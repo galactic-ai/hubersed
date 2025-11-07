@@ -61,3 +61,32 @@ def make_agebins_for_z(z):
     dt_yr = dt_gyr * 1e9
 
     return edges, mids, dt_yr
+
+def make_stochastic_agebins(z):
+    """ready to use for fsps or be in the dictionary.
+    Make age bins for stochastic SFH model at redshift z.
+    
+    Parameters
+    ----------
+    z : float
+        Redshift
+    
+    Returns
+    -------
+    age_bins_log : np.array
+        Array of shape (10, 2) with log10(yr) bin edges.
+    """
+    t_univ = universe_age_gyr(z)
+    # each bin should be in Gyr, shape (n, 2) (start, end)
+    age_bins = np.zeros((10, 2))
+
+    age_bins[0] = [0.001, 0.005]
+    age_bins[1] = [0.005, 0.01]
+    log_t_edges = np.log10(np.linspace(0.01, 0.95*t_univ, 9))
+    for i in range(2, 10):
+        age_bins[i] = [10**log_t_edges[i-2], 10**log_t_edges[i-1]]
+
+    # convert age bins to log(yr)
+    age_bins_log = np.log10(age_bins * 1e9)
+
+    return age_bins_log
