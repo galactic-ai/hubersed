@@ -698,6 +698,7 @@ dependencies = [
     { name = "scipy" },
     { name = "six" },
     { name = "spender" },
+    { name = "tqdm" },
 ]
 
 [package.dev-dependencies]
@@ -719,6 +720,7 @@ requires-dist = [
     { name = "scipy", specifier = ">=1.16.3" },
     { name = "six", specifier = ">=1.17.0" },
     { name = "spender", git = "https://github.com/galactic-ai/spender" },
+    { name = "tqdm", specifier = ">=4.67.1" },
 ]
 
 [package.metadata.requires-dev]
