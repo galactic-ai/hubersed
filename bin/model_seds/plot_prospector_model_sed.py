@@ -6,7 +6,7 @@ import os, re, glob, argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
-C_AA_PER_S = 2.99792458e18  # Å / s
+from hubersed.conversion import maggies_to_flambda
 
 def load_index(dirpath):
     idx = os.path.join(dirpath, "index.csv")
@@ -23,11 +23,6 @@ def npz_meta(path):
     meta = d["meta"].item()
     return d["wave"], d["flux"], meta
 
-def maggies_to_flambda(wave, maggies):
-    # maggies → f_nu (cgs), then f_lambda
-    fnu_cgs = (maggies * 3631.0) * 1e-23
-    flam = fnu_cgs * C_AA_PER_S / (wave**2)
-    return flam
 
 def parse_args():
     ap = argparse.ArgumentParser(description="Plot NP-SFH DESI-like model spectra (NPZ).")

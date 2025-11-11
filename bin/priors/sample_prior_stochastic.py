@@ -35,8 +35,6 @@ for param in ['sigma_reg', 'tau_eq', 'tau_in', 'sigma_dyn', 'tau_dyn']:
 
 base_template = adjust_stochastic_params(base_template)
 
-base_template['zred']
-
 sps = FastStepBasis()
 
 model = HyperSpecModel(base_template)
