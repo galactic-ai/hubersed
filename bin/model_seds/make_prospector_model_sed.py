@@ -29,7 +29,7 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"
 DATA_PATH = PATHS['DATA']
 
 # load priors (hard coded for now)
-priors_npz = np.load(f'{DATA_PATH}/stochastic_priors_sample_100000.npz', allow_pickle=True)
+priors_npz = np.load(f'{DATA_PATH}/stochastic_priors_sample_500000.npz', allow_pickle=True)
 priors_dict = {k: priors_npz[k] for k in priors_npz.files}
 
 DESI_WAV = np.linspace(3600.0, 9824.0, 7781, dtype=np.float64)
@@ -152,7 +152,7 @@ def worker_block(start, stop):
 # store in hdf5
 
 def main():
-    output_file = DATA_PATH / "prospector_stochastic_model_seds.h5"
+    output_file = DATA_PATH / "prospector_stochastic_model_seds_500000.h5"
 
     with h5py.File(output_file, "w") as hf:
         # store wavs

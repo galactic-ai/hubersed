@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 
 from hubersed.prospector.utils import universe_age_gyr
@@ -7,9 +9,8 @@ from hubersed.paths import PATHS
 
 DATA_PATH = PATHS['DATA']
 
-
-# 100_000 samples
-SAMPLE_SIZE = 100_000
+# 500_000 samples
+SAMPLE_SIZE = int(sys.argv[1]) if len(sys.argv) > 1 else 500_000
 
 # from Wan+24 Stochastic prior model
 
