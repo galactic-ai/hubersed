@@ -1,0 +1,76 @@
+##### Figure defaults #####
+figure.figsize      : 3.5, 3.0        # single-column figure (ApJ-ish)
+figure.dpi          : 300
+savefig.dpi         : 300
+savefig.bbox        : tight
+savefig.pad_inches  : 0.02
+savefig.format      : pdf
+
+##### TeX / Fonts #####
+text.usetex         : True
+
+# This controls non-LaTeX fallback; actual fonts come from LaTeX.
+font.family         : serif
+font.size           : 10              # base font ~ AASTeX default
+
+# Make all the “main” text reasonably large
+axes.labelsize      : 10
+axes.titlesize      : 10
+xtick.labelsize     : 9
+ytick.labelsize     : 9
+legend.fontsize     : 9
+
+# Use Computer Modern by default (standard LaTeX / AASTeX fonts)
+# or override via the LaTeX preamble below.
+mathtext.fontset    : cm
+
+# IMPORTANT: copy any font-related bits from your LaTeX preamble here.
+# Example 1 (plain AASTeX, Computer Modern):
+text.latex.preamble :
+    \usepackage{amsmath}
+    \usepackage{amssymb}
+
+# If in your .tex you instead do e.g.
+#   \usepackage{newtxtext,newtxmath}
+# then ALSO add that here:
+#    \usepackage{newtxtext,newtxmath}
+
+
+##### Axes #####
+axes.linewidth                  : 0.8
+axes.labelpad                   : 3
+axes.formatter.use_mathtext     : True
+axes.unicode_minus              : True
+
+##### Lines & markers #####
+lines.linewidth                 : 1.0
+lines.markersize                : 3
+lines.markeredgewidth           : 0.5
+
+##### Ticks #####
+xtick.direction                 : in
+ytick.direction                 : in
+xtick.top                       : True
+ytick.right                     : True
+
+xtick.major.size                : 3
+ytick.major.size                : 3
+xtick.minor.size                : 1.5
+ytick.minor.size                : 1.5
+
+xtick.major.width               : 0.8
+ytick.major.width               : 0.8
+xtick.minor.width               : 0.6
+ytick.minor.width               : 0.6
+
+##### Legend #####
+legend.frameon                  : False
+legend.handlelength             : 1.5
+legend.labelspacing             : 0.3
+legend.borderaxespad            : 0.5
+
+##### Grid (off by default) #####
+axes.grid                       : False
+
+##### Color cycle #####
+# Use Matplotlib default (tab10) – safe and colorblind-friendly
