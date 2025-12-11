@@ -2388,7 +2388,7 @@ wheels = [
 [[package]]
 name = "spender"
 version = "0.2.8"
-source = { git = "https://github.com/galactic-ai/spender#dd67bcbf9e9dc6ce652fa44cbfdd30f001c3a239" }
+source = { git = "https://github.com/galactic-ai/spender#8383096aafb25fff10d6a61a0fa00f8a56c3c174" }
 dependencies = [
     { name = "accelerate" },
     { name = "astropy" },
