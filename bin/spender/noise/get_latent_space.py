@@ -4,16 +4,13 @@ import argparse
 from typing import Optional, Tuple
 
 import torch
-from torch.utils.data import DataLoader
-
 from spender import SpectrumAutoencoder
 from spender.data import desi
 from spender import load_model
-from contextlib import nullcontext
 
 def process_loader(
     model: SpectrumAutoencoder,
-    loader: DataLoader,
+    loader,
     device: torch.device,
     compute_snr: bool = False,
 ) -> Tuple[
@@ -29,65 +26,46 @@ def process_loader(
     Returns:
         latents, A, specs_or_none, snrs_or_none, zs
     """
-    model.eval()
-    n_total = len(loader.dataset)
+    all_latents = []
+    all_A = []
+    all_specs = []
+    all_snrs = []
+    all_z = []
 
-    # infer dims
-    first = next(iter(loader))
-    spec0, w0, z0, target_id0, norm0, zerr0 = first
-    L = spec0.shape[1]
-
-    amp_ctx = (
-        torch.autocast(device_type='cuda', dtype=torch.bfloat16)
-        if device.type == "cuda"
-        else nullcontext()
-
-    )
-
-    with torch.inference_mode(), amp_ctx:
-        spec0 = spec0.to(device)
-        w0 = w0.to(device)
-        x0 = spec0 * torch.sqrt(w0) if compute_snr else spec0
-        latent_dim = model.encode(x0[:1].float()).shape[1]
-    
-    latents = torch.empty((n_total, latent_dim), dtype=torch.float32, device="cpu")
-    A = torch.empty((n_total, 1), dtype=torch.float32, device="cpu")
-    zs = torch.empty((n_total, ), dtype=torch.float32, device="cpu")
-    
-    specs = torch.empty((n_total, L), dtype=torch.float32, device="cpu")
-    snrs = torch.empty((n_total, L), dtype=torch.float32, device="cpu")
-
-    idx = 0
-
-    with torch.inference_mode(), amp_ctx:
+    with torch.no_grad():
         for i, batch in enumerate(loader):
             spec, w, z, target_id, norm, zerr = batch
-            bsz = spec.shape[0]
 
-            specs[idx:idx+bsz] = spec
+            spec = spec.to(device)
+            w = w.to(device)
+            z = z.to(device)
 
-            spec_gpu = spec.to(device, non_blocking=True)
-            w_gpu    = w.to(device, non_blocking=True)
-            z_gpu    = z.to(device, non_blocking=True)
-
+            snr = None
             if compute_snr:
-                snr_gpu = spec_gpu * torch.sqrt(w_gpu)
-                to_encode = snr_gpu
-                snrs[idx:idx+bsz] = snr_gpu.detach().cpu()
-            else: 
-                to_encode = spec_gpu
-                snrs[idx:idx+bsz].zero_()
-            
-            s = model.encode(to_encode.float())
-            
-            latents[idx:idx+bsz] = s.detach().cpu()
-            A[idx:idx+bsz]       = norm.unsqueeze(1).cpu()
-            zs[idx:idx+bsz]      = z_gpu.detach().cpu().view(-1)
+                snr = spec * torch.sqrt(w)
 
-            idx += bsz
+            # Decide what to encode: prefer SNR if computed, otherwise raw spectrum
+            to_encode = snr if (snr is not None) else spec
+
+            s = model.encode(to_encode.float())
+            all_latents.append(s.cpu())
+            all_A.append(norm.unsqueeze(1).cpu())
+            all_z.append(z.cpu())
+
+            # store both representations so outputs are uniform
+            all_specs.append(spec.cpu())
+            all_snrs.append(
+                snr.cpu() if snr is not None else torch.zeros_like(spec.cpu())
+            )
 
             if (i + 1) % 50 == 0:
-                print(f"Processed {idx} spectra")
+                print(f"Processed {(i + 1) * loader.batch_size} spectra")
+
+    latents = torch.cat(all_latents, dim=0)
+    A = torch.cat(all_A, dim=0)
+    specs = torch.cat(all_specs, dim=0)
+    snrs = torch.cat(all_snrs, dim=0)
+    zs = torch.cat(all_z, dim=0)
 
     return latents, A, specs, snrs, zs
 
