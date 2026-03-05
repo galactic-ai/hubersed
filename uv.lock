@@ -478,6 +478,15 @@ wheels = [
 ]
 
 [[package]]
+name = "dynesty"
+version = "2.1.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d0/20/6a8a27d803900ad8fdfe7d730a66d2304f3fda17616eb8debe10085fa81a/dynesty-2.1.5.tar.gz", hash = "sha256:fd742d483a1f78086bc8a36316594fa1e18eeb3a27f8293fca147b377b5cd311", size = 31034553, upload-time = "2024-12-17T20:07:48.666Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c8/01/db367a6adfa49d280cda609ad5d94b9b257058b4499c59633e6d15c5e552/dynesty-2.1.5-py2.py3-none-any.whl", hash = "sha256:c1d20f300d6e0fb64675f01683d7511b181d2a5ac372295b1fe5f4410670530b", size = 108214, upload-time = "2024-12-17T20:07:42.296Z" },
+]
+
+[[package]]
 name = "executing"
 version = "2.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -703,11 +712,14 @@ dependencies = [
     { name = "astro-sedpy" },
     { name = "astropy" },
     { name = "corner" },
+    { name = "dynesty" },
     { name = "fsps" },
     { name = "h5py" },
+    { name = "ipykernel" },
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "requests" },
     { name = "scipy" },
     { name = "six" },
     { name = "spender" },
@@ -727,11 +739,14 @@ requires-dist = [
     { name = "astro-sedpy", specifier = ">=0.4.1" },
     { name = "astropy", specifier = ">=7.1.1" },
     { name = "corner", specifier = ">=2.2.3" },
+    { name = "dynesty", specifier = "==2.1.5" },
     { name = "fsps", specifier = ">=0.4.7" },
     { name = "h5py", specifier = ">=3.15.1" },
+    { name = "ipykernel", specifier = ">=7.1.0" },
     { name = "matplotlib", specifier = ">=3.10.7" },
     { name = "numpy", specifier = ">=2.3.4" },
     { name = "pandas", specifier = ">=2.3.3" },
+    { name = "requests", specifier = ">=2.32.5" },
     { name = "scipy", specifier = ">=1.16.3" },
     { name = "six", specifier = ">=1.17.0" },
     { name = "spender", git = "https://github.com/galactic-ai/spender" },
@@ -2388,7 +2403,7 @@ wheels = [
 [[package]]
 name = "spender"
 version = "0.2.8"
-source = { git = "https://github.com/galactic-ai/spender#8383096aafb25fff10d6a61a0fa00f8a56c3c174" }
+source = { git = "https://github.com/galactic-ai/spender#79b68c3b21d4cc231ed7bd690dfa413b67dae298" }
 dependencies = [
     { name = "accelerate" },
     { name = "astropy" },
