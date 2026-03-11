@@ -35,6 +35,8 @@ set_vals = {
     "dust_index": 0.0,
     "dust2": 0.1,
     "dust_ratio": 1.0,
+    "gas_logz": -0.1,
+    "gas_logu": -2.0,
 }
 set_priors = {
     "logmass": Uniform(mini=7.0, maxi=12.0),
@@ -46,7 +48,9 @@ set_priors = {
     "tau_dyn": ClippedNormal(mean=0.01, sigma=0.02, mini=0.005, maxi=0.2),
     "dust_index": TopHat(mini=-1.0, maxi=0.4),
     "dust2": ClippedNormal(mean=0.3, sigma=1.0, mini=0.0, maxi=4.0),
-    "dust_ratio": ClippedNormal(mean=1.0, sigma=0.3, mini=0.0, maxi=2.0)
+    "dust_ratio": ClippedNormal(mean=1.0, sigma=0.3, mini=0.0, maxi=2.0),
+    "gas_logz": Uniform(mini=-2.0, maxi=0.5),
+    "gas_logu": Uniform(mini=-4.0, maxi=-1.0),
     
 }
 
@@ -91,16 +95,7 @@ for key in set_vals:
         print(f"  Setting {key} = {set_vals[key]} in template")
         template[key]['init'] = set_vals[key]
         template[key]['prior'] = set_priors[key]
-        if key in ['tau_eq', 'tau_in', 'sigma_dyn', 'tau_dyn', 'sigma_reg']:
-            # The continuum is dominated by old stars that accumulated over billions of years 
-            # — it cares about total mass at broad age ranges, not fine-grained SFH variations. 
-            # The hyperparameters control bin-to-bin correlations and burstiness, which barely 
-            # affect the cumulative light. Emission lines are the opposite — they trace stars 
-            # younger than ~10 Myr, where the exact recent SFH shape 
-            # (controlled by the hyperparameters) matters enormously.
-            template[key]['isfree'] = False
-        else:
-            template[key]['isfree'] = True
+        template[key]['isfree'] = True
     else:
         print(f"  Warning: {key} not found in template parameters")
 
@@ -169,15 +164,15 @@ if withmpi:
         # The parent process will oversee the fitting
         results = fit_model(obs, model, sps, pool=pool, 
                            queue_size=nprocs, lnprobfn=lnprobfn_fixed, 
-                           nlive=100, dynesty=True, nested_sample='rwalk',
+                           nlive=1000, dynesty=True, nested_sample='rwalk',
                            print_progress=True)
 else:
     # without MPI we don't pass the pool
     raise NotImplementedError("This script is designed to run with MPI. Please run with mpirun or mpiexec.")
 
-writer.write_hdf5("continuum_fit.h5", {}, model, obs,
+writer.write_hdf5("full_fit.h5", {}, model, obs,
                    results["sampling"][0], results["optimization"][0], 
                    tsample=results["sampling"][1],
                    toptimize=results["optimization"][1],
                    sps=sps)
-print("Done! Saved to continuum_fit.h5")
+print("Done! Saved to full_fit.h5")
