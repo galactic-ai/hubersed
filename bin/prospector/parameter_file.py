@@ -15,6 +15,7 @@ import torch
 
 from hubersed.prospector.utils import make_stochastic_agebins
 from hubersed.paths import PATHS
+from hubersed.prospector.utils import load_lines
 
 if not hasattr(np, "infty"):
     np.infty = np.inf  # compatibility shim for older code
@@ -28,11 +29,7 @@ OUTLIERS_IDX = torch.load(RESULTS_PATH / "desi_outliers.pt", weights_only=False)
 C_CGS = 2.99792458e10          # cm/s
 FNU_PER_MAGGIE = 3631e-23       # erg/s/cm^2/Hz
 
-EM_LINES_A = np.array([
-            3727, 3869, 4102, 4340,
-            4861, 4959, 5007,
-            6563, 6583, 6716, 6731
-        ])
+EM_LINES_A = load_lines()['all_waves']
 
 # build obs
 def build_obs(spec: np.ndarray, unc: np.ndarray, mask: np.ndarray) -> dict:
@@ -213,28 +210,35 @@ def ivar_flambda_to_ivar_maggies(wave_A, ivar_flambda):
     K = (wave_A**2) * 1e-8 * 1e-17 / C_CGS / FNU_PER_MAGGIE 
     return ivar_flambda / (K**2)
 
-def mask_em_lines(mask, z, halfwidth_A=20):
-    """Mask emission lines in the spectrum by setting the corresponding elements of the mask to False.
+def mask_spectral_lines(wave_obs, mask, z, line_waves=EM_LINES_A, halfwidth_kms=500.0):
+    """Mask spectral lines using a velocity-based window.
+    
     Parameters
     ----------
+    wave_obs : np.ndarray
+        Observed wavelength array [Å].
     mask : np.ndarray
-        Boolean array indicating which pixels are currently unmasked (True) or masked (False).
+        Boolean array; True = good pixel, False = masked.
     z : float
         Redshift of the object.
-    halfwidth_A : float, optional
-        Half-width of the emission line mask in Angstroms. Default is 20 Å.
+    line_waves : np.ndarray
+        Rest-frame vacuum wavelengths of lines to mask [Å].
+    halfwidth_kms : float, optional
+        Half-width of mask window in km/s. Default is 500 km/s.
     
     Returns
     -------
     np.ndarray
-        Updated mask with emission line regions set to False.
+        Updated boolean mask.
     """
+    c_kms = 299792.458
     mask = mask.copy()
-
-    wave_rest = WAVE_OBS / (1 + z)
+    wave_rest = wave_obs / (1.0 + z)
     
-    for line in EM_LINES_A:
-        mask &= np.abs(wave_rest - line) > halfwidth_A
+    for line in line_waves:
+        dwave = line * halfwidth_kms / c_kms
+        mask &= np.abs(wave_rest - line) > dwave
+    
     return mask
 
 if __name__ == "__main__":
@@ -260,7 +264,7 @@ if __name__ == "__main__":
 
     # mask sky lines if arguments specify
     if args.mask:
-        mask = mask_em_lines(mask, redshift)
+        mask = mask_spectral_lines(WAVE_OBS, mask, redshift, EM_LINES_A, halfwidth_kms=500.0)
 
     # build the fit ingredients
     obs, model, sps, noise = build_all(spec, unc, mask=mask, redshift=redshift)

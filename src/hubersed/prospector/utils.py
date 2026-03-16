@@ -90,3 +90,107 @@ def make_stochastic_agebins(z):
     age_bins_log = np.log10(age_bins * 1e9)
 
     return age_bins_log
+
+def _airtovac(w):
+    # From https://github.com/desihub/prospect/blob/1694e3f2eb35e33778f9ab73dc535719f45a959b/py/prospect/viewer/cds.py#L34
+    """Convert air wavelengths to vacuum wavelengths. Don't convert less than 2000 Å.
+
+    Parameters
+    ----------
+    w : :class:`float`
+        Wavelength [Å] of the line in air.
+
+    Returns
+    -------
+    :class:`float`
+        Wavelength [Å] of the line in vacuum.
+    """
+    if w < 2000.0:
+        return w
+    vac = w
+    for iter in range(2):
+        sigma2 = (1.0e4/vac)*(1.0e4/vac)
+        fact = 1.0 + 5.792105e-2/(238.0185 - sigma2) + 1.67917e-3/(57.362 - sigma2)
+        vac = w*fact
+    return vac
+
+def _parse_line_file(filepath):
+    """Parse a single prospect-format spectral line CSV file.
+    
+    Parameters
+    ----------
+    filepath : str or Path
+        Path to the CSV file.
+    
+    Returns
+    -------
+    np.ndarray
+        Structured array with fields: name (U20), longname (U40),
+        wave_vac (float64), major (bool).
+    """
+    names = []
+    longnames = []
+    wavelengths = []
+    majors = []
+    
+    with open(filepath, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            parts = line.split(',')
+            if len(parts) < 5:
+                continue
+            
+            name = parts[0].strip()
+            longname = parts[1].strip()
+            wave = float(parts[2].strip())
+            is_vacuum = parts[3].strip() == 'True'
+            is_major = parts[4].strip() == 'True'
+            
+            # Convert air -> vacuum if needed
+            if not is_vacuum:
+                wave = float(_airtovac(np.array([wave]))[0])
+            
+            names.append(name)
+            longnames.append(longname)
+            wavelengths.append(wave)
+            majors.append(is_major)
+    
+    n = len(names)
+    dtype = np.dtype([
+        ('name', 'U20'),
+        ('longname', 'U40'),
+        ('wave_vac', 'f8'),
+        ('major', '?'),
+    ])
+    result = np.empty(n, dtype=dtype)
+    result['name'] = names
+    result['longname'] = longnames
+    result['wave_vac'] = wavelengths
+    result['major'] = majors
+    
+    return result
+
+def load_lines():
+    from pathlib import Path
+    import numpy as np
+
+    ab_lines_path = Path(__file__).parent / "data" / "absorption_lines.txt"
+    em_lines_path = Path(__file__).parent / "data" / "emission_lines.txt"
+
+    ab_lines = _parse_line_file(ab_lines_path)
+    em_lines = _parse_line_file(em_lines_path)
+
+    all_waves = np.unique(np.concatenate([ab_lines['wave_vac'], em_lines['wave_vac']]))
+
+    major_ab = ab_lines['wave_vac'][ab_lines['major']]
+    major_em = em_lines['wave_vac'][em_lines['major']]
+    major_waves = np.unique(np.concatenate([major_em, major_ab]))
+    
+    return {
+        'emission': em_lines,
+        'absorption': ab_lines,
+        'all_waves': all_waves,
+        'major_waves': major_waves,
+    }

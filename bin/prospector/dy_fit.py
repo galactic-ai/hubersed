@@ -13,16 +13,16 @@ import prospect.io.write_results as writer
 from hubersed.prospector.utils import make_stochastic_agebins
 
 # ── Build EVERYTHING on all processes ──
-spec, unc, redshift, mask, id = P.get_outlier_info(0)
-mask = (spec > 0) & np.isfinite(spec) & np.isfinite(unc)
-
-assert id == 39632941227181576, f"Expected ID 39632941227181576, but got {id}"
+spec, unc, redshift, mask, id = P.get_outlier_info(808)
+mask = np.ones_like(spec, dtype=bool)
+assert id == 39633342949230018, "Expected id 39633342949230018, but got {}".format(id)
 
 wave_A = P.WAVE_OBS
 spec_maggies = P.flambda_to_maggies(wave_A, spec)
 ivar_maggies = P.ivar_flambda_to_ivar_maggies(wave_A, unc)
 sigma_maggies = 1 / np.sqrt(np.where(ivar_maggies > 0, ivar_maggies, np.inf))
-mask_em = P.mask_em_lines(mask, redshift)
+mask = mask & (sigma_maggies > 0) & np.isfinite(sigma_maggies)
+mask_em = P.mask_spectral_lines(wave_A, mask, redshift)
 
 set_vals = {
     "logmass": 8.7,
@@ -107,8 +107,25 @@ template["agebins"] = {
 }
 
 # Charlot & Fall dust model
-template["dust_type"]["init"] = 0
+template["dust_type"]["init"] = 4
 
+template["sigma_smooth"] = {
+    "N": 1,
+    "isfree": True,
+    "init": 200.0,
+    "units": "km/s",
+    "prior": TopHat(mini=50.0, maxi=400.0),
+}
+template["smoothtype"] = {
+    "N": 1,
+    "isfree": False,
+    "init": "vel",
+}
+template["fftsmooth"] = {
+    "N": 1,
+    "isfree": False,
+    "init": True,
+}
 
 template = adjust_stochastic_params(template)
 
@@ -170,9 +187,9 @@ else:
     # without MPI we don't pass the pool
     raise NotImplementedError("This script is designed to run with MPI. Please run with mpirun or mpiexec.")
 
-writer.write_hdf5("full_fit.h5", {}, model, obs,
+writer.write_hdf5("em_fit.h5", {}, model, obs,
                    results["sampling"][0], results["optimization"][0], 
                    tsample=results["sampling"][1],
                    toptimize=results["optimization"][1],
                    sps=sps)
-print("Done! Saved to full_fit.h5")
+print("Done! Saved to em_fit.h5")
