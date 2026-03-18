@@ -7,6 +7,8 @@ from tqdm.auto import tqdm
 from hubersed.prospector.utils import make_stochastic_agebins
 from hubersed.paths import PATHS
 
+from scipy.sparse import lil_matrix, csr_matrix
+
 import numpy as np
 import h5py
 
@@ -15,6 +17,10 @@ from functools import lru_cache
 
 import os
 import copy
+import warnings
+
+# ignore warnings from zero ivar
+warnings.filterwarnings("ignore", category=RuntimeWarning)  
 
 # export OMP_NUM_THREADS=1
 # export OPENBLAS_NUM_THREADS=1
@@ -81,10 +87,28 @@ def build_base_template():
         "prior": priors.TopHat(mini=-1.0, maxi=0.4),
     }
 
+    # add velocity dispersion parameters (same for all spectra, not varied)
+    base_template["sigma_smooth"] = {
+    "N": 1,
+    "isfree": False,
+    "init": 200.0,
+    "units": "km/s",
+    }
+    base_template["smoothtype"] = {
+        "N": 1,
+        "isfree": False,
+        "init": "vel",
+    }
+    base_template["fftsmooth"] = {
+        "N": 1,
+        "isfree": False,
+        "init": True,
+    }
 
     return base_template
 
 BASE_TEMPLATE = build_base_template()
+    
 
 def build_parset_for_index(i):
     base_template = copy.deepcopy(BASE_TEMPLATE)
@@ -119,16 +143,90 @@ def build_parset_for_index(i):
     base_template["sigma_dyn"]["init"] = priors_dict["sigma_dyns"][i]
     base_template["tau_dyn"]["init"] = priors_dict["tau_dyns"][i]
 
+    # vel disp
+    base_template["sigma_smooth"]["init"] = priors_dict["sigma_smooths"][i]
+
     # adjust stochastic parameters (same call as in your example)
     base_template = adjust_stochastic_params(base_template)
 
     return base_template
 
+def desi_resolution(wave):
+    """DESI spectral resolution R(lambda).
+    
+    Design requirements from DESI Collaboration (2019),
+    arXiv:1907.10688, Table 1.
+    
+    Blue:  3600-5930 Å,  R = 2000-3200
+    Red:   5660-7720 Å,  R = 3200-4100
+    NIR:   7470-9800 Å,  R = 4100-5100
+    
+    Linear interpolation within each arm.
+    In overlap regions, uses the arm with higher resolution.
+    """
+    R = np.zeros_like(wave, dtype=float)
+    
+    b = (wave >= 3600) & (wave < 5930)
+    r = (wave >= 5930) & (wave < 7470)
+    z = (wave >= 7470)
+    
+    R[b] = 2000 + (3200 - 2000) * (wave[b] - 3600) / (5930 - 3600)
+    R[r] = 3200 + (4100 - 3200) * (wave[r] - 5930) / (7720 - 5930)
+    R[z] = 4100 + (5100 - 4100) * (wave[z] - 7470) / (9800 - 7470)
+    
+    return R
+
+def build_desi_resolution_matrix(wave):
+    """Build sparse resolution matrix from DESI R(lambda) curve.
+    
+    Parameters
+    ----------
+    wave : 1D array
+        Wavelength grid in Angstroms.
+    
+    Returns
+    -------
+    scipy.sparse.csr_matrix
+        Shape (nwave, nwave). Multiply by flux to apply LSF.
+    """
+    c_kms = 299792.458
+    R = desi_resolution(wave)
+    
+    # R(lambda) -> sigma in km/s -> sigma in pixels
+    sigma_kms = c_kms / (2.355 * R)
+    dwave = np.gradient(wave)
+    dpix_kms = dwave / wave * c_kms
+    sigma_pix = sigma_kms / dpix_kms
+
+    n = len(wave)
+    mat = lil_matrix((n, n), dtype=np.float64)
+
+    for i in range(n):
+        # Kernel extends ±4 sigma
+        hw = int(4 * sigma_pix[i]) + 1
+        lo = max(0, i - hw)
+        hi = min(n, i + hw + 1)
+        
+        # Gaussian kernel centered on pixel i
+        j = np.arange(lo, hi)
+        kernel = np.exp(-0.5 * ((j - i) / sigma_pix[i])**2)
+        kernel /= kernel.sum()
+        
+        mat[i, lo:hi] = kernel
+
+    return csr_matrix(mat)
+
+R_MATRIX = build_desi_resolution_matrix(DESI_WAV)
 
 @lru_cache(maxsize=None)
 def _get_sps():
     from prospect.sources import FastStepBasis
     return FastStepBasis()
+
+
+@lru_cache(maxsize=None)
+def _get_resolution_matrix():
+    return build_desi_resolution_matrix(DESI_WAV)
 
 
 def worker_block(start, stop):
@@ -137,6 +235,7 @@ def worker_block(start, stop):
     """
 
     sps = _get_sps()
+    R_mat = _get_resolution_matrix()
     obs = {"wavelength": DESI_WAV, "filters": None}
 
     block = np.empty((stop - start, n_wave), dtype=np.float32)
@@ -144,7 +243,10 @@ def worker_block(start, stop):
     for j, i in enumerate(range(start, stop)):
         parset = build_parset_for_index(i)
         model = HyperSpecModel(configuration=parset)
+        # sigma_smooth (velocity dispersion) applied here by Prospector
         spec, _, _ = model.predict(model.theta, obs, sps=sps)
+        # DESI instrumental LSF applied here
+        spec = R_mat.dot(spec)
         block[j, :] = spec.astype(np.float32)
 
     return start, stop, block

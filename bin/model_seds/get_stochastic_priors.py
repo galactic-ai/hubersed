@@ -17,8 +17,8 @@ SAMPLE_SIZE = int(sys.argv[1]) if len(sys.argv) > 1 else 500_000
 # redshift 0.01 to 0.6 uniform
 redshifts = sample_uniform(0.01, 0.6, size=SAMPLE_SIZE)
 
-# stellar mass 9.5 to 12 uniform
-stellar_masses = sample_uniform(9.5, 12, size=SAMPLE_SIZE)
+# stellar mass 7 to 12 uniform
+stellar_masses = sample_uniform(7, 12, size=SAMPLE_SIZE)
 
 # stellar metallicity -1.0 to 0.19 uniform
 stellar_metallicities = sample_uniform(-1.0, 0.19, size=SAMPLE_SIZE)
@@ -64,6 +64,9 @@ gas_metallicities = sample_uniform(-2.0, 0.5, size=SAMPLE_SIZE)
 # gas ionization parameter -4 to -1
 gas_ionization_parameters = sample_uniform(-4.0, -1.0, size=SAMPLE_SIZE)
 
+# top hat min 50 max 500 (not used in Wan+24 but included for completeness)
+sigma_smooths = sample_uniform(50, 500, size=SAMPLE_SIZE)
+
 # save to npz
 np.savez(
     f'{DATA_PATH}/stochastic_priors_sample_{SAMPLE_SIZE}.npz',
@@ -84,4 +87,5 @@ np.savez(
     sigma_gass=sigma_gass,
     gas_metallicities=gas_metallicities,
     gas_ionization_parameters=gas_ionization_parameters,
+    sigma_smooths=sigma_smooths,
 )
