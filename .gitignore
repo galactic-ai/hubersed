@@ -13,3 +13,6 @@ wheels/
 results/
 data/
 tmp/
+
+.ruff_cache/
+.ipynb_checkpoints/
