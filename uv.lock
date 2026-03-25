@@ -496,6 +496,18 @@ wheels = [
 ]
 
 [[package]]
+name = "emcee"
+version = "3.1.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cb/53/1045ee878cb24281387079f8ee4f0ade1622c6aae1ed1fd91a53e4fa5b19/emcee-3.1.6.tar.gz", hash = "sha256:11af4daf6ab8f9ca69681e3c29054665db7bbd87fd4eb8e437d2c3a1248c637d", size = 2871117, upload-time = "2024-04-19T10:03:19.555Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f9/ef/2196b9bf88ffa1bde45853c72df021fbd07a8fa91a0f59a22d14a050dc04/emcee-3.1.6-py2.py3-none-any.whl", hash = "sha256:f2d63752023bdccf744461450e512a5b417ae7d28f18e12acd76a33de87580cb", size = 47351, upload-time = "2024-04-19T10:03:17.522Z" },
+]
+
+[[package]]
 name = "executing"
 version = "2.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -722,6 +734,7 @@ dependencies = [
     { name = "astropy" },
     { name = "corner" },
     { name = "dynesty" },
+    { name = "emcee" },
     { name = "fsps" },
     { name = "h5py" },
     { name = "ipykernel" },
@@ -751,6 +764,7 @@ requires-dist = [
     { name = "astropy", specifier = ">=7.1.1" },
     { name = "corner", specifier = ">=2.2.3" },
     { name = "dynesty", specifier = "==2.1.5" },
+    { name = "emcee", specifier = ">=3.1.6" },
     { name = "fsps", specifier = ">=0.4.7" },
     { name = "h5py", specifier = ">=3.15.1" },
     { name = "ipykernel", specifier = ">=7.1.0" },
