@@ -77,9 +77,9 @@ def compute_sfh(flat_samples, model, n_thin=10):
 
 def fit_galaxy(outlier_idx, parameter_file, 
                run_continuum=True, run_full=True,
-               cont_nseeds=5, cont_maxfev=30_000,
+               cont_nseeds=3, cont_maxfev=30_000,
                cont_nburn=300, cont_nprod=1000,
-               full_nseeds=5, full_maxfev=100_000,
+               full_nseeds=3, full_maxfev=30_000,
                full_nburn=500, full_nprod=3000):
     """
     Full pipeline for one galaxy.
@@ -190,7 +190,7 @@ def fit_galaxy(outlier_idx, parameter_file,
 
     # ── Full nebular fit ─────────────────────────────────────────────────────
     if run_full and results.get("continuum_status") == "success":
-        obs_full   = P.build_obs(spec=spec_maggies, unc=sigma_maggies, mask=mask)
+        obs_full   = P.build_obs(spec=spec_maggies, unc=sigma_maggies, mask=mask_em)
         full_model, full_template = build_full_model(
             template, theta_best_cont, model, redshift
         )
