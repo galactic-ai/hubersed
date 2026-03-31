@@ -36,6 +36,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "huggingface-hub>=1.8.0",
     "ipykernel>=7.1.0",
     "jupyter>=1.1.1",
 ]
