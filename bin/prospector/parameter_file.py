@@ -17,6 +17,8 @@ from hubersed.prospector.utils import make_stochastic_agebins
 from hubersed.paths import PATHS
 from hubersed.prospector.utils import load_lines
 
+from huggingface_hub import hffs
+
 if not hasattr(np, "infty"):
     np.infty = np.inf  # compatibility shim for older code
 
@@ -143,7 +145,7 @@ def build_all(spec, unc, mask, redshift):
 
 
 # DESI Spectra
-def get_outlier_info(idx):
+def get_outlier_info(idx, streaming=True):
     """
     Get information about a specific outlier.
 
@@ -173,8 +175,13 @@ def get_outlier_info(idx):
 
     chunk_file = chunk_files[idx]
     idx_in_chunk = chunk_indices_in_chunk[idx]    
-    with open(chunk_file, "rb") as f:
-        s, w, z, id, norm, *_ = pickle.load(f)
+
+    if not streaming:
+        with open(chunk_file, "rb") as f:
+            s, w, z, id, norm, *_ = pickle.load(f)
+    else:
+        with hffs.open(f"buckets/nikhil0504/hubersed-data/{chunk_file.name}", "rb") as f:
+            s, w, z, id, norm, *_ = pickle.load(f)
     
     # correct for normalization
     s = s * norm[:, None]
