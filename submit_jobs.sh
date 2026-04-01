@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=prospector_fits
-#SBATCH --array=0-999%50        # max 1000, max 50 concurrent
+#SBATCH --array=0-4%2        # max 1000, max 50 concurrent
 #SBATCH --ntasks=1
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=64G
-#SBATCH --time=8:00:00
+#SBATCH --mem=8G
+#SBATCH --time=2:00:00
 #SBATCH --output=logs/%A_%a.out
 #SBATCH --error=logs/%A_%a.err
 #SBATCH --mail-type=all    # Send email at begin and end of job
