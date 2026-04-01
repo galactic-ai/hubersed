@@ -1,5 +1,4 @@
 """Run after all SLURM jobs complete to aggregate results."""
-import numpy as np
 import pandas as pd
 from save_results import aggregate_summaries
 

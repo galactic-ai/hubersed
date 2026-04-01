@@ -5,7 +5,7 @@ from scipy.optimize import minimize
 from prospect.fitting import lnprobfn
 from prospect.models.transforms import logsfr_ratios_to_sfrs
 
-from fit_config import DEFAULT_SET_VALS, build_continuum_model, build_full_model
+from fit_config import build_continuum_model, build_full_model
 
 def run_optimizer(neg_lnp, theta_init, n_seeds=5, jitter=0.05, 
                   maxfev=30_000, ftol=1e-6):

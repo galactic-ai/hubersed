@@ -3,7 +3,6 @@ run_fits.py — fits one galaxy, called by SLURM array job.
 Usage: python run_fits.py --task_id 0 --outlier_list outliers.npy --output_dir /path/to/output
 """
 import argparse
-import numpy as np
 import traceback
 
 from fit_single import fit_galaxy

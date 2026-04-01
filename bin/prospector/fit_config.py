@@ -3,7 +3,7 @@ import copy
 import numpy as np
 from astropy.cosmology import Planck18 as cosmo
 from prospect.models.priors import (
-    TopHat, ClippedNormal, LogUniform, Uniform, MultiVariateNormal
+    TopHat, ClippedNormal, LogUniform, Uniform
 )
 from prospect.models.transforms import dustratio_to_dust1
 from prospect.models.templates import TemplateLibrary, adjust_stochastic_params
