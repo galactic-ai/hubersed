@@ -98,6 +98,7 @@ def fit_galaxy(outlier_idx, parameter_file,
     mask      = (sigma_maggies > 0) & np.isfinite(sigma_maggies)
     mask_em   = P.mask_spectral_lines(wave_A, mask, redshift)
 
+    print(f"Fitting galaxy {gal_id} (outlier index {outlier_idx}) at z={redshift:.3f}")
     sps = P.build_sps()
     obs = P.build_obs(spec=spec_maggies, unc=sigma_maggies, mask=mask_em)
 
@@ -109,6 +110,7 @@ def fit_galaxy(outlier_idx, parameter_file,
 
     # ── Continuum fit ────────────────────────────────────────────────────────
     if run_continuum:
+        print(f"Running continuum fit for galaxy {gal_id}...")
         model, template = build_continuum_model(redshift)
         theta_init = model.theta.copy()
 
@@ -123,6 +125,7 @@ def fit_galaxy(outlier_idx, parameter_file,
                     return 1e18
 
         # Optimizer
+        print("Running optimizer for continuum fit...")
         best_res = run_optimizer(neg_lnp_cont, theta_init,
                                  n_seeds=cont_nseeds, maxfev=cont_maxfev)
         if best_res is None:
@@ -142,6 +145,7 @@ def fit_galaxy(outlier_idx, parameter_file,
                 except Exception:
                     return -np.inf
 
+        print("Running MCMC for continuum fit...")
         sampler_cont = run_emcee(lnp_cont, theta_map_cont,
                                  ndim=len(theta_map_cont),
                                  nburn=cont_nburn, nprod=cont_nprod)
@@ -190,6 +194,7 @@ def fit_galaxy(outlier_idx, parameter_file,
 
     # ── Full nebular fit ─────────────────────────────────────────────────────
     if run_full and results.get("continuum_status") == "success":
+        print(f"Running full fit for galaxy {gal_id}...")
         obs_full   = P.build_obs(spec=spec_maggies, unc=sigma_maggies, mask=mask_em)
         full_model, full_template = build_full_model(
             template, theta_best_cont, model, redshift
@@ -205,7 +210,7 @@ def fit_galaxy(outlier_idx, parameter_file,
                     return -lp if np.isfinite(lp) else 1e18
                 except Exception:
                     return 1e18
-
+        print("Running optimizer for full fit...")
         best_res_full = run_optimizer(neg_lnp_full, theta_init_full,
                                       n_seeds=full_nseeds, 
                                       maxfev=full_maxfev, jitter=0.01)
@@ -225,10 +230,12 @@ def fit_galaxy(outlier_idx, parameter_file,
                 except Exception:
                     return -np.inf
 
+        print("Running MCMC for full fit...")
         sampler_full = run_emcee(lnp_full, theta_map_full,
                                  ndim=len(theta_map_full),
                                  nburn=full_nburn, nprod=full_nprod)
 
+        print("Extracting chain for full fit...")
         flat_samples_full, flat_lp_full = extract_chain(sampler_full)
         theta_best_full = flat_samples_full[np.argmax(flat_lp_full)]
 
@@ -239,6 +246,7 @@ def fit_galaxy(outlier_idx, parameter_file,
                      / obs_full['unc'][obs_full['mask']]
         chi2_full  = float(np.nansum(resid_full**2))
         ndof_full  = int(obs_full['mask'].sum()) - len(theta_best_full)
+        print(f"Full fit chi2_red = {chi2_full / ndof_full:.3f}")
 
         params_full = {}
         for name, idx in full_model.theta_index.items():

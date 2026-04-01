@@ -15,8 +15,8 @@ def main():
     parser.add_argument("--task_id",      type=int, required=True)
     parser.add_argument("--output_dir",   type=str, required=True)
     parser.add_argument("--run_full",     action="store_true", default=True)
-    parser.add_argument("--cont_nseeds",  type=int, default=5)
-    parser.add_argument("--full_nseeds",  type=int, default=5)
+    parser.add_argument("--cont_nseeds",  type=int, default=3)
+    parser.add_argument("--full_nseeds",  type=int, default=3)
     parser.add_argument("--cont_nprod",   type=int, default=1000)
     parser.add_argument("--full_nprod",   type=int, default=3000)
     args = parser.parse_args()
@@ -46,7 +46,7 @@ def main():
             cont_nburn        = 300,
             cont_nprod        = args.cont_nprod,
             full_nseeds       = args.full_nseeds,
-            full_maxfev       = 100_000,
+            full_maxfev       = 30_000,
             full_nburn        = 500,
             full_nprod        = args.full_nprod,
         )
