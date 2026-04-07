@@ -28,10 +28,10 @@ def get_priors(redshift):
     return {
         "logmass":   Uniform(mini=7.0, maxi=12.0),
         "logzsol":   Uniform(mini=-1.0, maxi=0.19),
-        "sigma_reg": LogUniform(mini=0.1, maxi=10.0),
+        "sigma_reg": LogUniform(mini=0.1, maxi=5.0),
         "tau_eq":    Uniform(mini=0.01, maxi=tau_max),
         "tau_in":    Uniform(mini=0.01, maxi=tau_max),
-        "sigma_dyn": LogUniform(mini=0.001, maxi=0.1),
+        "sigma_dyn": LogUniform(mini=0.001, maxi=0.5),
         "tau_dyn":   ClippedNormal(mean=0.01, sigma=0.02, mini=0.005, maxi=0.2),
         "dust_index": TopHat(mini=-1.0, maxi=0.4),
         "dust2":     ClippedNormal(mean=0.3, sigma=1.0, mini=0.0, maxi=4.0),
@@ -94,7 +94,7 @@ def build_continuum_model(redshift, logmass_init=None):
     template["sigma_smooth"] = {
         "N": 1, "isfree": True, "init": 200.0,
         "units": "km/s",
-        "prior": TopHat(mini=50.0, maxi=400.0),
+        "prior": TopHat(mini=10.0, maxi=400.0),
     }
     template["smoothtype"] = {"N": 1, "isfree": False, "init": "vel"}
     template["fftsmooth"]  = {"N": 1, "isfree": False, "init": True}
@@ -108,6 +108,12 @@ def build_full_model(continuum_template, theta_best_cont, cont_model, redshift):
     nebular_template = copy.deepcopy(TemplateLibrary["nebular"])
     full_template = copy.deepcopy(continuum_template)
     full_template.update(nebular_template)
+
+    # Prospector handles emission lines separately from FSPS
+    # so we can apply independent gas velocity dispersion
+    full_template["nebemlineinspec"] = {
+        "N": 1, "isfree": False, "init": False,
+    }
 
     vary_params = [
         "logsfr_ratios", "gas_logz", "gas_logu",
@@ -133,6 +139,13 @@ def build_full_model(continuum_template, theta_best_cont, cont_model, redshift):
         **full_template.get("gas_logu", {}),
         "isfree": True, "init": -2.5,
         "prior": TopHat(mini=-4.0, maxi=-1.0),
+    }
+
+    # Gas velocity dispersion — independent from stellar sigma_smooth
+    full_template["eline_sigma"] = {
+        "N": 1, "isfree": True, "init": 200.0,
+        "units": "km/s",
+        "prior": TopHat(mini=20.0, maxi=250.0),
     }
 
     full_template = adjust_stochastic_params(full_template)
