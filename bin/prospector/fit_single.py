@@ -23,14 +23,29 @@ def run_optimizer(neg_lnp, theta_init, n_seeds=5, jitter=0.05,
             results.append(res)
     return min(results, key=lambda r: r.fun) if results else None
 
-def run_emcee(lnp_fn, theta_map, ndim, nwalkers=64, 
+def run_emcee(lnp_fn, theta_map, ndim, model=None, nwalkers=64, 
               nburn=300, nprod=1000):
-    """Run emcee seeded from MAP."""
-    p0 = theta_map + 1e-4 * np.random.randn(nwalkers, ndim)
+    """Run emcee seeded from MAP, with prior-spread initialization."""
+    p0 = np.empty((nwalkers, ndim))
+    
     for i in range(nwalkers):
+        if model is not None:
+            # Draw from prior, then pull toward MAP
+            # Half walkers near MAP, half spread across prior
+            if i < nwalkers // 2:
+                p0[i] = theta_map + 1e-4 * np.random.randn(ndim)
+            else:
+                p0[i] = model.prior_transform(np.random.uniform(size=ndim))
+        else:
+            p0[i] = theta_map + 1e-4 * np.random.randn(ndim)
+        
+        # Ensure valid starting position
         attempts = 0
         while not np.isfinite(lnp_fn(p0[i])) and attempts < 50:
-            p0[i] = theta_map + 1e-4 * np.random.randn(ndim)
+            if model is not None:
+                p0[i] = model.prior_transform(np.random.uniform(size=ndim))
+            else:
+                p0[i] = theta_map + 1e-4 * np.random.randn(ndim)
             attempts += 1
         if attempts == 50:
             p0[i] = theta_map
@@ -95,11 +110,14 @@ def fit_galaxy(outlier_idx, parameter_file,
     ivar_maggies  = P.ivar_flambda_to_ivar_maggies(wave_A, unc)
     sigma_maggies = 1 / np.sqrt(np.where(ivar_maggies > 0, ivar_maggies, np.inf))
 
+    sps = P.build_sps()
+    fsps_waves = sps.ssp.emline_wavelengths
+    fsps_optical = fsps_waves[(fsps_waves > 3600) & (fsps_waves < 9824)]
+
     mask      = (sigma_maggies > 0) & np.isfinite(sigma_maggies)
-    mask_em   = P.mask_spectral_lines(wave_A, mask, redshift)
+    mask_em   = P.mask_spectral_lines(wave_A, mask, redshift, halfwidth_kms=1500.0, line_waves=fsps_optical)
 
     print(f"Fitting galaxy {gal_id} (outlier index {outlier_idx}) at z={redshift:.3f}")
-    sps = P.build_sps()
     obs = P.build_obs(spec=spec_maggies, unc=sigma_maggies, mask=mask_em)
 
     results = {
@@ -148,7 +166,8 @@ def fit_galaxy(outlier_idx, parameter_file,
         print("Running MCMC for continuum fit...")
         sampler_cont = run_emcee(lnp_cont, theta_map_cont,
                                  ndim=len(theta_map_cont),
-                                 nburn=cont_nburn, nprod=cont_nprod)
+                                 nburn=cont_nburn, nprod=cont_nprod,
+                                 model=model)
 
         flat_samples_cont, flat_lp_cont = extract_chain(sampler_cont)
         theta_best_cont = flat_samples_cont[np.argmax(flat_lp_cont)]
@@ -233,7 +252,7 @@ def fit_galaxy(outlier_idx, parameter_file,
         print("Running MCMC for full fit...")
         sampler_full = run_emcee(lnp_full, theta_map_full,
                                  ndim=len(theta_map_full),
-                                 nburn=full_nburn, nprod=full_nprod)
+                                 nburn=full_nburn, nprod=full_nprod, model=full_model)
 
         print("Extracting chain for full fit...")
         flat_samples_full, flat_lp_full = extract_chain(sampler_full)
