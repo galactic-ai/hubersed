@@ -6,8 +6,7 @@ from tqdm.auto import tqdm
 
 from hubersed.prospector.utils import make_stochastic_agebins
 from hubersed.paths import PATHS
-
-from scipy.sparse import lil_matrix, csr_matrix
+from hubersed.prospector.lsf import build_desi_resolution_matrix
 
 import numpy as np
 import h5py
@@ -150,73 +149,6 @@ def build_parset_for_index(i):
     base_template = adjust_stochastic_params(base_template)
 
     return base_template
-
-def desi_resolution(wave):
-    """DESI spectral resolution R(lambda).
-    
-    Design requirements from DESI Collaboration (2019),
-    arXiv:1907.10688, Table 1.
-    
-    Blue:  3600-5930 Å,  R = 2000-3200
-    Red:   5660-7720 Å,  R = 3200-4100
-    NIR:   7470-9800 Å,  R = 4100-5100
-    
-    Linear interpolation within each arm.
-    In overlap regions, uses the arm with higher resolution.
-    """
-    R = np.zeros_like(wave, dtype=float)
-    
-    b = (wave >= 3600) & (wave < 5930)
-    r = (wave >= 5930) & (wave < 7470)
-    z = (wave >= 7470)
-    
-    R[b] = 2000 + (3200 - 2000) * (wave[b] - 3600) / (5930 - 3600)
-    R[r] = 3200 + (4100 - 3200) * (wave[r] - 5930) / (7720 - 5930)
-    R[z] = 4100 + (5100 - 4100) * (wave[z] - 7470) / (9800 - 7470)
-    
-    return R
-
-def build_desi_resolution_matrix(wave):
-    """Build sparse resolution matrix from DESI R(lambda) curve.
-    
-    Parameters
-    ----------
-    wave : 1D array
-        Wavelength grid in Angstroms.
-    
-    Returns
-    -------
-    scipy.sparse.csr_matrix
-        Shape (nwave, nwave). Multiply by flux to apply LSF.
-    """
-    c_kms = 299792.458
-    R = desi_resolution(wave)
-    
-    # R(lambda) -> sigma in km/s -> sigma in pixels
-    sigma_kms = c_kms / (2.355 * R)
-    dwave = np.gradient(wave)
-    dpix_kms = dwave / wave * c_kms
-    sigma_pix = sigma_kms / dpix_kms
-
-    n = len(wave)
-    mat = lil_matrix((n, n), dtype=np.float64)
-
-    for i in range(n):
-        # Kernel extends ±4 sigma
-        hw = int(4 * sigma_pix[i]) + 1
-        lo = max(0, i - hw)
-        hi = min(n, i + hw + 1)
-        
-        # Gaussian kernel centered on pixel i
-        j = np.arange(lo, hi)
-        kernel = np.exp(-0.5 * ((j - i) / sigma_pix[i])**2)
-        kernel /= kernel.sum()
-        
-        mat[i, lo:hi] = kernel
-
-    return csr_matrix(mat)
-
-R_MATRIX = build_desi_resolution_matrix(DESI_WAV)
 
 @lru_cache(maxsize=None)
 def _get_sps():
