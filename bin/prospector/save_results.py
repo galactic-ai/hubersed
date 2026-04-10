@@ -29,7 +29,8 @@ def save_galaxy_results(results, output_dir):
             # Key scalar params
             params = results.get(f"params_{fit}", {})
             for p in ["logmass", "logzsol", "dust2", 
-                      "dust_ratio", "dust_index", "sigma_smooth"]:
+                      "dust_ratio", "dust_index", "sigma_smooth",
+                      "gas_logz", "gas_logu", "eline_sigma"]:
                 if p in params and "q50" in params[p]:
                     summary[f"{fit}_{p}_q50"] = float(params[p]["q50"])
                     summary[f"{fit}_{p}_q16"] = float(params[p]["q16"])

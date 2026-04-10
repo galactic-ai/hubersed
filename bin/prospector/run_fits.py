@@ -46,12 +46,12 @@ def main():
             cont_nprod        = args.cont_nprod,
             full_nseeds       = args.full_nseeds,
             full_maxfev       = 30_000,
-            full_nburn        = 500,
+            full_nburn        = 1000,
             full_nprod        = args.full_nprod,
         )
         save_galaxy_results(results, args.output_dir)
         print(f"Task {args.task_id}: done. "
-              f"chi2_red_cont={results.get('chi2_red_cont', 'N/A'):.3f}")
+              f"chi2_red_cont={results.get('chi2_red_cont', -99):.3f}")
 
     except Exception as e:
         print(f"Task {args.task_id}: FAILED with error: {e}")

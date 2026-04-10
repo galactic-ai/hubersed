@@ -31,8 +31,8 @@ def run_emcee(lnp_fn, theta_map, ndim, model=None, nwalkers=64,
     for i in range(nwalkers):
         if model is not None:
             # Draw from prior, then pull toward MAP
-            # Half walkers near MAP, half spread across prior
-            if i < nwalkers // 2:
+            # 75% of walkers start near MAP, 25% start from prior to encourage exploration
+            if i < 3 * nwalkers // 4:
                 p0[i] = theta_map + 1e-4 * np.random.randn(ndim)
             else:
                 p0[i] = model.prior_transform(np.random.uniform(size=ndim))
