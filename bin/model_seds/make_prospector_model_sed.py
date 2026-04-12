@@ -33,7 +33,7 @@ os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
 
-DATA_PATH = PATHS['DATA']
+DATA_PATH = PATHS['DATA'] / "prospector_model"
 
 # load priors (hard coded for now)
 priors_npz = np.load(f'{DATA_PATH}/stochastic_priors_sample_500000.npz', allow_pickle=True)
@@ -54,6 +54,13 @@ def build_base_template():
     # merge templates
     base_template.update(dust_template)
     base_template.update(nebular_template)
+
+    # set emission lines to be separate from FSPS
+    base_template["nebemlineinspec"] = {
+        "N": 1, 
+        "isfree": False, 
+        "init": False,
+    }
 
     # Charlot & Fall dust model
     base_template["dust_type"]["init"] = 0
@@ -106,6 +113,13 @@ def build_base_template():
         "init": True,
     }
 
+    # emission line sigma
+    base_template["eline_sigma"] = {
+        "N": 1, "isfree": False,
+        "init": 100.0,
+        "units": "km/s",
+    }
+
     return base_template
 
 BASE_TEMPLATE = build_base_template()
@@ -146,6 +160,9 @@ def build_parset_for_index(i):
 
     # vel disp
     base_template["sigma_smooth"]["init"] = priors_dict["sigma_smooths"][i]
+
+    # gas vel disp
+    base_template["eline_sigma"]["init"] = priors_dict["sigma_gass"][i]
 
     # adjust stochastic parameters (same call as in your example)
     base_template = adjust_stochastic_params(base_template)

@@ -28,16 +28,16 @@ stellar_masses = sample_uniform(7, 12, size=SAMPLE_SIZE)
 # stellar metallicity -1.0 to 0.19 uniform
 stellar_metallicities = sample_uniform(-1.0, 0.19, size=SAMPLE_SIZE)
 
-# sigma_reg log uniform 0.1 to 10
-sigma_regs = sample_log_uniform(0.1, 10, size=SAMPLE_SIZE)
+# sigma_reg log uniform 0.1 to 5
+sigma_regs = sample_log_uniform(0.1, 5, size=SAMPLE_SIZE)
 
 # tau_eq uniform 0.01 to t_H
 t_h = universe_age_gyr(redshifts)
 tau_eqs = sample_uniform(0.01, t_h, size=SAMPLE_SIZE)
 tau_ins = sample_uniform(0.01, t_h, size=SAMPLE_SIZE)
 
-# sigma_dyn log uniform 0.001 to 0.1
-sigma_dyns = sample_log_uniform(0.001, 0.1, size=SAMPLE_SIZE)
+# sigma_dyn log uniform 0.001 to 0.5
+sigma_dyns = sample_log_uniform(0.001, 0.5, size=SAMPLE_SIZE)
 
 # tau_dyn clipped normal min 0.005 max 0.2 mu 0.01 sigma 0.02
 tau_dyns = sample_clipped_normal(0.01, 0.02, 0.005, 0.2, size=SAMPLE_SIZE)
@@ -60,8 +60,8 @@ gamma_es = sample_log_uniform(1e-4, 0.1, size=SAMPLE_SIZE)
 # q_pah uniform 0.5 to 7.0
 q_pahs = sample_uniform(0.5, 7.0, size=SAMPLE_SIZE)
 
-# sigma_gas uniform 30 to 250
-sigma_gass = sample_uniform(30, 250, size=SAMPLE_SIZE)
+# sigma_gas uniform 20 to 250
+sigma_gass = sample_uniform(20, 250, size=SAMPLE_SIZE)
 
 # gas phase metallicity -2 to 0.5
 gas_metallicities = sample_uniform(-2.0, 0.5, size=SAMPLE_SIZE)
@@ -69,8 +69,8 @@ gas_metallicities = sample_uniform(-2.0, 0.5, size=SAMPLE_SIZE)
 # gas ionization parameter -4 to -1
 gas_ionization_parameters = sample_uniform(-4.0, -1.0, size=SAMPLE_SIZE)
 
-# top hat min 50 max 500 (not used in Wan+24 but included for completeness)
-sigma_smooths = sample_uniform(50, 500, size=SAMPLE_SIZE)
+# top hat min 10 max 400 (not used in Wan+24 but included for completeness)
+sigma_smooths = sample_uniform(10, 400, size=SAMPLE_SIZE)
 
 # save to npz
 np.savez(
