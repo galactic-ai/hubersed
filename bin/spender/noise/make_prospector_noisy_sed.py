@@ -10,9 +10,11 @@ from hubersed.utils import nanstd
 from spender.data import desi
 from spender.instrument import get_skyline_mask
 
+from huggingface_hub import hffs
+
 import pickle
 
-DATA_PATH = PATHS['DATA']
+DATA_PATH = PATHS['DATA'] / "prospector_model"
 RESULTS_PATH = PATHS['RESULTS']
 
 # set random seeds
@@ -114,7 +116,7 @@ for i in range(0, total_samples, batch_size):
     ]
     save_path = DATA_PATH / f'DESIprospector1024_{idx}.pkl'
 
-    with open(save_path, 'wb') as f:
+    with hffs.open(f'buckets/nikhil0504/hubersed-data/prospector_model/DESIprospector1024_{idx}.pkl', 'wb') as f:
         pickle.dump(save_dict, f)
     
     idx += 1

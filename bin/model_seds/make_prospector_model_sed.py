@@ -4,6 +4,8 @@ from prospect.models.templates import TemplateLibrary, adjust_stochastic_params
 
 from tqdm.auto import tqdm
 
+from huggingface_hub import hffs
+
 from hubersed.prospector.utils import make_stochastic_agebins
 from hubersed.paths import PATHS
 from hubersed.prospector.lsf import build_desi_resolution_matrix
@@ -223,6 +225,10 @@ def main():
 
     print(f"Saved model SEDs to {output_file}")
 
+    hffs.put(
+        output_file,
+        f"buckets/nikhil0504/hubersed-data/prospector_model/{output_file.name}",
+    )
 
 if __name__ == "__main__":
     main()

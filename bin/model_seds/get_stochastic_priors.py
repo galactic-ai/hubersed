@@ -7,7 +7,12 @@ from hubersed.sampling import *
 
 from hubersed.paths import PATHS
 
-DATA_PATH = PATHS['DATA']
+from huggingface_hub import hffs
+
+DATA_PATH = PATHS['DATA'] / "prospector_model"
+
+if not DATA_PATH.exists():
+    DATA_PATH.mkdir(parents=True, exist_ok=True)
 
 # 500_000 samples
 SAMPLE_SIZE = int(sys.argv[1]) if len(sys.argv) > 1 else 500_000
@@ -88,4 +93,9 @@ np.savez(
     gas_metallicities=gas_metallicities,
     gas_ionization_parameters=gas_ionization_parameters,
     sigma_smooths=sigma_smooths,
+)
+
+hffs.put(
+    f'{DATA_PATH}/stochastic_priors_sample_{SAMPLE_SIZE}.npz',
+    f"buckets/nikhil0504/hubersed-data/prospector_model/stochastic_priors_sample_{SAMPLE_SIZE}.npz",
 )
