@@ -36,13 +36,14 @@ def process_loader(
         for i, batch in enumerate(loader):
             spec, w, z, target_id, norm, zerr = batch
 
-            spec = spec.to(device)
-            w = w.to(device)
-            z = z.to(device)
+            spec = spec.float().to(device)
+            w = w.float().to(device)
+            z = z.float().to(device)
 
             snr = None
             if compute_snr:
                 snr = spec * torch.sqrt(w)
+                all_snrs.append(snr.cpu())
 
             # Decide what to encode: prefer SNR if computed, otherwise raw spectrum
             to_encode = snr if (snr is not None) else spec
@@ -53,31 +54,36 @@ def process_loader(
             all_z.append(z.cpu())
 
             # store both representations so outputs are uniform
-            all_specs.append(spec.cpu())
-            all_snrs.append(
-                snr.cpu() if snr is not None else torch.zeros_like(spec.cpu())
-            )
+            all_specs.append(spec.cpu().half())
 
             if (i + 1) % 50 == 0:
-                print(f"Processed {(i + 1) * loader.batch_size} spectra")
+                print(f"Processed {(i + 1) * loader.batch_size} spectra", end="\r", flush=True)
 
     latents = torch.cat(all_latents, dim=0)
     A = torch.cat(all_A, dim=0)
     specs = torch.cat(all_specs, dim=0)
-    snrs = torch.cat(all_snrs, dim=0)
+    snrs = torch.cat(all_snrs, dim=0) if all_snrs else None
     zs = torch.cat(all_z, dim=0)
 
     return latents, A, specs, snrs, zs
 
+def save_output(out, path):
+    if path.startswith("hf://"):
+        from huggingface_hub import hffs
+        # hf://buckets/nikhil0504/... → buckets/nikhil0504/...
+        with hffs.open(path.replace("hf://", ""), 'wb') as f:
+            torch.save(out, f)
+    else:
+        torch.save(out, path)
 
 def main(args: argparse.Namespace) -> None:
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
     inst = desi.DESI()
 
     # Build wave_rest according to selected mode
-    model = load_model(args.checkpoint, inst, map_location=device, weights_only=False)
+    model = load_model(args.checkpoint, inst, map_location="cpu", weights_only=False, mmap=True).float().to(device)
     
     # data loader: allow tag override like original spec script
     tag = args.tag or "chunk1024"
@@ -94,7 +100,7 @@ def main(args: argparse.Namespace) -> None:
     compute_snr = args.compute_snr or (args.mode == "noise")
 
     latents, A, specs, snrs, zs = process_loader(
-        model.to(device), loader, device, compute_snr=compute_snr
+        model, loader, device, compute_snr=compute_snr
     )
 
     print("Latents shape:", latents.shape)
@@ -114,7 +120,7 @@ def main(args: argparse.Namespace) -> None:
         },
     }
 
-    torch.save(out, args.outfile)
+    save_output(out, args.outfile)
     print(f"Saved latents to {args.outfile}")
 
 
