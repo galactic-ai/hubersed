@@ -197,7 +197,8 @@ def worker_block(start, stop):
     ratios_block = np.empty((stop - start, 9), dtype=np.float32) # 9 logsfr_ratios for 10 age bins
 
     for j, i in enumerate(range(start, stop)):
-        parset = build_parset_for_index(i)
+        parset, ratios = build_parset_for_index(i)
+        ratios_block[j, :] = ratios.astype(np.float32)
         model = HyperSpecModel(configuration=parset)
         # sigma_smooth (velocity dispersion) applied here by Prospector
         spec, _, _ = model.predict(model.theta, obs, sps=sps)
