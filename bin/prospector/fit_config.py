@@ -131,12 +131,12 @@ def build_full_model(continuum_template, theta_best_cont, cont_model, redshift):
         )
 
     full_template["gas_logz"] = {
-        **full_template.get("gas_logz", {}),
+        "N": 1,
         "isfree": True, "init": 0.0,
         "prior": TopHat(mini=-2.0, maxi=0.5),
     }
     full_template["gas_logu"] = {
-        **full_template.get("gas_logu", {}),
+        "N": 1,
         "isfree": True, "init": -2.5,
         "prior": TopHat(mini=-4.0, maxi=-1.0),
     }
