@@ -2,6 +2,13 @@ from astropy.cosmology import Planck18 as cosmo
 import numpy as np
 import astropy.units as u
 
+__all__ = [
+    "universe_age_gyr",
+    "make_agebins_for_z",
+    "make_stochastic_agebins",
+    "load_lines",
+]
+
 # From Leja et al. 2019 (Non parameteric models paper)
 BASE_EDGES_GYR = np.array([0, 0.03, 0.10, 0.33, 1.10, 3.60, 11.70, 13.80])
 
@@ -84,7 +91,7 @@ def make_stochastic_agebins(z):
     age_bins[1] = [0.005, 0.01]
     log_t_edges = np.geomspace(0.01, 0.95*t_univ, 9)  # 9 edges to make 8 bins
     for i in range(2, 10):
-        age_bins[i] = [10**log_t_edges[i-2], 10**log_t_edges[i-1]]
+        age_bins[i] = [log_t_edges[i-2], log_t_edges[i-1]]
 
     # convert age bins to log(yr)
     age_bins_log = np.log10(age_bins * 1e9)
