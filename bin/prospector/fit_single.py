@@ -103,7 +103,7 @@ def fit_galaxy(outlier_idx, parameter_file,
     import parameter_file as P
 
     # ── Load data ────────────────────────────────────────────────────────────
-    spec, unc, redshift, _, gal_id = P.get_outlier_info(outlier_idx)
+    spec, unc, redshift, _, gal_id = P.get_outlier_info(outlier_idx, streaming=False)
     wave_A = P.WAVE_OBS
 
     spec_maggies  = P.flambda_to_maggies(wave_A, spec)
@@ -153,70 +153,70 @@ def fit_galaxy(outlier_idx, parameter_file,
         theta_map_cont = best_res.x
 
         # emcee
-        def lnp_cont(theta):
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", RuntimeWarning)
-                try:
-                    lp = lnprobfn(theta, model=model, obs=obs,
-                                  sps=sps, nested=False)
-                    return lp if np.isfinite(lp) else -np.inf
-                except Exception:
-                    return -np.inf
+        # def lnp_cont(theta):
+        #     with warnings.catch_warnings():
+        #         warnings.simplefilter("ignore", RuntimeWarning)
+        #         try:
+        #             lp = lnprobfn(theta, model=model, obs=obs,
+        #                           sps=sps, nested=False)
+        #             return lp if np.isfinite(lp) else -np.inf
+        #         except Exception:
+        #             return -np.inf
 
-        print("Running MCMC for continuum fit...")
-        sampler_cont = run_emcee(lnp_cont, theta_map_cont,
-                                 ndim=len(theta_map_cont),
-                                 nburn=cont_nburn, nprod=cont_nprod,
-                                 model=model)
+        # print("Running MCMC for continuum fit...")
+        # sampler_cont = run_emcee(lnp_cont, theta_map_cont,
+        #                          ndim=len(theta_map_cont),
+        #                          nburn=cont_nburn, nprod=cont_nprod,
+        #                          model=model)
 
-        flat_samples_cont, flat_lp_cont = extract_chain(sampler_cont)
-        theta_best_cont = flat_samples_cont[np.argmax(flat_lp_cont)]
+        # flat_samples_cont, flat_lp_cont = extract_chain(sampler_cont)
+        # theta_best_cont = flat_samples_cont[np.argmax(flat_lp_cont)]
 
-        # Fit quality
-        spec_cont, _, _ = model.predict(theta_best_cont, obs=obs, sps=sps)
-        resid_cont = (obs['spectrum'][obs['mask']] - spec_cont[obs['mask']]) \
-                     / obs['unc'][obs['mask']]
-        chi2_cont  = float(np.nansum(resid_cont**2))
-        ndof_cont  = int(obs['mask'].sum()) - len(theta_best_cont)
+        # # Fit quality
+        # spec_cont, _, _ = model.predict(theta_best_cont, obs=obs, sps=sps)
+        # resid_cont = (obs['spectrum'][obs['mask']] - spec_cont[obs['mask']]) \
+        #              / obs['unc'][obs['mask']]
+        # chi2_cont  = float(np.nansum(resid_cont**2))
+        # ndof_cont  = int(obs['mask'].sum()) - len(theta_best_cont)
 
-        # SFH
-        sfh_cont = compute_sfh(flat_samples_cont, model)
+        # # SFH
+        # sfh_cont = compute_sfh(flat_samples_cont, model)
 
-        # Parameter medians
-        params_cont = {}
-        for name, idx in model.theta_index.items():
-            vals = flat_samples_cont[:, idx]
-            if vals.ndim == 1:
-                q16, q50, q84 = np.percentile(vals, [16, 50, 84])
-                params_cont[name] = {"q16": q16, "q50": q50, "q84": q84}
-            else:
-                params_cont[name] = {
-                    "q16": np.percentile(vals, 16, axis=0),
-                    "q50": np.percentile(vals, 50, axis=0),
-                    "q84": np.percentile(vals, 84, axis=0),
-                }
+        # # Parameter medians
+        # params_cont = {}
+        # for name, idx in model.theta_index.items():
+        #     vals = flat_samples_cont[:, idx]
+        #     if vals.ndim == 1:
+        #         q16, q50, q84 = np.percentile(vals, [16, 50, 84])
+        #         params_cont[name] = {"q16": q16, "q50": q50, "q84": q84}
+        #     else:
+        #         params_cont[name] = {
+        #             "q16": np.percentile(vals, 16, axis=0),
+        #             "q50": np.percentile(vals, 50, axis=0),
+        #             "q84": np.percentile(vals, 84, axis=0),
+        #         }
 
         results.update({
             "continuum_status":    "success",
             "theta_map_cont":      theta_map_cont,
-            "theta_best_cont":     theta_best_cont,
-            "flat_samples_cont":   flat_samples_cont,
-            "flat_lp_cont":        flat_lp_cont,
-            "params_cont":         params_cont,
-            "chi2_cont":           chi2_cont,
-            "chi2_red_cont":       chi2_cont / ndof_cont,
-            "ndof_cont":           ndof_cont,
-            "sfh_cont":            sfh_cont,
-            "spec_cont":           spec_cont,
-            "acceptance_cont":     float(np.mean(sampler_cont.acceptance_fraction)),
+            # "theta_best_cont":     theta_best_cont,
+            # "flat_samples_cont":   flat_samples_cont,
+            # "flat_lp_cont":        flat_lp_cont,
+            # "params_cont":         params_cont,
+            # "chi2_cont":           chi2_cont,
+            # "chi2_red_cont":       chi2_cont / ndof_cont,
+            # "ndof_cont":           ndof_cont,
+            # "sfh_cont":            sfh_cont,
+            # "spec_cont":           spec_cont,
+            # "acceptance_cont":     float(np.mean(sampler_cont.acceptance_fraction)),
         })
 
     # ── Full nebular fit ─────────────────────────────────────────────────────
     if run_full and results.get("continuum_status") == "success":
         print(f"Running full fit for galaxy {gal_id}...")
-        obs_full   = P.build_obs(spec=spec_maggies, unc=sigma_maggies, mask=mask_em)
+        obs_full   = P.build_obs(spec=spec_maggies, unc=sigma_maggies, mask=mask)
         full_model, full_template = build_full_model(
-            template, theta_best_cont, model, redshift
+            template, theta_map_cont, model, redshift
         )
         theta_init_full = full_model.theta.copy()
 

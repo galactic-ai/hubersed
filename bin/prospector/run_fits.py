@@ -25,7 +25,7 @@ def main():
     outlier_idx = int(outlier_indices[args.task_id])
 
     # Get galaxy ID for checking if done
-    _, _, _, _, gal_id = P.get_outlier_info(args.task_id)
+    _, _, _, _, gal_id = P.get_outlier_info(args.task_id, streaming=False)
 
     if is_done(outlier_idx, gal_id, args.output_dir):
         print(f"Task {args.task_id} (outlier {outlier_idx}, id={gal_id}): "
