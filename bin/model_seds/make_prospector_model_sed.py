@@ -167,7 +167,11 @@ def build_parset_for_index(i):
     # adjust stochastic parameters (same call as in your example)
     base_template = adjust_stochastic_params(base_template)
 
-    return base_template
+    # sample the SFH from the prior
+    ratios = base_template['logsfr_ratios']['prior'].sample()
+    base_template['logsfr_ratios']['init'] = ratios
+
+    return base_template, ratios
 
 @lru_cache(maxsize=None)
 def _get_sps():
@@ -190,6 +194,7 @@ def worker_block(start, stop):
     obs = {"wavelength": DESI_WAV, "filters": None}
 
     block = np.empty((stop - start, n_wave), dtype=np.float32)
+    ratios_block = np.empty((stop - start, 9), dtype=np.float32) # 9 logsfr_ratios for 10 age bins
 
     for j, i in enumerate(range(start, stop)):
         parset = build_parset_for_index(i)
@@ -200,7 +205,7 @@ def worker_block(start, stop):
         spec = R_mat.dot(spec)
         block[j, :] = spec.astype(np.float32)
 
-    return start, stop, block
+    return start, stop, block, ratios_block
 
 # store in hdf5
 
@@ -215,6 +220,13 @@ def main():
         flux_dset = hf.create_dataset(
             "fluxes",
             shape=(n_spectra, n_wave),
+            dtype=np.float32,
+            compression="gzip",
+        )
+
+        ratios_dset = hf.create_dataset(
+            "priors/logsfr_ratios",
+            shape=(n_spectra, 9),  # 9 logsfr_ratios for 10 age bins
             dtype=np.float32,
             compression="gzip",
         )
@@ -236,8 +248,9 @@ def main():
                        for (start, stop) in blocks}
 
             for fut in as_completed(futures):
-                start, stop, block = fut.result()
+                start, stop, block, ratios_block = fut.result()
                 flux_dset[start:stop, :] = block
+                ratios_dset[start:stop, :] = ratios_block
                 pbar.update(stop - start)
 
     print(f"Saved model SEDs to {output_file}")

@@ -82,7 +82,7 @@ def make_stochastic_agebins(z):
 
     age_bins[0] = [0.001, 0.005]
     age_bins[1] = [0.005, 0.01]
-    log_t_edges = np.log10(np.linspace(0.01, 0.95*t_univ, 9))
+    log_t_edges = np.geomspace(0.01, 0.95*t_univ, 9)  # 9 edges to make 8 bins
     for i in range(2, 10):
         age_bins[i] = [10**log_t_edges[i-2], 10**log_t_edges[i-1]]
 
