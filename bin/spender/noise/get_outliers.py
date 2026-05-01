@@ -17,34 +17,39 @@ print(f"Using device: {device}")
 
 inst = desi.DESI().float().to(device)
 
-# Build wave_rest according to selected mode
-model = load_model(str(DATA_PATH / 'spender_asc_run_6latent_zmax.pt'), inst, map_location='cpu', weights_only=False).float()
-model = model.to(device)
-model.eval()
+desi_latent_path = DATA_PATH / 'spender_spec_6latent'
+if not desi_latent_path.exists():
+    # Build wave_rest according to selected mode
+    model = load_model(str(DATA_PATH / 'spender_asc_run_6latent_zmax.pt'), inst, map_location='cpu', weights_only=False).float()
+    model = model.to(device)
+    model.eval()
 
-loader = inst.get_data_loader(
-        str(DATA_PATH),
-        tag='chunk1024',
-        which="all",
-        batch_size=1024,
-        shuffle=False,
-        shuffle_instance=False,
-    )
+    loader = inst.get_data_loader(
+            str(DATA_PATH),
+            tag='chunk1024',
+            which="all",
+            batch_size=1024,
+            shuffle=False,
+            shuffle_instance=False,
+        )
 
-amount = len(loader.dataset)
-print(amount)
+    amount = len(loader.dataset)
+    print(amount)
 
-desi_latents = torch.empty((amount*1024, 6), dtype=torch.float32, device=device)
+    desi_latents = torch.empty((amount*1024, 6), dtype=torch.float32, device=device)
 
-prospector_spec = torch.load(DATA_PATH / 'prospector_noise_spec_6latent', map_location='cpu')
+    with torch.no_grad():
+        for i, batch in enumerate(loader):
+            s, *_ = batch
+            s = s.float().to(device)
+            l = model.encode(s)
+            desi_latents[i*1024:(i+1)*1024] = l
+else:
+    desi_latents = torch.load(desi_latent_path, map_location=device)['latents'].float().to(device)
+
+prospector_spec = torch.load(DATA_PATH / 'prospector_noise_spec_6latent', map_location='cpu', mmap=True)
 p_l    = prospector_spec['latents'].to(device='cpu', dtype=torch.float32)
 
-with torch.no_grad():
-    for i, batch in enumerate(loader):
-        s, *_ = batch
-        s = s.float().to(device)
-        l = model.encode(s)
-        desi_latents[i*1024:(i+1)*1024] = l
 
 # Isolation Forest for outlier detection
 scaler = StandardScaler()

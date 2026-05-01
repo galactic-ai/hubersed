@@ -90,7 +90,7 @@ def get_outlier_info(idx, streaming=True):
 
     chunk_size = 1024
     chunk_indices = OUTLIERS_IDX // chunk_size
-    chunk_files = [DATA_PATH / f"DESIchunk1024_{i}.pkl" for i in chunk_indices]
+    chunk_files = [DATA_PATH / 'desi_spectra' / f"DESIchunk1024_{i}.pkl" for i in chunk_indices]
     chunk_indices_in_chunk = OUTLIERS_IDX % chunk_size
 
     chunk_file = chunk_files[idx]
@@ -100,7 +100,7 @@ def get_outlier_info(idx, streaming=True):
         with open(chunk_file, "rb") as f:
             s, w, z, id, norm, *_ = pickle.load(f)
     else:
-        with hffs.open(f"buckets/nikhil0504/hubersed-data/{chunk_file.name}", "rb") as f:
+        with hffs.open(f"buckets/nikhil0504/hubersed-data/desi_spectra/{chunk_file.name}", "rb") as f:
             s, w, z, id, norm, *_ = pickle.load(f)
     
     # correct for normalization
