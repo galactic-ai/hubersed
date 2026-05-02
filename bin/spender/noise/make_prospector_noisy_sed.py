@@ -10,12 +10,17 @@ from hubersed.utils import nanstd
 from spender.data import desi
 from spender.instrument import get_skyline_mask
 
-from huggingface_hub import hffs
+from huggingface_hub import batch_bucket_files
 
 import pickle
 
-DATA_PATH = PATHS['DATA'] / "prospector_model"
+from pathlib import Path
+
+DATA_PATH = PATHS['DATA']
 RESULTS_PATH = PATHS['RESULTS']
+
+LOCAL_TMP =  Path(f'/tmp/prospector_noisy_mocks/')
+UPLOAD_EVERY = 50
 
 # set random seeds
 torch.manual_seed(42)
@@ -29,13 +34,16 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 flow_file = str(DATA_PATH / 'desi_noise_spender_10latent_flow.pt')
 spender_file = str(DATA_PATH / 'desi_noise_spender_10latent.pt')
-prospector_sed_file = DATA_PATH / 'prospector_stochastic_model_seds_500000.h5'
+prospector_sed_file = DATA_PATH /  "prospector_model" / 'prospector_stochastic_model_seds_500000.h5'
 
 flow_latent = 10
 instrument = desi.DESI()
 
-wave_rest = instrument._wave_obs
-sky_mask = get_skyline_mask(wave_rest)
+wave_obs = instrument._wave_obs
+sky_mask = get_skyline_mask(wave_obs)
+
+# create tmp directory if it doesn't exist
+LOCAL_TMP.mkdir(parents=True, exist_ok=True)
 
 # loading flow model and spender model for noise
 NDE_theta, model_spender = load_models(flow_file=flow_file, 
@@ -67,10 +75,13 @@ for i in range(0, total_samples, batch_size):
     flambda_norm, norms, good_mask = normalize_spectra(flambda, redshifts_batch, wavelength, inplace=False)
     flambda_norm = flambda_norm[:, :-1]  # remove last point to match instrument wave grid
 
-    print(f'Processing batch {i} - {i+batch_size}, normalized {good_mask.sum().item()} / {good_mask.shape[0]} spectra')
+
+    print(f'Processing batch {i} - {i+batch_size}, '
+      f'normalized {good_mask.sum().item()} / {good_mask.shape[0]} spectra, ')
 
     with torch.no_grad():
-        samples = NDE_theta.sample(1, context=norms.unsqueeze(1).float())# (n_sims, n_samples, n_latent)
+        # (n_sims, n_samples, n_latent)
+        samples = NDE_theta.sample(1, context=norms.unsqueeze(1).float())
 
         # make it (n_samples, n_sims, n_latent)
         samples = samples.permute(1, 0, 2).float()
@@ -82,7 +93,7 @@ for i in range(0, total_samples, batch_size):
         snr_sample_maf = snr_sample_maf.squeeze(0) # (n_samples, n_wave)
 
 
-    snr_batch = snr_sample_maf.clone() # (1024, 7780)
+    snr_batch = snr_sample_maf.clone() # (1024, 7780), last batch could be smaller
     snr_batch[:, sky_mask[:-1]] = float('nan')
     snr_batch[snr_batch <= 0] = float('nan')
 
@@ -90,19 +101,20 @@ for i in range(0, total_samples, batch_size):
     median_snr = torch.nanmedian(snr_batch, dim=1).values     # (1024,)
     std_snr    = nanstd(snr_batch, dim=1)                     # (1024,)
 
-    ivar_batch = compute_ivar(flambda_norm, snr_batch)
-    ivar_batch = torch.nan_to_num(ivar_batch, nan=0.0, posinf=0.0, neginf=0.0)
-    
-    sigma_batch = flambda_norm / snr_batch
+    sigma_batch = (flambda_norm / snr_batch).abs()
     sigma_batch = torch.nan_to_num(sigma_batch, nan=0.0, posinf=0.0, neginf=0.0)
 
-    # clamp sigma batch to be 5 * std of the sigma
-    sigma_batch = torch.clamp(sigma_batch, max=5.0 * sigma_batch.std(dim=1, keepdim=True))
+    # clamp sigma batch to be 99.5 percentile 
+    sigma_cap = torch.nanquantile(sigma_batch, 0.995, dim=1, keepdim=True)
+    sigma_batch = torch.minimum(sigma_batch, sigma_cap)
 
-    noise = torch.normal(mean=0.0, std=sigma_batch, generator=generator)
+    ivar_batch = 1.0 / (sigma_batch ** 2)
+    ivar_batch = torch.nan_to_num(ivar_batch, nan=0.0, posinf=0.0, neginf=0.0)
+    ivar_batch[sigma_batch == 0] = 0.0
     
+    noise = torch.normal(mean=0.0, std=sigma_batch, generator=generator)
     f_noisy = flambda_norm + noise
-
+    
     # save to a pickle file (DESIprospector1024_idx.pkl)
     # such that when I open I can upack it as
     # spec, w, z, target_id,  norm, zerr
@@ -111,12 +123,23 @@ for i in range(0, total_samples, batch_size):
                  ivar_batch,
                  redshifts_batch,
                  target_id_batch,
-                norms,
+                 norms,
                 redshifts_err_batch,
     ]
-    save_path = DATA_PATH / f'DESIprospector1024_{idx}.pkl'
+    local_path = LOCAL_TMP / f'DESIprospector1024_{idx}.pkl'
 
-    with hffs.open(f'buckets/nikhil0504/hubersed-data/prospector_model/DESIprospector1024_{idx}.pkl', 'wb') as f:
+    with open(local_path, 'wb') as f:
         pickle.dump(save_dict, f)
-    
+
     idx += 1
+
+    if idx % UPLOAD_EVERY == 0:
+        # upload to huggingface hub
+        files_to_upload = sorted(LOCAL_TMP.glob('DESIprospector1024_*.pkl'))
+        batch_bucket_files(
+            "nikhil0504/hubersed-data",
+            add=[(str(p), f"prospector_model/{p.name}") for p in files_to_upload],
+        )
+
+        for p in files_to_upload:
+            p.unlink()
