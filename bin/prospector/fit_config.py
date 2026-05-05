@@ -1,14 +1,15 @@
 import copy
 
 import numpy as np
-from astropy.cosmology import Planck18 as cosmo
+
 from prospect.models.priors import (
     TopHat, ClippedNormal, LogUniform, Uniform
 )
 from prospect.models.transforms import dustratio_to_dust1
 from prospect.models.templates import TemplateLibrary, adjust_stochastic_params
 from prospect.models.sedmodel import HyperSpecModel
-from hubersed.prospector.utils import make_stochastic_agebins
+
+from hubersed.prospector.utils import make_stochastic_agebins, universe_age_gyr
 
 # ── Default initial values ───────────────────────────────────────────────────
 DEFAULT_SET_VALS = {
@@ -24,7 +25,7 @@ DEFAULT_SET_VALS = {
 }
 
 def get_priors(redshift):
-    tau_max = cosmo.age(redshift).value
+    tau_max = universe_age_gyr(redshift)
     return {
         "logmass":   Uniform(mini=7.0, maxi=12.0),
         "logzsol":   Uniform(mini=-1.0, maxi=0.19),
@@ -40,7 +41,7 @@ def get_priors(redshift):
 
 def build_continuum_model(redshift, logmass_init=None):
     """Build the continuum-only HyperSpecModel."""
-    tau_in = cosmo.age(redshift).value
+    tau_in = universe_age_gyr(redshift)
     set_vals = DEFAULT_SET_VALS.copy()
     set_vals["tau_in"] = tau_in
     if logmass_init is not None:
@@ -104,7 +105,6 @@ def build_continuum_model(redshift, logmass_init=None):
 
 def build_full_model(continuum_template, theta_best_cont, cont_model, redshift):
     """Build the full nebular HyperSpecModel seeded from continuum MAP."""
-    import copy
     nebular_template = copy.deepcopy(TemplateLibrary["nebular"])
     full_template = copy.deepcopy(continuum_template)
     full_template.update(nebular_template)
