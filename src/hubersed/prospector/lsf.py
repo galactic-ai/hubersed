@@ -14,7 +14,7 @@ RESULTS_PATH = PATHS["RESULTS"]
 # ──────────────────────────────────────────────
 C_KMS = 299792.458
 DESI_BASE_URL = "https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/"
-DESI_WAV = np.linspace(3600.0, 9824.0, 7781)
+DESI_WAV = np.linspace(3600.0, 9824.0, 7781, dtype=np.float64)
 ZPIX_FILE = DESI_BASE_URL + 'zcatalog/v1/zpix-sv3-bright.fits'
 
 # ──────────────────────────────────────────────

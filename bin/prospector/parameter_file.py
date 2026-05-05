@@ -6,6 +6,8 @@ import torch
 
 from hubersed.paths import PATHS
 from hubersed.prospector.utils import load_lines
+from hubersed.prospector.lsf import DESI_WAV
+
 from huggingface_hub import hffs
 
 if not hasattr(np, "infty"):
@@ -14,7 +16,7 @@ if not hasattr(np, "infty"):
 DATA_PATH = PATHS['DATA']
 RESULTS_PATH = PATHS['RESULTS']
 
-WAVE_OBS = np.linspace(3600.0, 9824.0, 7781, dtype=np.float32)
+WAVE_OBS = DESI_WAV.astype(np.float32)
 OUTLIERS_IDX = torch.load(RESULTS_PATH / "desi_outliers.pt", weights_only=False)["outlier_indices"]
 
 EM_LINES_A = load_lines()['emission']['wave_vac']

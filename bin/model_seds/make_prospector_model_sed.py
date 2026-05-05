@@ -8,7 +8,7 @@ from huggingface_hub import hffs
 
 from hubersed.prospector.utils import make_stochastic_agebins
 from hubersed.paths import PATHS
-from hubersed.prospector.lsf import build_desi_resolution_matrix
+from hubersed.prospector.lsf import build_desi_resolution_matrix, DESI_WAV
 
 import numpy as np
 import h5py
@@ -38,8 +38,6 @@ DATA_PATH = PATHS['DATA'] / "prospector_model"
 # load priors (hard coded for now)
 priors_npz = np.load(f'{DATA_PATH}/stochastic_priors_sample_500000.npz', allow_pickle=True)
 priors_dict = {k: priors_npz[k] for k in priors_npz.files}
-
-DESI_WAV = np.linspace(3600.0, 9824.0, 7781, dtype=np.float64)
 
 n_spectra = len(priors_dict['redshifts'])
 n_wave = DESI_WAV.size
