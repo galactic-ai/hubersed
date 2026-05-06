@@ -1,5 +1,5 @@
 import pickle
-from prospect.utils.obsutils import fix_obs
+from prospect.observation import Spectrum
 from prospect.sources import FastStepBasis
 import numpy as np
 import torch
@@ -22,7 +22,7 @@ OUTLIERS_IDX = torch.load(RESULTS_PATH / "desi_outliers.pt", weights_only=False)
 EM_LINES_A = load_lines()['emission']['wave_vac']
 
 # build obs
-def build_obs(spec: np.ndarray, unc: np.ndarray, mask: np.ndarray) -> dict:
+def build_obs(spec: np.ndarray, unc: np.ndarray, mask: np.ndarray) -> list:
     """
     Build the observation dictionary for the fit. 
     This should include at least the spectrum and uncertainty, for DESI data.
@@ -39,18 +39,14 @@ def build_obs(spec: np.ndarray, unc: np.ndarray, mask: np.ndarray) -> dict:
         in the likelihood calculation. This can be used to mask out bad pixels, sky lines, etc.
     """
 
-    obs_dict  = {
-        "wavelength": WAVE_OBS,
-        "spectrum": spec,
-        "unc": unc,
-        "mask": mask,
-        "filters": None,
-        "maggies": None,
-        "maggies_unc": None,
-        "phot_mask" : None,
-    }
-    obs_dict = fix_obs(obs_dict)
-    return obs_dict
+    spec_obs = Spectrum(
+        wavelength=WAVE_OBS,
+        flux=spec,
+        uncertainty=unc,
+        mask=mask
+    )
+    spec_obs.rectify()
+    return [spec_obs]
 
 # build sps
 def build_sps():

@@ -120,7 +120,7 @@ def fit_galaxy(outlier_idx,
     mask_em   = P.mask_spectral_lines(wave_A, mask, redshift, halfwidth_kms=1500.0, line_waves=fsps_optical)
 
     print(f"Fitting galaxy {gal_id} (outlier index {outlier_idx}) at z={redshift:.3f}")
-    obs = P.build_obs(spec=spec_maggies, unc=sigma_maggies, mask=mask_em)
+    observations = P.build_obs(spec=spec_maggies, unc=sigma_maggies, mask=mask_em)
 
     results = {
         "outlier_idx": outlier_idx,
@@ -138,7 +138,7 @@ def fit_galaxy(outlier_idx,
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
                 try:
-                    lp = lnprobfn(theta, model=model, obs=obs,
+                    lp = lnprobfn(theta, model=model, observations=observations,
                                   sps=sps, nested=False)
                     return -lp if np.isfinite(lp) else 1e18
                 except Exception:
@@ -172,7 +172,7 @@ def fit_galaxy(outlier_idx,
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
                 try:
-                    lp = lnprobfn(theta, model=full_model, obs=obs_full,
+                    lp = lnprobfn(theta, model=full_model, observations=obs_full,
                                   sps=sps, nested=False)
                     return -lp if np.isfinite(lp) else 1e18
                 except Exception:
@@ -208,11 +208,11 @@ def fit_galaxy(outlier_idx,
 
         spec_full, _, _ = full_model.predict(theta_best_full, 
                                               obs=obs_full, sps=sps)
-        resid_full = (obs_full['spectrum'][obs_full['mask']] \
-                      - spec_full[obs_full['mask']]) \
-                     / obs_full['unc'][obs_full['mask']]
+        resid_full = (observations[0].flux[observations[0].mask] \
+                      - spec_full[observations[0].mask]) \
+                     / observations[0].uncertainty[observations[0].mask]
         chi2_full  = float(np.nansum(resid_full**2))
-        ndof_full  = int(obs_full['mask'].sum()) - len(theta_best_full)
+        ndof_full  = int(observations[0].mask.sum()) - len(theta_best_full)
         print(f"Full fit chi2_red = {chi2_full / ndof_full:.3f}")
 
         params_full = {}
@@ -237,7 +237,7 @@ def fit_galaxy(outlier_idx,
         for line_name, wave_rest in ism_lines.items():
             wave_obs = wave_rest * (1 + redshift)
             region = (wave_A >= wave_obs - 15) & (wave_A <= wave_obs + 15) \
-                     & obs_full['mask']
+                     & observations[0].mask
             if region.sum() >= 3:
                 ism_residuals[line_name] = float(np.median(
                     (spec_maggies[region] - spec_full[region]) / spec_full[region]
