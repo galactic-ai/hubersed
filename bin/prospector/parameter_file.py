@@ -81,10 +81,14 @@ def get_outlier_info(idx, streaming=True):
         The original ID of the spectrum in the DESI dataset, for reference.
     """
 
+    # recomputes all the chunk files
+    # TODO: optimise it to only compute for the file we care about
+    
     chunk_size = 1024
     chunk_indices = OUTLIERS_IDX // chunk_size
     chunk_files = [DATA_PATH / 'desi_spectra' / f"DESIchunk1024_{i}.pkl" for i in chunk_indices]
     chunk_indices_in_chunk = OUTLIERS_IDX % chunk_size
+
 
     chunk_file = chunk_files[idx]
     idx_in_chunk = chunk_indices_in_chunk[idx]    

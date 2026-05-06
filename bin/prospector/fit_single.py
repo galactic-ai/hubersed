@@ -95,10 +95,9 @@ def compute_sfh(flat_samples, model, n_thin=10):
         "sfr_84":  np.percentile(all_sfrs, 84, axis=0),
     }
 
-def fit_galaxy(outlier_idx, parameter_file, 
+def fit_galaxy(outlier_idx,
                run_continuum=True, run_full=True,
                cont_nseeds=3, cont_maxfev=30_000,
-               cont_nburn=300, cont_nprod=1000,
                full_nseeds=3, full_maxfev=30_000,
                full_nburn=500, full_nprod=3000):
     """
