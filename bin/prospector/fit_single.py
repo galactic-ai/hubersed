@@ -162,7 +162,7 @@ def fit_galaxy(outlier_idx,
     # ── Full nebular fit ─────────────────────────────────────────────────────
     if run_full and results.get("continuum_status") == "success":
         print(f"Running full fit for galaxy {gal_id}...")
-        obs_full   = P.build_obs(spec=spec_maggies, unc=sigma_maggies, mask=mask)
+        obs_full   = P.build_obs(spec=spec_maggies, unc=sigma_maggies, mask=mask_em)
         full_model, full_template = build_full_model(
             template, theta_map_cont, model, redshift
         )
