@@ -22,6 +22,7 @@ DEFAULT_SET_VALS = {
     "dust_index": 0.0,
     "dust2":     0.1,
     "dust_ratio": 1.0,
+    "tau_in":    0.1,
 }
 
 def get_priors(redshift):
@@ -119,6 +120,7 @@ def build_full_model(continuum_template, theta_best_cont, cont_model, redshift):
         "logsfr_ratios", "gas_logz", "gas_logu",
         "dust2", "dust_ratio", "dust_index",
         "sigma_reg", "tau_eq", "sigma_dyn", "tau_dyn",
+        "tau_in",
     ]
     for key in full_template:
         full_template[key]["isfree"] = key in vary_params
