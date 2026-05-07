@@ -1,12 +1,12 @@
 import pickle
 from prospect.observation import Spectrum
-from prospect.sources import FastStepBasis
+from prospect.sources import FastStepBasis, SSPBasis
 import numpy as np
 import torch
 
 from hubersed.paths import PATHS
 from hubersed.prospector.utils import load_lines
-from hubersed.prospector.lsf import DESI_WAV
+from hubersed.prospector.lsf import DESI_WAV, desi_resolution, C_KMS
 
 from huggingface_hub import hffs
 
@@ -38,19 +38,24 @@ def build_obs(spec: np.ndarray, unc: np.ndarray, mask: np.ndarray) -> list:
         A boolean array indicating which pixels to use in the fit. False elements will be ignored
         in the likelihood calculation. This can be used to mask out bad pixels, sky lines, etc.
     """
+    # R = desi_resolution(WAVE_OBS)
+    # sigma_kms =- C_KMS / (2.355 * R)
 
     spec_obs = Spectrum(
         wavelength=WAVE_OBS,
         flux=spec,
         uncertainty=unc,
-        mask=mask
+        mask=mask,
+        # resolution=sigma_kms,
     )
     spec_obs.rectify()
     return [spec_obs]
 
 # build sps
 def build_sps():
-    return FastStepBasis()
+    sps = FastStepBasis()
+    SSPBasis.spectral_resolution = property(lambda self: np.zeros_like(self.ssp.wavelengths))
+    return sps
 
 
 # DESI Spectra
