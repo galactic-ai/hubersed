@@ -191,7 +191,7 @@ def fit_galaxy(outlier_idx,
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
                 try:
-                    lp = lnprobfn(theta, model=full_model, obs=obs_full,
+                    lp = lnprobfn(theta, model=full_model, observations=obs_full,
                                   sps=sps, nested=False)
                     return lp if np.isfinite(lp) else -np.inf
                 except Exception:
@@ -206,13 +206,14 @@ def fit_galaxy(outlier_idx,
         flat_samples_full, flat_lp_full = extract_chain(sampler_full)
         theta_best_full = flat_samples_full[np.argmax(flat_lp_full)]
 
-        spec_full, _, _ = full_model.predict(theta_best_full, 
-                                              obs=obs_full, sps=sps)
-        resid_full = (observations[0].flux[observations[0].mask] \
-                      - spec_full[observations[0].mask]) \
-                     / observations[0].uncertainty[observations[0].mask]
+        predictions_full, _, = full_model.predict(theta_best_full, 
+                                              observations=obs_full, sps=sps)
+        spec_full = predictions_full[0]
+        resid_full = (obs_full[0].flux[obs_full[0].mask] \
+                      - spec_full[obs_full[0].mask]) \
+                     / obs_full[0].uncertainty[obs_full[0].mask]
         chi2_full  = float(np.nansum(resid_full**2))
-        ndof_full  = int(observations[0].mask.sum()) - len(theta_best_full)
+        ndof_full  = int(obs_full[0].mask.sum()) - len(theta_best_full)
         print(f"Full fit chi2_red = {chi2_full / ndof_full:.3f}")
 
         params_full = {}
@@ -237,7 +238,7 @@ def fit_galaxy(outlier_idx,
         for line_name, wave_rest in ism_lines.items():
             wave_obs = wave_rest * (1 + redshift)
             region = (wave_A >= wave_obs - 15) & (wave_A <= wave_obs + 15) \
-                     & observations[0].mask
+                     & obs_full[0].mask
             if region.sum() >= 3:
                 ism_residuals[line_name] = float(np.median(
                     (spec_maggies[region] - spec_full[region]) / spec_full[region]
