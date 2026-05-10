@@ -162,7 +162,7 @@ def build_full_cue_model(continuum_template, theta_best_cont, cont_model, redshi
 
     # vary same set as before plus her gas params
     vary_params = [
-        "logsfr_ratios", "gas_logu", "gas_logz", "gas_logn", "gas_logno",
+        "logsfr_ratios", "gas_logu", "gas_logz", "gas_lognH", "gas_logno",
         "gas_logco", "gas_logqion",
         "dust2", "dust_ratio", "dust_index",
         "sigma_reg", "tau_eq", "sigma_dyn", "tau_dyn", "tau_in",

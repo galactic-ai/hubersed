@@ -5,7 +5,7 @@ from scipy.optimize import minimize
 from prospect.fitting import lnprobfn
 from prospect.models.transforms import logsfr_ratios_to_sfrs
 
-from fit_config import build_continuum_model, build_full_model
+from fit_config import build_continuum_model, build_full_cue_model, build_full_model
 
 from hubersed.conversion import flambda_to_maggies, ivar_flambda_to_ivar_maggies
 
@@ -56,10 +56,10 @@ def run_emcee(lnp_fn, theta_map, ndim, model=None, nwalkers=64,
             p0[i] = theta_map
 
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnp_fn)
-    p0, _, _ = sampler.run_mcmc(p0, nburn, progress=False,
+    p0, _, _ = sampler.run_mcmc(p0, nburn, progress=True,
                                  skip_initial_state_check=True)
     sampler.reset()
-    sampler.run_mcmc(p0, nprod, progress=False,
+    sampler.run_mcmc(p0, nprod, progress=True,
                      skip_initial_state_check=True)
     return sampler
 
@@ -98,7 +98,7 @@ def compute_sfh(flat_samples, model, n_thin=10):
 def fit_galaxy(outlier_idx,
                run_continuum=True, run_full=True,
                cont_nseeds=3, cont_maxfev=30_000,
-               full_nseeds=3, full_maxfev=30_000,
+                use_cue=False,
                full_nburn=500, full_nprod=3000):
     """
     Full pipeline for one galaxy.
@@ -162,21 +162,16 @@ def fit_galaxy(outlier_idx,
     # ── Full nebular fit ─────────────────────────────────────────────────────
     if run_full and results.get("continuum_status") == "success":
         print(f"Running full fit for galaxy {gal_id}...")
-        obs_full   = P.build_obs(spec=spec_maggies, unc=sigma_maggies, mask=mask_em)
-        full_model, full_template = build_full_model(
-            template, theta_map_cont, model, redshift
-        )
+        obs_full   = P.build_obs(spec=spec_maggies, unc=sigma_maggies, mask=mask)
+        if not use_cue:
+            full_model, full_template = build_full_model(
+                template, theta_map_cont, model, redshift
+            )
+        if use_cue:
+            full_model, full_template = build_full_cue_model(
+                template, theta_map_cont, model, redshift
+            )
         theta_init_full = full_model.theta.copy()
-
-        def neg_lnp_full(theta):
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", RuntimeWarning)
-                try:
-                    lp = lnprobfn(theta, model=full_model, observations=obs_full,
-                                  sps=sps, nested=False)
-                    return -lp if np.isfinite(lp) else 1e18
-                except Exception:
-                    return 1e18
 
         def lnp_full(theta):
             with warnings.catch_warnings():
