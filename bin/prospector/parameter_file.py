@@ -58,6 +58,14 @@ def build_sps():
     return sps
 
 
+# use Cue instead
+def build_cue_sps():
+    """
+    SPS with Cue (Li+24) nebular emulator instead of FSPS+Cloudy lines.
+    """
+    from prospect.sources import NebSSPBasis
+    return NebSSPBasis()
+
 # DESI Spectra
 def get_outlier_info(idx, streaming=True):
     """

@@ -45,4 +45,4 @@ dev = [
 [tool.uv.sources]
 spender = { git = "https://github.com/galactic-ai/spender" }
 astro-prospector = { git = "https://github.com/galactic-ai/prospector", rev = "feature/cue-on-v2" }
-astro-cue = { git = "https://github.com/galactic-ai/cue", rev = "cue-pin-v0" }
+astro-cue = { git = "https://github.com/yi-jia-li/cue", rev = "cuejax" }

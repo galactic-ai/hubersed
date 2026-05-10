@@ -152,3 +152,31 @@ def build_full_model(continuum_template, theta_best_cont, cont_model, redshift):
 
     full_template = adjust_stochastic_params(full_template)
     return HyperSpecModel(full_template), full_template
+
+
+# use Cue
+def build_full_cue_model(continuum_template, theta_best_cont, cont_model, redshift):
+    full_template = copy.deepcopy(continuum_template)
+    nebular = copy.deepcopy(TemplateLibrary["cue_stellar_nebular"])
+    full_template.update(nebular)
+
+    # vary same set as before plus her gas params
+    vary_params = [
+        "logsfr_ratios", "gas_logu", "gas_logz", "gas_logn", "gas_logno",
+        "gas_logco", "gas_logqion",
+        "dust2", "dust_ratio", "dust_index",
+        "sigma_reg", "tau_eq", "sigma_dyn", "tau_dyn", "tau_in",
+    ]
+    for key in full_template:
+        full_template[key]["isfree"] = key in vary_params
+
+    for key in ["logmass", "logzsol", "sigma_smooth"]:
+        full_template[key]["isfree"] = True
+        full_template[key]["init"] = float(theta_best_cont[cont_model.theta_index[key]][0])
+
+    full_template["eline_sigma"] = {"N": 1, "isfree": True, "init": 100.0,
+                                    "units": "km/s",
+                                    "prior": TopHat(mini=20.0, maxi=250.0)}
+
+    full_template = adjust_stochastic_params(full_template)
+    return HyperSpecModel(full_template), full_template
