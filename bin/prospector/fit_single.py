@@ -177,15 +177,6 @@ def fit_galaxy(outlier_idx,
                     return -lp if np.isfinite(lp) else 1e18
                 except Exception:
                     return 1e18
-        print("Running optimizer for full fit...")
-        best_res_full = run_optimizer(neg_lnp_full, theta_init_full,
-                                      n_seeds=full_nseeds, 
-                                      maxfev=full_maxfev, jitter=0.01)
-        if best_res_full is None:
-            results["full_status"] = "optimizer_failed"
-            return results
-
-        theta_map_full = best_res_full.x
 
         def lnp_full(theta):
             with warnings.catch_warnings():
@@ -198,8 +189,8 @@ def fit_galaxy(outlier_idx,
                     return -np.inf
 
         print("Running MCMC for full fit...")
-        sampler_full = run_emcee(lnp_full, theta_map_full,
-                                 ndim=len(theta_map_full),
+        sampler_full = run_emcee(lnp_full, theta_init_full,
+                                 ndim=len(theta_init_full),
                                  nburn=full_nburn, nprod=full_nprod, model=full_model)
 
         print("Extracting chain for full fit...")
@@ -246,7 +237,6 @@ def fit_galaxy(outlier_idx,
 
         results.update({
             "full_status":       "success",
-            "theta_map_full":    theta_map_full,
             "theta_best_full":   theta_best_full,
             "flat_samples_full": flat_samples_full,
             "flat_lp_full":      flat_lp_full,
