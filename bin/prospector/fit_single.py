@@ -163,11 +163,12 @@ def fit_galaxy(outlier_idx,
     if run_full and results.get("continuum_status") == "success":
         print(f"Running full fit for galaxy {gal_id}...")
         obs_full   = P.build_obs(spec=spec_maggies, unc=sigma_maggies, mask=mask)
-        if not use_cue:
-            full_model, full_template = build_full_model(
-                template, theta_map_cont, model, redshift
-            )
+        full_model, full_template = build_full_model(
+            template, theta_map_cont, model, redshift
+        )
         if use_cue:
+
+            sps = P.build_cue_sps()
             full_model, full_template = build_full_cue_model(
                 template, theta_map_cont, model, redshift
             )
