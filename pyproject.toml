@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "astro-cue",
     "astro-prospector>=1.4.0",
     "astro-sedpy>=0.4.1",
     "astropy>=7.1.1",
@@ -43,3 +44,5 @@ dev = [
 
 [tool.uv.sources]
 spender = { git = "https://github.com/galactic-ai/spender" }
+astro-prospector = { git = "https://github.com/galactic-ai/prospector", rev = "feature/cue-on-v2" }
+astro-cue = { git = "https://github.com/yi-jia-li/cue", rev = "cuejax" }

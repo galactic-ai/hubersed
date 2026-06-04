@@ -1,12 +1,12 @@
 import pickle
-from prospect.utils.obsutils import fix_obs
-from prospect.sources import FastStepBasis
+from prospect.observation import Spectrum
+from prospect.sources import FastStepBasis, SSPBasis
 import numpy as np
 import torch
 
 from hubersed.paths import PATHS
 from hubersed.prospector.utils import load_lines
-from hubersed.prospector.lsf import DESI_WAV
+from hubersed.prospector.lsf import DESI_WAV, desi_resolution, C_KMS
 
 from huggingface_hub import hffs
 
@@ -22,7 +22,7 @@ OUTLIERS_IDX = torch.load(RESULTS_PATH / "desi_outliers.pt", weights_only=False)
 EM_LINES_A = load_lines()['emission']['wave_vac']
 
 # build obs
-def build_obs(spec: np.ndarray, unc: np.ndarray, mask: np.ndarray) -> dict:
+def build_obs(spec: np.ndarray, unc: np.ndarray, mask: np.ndarray) -> list:
     """
     Build the observation dictionary for the fit. 
     This should include at least the spectrum and uncertainty, for DESI data.
@@ -38,24 +38,33 @@ def build_obs(spec: np.ndarray, unc: np.ndarray, mask: np.ndarray) -> dict:
         A boolean array indicating which pixels to use in the fit. False elements will be ignored
         in the likelihood calculation. This can be used to mask out bad pixels, sky lines, etc.
     """
+    # R = desi_resolution(WAVE_OBS)
+    # sigma_kms =- C_KMS / (2.355 * R)
 
-    obs_dict  = {
-        "wavelength": WAVE_OBS,
-        "spectrum": spec,
-        "unc": unc,
-        "mask": mask,
-        "filters": None,
-        "maggies": None,
-        "maggies_unc": None,
-        "phot_mask" : None,
-    }
-    obs_dict = fix_obs(obs_dict)
-    return obs_dict
+    spec_obs = Spectrum(
+        wavelength=WAVE_OBS,
+        flux=spec,
+        uncertainty=unc,
+        mask=mask,
+        # resolution=sigma_kms,
+    )
+    spec_obs.rectify()
+    return [spec_obs]
 
 # build sps
 def build_sps():
-    return FastStepBasis()
+    sps = FastStepBasis()
+    SSPBasis.spectral_resolution = property(lambda self: np.zeros_like(self.ssp.wavelengths))
+    return sps
 
+
+# use Cue instead
+def build_cue_sps():
+    """
+    SPS with Cue (Li+24) nebular emulator instead of FSPS+Cloudy lines.
+    """
+    from prospect.sources import NebStepBasis
+    return NebStepBasis()
 
 # DESI Spectra
 def get_outlier_info(idx, streaming=True):

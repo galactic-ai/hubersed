@@ -1,6 +1,7 @@
 from prospect.models import priors, transforms
 from prospect.models.sedmodel import HyperSpecModel
 from prospect.models.templates import TemplateLibrary, adjust_stochastic_params
+from prospect.observation import Spectrum
 
 from tqdm.auto import tqdm
 
@@ -182,6 +183,29 @@ def _get_resolution_matrix():
     return build_desi_resolution_matrix(DESI_WAV)
 
 
+def _make_obs():
+    # A proper Spectrum observation is REQUIRED for emission lines to be added.
+    # cache_eline_parameters() injects lines only if obs carries a (non-None) flux
+    # array. Flux here is a placeholder; the parset sets no spectral calibration,
+    # so the calibration response is 1 and the placeholder does not affect output.
+    obs = Spectrum(
+        wavelength=np.asarray(DESI_WAV, dtype=np.float64),
+        flux=np.ones(n_wave, dtype=np.float64),
+        uncertainty=np.ones(n_wave, dtype=np.float64),
+        mask=np.ones(n_wave, dtype=bool),
+    )
+    obs.rectify()
+    return obs
+
+
+def _get_line_wave():
+    """Rest-frame wavelengths (AA) of the FSPS nebular lines, for labelling line_lum."""
+    parset, _ = build_parset_for_index(0)
+    m = HyperSpecModel(configuration=parset)
+    m.predict(m.theta, [_make_obs()], sps=_get_sps())
+    return np.asarray(m._eline_wave, dtype=np.float64)
+
+
 def worker_block(start, stop):
     """
     Compute spectra[start:stop] in this process and return a 2D block.
@@ -189,22 +213,30 @@ def worker_block(start, stop):
 
     sps = _get_sps()
     R_mat = _get_resolution_matrix()
-    obs = {"wavelength": DESI_WAV, "filters": None}
+    obs = _make_obs()
 
     block = np.empty((stop - start, n_wave), dtype=np.float32)
     ratios_block = np.empty((stop - start, 9), dtype=np.float32) # 9 logsfr_ratios for 10 age bins
+    lum_block = None  # (stop-start, n_lines), allocated once we know n_lines
 
     for j, i in enumerate(range(start, stop)):
         parset, ratios = build_parset_for_index(i)
         ratios_block[j, :] = ratios.astype(np.float32)
         model = HyperSpecModel(configuration=parset)
-        # sigma_smooth (velocity dispersion) applied here by Prospector
-        spec, _, _ = model.predict(model.theta, obs, sps=sps)
+        # sigma_smooth (velocity dispersion) applied here by Prospector;
+        # emission lines injected because obs carries a flux array (new Observation API)
+        preds, _ = model.predict(model.theta, [obs], sps=sps)
+        spec = preds[0]
         # DESI instrumental LSF applied here
         spec = R_mat.dot(spec)
         block[j, :] = spec.astype(np.float32)
+        # dust-ATTENUATED nebular line luminosities, erg/s (corr with dust2 ~0.83)
+        lum = np.asarray(model._eline_lum, dtype=np.float32)
+        if lum_block is None:
+            lum_block = np.empty((stop - start, lum.size), dtype=np.float32)
+        lum_block[j, :] = lum
 
-    return start, stop, block, ratios_block
+    return start, stop, block, ratios_block, lum_block
 
 # store in hdf5
 
@@ -230,6 +262,17 @@ def main():
             compression="gzip",
         )
 
+        # store dust-attenuated nebular line luminosities (erg/s) + their rest wavelengths
+        line_wave = _get_line_wave()
+        n_lines = line_wave.size
+        hf.create_dataset("line_wave", data=line_wave, compression="gzip")
+        lum_dset = hf.create_dataset(
+            "priors/line_lum",
+            shape=(n_spectra, n_lines),
+            dtype=np.float32,
+            compression="gzip",
+        )
+
         # store priors
         for key, arr in priors_dict.items():
             hf.create_dataset(f"priors/{key}", data=arr, compression="gzip")
@@ -247,17 +290,18 @@ def main():
                        for (start, stop) in blocks}
 
             for fut in as_completed(futures):
-                start, stop, block, ratios_block = fut.result()
+                start, stop, block, ratios_block, lum_block = fut.result()
                 flux_dset[start:stop, :] = block
                 ratios_dset[start:stop, :] = ratios_block
+                lum_dset[start:stop, :] = lum_block
                 pbar.update(stop - start)
 
     print(f"Saved model SEDs to {output_file}")
 
-    hffs.put(
-        output_file,
-        f"buckets/nikhil0504/hubersed-data/prospector_model/{output_file.name}",
-    )
+    # hffs.put(
+    #     output_file,
+    #     f"buckets/nikhil0504/hubersed-data/prospector_model/{output_file.name}",
+    # )
 
 if __name__ == "__main__":
     main()

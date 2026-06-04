@@ -18,6 +18,7 @@ def main():
     parser.add_argument("--full_nseeds",  type=int, default=3)
     parser.add_argument("--cont_nprod",   type=int, default=1000)
     parser.add_argument("--full_nprod",   type=int, default=3000)
+    parser.add_argument("--use_cue",      action="store_true", default=False)
     args = parser.parse_args()
 
     # Load list of outlier indices
@@ -41,10 +42,9 @@ def main():
             run_full          = args.run_full,
             cont_nseeds       = args.cont_nseeds,
             cont_maxfev       = 30_000,
-            full_nseeds       = args.full_nseeds,
-            full_maxfev       = 30_000,
             full_nburn        = 1000,
             full_nprod        = args.full_nprod,
+            use_cue           = args.use_cue,
         )
         save_galaxy_results(results, args.output_dir)
         print(f"Task {args.task_id}: done. "
