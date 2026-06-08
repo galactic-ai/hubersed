@@ -157,7 +157,7 @@ def build_full_model(continuum_template, theta_best_cont, cont_model, redshift):
 # use Cue
 def build_full_cue_model(continuum_template, theta_best_cont, cont_model, redshift):
     full_template = copy.deepcopy(continuum_template)
-    nebular = copy.deepcopy(TemplateLibrary["cue_nebular"])
+    nebular = copy.deepcopy(TemplateLibrary["cue_stellar_nebular"])
     full_template.update(nebular)
 
     # vary same set as before plus her gas params
