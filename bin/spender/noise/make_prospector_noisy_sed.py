@@ -19,7 +19,11 @@ from pathlib import Path
 DATA_PATH = PATHS['DATA']
 RESULTS_PATH = PATHS['RESULTS']
 
-LOCAL_TMP =  Path(f'/tmp/prospector_noisy_mocks/')
+# CUE: noise the Cue mocks into a separate, cue-tagged LOCAL set (don't touch the FSPS chain)
+CUE = True
+TAG = 'cueprospector1024' if CUE else 'prospector1024'
+PUSH = False   # keep everything local for now; push to HF later
+LOCAL_TMP = DATA_PATH / 'prospector_model'
 UPLOAD_EVERY = 50
 
 # set random seeds
@@ -34,7 +38,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 flow_file = str(DATA_PATH / 'desi_noise_spender_10latent_flow.pt')
 spender_file = str(DATA_PATH / 'desi_noise_spender_10latent.pt')
-prospector_sed_file = DATA_PATH /  "prospector_model" / 'prospector_stochastic_model_seds_500000.h5'
+prospector_sed_file = DATA_PATH / "prospector_model" / (
+    'prospector_stochastic_model_seds_cue_500000.h5' if CUE else 'prospector_stochastic_model_seds_500000.h5')
 
 flow_latent = 10
 instrument = desi.DESI()
@@ -126,16 +131,16 @@ for i in range(0, total_samples, batch_size):
                  norms,
                 redshifts_err_batch,
     ]
-    local_path = LOCAL_TMP / f'DESIprospector1024_{idx}.pkl'
+    local_path = LOCAL_TMP / f'DESI{TAG}_{idx}.pkl'
 
     with open(local_path, 'wb') as f:
         pickle.dump(save_dict, f)
 
     idx += 1
 
-    if idx % UPLOAD_EVERY == 0:
+    if PUSH and idx % UPLOAD_EVERY == 0:
         # upload to huggingface hub
-        files_to_upload = sorted(LOCAL_TMP.glob('DESIprospector1024_*.pkl'))
+        files_to_upload = sorted(LOCAL_TMP.glob(f'DESI{TAG}_*.pkl'))
         batch_bucket_files(
             "nikhil0504/hubersed-data",
             add=[(str(p), f"prospector_model/{p.name}") for p in files_to_upload],
