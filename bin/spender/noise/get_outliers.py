@@ -47,7 +47,10 @@ if not desi_latent_path.exists():
 else:
     desi_latents = torch.load(desi_latent_path, map_location=device)['latents'].float().to(device)
 
-prospector_spec = torch.load(DATA_PATH / 'prospector_noise_spec_6latent', map_location='cpu', mmap=True)
+# CUE: use the Cue-mock latents + write a separate outlier file (keep the FSPS 352 intact)
+CUE = True
+_prospector_latents = 'prospector_noise_spec_6latent_cue' if CUE else 'prospector_noise_spec_6latent'
+prospector_spec = torch.load(DATA_PATH / _prospector_latents, map_location='cpu', mmap=True)
 p_l    = prospector_spec['latents'].to(device='cpu', dtype=torch.float32)
 
 
@@ -75,4 +78,6 @@ outlier_mask = torch.tensor(scores_desi) <= threshold
 outlier_idx = torch.where(outlier_mask)[0]
 
 # save outlier indices for later analysis
-torch.save({"outlier_indices": outlier_idx}, RESULTS_PATH / "desi_outliers.pt")
+_outfile = "desi_outliers_cue.pt" if CUE else "desi_outliers.pt"
+torch.save({"outlier_indices": outlier_idx}, RESULTS_PATH / _outfile)
+print(f"{len(outlier_idx)} outliers -> {_outfile}")
