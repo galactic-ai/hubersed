@@ -17,41 +17,25 @@ print(f"Using device: {device}")
 
 inst = desi.DESI().float().to(device)
 
-desi_latent_path = DATA_PATH / 'spender_spec_6latent'
-if not desi_latent_path.exists():
-    # Build wave_rest according to selected mode
-    model = load_model(str(DATA_PATH / 'spender_asc_run_6latent_zmax.pt'), inst, map_location='cpu', weights_only=False).float()
-    model = model.to(device)
-    model.eval()
-
-    loader = inst.get_data_loader(
-            str(DATA_PATH),
-            tag='chunk1024',
-            which="all",
-            batch_size=1024,
-            shuffle=False,
-            shuffle_instance=False,
-        )
-
-    amount = len(loader.dataset)
-    print(amount)
-
-    desi_latents = torch.empty((amount*1024, 6), dtype=torch.float32, device=device)
-
-    with torch.no_grad():
-        for i, batch in enumerate(loader):
-            s, *_ = batch
-            s = s.float().to(device)
-            l = model.encode(s)
-            desi_latents[i*1024:(i+1)*1024] = l
-else:
-    desi_latents = torch.load(desi_latent_path, map_location=device)['latents'].float().to(device)
-
 # CUE: use the Cue-mock latents + write a separate outlier file (keep the FSPS 352 intact)
 CUE = True
-_prospector_latents = 'prospector_noise_spec_6latent_cue' if CUE else 'prospector_noise_spec_6latent'
+# S/N>3 run: point at the snr3 latent files and write a separate outlier file so the
+# old (no-cut) 280/352 outlier sets stay intact for comparison. Set SNR_TAG='' for old behaviour.
+SNR_TAG = '_snr3'
+
+desi_file = DATA_PATH / f'spender_spec_6latent{SNR_TAG}'
+_prospector_latents = f'prospector_noise_spec_6latent_cue{SNR_TAG}' if CUE else f'prospector_noise_spec_6latent{SNR_TAG}'
+
+desi_blob = torch.load(desi_file, map_location='cpu', mmap=True)
+desi_latents = desi_blob['latents'].float().to(device)
+# global catalogue index of each kept DESI spectrum (position != global after the S/N cut)
+desi_index = (desi_blob['indices'].cpu().long() if 'indices' in desi_blob
+              else torch.arange(desi_latents.shape[0]))
+print(f"DESI S/N-cut latents: {desi_latents.shape[0]} (from file {desi_file.name})")
+
 prospector_spec = torch.load(DATA_PATH / _prospector_latents, map_location='cpu', mmap=True)
 p_l    = prospector_spec['latents'].to(device='cpu', dtype=torch.float32)
+print(f"mock S/N-cut latents: {p_l.shape[0]}")
 
 
 # Isolation Forest for outlier detection
@@ -75,9 +59,15 @@ scores_prospector = iso.decision_function(p_l_scaled)
 # threshold for outliers, worse than 0.1% in the prospector distribution
 threshold = torch.quantile(torch.tensor(scores_prospector), 0.001)
 outlier_mask = torch.tensor(scores_desi) <= threshold
-outlier_idx = torch.where(outlier_mask)[0]
+outlier_pos = torch.where(outlier_mask)[0]            # position in the S/N-cut DESI array
+outlier_idx = desi_index[outlier_pos]                  # -> global catalogue index
 
-# save outlier indices for later analysis
-_outfile = "desi_outliers_cue.pt" if CUE else "desi_outliers.pt"
-torch.save({"outlier_indices": outlier_idx}, RESULTS_PATH / _outfile)
-print(f"{len(outlier_idx)} outliers -> {_outfile}")
+# save outlier indices for later analysis (outlier_indices are GLOBAL catalogue indices)
+_outfile = f"desi_outliers_cue{SNR_TAG}.pt" if CUE else f"desi_outliers{SNR_TAG}.pt"
+torch.save({"outlier_indices": outlier_idx,
+            "outlier_pos": outlier_pos,
+            "desi_index": desi_index,
+            "threshold": float(threshold),
+            "snr_min": prospector_spec.get('meta', {}).get('snr_min', None)},
+           RESULTS_PATH / _outfile)
+print(f"{len(outlier_idx)} outliers -> {_outfile}  (global indices; threshold {float(threshold):.4f})")

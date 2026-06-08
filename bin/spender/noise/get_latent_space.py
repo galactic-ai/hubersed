@@ -13,59 +13,86 @@ def process_loader(
     loader,
     device: torch.device,
     compute_snr: bool = False,
+    snr_min: float = 0.0,
 ) -> Tuple[
     torch.Tensor,
     torch.Tensor,
     Optional[torch.Tensor],
     Optional[torch.Tensor],
     torch.Tensor,
+    torch.Tensor,
 ]:
     """
     Iterate through `loader`, encode either raw spectra or SNR, and collect outputs.
 
+    If ``snr_min > 0`` keep only spectra whose per-pixel S/N (= spec*sqrt(w),
+    median over valid pixels w>0) exceeds ``snr_min``. The encode INPUT is still
+    chosen by mode (spec vs snr) -- the S/N cut is decoupled from what is encoded.
+
+    Because rows are dropped, position no longer equals the global index. The
+    running global index (chunk*1024+row order, loader shuffle=False) of every
+    KEPT spectrum is tracked and returned so downstream code (outliers, map_chi2)
+    can still map back to the original catalogue.
+
     Returns:
-        latents, A, specs_or_none, snrs_or_none, zs
+        latents, A, specs, snrs_or_none, zs, indices
     """
-    all_latents = []
-    all_A = []
-    all_specs = []
-    all_snrs = []
-    all_z = []
+    all_latents, all_A, all_specs, all_snrs, all_z, all_idx = [], [], [], [], [], []
+    offset = 0
 
     with torch.no_grad():
         for i, batch in enumerate(loader):
-            spec, w, z, target_id, norm, zerr = batch
+            spec, w, z, target_id, norm, zerr = batch   # CPU tensors from loader
+            B = spec.shape[0]
+            g = torch.arange(offset, offset + B)         # global indices for this batch
+            offset += B
 
-            spec = spec.float().to(device)
-            w = w.float().to(device)
-            z = z.float().to(device)
+            # per-pixel S/N on CPU (norm cancels); needed for the cut and/or storage
+            snr_cpu = spec * torch.sqrt(w) if (compute_snr or snr_min > 0) else None
 
-            snr = None
-            if compute_snr:
-                snr = spec * torch.sqrt(w)
-                all_snrs.append(snr.cpu())
+            # S/N cut on CPU (torch.nanmedian unimplemented on MPS), BEFORE encode.
+            # Filtering pre-encode is identical to post-encode (encoder is per-spectrum)
+            # but skips encoding discarded rows and avoids a mid-loop GPU->CPU sync.
+            if snr_min > 0:
+                snr_pix = torch.where(w > 0, snr_cpu, torch.nan)
+                med_snr = torch.nanmedian(snr_pix, dim=1).values
+                keep = med_snr > snr_min
+            else:
+                keep = torch.ones(B, dtype=torch.bool)
 
-            # Decide what to encode: prefer SNR if computed, otherwise raw spectrum
-            to_encode = snr if (snr is not None) else spec
+            if not keep.any():
+                if (i + 1) % 50 == 0:
+                    print(f"Processed {offset} spectra (kept {sum(int(x.shape[0]) for x in all_idx)})",
+                          end="\r", flush=True)
+                continue
 
-            s = model.encode(to_encode.float())
+            # keep-only, then move just survivors to device and encode
+            spec_k = spec[keep].float().to(device)
+            
+            # encode input is mode-driven: snr only when compute_snr (noise mode)
+            to_encode = (snr_cpu[keep].float().to(device)) if compute_snr else spec_k
+            s = model.encode(to_encode)
+
             all_latents.append(s.cpu())
-            all_A.append(norm.unsqueeze(1).cpu())
-            all_z.append(z.cpu())
-
-            # store both representations so outputs are uniform
-            all_specs.append(spec.cpu().half())
+            all_A.append(norm[keep].unsqueeze(1))
+            all_z.append(z[keep])
+            all_specs.append(spec[keep].half())
+            all_idx.append(g[keep])
+            if compute_snr:
+                all_snrs.append(snr_cpu[keep])
 
             if (i + 1) % 50 == 0:
-                print(f"Processed {(i + 1) * loader.batch_size} spectra", end="\r", flush=True)
+                kept = sum(int(x.shape[0]) for x in all_idx)
+                print(f"Processed {offset} spectra (kept {kept})", end="\r", flush=True)
 
     latents = torch.cat(all_latents, dim=0)
     A = torch.cat(all_A, dim=0)
     specs = torch.cat(all_specs, dim=0)
     snrs = torch.cat(all_snrs, dim=0) if all_snrs else None
     zs = torch.cat(all_z, dim=0)
+    indices = torch.cat(all_idx, dim=0)
 
-    return latents, A, specs, snrs, zs
+    return latents, A, specs, snrs, zs, indices
 
 def save_output(out, path):
     if path.startswith("hf://"):
@@ -99,11 +126,11 @@ def main(args: argparse.Namespace) -> None:
     # Decide whether to compute SNRs; for 'noise' mode we compute them by default
     compute_snr = args.compute_snr or (args.mode == "noise")
 
-    latents, A, specs, snrs, zs = process_loader(
-        model, loader, device, compute_snr=compute_snr
+    latents, A, specs, snrs, zs, indices = process_loader(
+        model, loader, device, compute_snr=compute_snr, snr_min=args.snr_min
     )
 
-    print("Latents shape:", latents.shape)
+    print("Latents shape:", latents.shape, "(kept after S/N cut)" if args.snr_min > 0 else "")
     print("A shape:", A.shape)
 
     out = {
@@ -113,10 +140,12 @@ def main(args: argparse.Namespace) -> None:
         # keep both keys for backward compatibility; caller can choose which to use
         "specs": specs,
         "snrs": snrs,
+        "indices": indices,   # global catalogue index of each kept spectrum
         "meta": {
             "mode": args.mode,
             "zmax": args.zmax,
             "tag": tag,
+            "snr_min": args.snr_min,
         },
     }
 
@@ -166,6 +195,13 @@ if __name__ == "__main__":
         "--compute_snr",
         action="store_true",
         help="Compute SNRs (spec * sqrt(w)). Always enabled for --mode noise.",
+    )
+    parser.add_argument(
+        "--snr_min",
+        type=float,
+        default=0.0,
+        help="Keep only spectra with median per-pixel S/N > this (0 = no cut). "
+             "Stores 'indices' = global catalogue index of each kept spectrum.",
     )
 
     args = parser.parse_args()
