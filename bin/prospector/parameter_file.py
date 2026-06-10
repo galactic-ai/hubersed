@@ -22,9 +22,10 @@ OUTLIERS_IDX = torch.load(RESULTS_PATH / "desi_outliers.pt", weights_only=False)
 EM_LINES_A = load_lines()['emission']['wave_vac']
 
 # build obs
-def build_obs(spec: np.ndarray, unc: np.ndarray, mask: np.ndarray) -> list:
+def build_obs(spec: np.ndarray, unc: np.ndarray, mask: np.ndarray,
+              resolution: np.ndarray = None) -> list:
     """
-    Build the observation dictionary for the fit. 
+    Build the observation dictionary for the fit.
     This should include at least the spectrum and uncertainty, for DESI data.
 
     Parameters
@@ -37,16 +38,18 @@ def build_obs(spec: np.ndarray, unc: np.ndarray, mask: np.ndarray) -> list:
     mask: np.ndarray
         A boolean array indicating which pixels to use in the fit. False elements will be ignored
         in the likelihood calculation. This can be used to mask out bad pixels, sky lines, etc.
+    resolution: np.ndarray, optional
+        Instrumental resolution (sigma) at each wavelength, in km/s (prospect
+        Spectrum convention). When given, prospect smooths the model to the DESI
+        LSF. Pass C_KMS/(2.355*R(lambda)). Safe because build_sps zeroes the
+        library resolution (no `data higher resolution than library` assert).
     """
-    # R = desi_resolution(WAVE_OBS)
-    # sigma_kms =- C_KMS / (2.355 * R)
-
     spec_obs = Spectrum(
         wavelength=WAVE_OBS,
         flux=spec,
         uncertainty=unc,
         mask=mask,
-        # resolution=sigma_kms,
+        resolution=resolution,
     )
     spec_obs.rectify()
     return [spec_obs]
