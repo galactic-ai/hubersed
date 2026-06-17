@@ -17,6 +17,10 @@ if not DATA_PATH.exists():
 # 500_000 samples
 SAMPLE_SIZE = int(sys.argv[1]) if len(sys.argv) > 1 else 500_000
 
+# Cue (Li+24) nebular model: add free N/O, C/O, nH; widen O/H to the Cue grid.
+# Cue grid ranges from arXiv:2405.04598 Table 1.
+CUE = True
+
 # from Wan+24 Stochastic prior model
 
 # redshift 0.01 to 0.6 uniform
@@ -63,8 +67,8 @@ q_pahs = sample_uniform(0.5, 7.0, size=SAMPLE_SIZE)
 # sigma_gas uniform 20 to 250
 sigma_gass = sample_uniform(20, 250, size=SAMPLE_SIZE)
 
-# gas phase metallicity -2 to 0.5
-gas_metallicities = sample_uniform(-2.0, 0.5, size=SAMPLE_SIZE)
+# gas phase metallicity (O/H); Cue grid allows -2.2 (Byler/FSPS used -2.0)
+gas_metallicities = sample_uniform(-2.2 if CUE else -2.0, 0.5, size=SAMPLE_SIZE)
 
 # gas ionization parameter -4 to -1
 gas_ionization_parameters = sample_uniform(-4.0, -1.0, size=SAMPLE_SIZE)
@@ -72,9 +76,15 @@ gas_ionization_parameters = sample_uniform(-4.0, -1.0, size=SAMPLE_SIZE)
 # top hat min 10 max 400 (not used in Wan+24 but included for completeness)
 sigma_smooths = sample_uniform(10, 400, size=SAMPLE_SIZE)
 
-# save to npz
-np.savez(
-    f'{DATA_PATH}/stochastic_priors_sample_{SAMPLE_SIZE}.npz',
+# --- Cue (Li+24) free nebular params (arXiv:2405.04598 Table 1) ---
+# gas_logno/gas_logco are LOG10 of (N/O)/(N-O)_sun ; grid is linear [0.1, 5.4] -> log [-1, log10(5.4)]
+if CUE:
+    gas_lognHs = sample_uniform(1.0, 4.0, size=SAMPLE_SIZE)                # log nH [cm^-3]
+    gas_lognos = sample_uniform(-1.0, np.log10(5.4), size=SAMPLE_SIZE)     # log [N/O]
+    gas_logcos = sample_uniform(-1.0, np.log10(5.4), size=SAMPLE_SIZE)     # log [C/O]
+
+# save to npz (separate filename for the Cue sample)
+arrays = dict(
     redshifts=redshifts,
     stellar_masses=stellar_masses,
     stellar_metallicities=stellar_metallicities,
@@ -94,8 +104,16 @@ np.savez(
     gas_ionization_parameters=gas_ionization_parameters,
     sigma_smooths=sigma_smooths,
 )
+if CUE:
+    arrays.update(gas_lognHs=gas_lognHs, gas_lognos=gas_lognos, gas_logcos=gas_logcos)
+    outname = f'{DATA_PATH}/stochastic_priors_sample_cue_{SAMPLE_SIZE}.npz'
+else:
+    outname = f'{DATA_PATH}/stochastic_priors_sample_{SAMPLE_SIZE}.npz'
 
-hffs.put(
-    f'{DATA_PATH}/stochastic_priors_sample_{SAMPLE_SIZE}.npz',
-    f"buckets/nikhil0504/hubersed-data/prospector_model/stochastic_priors_sample_{SAMPLE_SIZE}.npz",
-)
+np.savez(outname, **arrays)
+print(f'saved {outname}  (CUE={CUE}, n_keys={len(arrays)})')
+
+# hffs.put(
+#     f'{DATA_PATH}/stochastic_priors_sample_{SAMPLE_SIZE}.npz',
+#     f"buckets/nikhil0504/hubersed-data/prospector_model/stochastic_priors_sample_{SAMPLE_SIZE}.npz",
+# )

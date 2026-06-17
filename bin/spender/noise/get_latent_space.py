@@ -1,80 +1,77 @@
 #!/usr/bin/env python
-
 import argparse
-from typing import Optional, Tuple
 
+import h5py
 import torch
-from spender import SpectrumAutoencoder
 from spender.data import desi
 from spender import load_model
 
-def process_loader(
-    model: SpectrumAutoencoder,
-    loader,
-    device: torch.device,
-    compute_snr: bool = False,
-) -> Tuple[
-    torch.Tensor,
-    torch.Tensor,
-    Optional[torch.Tensor],
-    Optional[torch.Tensor],
-    torch.Tensor,
-]:
-    """
-    Iterate through `loader`, encode either raw spectra or SNR, and collect outputs.
 
-    Returns:
-        latents, A, specs_or_none, snrs_or_none, zs
-    """
-    all_latents = []
-    all_A = []
-    all_specs = []
-    all_snrs = []
-    all_z = []
+def process_loader_h5(model, loader, device, outfile, compute_snr=False,
+                      snr_min=0.0, meta=None):
+    f = h5py.File(outfile, 'w')
+    d = {}
+    seen = 0
+    kept = 0
+
+    def append(name, arr):
+        ds = d[name]; n = ds.shape[0]
+        ds.resize(n + arr.shape[0], axis=0); ds[n:] = arr
 
     with torch.no_grad():
         for i, batch in enumerate(loader):
-            spec, w, z, target_id, norm, zerr = batch
+            spec, w, z, target_id, norm, zerr = batch     # CPU tensors
+            B = spec.shape[0]; seen += B
 
-            spec = spec.float().to(device)
-            w = w.float().to(device)
-            z = z.float().to(device)
+            snr_cpu = spec * torch.sqrt(w) if (compute_snr or snr_min > 0) else None
+            if snr_min > 0:
+                med = torch.nanmedian(torch.where(w > 0, snr_cpu, torch.nan), dim=1).values
+                keep = med > snr_min
+            else:
+                keep = torch.ones(B, dtype=torch.bool)
+            if not keep.any():
+                if (i + 1) % 50 == 0:
+                    print(f"Processed {seen} (kept {kept})", end="\r", flush=True)
+                continue
 
-            snr = None
+            spec_k = spec[keep].float().to(device)
+            to_encode = (snr_cpu[keep].float().to(device)) if compute_snr else spec_k
+            lat = model.encode(to_encode).cpu().numpy().astype('float32')
+
+            zk = z[keep].numpy().astype('float32').reshape(-1)
+            Ak = norm[keep].unsqueeze(1).numpy().astype('float32')
+            tk = target_id[keep].numpy().astype('int64')
+            spk = spec[keep].half().numpy()
+            snk = snr_cpu[keep].numpy().astype('float32') if compute_snr else None
+
+            if not d:                                       # lazily create datasets
+                nlat, L = lat.shape[1], spk.shape[1]
+                mk = lambda nm, c, dt: f.create_dataset(nm, shape=(0,) + c, maxshape=(None,) + c, dtype=dt, chunks=True)
+                d['latents'] = mk('latents', (nlat,), 'float32')
+                d['zs'] = mk('zs', (), 'float32')
+                d['A'] = mk('A', (1,), 'float32')
+                d['target_ids'] = mk('target_ids', (), 'int64')
+                d['specs'] = mk('specs', (L,), 'float16')
+                if compute_snr:
+                    d['snrs'] = mk('snrs', (L,), 'float32')
+
+            append('latents', lat); append('zs', zk); append('A', Ak)
+            append('target_ids', tk); append('specs', spk)
+
             if compute_snr:
-                snr = spec * torch.sqrt(w)
-                all_snrs.append(snr.cpu())
+                append('snrs', snk)
+            kept += lat.shape[0]
 
-            # Decide what to encode: prefer SNR if computed, otherwise raw spectrum
-            to_encode = snr if (snr is not None) else spec
-
-            s = model.encode(to_encode.float())
-            all_latents.append(s.cpu())
-            all_A.append(norm.unsqueeze(1).cpu())
-            all_z.append(z.cpu())
-
-            # store both representations so outputs are uniform
-            all_specs.append(spec.cpu().half())
+            if device.type == 'mps' and (i + 1) % 20 == 0:
+                torch.mps.empty_cache()
 
             if (i + 1) % 50 == 0:
-                print(f"Processed {(i + 1) * loader.batch_size} spectra", end="\r", flush=True)
+                print(f"Processed {seen} (kept {kept})", end="\r", flush=True)
 
-    latents = torch.cat(all_latents, dim=0)
-    A = torch.cat(all_A, dim=0)
-    specs = torch.cat(all_specs, dim=0)
-    snrs = torch.cat(all_snrs, dim=0) if all_snrs else None
-    zs = torch.cat(all_z, dim=0)
-
-    return latents, A, specs, snrs, zs
-
-def save_output(out, path):
-    if path.startswith("hf://"):
-        from huggingface_hub import hffs
-        # hf://buckets/nikhil0504/... → buckets/nikhil0504/...
-        with hffs.open(path.replace("hf://", ""), 'wb') as f:
-            torch.save(out, f)
-    else:
-        torch.save(out, path)
+    for k, v in (meta or {}).items():
+        f.attrs[k] = 'None' if v is None else v
+    f.close()
+    return kept
 
 def main(args: argparse.Namespace) -> None:
     device = torch.device("mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
@@ -82,10 +79,9 @@ def main(args: argparse.Namespace) -> None:
 
     inst = desi.DESI()
 
-    # Build wave_rest according to selected mode
     model = load_model(args.checkpoint, inst, map_location="cpu", weights_only=False, mmap=True).float().to(device)
-    
-    # data loader: allow tag override like original spec script
+    model.eval()
+
     tag = args.tag or "chunk1024"
     loader = inst.get_data_loader(
         args.datadir,
@@ -99,29 +95,12 @@ def main(args: argparse.Namespace) -> None:
     # Decide whether to compute SNRs; for 'noise' mode we compute them by default
     compute_snr = args.compute_snr or (args.mode == "noise")
 
-    latents, A, specs, snrs, zs = process_loader(
-        model, loader, device, compute_snr=compute_snr
-    )
-
-    print("Latents shape:", latents.shape)
-    print("A shape:", A.shape)
-
-    out = {
-        "latents": latents,
-        "A": A,
-        "zs": zs,
-        # keep both keys for backward compatibility; caller can choose which to use
-        "specs": specs,
-        "snrs": snrs,
-        "meta": {
-            "mode": args.mode,
-            "zmax": args.zmax,
-            "tag": tag,
-        },
-    }
-
-    save_output(out, args.outfile)
-    print(f"Saved latents to {args.outfile}")
+    if not str(args.outfile).endswith('.h5'):
+        raise RuntimeError(f"warning: output is HDF5 format; '{args.outfile}' does not end with .h5")
+    meta = {"mode": args.mode, "zmax": args.zmax, "tag": tag, "snr_min": args.snr_min}
+    n = process_loader_h5(model, loader, device, args.outfile,
+                          compute_snr=compute_snr, snr_min=args.snr_min, meta=meta)
+    print(f"\nSaved {n} spectra (streamed HDF5) to {args.outfile}")
 
 
 if __name__ == "__main__":
@@ -166,6 +145,13 @@ if __name__ == "__main__":
         "--compute_snr",
         action="store_true",
         help="Compute SNRs (spec * sqrt(w)). Always enabled for --mode noise.",
+    )
+    parser.add_argument(
+        "--snr_min",
+        type=float,
+        default=0.0,
+        help="Keep only spectra with median per-pixel S/N > this (0 = no cut). "
+             "Each kept spectrum is tagged with its TARGETID (target_ids) for catalogue matching.",
     )
 
     args = parser.parse_args()
