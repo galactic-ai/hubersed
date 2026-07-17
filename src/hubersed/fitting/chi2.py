@@ -14,8 +14,8 @@ from functools import cache
 import numpy as np
 from prospect.fitting import lnprobfn
 
-import parameter_file as P
-from fit_config import build_continuum_model, build_full_model, build_full_cue_model
+from hubersed.prospector import parameter_file as P
+from hubersed.fitting.config import build_continuum_model, build_full_model, build_full_cue_model
 from hubersed.conversion import flambda_to_maggies, ivar_flambda_to_ivar_maggies
 from hubersed.paths import PATHS
 
