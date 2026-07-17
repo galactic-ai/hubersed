@@ -10,9 +10,9 @@ wheels/
 .venv
 
 # ignore
-results/
-data/
-tmp/
+/results/
+/data/
 
 .ruff_cache/
 .ipynb_checkpoints/
+.DS_Store
