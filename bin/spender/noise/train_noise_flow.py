@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 
 import sys
 
@@ -9,14 +8,14 @@ from spender.flow import NeuralDensityEstimator
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import trange
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # ----------------------------------------------------------------------
 # Latents from single file
 # ----------------------------------------------------------------------
-blob = torch.load('../desi_noise_spender_10latent_space.pt', map_location='cpu')
-theta = blob['latents'].float()   # [N, 10]
-A = blob['A'].float() # [N, 1]
+blob = torch.load("../desi_noise_spender_10latent_space.pt", map_location="cpu")
+theta = blob["latents"].float()  # [N, 10]
+A = blob["A"].float()  # [N, 1]
 
 print("latents shape:", theta.shape, theta.device)
 print("A shape:", A.shape, A.device)
@@ -38,10 +37,8 @@ batch_size = 10_000
 train_ds = TensorDataset(train_theta, train_A)
 valid_ds = TensorDataset(valid_theta, valid_A)
 
-data_loader = DataLoader(train_ds, batch_size=batch_size,
-                         shuffle=True, drop_last=True)
-valid_data_loader = DataLoader(valid_ds, batch_size=batch_size,
-                               shuffle=False)
+data_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, drop_last=True)
+valid_data_loader = DataLoader(valid_ds, batch_size=batch_size, shuffle=False)
 
 # ----------------------------------------------------------------------
 # Build / load flow (your class)
@@ -97,14 +94,14 @@ scheduler = torch.optim.lr_scheduler.OneCycleLR(
 # ----------------------------------------------------------------------
 # Training loop (same structure as your original code)
 # ----------------------------------------------------------------------
-for epoch in trange(n_epoch, desc='Training NDE', unit='epochs'):
-    print('    Epoch', epoch)
-    print('    lr:', NDE_theta.optimizer.param_groups[0]['lr'])
+for epoch in trange(n_epoch, desc="Training NDE", unit="epochs"):
+    print("    Epoch", epoch)
+    print("    lr:", NDE_theta.optimizer.param_groups[0]["lr"])
 
     # ----------------- train -----------------
     train_loss = []
     for k, batch in enumerate(data_loader):
-        latent_batch, A_batch = [b.to(device) for b in batch]          # <- exactly your pattern
+        latent_batch, A_batch = [b.to(device) for b in batch]  # <- exactly your pattern
 
         # call log_prob on the flow itself (no .net)
         NDE_theta.optimizer.zero_grad()
@@ -130,7 +127,7 @@ for epoch in trange(n_epoch, desc='Training NDE', unit='epochs'):
     valid_loss = float(np.mean(valid_loss))
     NDE_theta.valid_loss_history.append(valid_loss)
 
-    print(f'Loss = {train_loss:.3f} (train), {valid_loss:.3f} (valid)')
+    print(f"Loss = {train_loss:.3f} (train), {valid_loss:.3f} (valid)")
 
     scheduler.step()
 

@@ -3,6 +3,7 @@ import torch
 from spender.flow import NeuralDensityEstimator
 from spender import load_model
 
+
 def _load_flow_model(filename, n_latent, **kwargs):
     NDE_theta = NeuralDensityEstimator(
         dim=n_latent,
