@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 
 from hubersed.distributions import (
-    sample_clipped_normal,
+    sample_truncated_normal,
     sample_log_uniform,
     sample_uniform,
 )
@@ -19,7 +19,8 @@ def parse_args(argv=None):
     )
     p.add_argument("-n", "--sample-size", type=int, default=500_000, help="Number of samples to draw")
     p.add_argument("-s", "--seed", type=int, default=42, help="Random seed for reproducibility")
-    p.add_argument("--cue", help="Use Cue (Li+24) nebular model with free N/O, C/O, nH", default=True)
+    p.add_argument("--cue", action=argparse.BooleanOptionalAction, default=True,
+               help="Cue (Li+24) nebular model with free N/O, C/O, nH")
     p.add_argument("-o", "--out", type=Path, default=None, help="Output file path (default: DATA_PATH/prospector_model/stochastic_priors_sample[_cue]_{n}.npz)")
     p.add_argument("-f", "--force", action="store_true", help="Overwrite existing output file if it exists")
 
@@ -28,7 +29,7 @@ def parse_args(argv=None):
 
 def main(argv=None):
     args = parse_args(argv)
-    n = args.n
+    n = args.sample_size
     rng = np.random.default_rng(args.seed)
 
     data_path = PATHS["DATA"] / "prospector_model"
@@ -51,8 +52,8 @@ def main(argv=None):
     # stellar mass 7 to 12 uniform
     stellar_masses = sample_uniform(7, 12, size=n, rng=rng)
 
-    # stellar metallicity -1.5 to 0.4 uniform
-    stellar_metallicities = sample_uniform(-1.5, 0.4, size=n, rng=rng)
+    # stellar metallicity -2.5 to 0.5 uniform
+    stellar_metallicities = sample_uniform(-2.5, 0.5, size=n, rng=rng)
 
     # sigma_reg log uniform 0.1 to 5
     sigma_regs = sample_log_uniform(0.1, 5, size=n, rng=rng)
@@ -65,20 +66,20 @@ def main(argv=None):
     # sigma_dyn log uniform 0.001 to 0.5
     sigma_dyns = sample_log_uniform(0.001, 0.5, size=n, rng=rng)
 
-    # tau_dyn clipped normal min 0.005 max 0.2 mu 0.01 sigma 0.02
-    tau_dyns = sample_clipped_normal(0.01, 0.02, 0.005, 0.2, size=n, rng=rng)
+    # tau_dyn truncated normal min 0.005 max 0.2 mu 0.01 sigma 0.02
+    tau_dyns = sample_truncated_normal(0.01, 0.02, 0.005, 0.2, size=n, rng=rng)
 
     # n uniform -1 to 0.4 (dust_index)
-    ns = sample_uniform(-1.0, 0.4, size=n, rng=rng)
+    ns = sample_uniform(-2.5, 0.4, size=n, rng=rng)
 
-    # tau_dust,2 clipped normal min 0.0 max 4 mu 0.3 sigma 1.0
-    tau_dust_2s = sample_clipped_normal(0.3, 1.0, 0.0, 4.0, size=n, rng=rng)
+    # tau_dust,2 truncated normal min 0.0 max 4 mu 0.3 sigma 1.0
+    tau_dust_2s = sample_truncated_normal(0.3, 1.0, 0.0, 4.0, size=n, rng=rng)
 
-    # tau_dust,1 clipped normal min 0.0 max 2 mu 1.0 sigma 0.3 (actually dust_ratio)
-    tau_dust_1s = sample_clipped_normal(1.0, 0.3, 0.0, 2.0, size=n, rng=rng)
+    # tau_dust,1 truncated normal min 0.0 max 2 mu 1.0 sigma 0.3 (actually dust_ratio)
+    tau_dust_1s = sample_truncated_normal(1.0, 0.3, 0.0, 2.0, size=n, rng=rng)
 
-    # U_min clipped normal min 0.1 max 15 mu 2.0 sigma 1.0
-    u_mins = sample_clipped_normal(2.0, 1.0, 0.1, 15.0, size=n, rng=rng)
+    # U_min truncated normal min 0.1 max 15 mu 2.0 sigma 1.0
+    u_mins = sample_truncated_normal(2.0, 1.0, 0.1, 15.0, size=n, rng=rng)
 
     # gamma_e log uniform 1e-4 to 0.1
     gamma_es = sample_log_uniform(1e-4, 0.1, size=n, rng=rng)
