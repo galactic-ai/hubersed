@@ -7,26 +7,36 @@ import matplotlib.pyplot as plt
 import astropy.io.fits as fits
 from tqdm import tqdm
 
-from hubersed.prospector.lsf import DESI_WAV, C_KMS, resolution_to_sigma_kms, sigma_kms_to_R, sample_target_ids, lookup_healpix, coadd_url
+from hubersed.prospector.lsf import (
+    DESI_WAV,
+    C_KMS,
+    resolution_to_sigma_kms,
+    sigma_kms_to_R,
+    sample_target_ids,
+    lookup_healpix,
+    coadd_url,
+)
 from hubersed.paths import PATHS
 
 DATA_PATH = PATHS["DATA"]
 RESULTS_PATH = PATHS["RESULTS"]
+
 
 def desi_resolution_design(wave):
     """DESI design-spec R(lambda)."""
     R = np.zeros_like(wave, dtype=float)
     b = (wave >= 3600) & (wave < 5930)
     r = (wave >= 5930) & (wave < 7470)
-    z = (wave >= 7470)
+    z = wave >= 7470
     R[b] = 2000 + (3200 - 2000) * (wave[b] - 3600) / (5930 - 3600)
     R[r] = 3200 + (4100 - 3200) * (wave[r] - 5930) / (7720 - 5930)
     R[z] = 4100 + (5100 - 4100) * (wave[z] - 7470) / (9800 - 7470)
     return R
 
+
 # Main pipeline
 def main(n_sample=10):
-    files = sorted(glob.glob(str(DATA_PATH / 'DESIchunk1024_*.pkl')))
+    files = sorted(glob.glob(str(DATA_PATH / "DESIchunk1024_*.pkl")))
     sample_files = files[::25]  # every 25th file, ~10 files
     print(f"Sampling from {len(sample_files)} files: {sample_files}")
     output_dir = str(RESULTS_PATH)
@@ -64,15 +74,15 @@ def main(n_sample=10):
             continue
 
         # Read all needed data once per healpix
-        all_tids = hdulist[1].data['TARGETID']
+        all_tids = hdulist[1].data["TARGETID"]
         waves = {}
         res_data = {}
         for h in range(2, len(hdulist)):
-            extname = hdulist[h].header['EXTNAME']
-            band = extname.split('_')[0].lower()
-            if 'WAVELENGTH' in extname:
+            extname = hdulist[h].header["EXTNAME"]
+            band = extname.split("_")[0].lower()
+            if "WAVELENGTH" in extname:
                 waves[band] = hdulist[h].data
-            if 'RESOLUTION' in extname:
+            if "RESOLUTION" in extname:
                 res_data[band] = hdulist[h].data
 
         for tid in tids:
@@ -82,7 +92,7 @@ def main(n_sample=10):
                 continue
             idx = idx[0]
 
-            for band in ['b', 'r', 'z']:
+            for band in ["b", "r", "z"]:
                 if band not in waves or band not in res_data:
                     continue
                 wave_arm = waves[band]
@@ -90,9 +100,8 @@ def main(n_sample=10):
                 sigma = resolution_to_sigma_kms(wave_arm, res_arm)
                 all_wave.append(wave_arm)
                 all_sigma.append(sigma)
- 
+
         hdulist.close()
- 
 
     print(f"  Extracted {len(all_sigma)} arm-level resolution curves")
 
@@ -105,8 +114,7 @@ def main(n_sample=10):
         good = np.isfinite(s)
         if np.sum(good) < 10:
             continue
-        sigma_grid[i] = np.interp(DESI_WAV, w[good], s[good],
-                                   left=np.nan, right=np.nan)
+        sigma_grid[i] = np.interp(DESI_WAV, w[good], s[good], left=np.nan, right=np.nan)
 
     # Compute statistics
     sigma_median = np.nanmedian(sigma_grid, axis=0)
@@ -133,27 +141,30 @@ def main(n_sample=10):
     fig, axes = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
 
     ax = axes[0]
-    ax.fill_between(DESI_WAV,
-                     sigma_kms_to_R(DESI_WAV, sigma_84),
-                     sigma_kms_to_R(DESI_WAV, sigma_16),
-                     alpha=0.3, color='C0', label='16-84th percentile')
-    ax.plot(DESI_WAV, R_median, 'C0-', lw=2, label='Median (actual)')
-    ax.plot(DESI_WAV, R_design, 'r--', lw=2, label='Design spec')
-    ax.set_ylabel('Resolving power R')
+    ax.fill_between(
+        DESI_WAV,
+        sigma_kms_to_R(DESI_WAV, sigma_84),
+        sigma_kms_to_R(DESI_WAV, sigma_16),
+        alpha=0.3,
+        color="C0",
+        label="16-84th percentile",
+    )
+    ax.plot(DESI_WAV, R_median, "C0-", lw=2, label="Median (actual)")
+    ax.plot(DESI_WAV, R_design, "r--", lw=2, label="Design spec")
+    ax.set_ylabel("Resolving power R")
     ax.legend()
-    ax.set_title('DESI LSF: Actual vs Design Specification')
-    ax.axvline(5930, color='gray', ls=':', alpha=0.5, label='B/R boundary')
-    ax.axvline(7470, color='gray', ls=':', alpha=0.5, label='R/Z boundary')
+    ax.set_title("DESI LSF: Actual vs Design Specification")
+    ax.axvline(5930, color="gray", ls=":", alpha=0.5, label="B/R boundary")
+    ax.axvline(7470, color="gray", ls=":", alpha=0.5, label="R/Z boundary")
 
     ax = axes[1]
-    ax.fill_between(DESI_WAV, sigma_16, sigma_84,
-                     alpha=0.3, color='C0')
-    ax.plot(DESI_WAV, sigma_median, 'C0-', lw=2, label='Median (actual)')
+    ax.fill_between(DESI_WAV, sigma_16, sigma_84, alpha=0.3, color="C0")
+    ax.plot(DESI_WAV, sigma_median, "C0-", lw=2, label="Median (actual)")
     sigma_design = C_KMS / (2.355 * R_design)
     sigma_design[R_design == 0] = np.nan
-    ax.plot(DESI_WAV, sigma_design, 'r--', lw=2, label='Design spec')
-    ax.set_xlabel('Wavelength [Å]')
-    ax.set_ylabel('σ_inst [km/s]')
+    ax.plot(DESI_WAV, sigma_design, "r--", lw=2, label="Design spec")
+    ax.set_xlabel("Wavelength [Å]")
+    ax.set_ylabel("σ_inst [km/s]")
     ax.legend()
 
     plt.tight_layout()
@@ -165,12 +176,13 @@ def main(n_sample=10):
     print("\nSummary at key wavelengths:")
     for lam in [3800, 4500, 5000, 5500, 6000, 6500, 7000, 7500, 8500]:
         idx = np.argmin(np.abs(DESI_WAV - lam))
-        print(f"  λ={lam}Å: R_actual={R_median[idx]:.0f}, "
-              f"R_design={R_design[idx]:.0f}, "
-              f"σ_actual={sigma_median[idx]:.1f} km/s, "
-              f"σ_design={sigma_design[idx]:.1f} km/s")
+        print(
+            f"  λ={lam}Å: R_actual={R_median[idx]:.0f}, "
+            f"R_design={R_design[idx]:.0f}, "
+            f"σ_actual={sigma_median[idx]:.1f} km/s, "
+            f"σ_design={sigma_design[idx]:.1f} km/s"
+        )
+
 
 if __name__ == "__main__":
     main()
-
-
