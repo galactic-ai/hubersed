@@ -1,27 +1,5 @@
-"""
-Normalizing-flow density (idea 4): model the MOCK latent density with a MAF, then
-score DESI by log p. Low log p = OOD/outlier. A calibrated, capacity-stable
-alternative to IsolationForest -> tests whether the outlier tail is reproducible
-across latent dims (10D/15D) where IsoForest was not.
-
-Pipeline per --tag:
-  1. train MAF on mock latents (S/N>3), StandardScaler fit on mock train split
-  2. VALIDATE it trained correctly:
-       - train/valid NLL curves converge, no overfit
-       - held-out mock NLL ~ train NLL
-       - sample from flow vs real mock latents: per-dim KS + C-2ST (~0.5 = good)
-  3. SCORE DESI log p; outliers = DESI below the 0.1% quantile of MOCK log p
-     (same convention as get_outliers) -> save global indices
-  4. overlap vs the IsoForest outliers for this tag
-
-Reuses spender.flow.NeuralDensityEstimator (MAF). Inherits the encoder-domain
-confound (mock latents from a DESI-trained encoder) -> a better/stabler DETECTOR,
-not a clean physics verdict.
-
-Usage (from bin/spender/noise/):  python flow_density.py --tag 10latent [--epochs 80]
-"""
-
 import argparse
+from pathlib import Path
 import numpy as np
 import torch
 import h5py
@@ -72,16 +50,25 @@ def build_flow(method, dim, hidden, n_transforms, num_bins=8, tail_bound=10.0):
     return Flow(CompositeTransform(ts), StandardNormal([dim]))
 
 
-def load_h5(name):
-    """Return (latents, target_ids). Catalogue key is TARGETID, never a position."""
-    with h5py.File(DATA / name, "r") as f:
+def load_h5(path):
+    """Return (latents, target_ids). Catalogue key is TARGETID, never a position.
+
+    Takes a full path: two different mock sets (noised_cue_meanzero vs
+    ..._wide) use the SAME filename in different directories, so resolving a
+    bare name against a single root silently picks the wrong one.
+    """
+    path = Path(path)
+    if not path.exists():
+        raise SystemExit(f"no latent file at {path}")
+    with h5py.File(path, "r") as f:
         lat = np.asarray(f["latents"], np.float32)
         if "target_ids" not in f:
             raise KeyError(
-                f"{name} has no 'target_ids' -- re-encode with the fixed get_latent_space.py"
+                f"{path.name} has no 'target_ids' -- re-encode with the fixed get_latent_space.py"
             )
         tid = np.asarray(f["target_ids"], np.int64)
-    return lat, tid
+        ckpt = f.attrs.get("checkpoint", "unknown")
+    return lat, tid, str(ckpt)
 
 
 def main():
@@ -100,17 +87,37 @@ def main():
         "--device", default="cpu"
     )  # flow is tiny; cpu avoids mps nflows gaps
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--desi", type=Path, required=True, help="DESI latent h5")
+    ap.add_argument("--mock", type=Path, required=True, help="mock latent h5")
+    ap.add_argument(
+        "--outdir",
+        type=Path,
+        default=None,
+        help="where to write flow / outliers / pdf (default: results/)",
+    )
+    ap.add_argument("-f", "--force", action="store_true",
+                    help="overwrite existing outputs")
     args = ap.parse_args()
     torch.manual_seed(args.seed)
     rng = np.random.default_rng(args.seed)
     dev = torch.device(args.device)
 
-    desi_file = f"spender_spec_{args.tag}_snr3.h5"
-    mock_file = f"prospector_noise_spec_cue_{args.tag}_snr3.h5"
-    mock, _ = load_h5(mock_file)
-    desi, desi_tid = load_h5(desi_file)
+    mock, _, mock_ckpt = load_h5(args.mock)
+    desi, desi_tid, desi_ckpt = load_h5(args.desi)
     D = mock.shape[1]
     print(f"tag={args.tag}  dim={D}  mock {mock.shape}  DESI {desi.shape}")
+    print(f"  mock {args.mock}  (encoder {mock_ckpt})")
+    print(f"  DESI {args.desi}  (encoder {desi_ckpt})")
+    if mock_ckpt != desi_ckpt and "unknown" not in (mock_ckpt, desi_ckpt):
+        raise SystemExit(
+            f"encoder mismatch: mock={mock_ckpt} vs DESI={desi_ckpt}.\n"
+            "Latents from different encoders are not comparable."
+        )
+
+    # NB not RES = RES / ... -- assigning a module global inside a function makes
+    # it local for the whole function, so the RHS raises UnboundLocalError.
+    out_dir = args.outdir or RES
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     # standardize on mock
     scaler = StandardScaler().fit(mock)
@@ -192,15 +199,22 @@ def main():
     with torch.no_grad():
         lp_mock = nde.log_prob(torch.from_numpy(mock_s).to(dev)).cpu().numpy()
         lp_desi = nde.log_prob(torch.from_numpy(desi_s).to(dev)).cpu().numpy()
-    thr = np.quantile(lp_mock, 0.001)
+    # Threshold from the HELD-OUT mocks: the flow was fit on tr_idx, so those points
+    # carry inflated log_p, which pushes the 0.1% quantile up and over-flags DESI.
+    # thr_all is reported alongside so the size of that bias is visible.
+    thr = float(np.quantile(lp_mock[val_idx], 0.001))
+    thr_all = float(np.quantile(lp_mock, 0.001))
     out_mask = lp_desi <= thr
     out_tid = desi_tid[out_mask]  # -> TARGETIDs
-    print(f"\nSCORE  threshold (0.1% mock log p) = {thr:.2f}")
+    print(f"\nSCORE  threshold (0.1% mock log p, held-out) = {thr:.2f}")
+    print(f"  (same quantile over ALL mocks incl. training = {thr_all:.2f})")
     print(f"  DESI outliers: {out_mask.sum()}  ({100 * out_mask.mean():.3f}%)")
+    print(f"  using thr_all instead would give: {int((lp_desi <= thr_all).sum())}")
 
-    # overlap vs IsoForest for this tag (by TARGETID)
+    # overlap vs IsoForest for this tag (by TARGETID). Stays at the results/ root --
+    # IsoForest outputs are not written per-outdir.
     iso_file = RES / (
-        f"desi_outliers_cue_snr3.pt"
+        "desi_outliers_cue_snr3.pt"
         if args.tag == "6latent"
         else f"desi_outliers_{args.tag}_snr3.pt"
     )
@@ -216,17 +230,37 @@ def main():
         )
 
     mtag = f"{args.method}_{args.tag}"
+    outputs = [
+        out_dir / f"desi_outliers_flow_{mtag}_snr3.pt",
+        out_dir / f"flow_{mtag}.pt",
+        out_dir / f"flow_{mtag}_validation.pdf",
+    ]
+    clash = [p for p in outputs if p.exists()]
+    if clash and not args.force:
+        raise SystemExit(
+            "refusing to overwrite:\n  "
+            + "\n  ".join(str(p) for p in clash)
+            + "\npass --force, or --outdir to write elsewhere"
+        )
+
     torch.save(
         {
             "outlier_target_ids": torch.tensor(out_tid),
-            "threshold": float(thr),
+            "threshold": thr,
+            "threshold_all_mocks": thr_all,
             "log_p_desi": lp_desi,
             "desi_target_ids": desi_tid,
             "tag": args.tag,
             "method": args.method,
             "c2st": float(c2st),
+            # which inputs produced this. Two mock sets share a filename
+            # (noised_cue_meanzero vs ..._wide), so the paths are the only record.
+            "mock_file": str(args.mock),
+            "desi_file": str(args.desi),
+            "encoder": mock_ckpt,
+            "seed": args.seed,
         },
-        RES / f"desi_outliers_flow_{mtag}_snr3.pt",
+        out_dir / f"desi_outliers_flow_{mtag}_snr3.pt",
     )
     torch.save(
         {
@@ -239,8 +273,11 @@ def main():
             "num_transforms": args.num_transforms,
             "num_bins": args.num_bins,
             "hidden": args.hidden,
+            "mock_file": str(args.mock),
+            "encoder": mock_ckpt,
+            "seed": args.seed,
         },
-        RES / f"flow_{mtag}.pt",
+        out_dir / f"flow_{mtag}.pt",
     )
 
     # ---- plots ----
@@ -266,10 +303,10 @@ def main():
     ax[2].legend()
     ax[2].set_title(f"{mtag}: DESI outliers {out_mask.sum()}")
     fig.tight_layout()
-    fig.savefig(RES / f"flow_{mtag}_validation.pdf", bbox_inches="tight")
-    print(
-        f"\nsaved -> flow_{mtag}.pt, desi_outliers_flow_{mtag}_snr3.pt, flow_{mtag}_validation.pdf"
-    )
+    fig.savefig(out_dir / f"flow_{mtag}_validation.pdf", bbox_inches="tight")
+    print(f"\nsaved -> {out_dir}/")
+    for p in outputs:
+        print(f"  {p.name}")
 
 
 if __name__ == "__main__":

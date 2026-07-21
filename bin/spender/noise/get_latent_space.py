@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+from pathlib import Path
 
 import h5py
 import torch
@@ -8,8 +9,28 @@ from spender import load_model
 
 
 def process_loader_h5(
-    model, loader, device, outfile, compute_snr=False, snr_min=0.0, meta=None
+    model,
+    loader,
+    device,
+    outfile,
+    encode_snr=False,
+    store_snr=False,
+    snr_min=0.0,
+    meta=None,
 ):
+    """Encode a spectrum set to latents, streaming to HDF5.
+
+    encode_snr : feed the S/N array to the encoder INSTEAD of the spectrum
+        (mode=noise, for training the noise model). False for OOD work.
+    store_snr : also save the per-pixel S/N arrays. Independent of encode_snr, so
+        `--mode spec --compute_snr` stores S/N while still encoding the spectrum.
+        These were one flag until 2026-07-21, and that combination silently
+        encoded S/N instead.
+
+    Every kept spectrum carries its TARGETID. Catalogue matching is by TARGETID
+    only: the loader is sorted(glob) = lexicographic, which is NOT the numeric
+    chunk*1024+row order, and conflating the two was the 2026-06-10 bug.
+    """
     f = h5py.File(outfile, "w")
     d = {}
     seen = 0
@@ -27,28 +48,30 @@ def process_loader_h5(
             B = spec.shape[0]
             seen += B
 
-            snr_cpu = spec * torch.sqrt(w) if (compute_snr or snr_min > 0) else None
-            if snr_min > 0:
-                med = torch.nanmedian(
-                    torch.where(w > 0, snr_cpu, torch.nan), dim=1
-                ).values
-                keep = med > snr_min
-            else:
-                keep = torch.ones(B, dtype=torch.bool)
+            need_snr = encode_snr or store_snr or snr_min > 0
+            snr_cpu = spec * torch.sqrt(w) if need_snr else None
+            # median per-pixel S/N over good pixels. Robust to emission lines
+            # (line-masked vs all-pixel agree to ~2%), so effectively continuum S/N.
+            med = (
+                torch.nanmedian(torch.where(w > 0, snr_cpu, torch.nan), dim=1).values
+                if snr_cpu is not None
+                else None
+            )
+            keep = (med > snr_min) if snr_min > 0 else torch.ones(B, dtype=torch.bool)
             if not keep.any():
                 if (i + 1) % 50 == 0:
                     print(f"Processed {seen} (kept {kept})", end="\r", flush=True)
                 continue
 
             spec_k = spec[keep].float().to(device)
-            to_encode = (snr_cpu[keep].float().to(device)) if compute_snr else spec_k
+            to_encode = (snr_cpu[keep].float().to(device)) if encode_snr else spec_k
             lat = model.encode(to_encode).cpu().numpy().astype("float32")
 
             zk = z[keep].numpy().astype("float32").reshape(-1)
             Ak = norm[keep].unsqueeze(1).numpy().astype("float32")
             tk = target_id[keep].numpy().astype("int64")
             spk = spec[keep].half().numpy()
-            snk = snr_cpu[keep].numpy().astype("float32") if compute_snr else None
+            snk = snr_cpu[keep].numpy().astype("float32") if store_snr else None
 
             if not d:  # lazily create datasets
                 nlat, L = lat.shape[1], spk.shape[1]
@@ -60,7 +83,11 @@ def process_loader_h5(
                 d["A"] = mk("A", (1,), "float32")
                 d["target_ids"] = mk("target_ids", (), "int64")
                 d["specs"] = mk("specs", (L,), "float16")
-                if compute_snr:
+                if med is not None:
+                    # one float per spectrum: makes "compare the S/N distribution of
+                    # retained mocks vs retained DESI" a read, not a re-encode.
+                    d["snr_med"] = mk("snr_med", (), "float32")
+                if store_snr:
                     d["snrs"] = mk("snrs", (L,), "float32")
 
             append("latents", lat)
@@ -69,7 +96,9 @@ def process_loader_h5(
             append("target_ids", tk)
             append("specs", spk)
 
-            if compute_snr:
+            if med is not None:
+                append("snr_med", med[keep].numpy().astype("float32"))
+            if store_snr:
                 append("snrs", snk)
             kept += lat.shape[0]
 
@@ -116,20 +145,33 @@ def main(args: argparse.Namespace) -> None:
         shuffle_instance=False,
     )
 
-    # Decide whether to compute SNRs; for 'noise' mode we compute them by default
-    compute_snr = args.compute_snr or (args.mode == "noise")
+    # Two independent things, deliberately not one flag:
+    #   encode_snr -- feed the S/N array to the encoder instead of the spectrum.
+    #                 Only for mode=noise (training the noise model).
+    #   store_snr  -- also save the per-pixel S/N arrays alongside the latents.
+    encode_snr = args.mode == "noise"
+    store_snr = args.compute_snr or encode_snr
 
     if not str(args.outfile).endswith(".h5"):
         raise RuntimeError(
             f"warning: output is HDF5 format; '{args.outfile}' does not end with .h5"
         )
-    meta = {"mode": args.mode, "zmax": args.zmax, "tag": tag, "snr_min": args.snr_min}
+    meta = {
+        "mode": args.mode,
+        "zmax": args.zmax,
+        "tag": tag,
+        "snr_min": args.snr_min,
+        # which encoder produced these latents. Without this the h5 only knows via
+        # its filename, and 6/10/15/cont latents are not interchangeable.
+        "checkpoint": Path(args.checkpoint).name,
+    }
     n = process_loader_h5(
         model,
         loader,
         device,
         args.outfile,
-        compute_snr=compute_snr,
+        encode_snr=encode_snr,
+        store_snr=store_snr,
         snr_min=args.snr_min,
         meta=meta,
     )
@@ -171,7 +213,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--mode",
         choices=("spec", "noise"),
-        default="noise",
+        default="spec",
         help="Mode to run: 'spec' for rest-frame spectra encoding, 'noise' for noise/SNR encoding",
     )
     parser.add_argument(

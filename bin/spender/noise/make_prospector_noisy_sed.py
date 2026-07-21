@@ -22,7 +22,7 @@ RESULTS_PATH = PATHS["RESULTS"]
 CUE = True
 TAG = "cueprospector1024" if CUE else "prospector1024"
 PUSH = False  # keep everything local for now; push to HF later
-LOCAL_TMP = DATA_PATH / "prospector_model"
+LOCAL_TMP = DATA_PATH / "prospector_model" / "noised_cue_meanzero_wide"
 UPLOAD_EVERY = 50
 
 # set random seeds
@@ -35,8 +35,8 @@ generator.manual_seed(42)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-flow_file = str(DATA_PATH / "desi_noise_spender_10latent_flow.pt")
-spender_file = str(DATA_PATH / "desi_noise_spender_10latent.pt")
+flow_file = str(DATA_PATH / "checkpoints" / "desi_noise_spender_10latent_flow.pt")
+spender_file = str(DATA_PATH / "checkpoints" / "desi_noise_spender_10latent.pt")
 prospector_sed_file = (
     DATA_PATH
     / "prospector_model"
