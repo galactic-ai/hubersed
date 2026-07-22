@@ -79,9 +79,9 @@ def main():
     ap.add_argument("--method", default="maf", choices=["maf", "nsf"])
     ap.add_argument("--epochs", type=int, default=80)
     ap.add_argument("--batch", type=int, default=4096)
-    ap.add_argument("--num_transforms", type=int, default=8)
-    ap.add_argument("--num_bins", type=int, default=8, help="spline bins (nsf only)")
-    ap.add_argument("--hidden", type=int, default=64)
+    ap.add_argument("--num_transforms", type=int, default=10)
+    ap.add_argument("--num_bins", type=int, default=10, help="spline bins (nsf only)")
+    ap.add_argument("--hidden", type=int, default=128, help="hidden layer size")
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument(
         "--device", default="cpu"
@@ -199,17 +199,20 @@ def main():
     with torch.no_grad():
         lp_mock = nde.log_prob(torch.from_numpy(mock_s).to(dev)).cpu().numpy()
         lp_desi = nde.log_prob(torch.from_numpy(desi_s).to(dev)).cpu().numpy()
-    # Threshold from the HELD-OUT mocks: the flow was fit on tr_idx, so those points
-    # carry inflated log_p, which pushes the 0.1% quantile up and over-flags DESI.
-    # thr_all is reported alongside so the size of that bias is visible.
-    thr = float(np.quantile(lp_mock[val_idx], 0.001))
-    thr_all = float(np.quantile(lp_mock, 0.001))
+    # Threshold = 0.1% quantile over ALL mocks (original behaviour). A held-out-only
+    # variant was tried 2026-07-21 and reverted: the train/valid NLL gaps are ~0
+    # (+0.006/+0.000/+0.073 for 6/10/15D), so there is no overfitting bias to
+    # correct, and the 0.1% quantile of the 10% held-out set is the ~15th order
+    # statistic vs the ~154th here -- much noisier. It moved the 6D count 805->675.
+    # Reported alongside so the difference stays visible.
+    thr = float(np.quantile(lp_mock, 0.001))
+    thr_heldout = float(np.quantile(lp_mock[val_idx], 0.001))
     out_mask = lp_desi <= thr
     out_tid = desi_tid[out_mask]  # -> TARGETIDs
-    print(f"\nSCORE  threshold (0.1% mock log p, held-out) = {thr:.2f}")
-    print(f"  (same quantile over ALL mocks incl. training = {thr_all:.2f})")
+    print(f"\nSCORE  threshold (0.1% mock log p) = {thr:.2f}")
+    print(f"  (held-out mocks only = {thr_heldout:.2f}, noisier -- see comment)")
     print(f"  DESI outliers: {out_mask.sum()}  ({100 * out_mask.mean():.3f}%)")
-    print(f"  using thr_all instead would give: {int((lp_desi <= thr_all).sum())}")
+    print(f"  using the held-out threshold would give: {int((lp_desi <= thr_heldout).sum())}")
 
     # overlap vs IsoForest for this tag (by TARGETID). Stays at the results/ root --
     # IsoForest outputs are not written per-outdir.
@@ -247,7 +250,7 @@ def main():
         {
             "outlier_target_ids": torch.tensor(out_tid),
             "threshold": thr,
-            "threshold_all_mocks": thr_all,
+            "threshold_heldout": thr_heldout,
             "log_p_desi": lp_desi,
             "desi_target_ids": desi_tid,
             "tag": args.tag,
