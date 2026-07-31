@@ -14,7 +14,11 @@ EM_LINES_A = load_lines()["emission"]["wave_vac"]
 
 # build obs
 def build_obs(
-    spec: np.ndarray, unc: np.ndarray, mask: np.ndarray, resolution: np.ndarray = None
+    spec: np.ndarray, 
+    unc: np.ndarray, 
+    mask: np.ndarray, 
+    resolution: np.ndarray | None = None, 
+    wavelength: np.ndarray = WAVE_OBS
 ) -> list:
     """
     Build the observation dictionary for the fit.
@@ -37,7 +41,7 @@ def build_obs(
         library resolution (no `data higher resolution than library` assert).
     """
     spec_obs = Spectrum(
-        wavelength=WAVE_OBS,
+        wavelength=wavelength,
         flux=spec,
         uncertainty=unc,
         mask=mask,
@@ -50,9 +54,9 @@ def build_obs(
 # build sps
 def build_sps():
     sps = FastStepBasis()
-    SSPBasis.spectral_resolution = property(
-        lambda self: np.zeros_like(self.ssp.wavelengths)
-    )
+    # SSPBasis.spectral_resolution = property(
+    #     lambda self: np.zeros_like(self.ssp.wavelengths)
+    # )
     return sps
 
 

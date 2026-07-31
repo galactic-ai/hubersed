@@ -18,6 +18,8 @@ from hubersed.prospector import parameter_file as P
 from hubersed.fitting.config import build_continuum_model, build_full_model, build_full_cue_model
 from hubersed.conversion import flambda_to_maggies, ivar_flambda_to_ivar_maggies
 from hubersed.paths import PATHS
+from hubersed.prospector.rebin import prep_spectrum, common_obs_edges
+
 
 DATA_PATH = PATHS["DATA"]
 RESULTS_PATH = PATHS["RESULTS"]
@@ -25,6 +27,9 @@ WAVE_OBS = P.WAVE_OBS
 CHUNK = 1024
 N_TOTAL = 254976
 Z_FLOOR = 0.01
+
+EDGES = common_obs_edges() 
+WAVE_C = (0.5 * (EDGES[1:] + EDGES[:-1])).astype(np.float32)   # coarse centers, for the checkpoint
 
 
 from scipy.optimize import minimize
@@ -113,6 +118,7 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
         return dict(gidx=gidx, status=f"load_fail:{type(e).__name__}")
     if redshift < Z_FLOOR:
         return dict(gidx=gidx, id=tid, z=redshift, status="below_zfloor")
+    
     spec_maggies = flambda_to_maggies(WAVE_OBS, spec)
     ivar_maggies = ivar_flambda_to_ivar_maggies(WAVE_OBS, ivar)
     sigma = 1 / np.sqrt(np.where(ivar_maggies > 0, ivar_maggies, np.inf))
@@ -120,17 +126,25 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
     if mask.sum() < 100:
         return dict(gidx=gidx, id=tid, z=redshift, status="too_masked")
 
+    # issue #15: degrade DESI -> MILES resolution, then rebin to the common grid
+    ivar_in = np.where(mask, ivar_maggies, 0.0)
+    wave_c, flux_c, ivar_c, good_c = prep_spectrum(
+        WAVE_OBS, spec_maggies, ivar_in, redshift, EDGES
+    )
+    sigma_c = 1 / np.sqrt(np.where(ivar_c > 0, ivar_c, np.inf))
+    if good_c.sum() < 100:
+        return dict(gidx=gidx, id=tid, z=redshift, status="too_masked")
+
     sps = _fsps()
     fw = sps.ssp.emline_wavelengths
     fopt = fw[(fw > 3600) & (fw < 9824)]
     mask_em = P.mask_spectral_lines(
-        WAVE_OBS, mask, redshift, halfwidth_kms=1500.0, line_waves=fopt
+        wave_c, fopt, redshift, halfwidth_kms=1500.0, line_waves=fopt
     )
-    res = (
-        _lsf_sigma_kms()
-    )  # DESI LSF -> model is smoothed to instrument resolution in the fit
-    obs_em = P.build_obs(spec=spec_maggies, unc=sigma, mask=mask_em, resolution=res)
-    obs_full = P.build_obs(spec=spec_maggies, unc=sigma, mask=mask, resolution=res)
+    
+    # data is now at MILES resolution -> no LSF forward-modeling (resolution=None)
+    obs_em   = P.build_obs(spec=flux_c, unc=sigma_c, mask=mask_em, resolution=None, wavelength=wave_c)
+    obs_full = P.build_obs(spec=flux_c, unc=sigma_c, mask=good_c,  resolution=None, wavelength=wave_c)
 
     # continuum MAP (seeds logmass/logzsol/sigma_smooth for the full model)
     cmodel, ctemplate = build_continuum_model(redshift)
@@ -298,7 +312,7 @@ def main():
         with open(full_pkl, "wb") as f:
             pickle.dump(
                 {
-                    "wave": np.asarray(WAVE_OBS, dtype=np.float32),
+                    "wave": np.asarray(WAVE_C, dtype=np.float32),
                     "use_cue": use_cue,
                     "rich": rich,
                     "results": out,
