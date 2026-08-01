@@ -24,17 +24,7 @@ legend.fontsize     : 9
 # or override via the LaTeX preamble below.
 mathtext.fontset    : cm
 
-# IMPORTANT: copy any font-related bits from your LaTeX preamble here.
-# Example 1 (plain AASTeX, Computer Modern):
-text.latex.preamble :
-    \usepackage{amsmath}
-    \usepackage{amssymb}
-
-# If in your .tex you instead do e.g.
-#   \usepackage{newtxtext,newtxmath}
-# then ALSO add that here:
-#    \usepackage{newtxtext,newtxmath}
-
+text.latex.preamble : \usepackage{amsmath}\usepackage{amssymb}
 
 ##### Axes #####
 axes.linewidth                  : 0.8

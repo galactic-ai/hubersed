@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def compute_logssfr(model, theta, to=1e8):
     """
     Compute the log10 specific star formation rate (sSFR) averaged over the last `to` years.
@@ -26,7 +27,7 @@ def compute_logssfr(model, theta, to=1e8):
     model.set_parameters(theta)
 
     # in years
-    agebins = 10 ** model.params['agebins']
+    agebins = 10 ** model.params["agebins"]
     dt = np.diff(agebins, axis=1)[:, 0]
 
     if "mass" in model.params:
@@ -38,10 +39,10 @@ def compute_logssfr(model, theta, to=1e8):
 
     # in case for some reason it goes to log space
     if np.any(mass_per_bin < 0):
-        mass_per_bin = 10 ** mass_per_bin
-    
+        mass_per_bin = 10**mass_per_bin
+
     M_formed = np.sum(mass_per_bin)
-    R = 0.4 # return fraction for the IMF used
+    R = 0.4  # return fraction for the IMF used
     M_current = M_formed * (1 - R)
 
     # Recent SFR averaged over last 100 Myr

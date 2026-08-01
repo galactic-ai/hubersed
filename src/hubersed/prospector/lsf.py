@@ -15,14 +15,15 @@ RESULTS_PATH = PATHS["RESULTS"]
 C_KMS = 299792.458
 DESI_BASE_URL = "https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/"
 DESI_WAV = np.linspace(3600.0, 9824.0, 7781, dtype=np.float64)
-ZPIX_FILE = DESI_BASE_URL + 'zcatalog/v1/zpix-sv3-bright.fits'
+ZPIX_FILE = DESI_BASE_URL + "zcatalog/v1/zpix-sv3-bright.fits"
+
 
 # ──────────────────────────────────────────────
 # Step 1: Load pkl and sample target_ids
 # ──────────────────────────────────────────────
 def sample_target_ids(pkl_file, n_sample=100, seed=42):
     """Load a batch pkl file and return N random target_ids."""
-    with open(pkl_file, 'rb') as f:
+    with open(pkl_file, "rb") as f:
         batch = pickle.load(f)
     # batch = [spec, w, z, target_id, norm, zerr]
     target_ids = batch[3].numpy()
@@ -40,8 +41,8 @@ def lookup_healpix(target_ids, zpix_file=ZPIX_FILE):
     Returns dict: {target_id: healpix}
     """
     zpix = aTable.Table.read(zpix_file)
-    zpix_tids = zpix['TARGETID']
-    zpix_hpix = zpix['HEALPIX']
+    zpix_tids = zpix["TARGETID"]
+    zpix_hpix = zpix["HEALPIX"]
 
     tid_to_hpix = {}
     for tid in target_ids:
@@ -59,8 +60,9 @@ def lookup_healpix(target_ids, zpix_file=ZPIX_FILE):
 def coadd_url(hpix, survey="sv3", program="bright"):
     """Construct the URL for a DESI coadd FITS file."""
     filename = f"coadd-{survey}-{program}-{hpix}.fits"
-    return (f"{DESI_BASE_URL}/healpix/{survey}/{program}/"
-            f"{str(hpix)[:-2]}/{hpix}/{filename}")
+    return (
+        f"{DESI_BASE_URL}/healpix/{survey}/{program}/{str(hpix)[:-2]}/{hpix}/{filename}"
+    )
 
 
 # ──────────────────────────────────────────────
@@ -73,7 +75,7 @@ def extract_resolution(coadd_file, target_id):
         where res_matrix is shape (ndiag, nwave_arm)
     """
     hdulist = fits.open(coadd_file, cache=True)
-    all_tids = hdulist[1].data['TARGETID']
+    all_tids = hdulist[1].data["TARGETID"]
     idx = np.where(all_tids == target_id)[0]
     if len(idx) == 0:
         raise ValueError(f"TARGETID {target_id} not found in {coadd_file}")
@@ -82,11 +84,11 @@ def extract_resolution(coadd_file, target_id):
     result = {}
     waves = {}
     for h in range(2, len(hdulist)):
-        extname = hdulist[h].header['EXTNAME']
-        band = extname.split('_')[0].lower()
-        if 'WAVELENGTH' in extname:
+        extname = hdulist[h].header["EXTNAME"]
+        band = extname.split("_")[0].lower()
+        if "WAVELENGTH" in extname:
             waves[band] = hdulist[h].data
-        if 'RESOLUTION' in extname:
+        if "RESOLUTION" in extname:
             result[band] = hdulist[h].data[idx]  # (ndiag, nwave_arm)
 
     hdulist.close()
@@ -136,26 +138,29 @@ def resolution_to_sigma_kms(wave, res_banded):
 
     return sigma_kms
 
+
 def sigma_kms_to_R(wave, sigma_kms):
     """Convert sigma in km/s to resolving power R = c / (2.355 * sigma)."""
     return C_KMS / (2.355 * sigma_kms)
+
 
 def desi_resolution(wave):
     """Calibrated DESI R(lambda) from actual resolution matrices."""
     print("Loading calibrated DESI resolution from resolution matrices...")
     cal = np.load(RESULTS_PATH / "desi_lsf_calibration.npz")
-    R_median = cal['R_median']
-    wave_cal = cal['wave']
+    R_median = cal["R_median"]
+    wave_cal = cal["wave"]
     return np.interp(wave, wave_cal, R_median)
+
 
 def build_desi_resolution_matrix(wave=DESI_WAV):
     """Build sparse resolution matrix from DESI R(lambda) curve.
-    
+
     Parameters
     ----------
     wave : 1D array
         Wavelength grid in Angstroms.
-    
+
     Returns
     -------
     scipy.sparse.csr_matrix
@@ -163,7 +168,7 @@ def build_desi_resolution_matrix(wave=DESI_WAV):
     """
     c_kms = 299792.458
     R = desi_resolution(wave)
-    
+
     # R(lambda) -> sigma in km/s -> sigma in pixels
     sigma_kms = c_kms / (2.355 * R)
     dwave = np.gradient(wave)
@@ -178,12 +183,12 @@ def build_desi_resolution_matrix(wave=DESI_WAV):
         hw = int(4 * sigma_pix[i]) + 1
         lo = max(0, i - hw)
         hi = min(n, i + hw + 1)
-        
+
         # Gaussian kernel centered on pixel i
         j = np.arange(lo, hi)
-        kernel = np.exp(-0.5 * ((j - i) / sigma_pix[i])**2)
+        kernel = np.exp(-0.5 * ((j - i) / sigma_pix[i]) ** 2)
         kernel /= kernel.sum()
-        
+
         mat[i, lo:hi] = kernel
 
     return csr_matrix(mat)

@@ -1,5 +1,6 @@
 import torch
 
+
 def normalize_spectra(
     flambda: torch.Tensor,
     redshifts: torch.Tensor,
@@ -80,6 +81,7 @@ def normalize_spectra(
 
     return flambda, norms, good_mask
 
+
 def compute_ivar(flux, snr):
     """Compute inverse variance from flux and SNR.
     sigma = flux / snr
@@ -99,5 +101,5 @@ def compute_ivar(flux, snr):
     """
 
     sigma = flux / snr
-    ivar = 1.0 / (sigma ** 2)
+    ivar = 1.0 / (sigma**2)
     return ivar

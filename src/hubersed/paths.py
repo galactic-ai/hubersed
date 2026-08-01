@@ -1,11 +1,12 @@
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Union
+from typing import Union
+from collections.abc import Iterable
 import os
 
 PathLike = Union[str, Path]
 
 
-def get_paths(base: Optional[PathLike] = None) -> Dict[str, Path]:
+def get_paths(base: PathLike | None = None) -> dict[str, Path]:
     """
     Return a dictionary of useful project paths (as Path objects).
     If base is None the function will assume the repository/project root is
@@ -31,7 +32,7 @@ def get_paths(base: Optional[PathLike] = None) -> Dict[str, Path]:
     }
 
 
-def ensure_dirs(paths: Iterable[PathLike], *, create: bool = True) -> Dict[str, bool]:
+def ensure_dirs(paths: Iterable[PathLike], *, create: bool = True) -> dict[str, bool]:
     """
     Ensure each path in `paths` exists and is writable.
     - paths: iterable of Path or string paths (or mapping values).
