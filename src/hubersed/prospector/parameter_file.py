@@ -52,11 +52,11 @@ def build_obs(
 
 
 # build sps
-def build_sps():
-    sps = FastStepBasis()
-    # SSPBasis.spectral_resolution = property(
-    #     lambda self: np.zeros_like(self.ssp.wavelengths)
-    # )
+def build_sps(zcontinuous=1):
+    sps = FastStepBasis(zcontinuous=zcontinuous)
+    SSPBasis.spectral_resolution = property(
+        lambda self: np.zeros_like(self.ssp.wavelengths)
+    )
     return sps
 
 
