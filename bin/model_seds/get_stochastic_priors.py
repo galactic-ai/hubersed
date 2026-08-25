@@ -87,8 +87,8 @@ def main(argv=None):
     # q_pah uniform 0.5 to 7.0
     q_pahs = sample_uniform(0.5, 7.0, size=n, rng=rng)
 
-    # sigma_gas uniform 20 to 250
-    sigma_gass = sample_uniform(20, 250, size=n, rng=rng)
+    # sigma_gas uniform 10 to 250
+    sigma_gass = sample_uniform(10, 250, size=n, rng=rng)
 
     # gas phase metallicity (O/H); Cue grid allows -2.2 (Byler/FSPS used -2.0)
     gas_metallicities = sample_uniform(-2.2 if args.cue else -2.0, 0.5, size=n, rng=rng)
