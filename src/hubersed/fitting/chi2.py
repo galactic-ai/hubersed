@@ -126,25 +126,16 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
     if mask.sum() < 100:
         return dict(gidx=gidx, id=tid, z=redshift, status="too_masked")
 
-    # issue #15: degrade DESI -> MILES resolution, then rebin to the common grid
-    ivar_in = np.where(mask, ivar_maggies, 0.0)
-    wave_c, flux_c, ivar_c, good_c = prep_spectrum(
-        WAVE_OBS, spec_maggies, ivar_in, redshift, EDGES
-    )
-    sigma_c = 1 / np.sqrt(np.where(ivar_c > 0, ivar_c, np.inf))
-    if good_c.sum() < 100:
-        return dict(gidx=gidx, id=tid, z=redshift, status="too_masked")
-
     sps = _fsps()
     fw = sps.ssp.emline_wavelengths
     fopt = fw[(fw > 3600) & (fw < 9824)]
     mask_em = P.mask_spectral_lines(
-        wave_c, fopt, redshift, halfwidth_kms=1500.0, line_waves=fopt
+        WAVE_OBS, mask, redshift, halfwidth_kms=1500.0, line_waves=fopt
     )
+    res = (_lsf_sigma_kms())
     
-    # data is now at MILES resolution -> no LSF forward-modeling (resolution=None)
-    obs_em   = P.build_obs(spec=flux_c, unc=sigma_c, mask=mask_em, resolution=None, wavelength=wave_c)
-    obs_full = P.build_obs(spec=flux_c, unc=sigma_c, mask=good_c,  resolution=None, wavelength=wave_c)
+    obs_em   = P.build_obs(spec=spec_maggies, unc=sigma, mask=mask_em, resolution=res, wavelength=WAVE_OBS)
+    obs_full = P.build_obs(spec=spec_maggies, unc=sigma, mask=mask,  resolution=res, wavelength=WAVE_OBS)
 
     # continuum MAP (seeds logmass/logzsol/sigma_smooth for the full model)
     cmodel, ctemplate = build_continuum_model(redshift)
