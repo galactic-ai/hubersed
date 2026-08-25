@@ -1,26 +1,3 @@
-"""emcee posterior sampling, seeded from a MAP solution.
-
-Was bin/prospector/fit_single.py.
-
-DROPPED in the move (recover from 77b3e31:bin/prospector/fit_single.py):
-  - fit_galaxy()    -- called P.get_outlier_info(outlier_idx): POSITIONAL, the
-    2026-06-10 bug, and get_outlier_info no longer exists. Its only caller was
-    run_fits.py (dead SLURM arm). Use chi2.tids_to_indices + chi2.load_by_index.
-  - run_optimizer() -- duplicated chi2._map_optimize. Two optimizers with different
-    defaults is what produced the "free-SFH ceiling" retraction (unequal
-    NSEEDS/MAXFEV between arms).
-  - compute_sfh()   -- zero callers in bin/, src/, tmp/, nb/.
-
-⚠️ UNVERIFIED: this code's acceptance fraction collapsed to 0.00-0.01 in earlier
-runs. The log blames DE moves + over-dispersed init. Two better candidates, neither
-tested: (1) emcee calls lnprobfn(nested=False) -> prospect's
-MultiVariateNormal.__call__ has no override, so it hits Prior.__call__ =
-scipy.stats.norm.logpdf(x, scale=Sigma) -> 9x9 NaN matrix (priors.py:269).
-WorkingMVN in tmp/alpha_tilt_map.py is the workaround and is NOT wired in here.
-(2) skip_initial_state_check was suppressing emcee's own degenerate-walker guard.
-Check sampler.acceptance_fraction before trusting any chain from this.
-"""
-
 import emcee
 import numpy as np
 
