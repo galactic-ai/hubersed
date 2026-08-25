@@ -187,7 +187,10 @@ def build_parset_for_index(i):
     # builds the MVN(0, Sigma_ACF) prior object on logsfr_ratios
     t = adjust_stochastic_params(t)
 
-    ratios = sample_logsfr_ratios(t, i, _S["seed"])
+    if "logsfr_ratios" in priors_dict:
+        ratios = np.asarray(priors_dict["logsfr_ratios"][i], dtype=float)
+    else:
+        ratios = sample_logsfr_ratios(t, i, _S["seed"])
     t["logsfr_ratios"]["init"] = ratios
     return t, ratios
 
