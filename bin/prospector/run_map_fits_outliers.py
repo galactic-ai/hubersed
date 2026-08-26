@@ -1,4 +1,5 @@
 import argparse
+import multiprocessing as mp
 import os
 import pickle
 import sys
@@ -606,7 +607,10 @@ def main(argv=None):
 
     if args.workers > 1:
         results = {}
-        with ProcessPoolExecutor(max_workers=args.workers) as ex:
+        # fork copies only the calling thread; torch/BLAS mutexes held by the
+        # parent's other threads stay locked forever in the child -> futex deadlock.
+        with ProcessPoolExecutor(max_workers=args.workers,
+                                 mp_context=mp.get_context("spawn")) as ex:
             futs = {ex.submit(_worker, t, args.n_seeds, args.maxfev, str(out),
                               seeds.get(t), args.freeze_hypers, fixed_for(t),
                               args.warm_from, args.fix_oii, args.wave_file,
