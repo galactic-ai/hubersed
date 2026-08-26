@@ -64,11 +64,6 @@ def vacuum_lines(sps):
         out[k] = float(fw[j])
     return out
 
-
-def zero_library():
-    SSPBasis.spectral_resolution = property(lambda self: np.zeros_like(self.ssp.wavelengths))
-
-
 def safe_lnprior(model, theta):
     try:
         v = float(np.squeeze(model.prior_product(np.asarray(theta, float), nested=False)))
@@ -236,54 +231,20 @@ def plot_sfh(tid, sfh, out):
 
 _SPS = {}
 
-# cuejax/data/cue_emlines_info.dat ships the [O II] doublet with a splitting of
-# 3.0008 A against the true 2.7907 A (+7.53%, +16.9 km/s). See the 2026-08-15
-# entries in knowledge/outlier_investigation_log.md. Stage 1 (fixed theta) showed
-# this alone costs 42% of the [O II] window chi2, 20/20 galaxies, with every other
-# line bitwise unchanged.
-# targets are lambda_true * (1 + 2.1e-5/(1+z)) so that eline_delta_zred = -2.1e-5
-# lands them on the truth -- NOT lambda_true itself, which would leave [O II]
-# offset by -6.1 km/s relative to every other line. See the 2026-08-15 log entry.
-OII_FIX = [(3727.1180, 3727.1655), (3730.1188, 3729.9562)]
 
-
-def patch_oii(sps):
-    w = np.asarray(sps.emline_wavelengths, float)
-    for bad, good in OII_FIX:
-        j = np.where(np.abs(w - bad) < 1e-3)[0]
-        assert j.size == 1, f"expected one entry near {bad}, found {j.size}"
-        w[j[0]] = good
-    sps.emline_wavelengths = w
-    return sps
-
-
-def load_waves(path, sps):
-    """Replace the whole Cue wavelength array from a corrected .dat file."""
-    w = np.genfromtxt(path, dtype=[("wave", "f8"), ("name", "<U40")], delimiter=",")["wave"]
-    old = np.asarray(sps.emline_wavelengths, float)
-    assert w.size == old.size, f"{path}: {w.size} lines vs {old.size} expected"
-    dv = (w - old) / old * C_KMS
-    sps.emline_wavelengths = w
-    return float(np.median(dv)), float(np.abs(dv).max())
-
-
-def get_sps(fix_oii=False, wave_file=None, zcontinuous=1):
-    # the cache is per-process; if it is already built, a wavelength override would be
-    # SILENTLY ignored -- fail loudly instead.
-    assert not (_SPS and (wave_file or fix_oii or zcontinuous != 1)), \
-        "get_sps() cache already built; wave_file/fix_oii/zcontinuous would be ignored"
+def get_sps(zcontinuous=1):
+    # the cache is per-process; if it is already built with a DIFFERENT config, an
+    # override would be SILENTLY ignored -- fail loudly instead. Reuse with the same
+    # config is fine and is the normal path: ProcessPoolExecutor hands each worker
+    # many targets, so every task after the first sees a populated cache.
+    key = int(zcontinuous)
+    assert not (_SPS and _SPS.get("key") != key), \
+        f"get_sps() cached with {_SPS.get('key')}; {key} would be ignored"
     if not _SPS:
-        zero_library()
+        _SPS["key"] = key
         _SPS["sps"] = build_sps(zcontinuous=zcontinuous)
         _SPS["zcontinuous"] = zcontinuous
         _SPS["cue"] = build_cue_sps()
-        if wave_file:
-            med, mx = load_waves(wave_file, _SPS["cue"])
-            print(f"  wavelengths from {wave_file}: median {med:+.3f} km/s, "
-                  f"max |shift| {mx:.2f} km/s", flush=True)
-        elif fix_oii:
-            patch_oii(_SPS["cue"])
-            print("  [O II] wavelengths corrected", flush=True)
         fw = _SPS["sps"].ssp.emline_wavelengths
         _SPS["lines"] = vacuum_lines(_SPS["sps"])
         _SPS["line_waves"] = fw[(fw > 3600) & (fw < 9824)]
@@ -291,9 +252,6 @@ def get_sps(fix_oii=False, wave_file=None, zcontinuous=1):
 
 
 FROZEN_HYPERS = {"sigma_reg": 1.5, "sigma_dyn": 0.1, "tau_eq": 2.5, "tau_dyn": 0.025}
-# NOTE: no source is recorded for these four values. outlier_investigation_log.md:493 calls
-# them "moderate FIXED hypers". Everything in knowledge/stochastic_prior_young_bin_clamp.md
-# follows from them, so their provenance is an open question.
 
 FLAT_SFH_RANGE = 5.0   # dex, symmetric
 
@@ -449,9 +407,6 @@ def fit_one(tid, sps, cue_sps, lines, line_waves, n_seeds, maxfev, out, seeds=No
     lr = line_ratios(WAVE_OBS, flux, sp, z, mask, lines)
     sfh = sfh_from_theta(model, best.x)
 
-    plot_fit(tid, z, WAVE_OBS, flux, unc, mask, sp, lines, stats["chi2_red"], out)
-    plot_sfh(tid, sfh, out)
-
     rec = {
         "target_id": tid, "z": float(z), "status": "ok", "wave": WAVE_OBS,
         "flux": flux, "unc": unc, "mask": mask, "line_pix": line_pix, "tight_pix": tight,
@@ -479,21 +434,25 @@ def fit_one(tid, sps, cue_sps, lines, line_waves, n_seeds, maxfev, out, seeds=No
                          if k in model.params},
         "fixed": dict(fixed or {}),
         "sfh_prior": f"tophat+/-{FLAT_SFH_RANGE}" if flat_sfh else "gp_stochastic",
-        "oii_fix": None if cont_only else bool(
-            np.min(np.abs(np.asarray(cue_sps.emline_wavelengths, float)
-                          - OII_FIX[1][1])) < 1e-3),
         "eline_waves": None if cont_only else
             np.asarray(cue_sps.emline_wavelengths, float).copy(),
     }
+    # Write the record BEFORE plotting.
     with open(out / f"{tid}.pkl", "wb") as f:
         pickle.dump(rec, f)
+
+    try:
+        plot_fit(tid, z, WAVE_OBS, flux, unc, mask, sp, lines, stats["chi2_red"], out)
+        plot_sfh(tid, sfh, out)
+    except Exception as e:
+        print(f"    {tid}: plotting failed, fit kept -- {type(e).__name__}: {e}", flush=True)
     return rec
 
 
-def _worker(tid, n_seeds, maxfev, outdir, seeds, frozen, fixed, warm_from, fix_oii=False,
-            wave_file=None, flat_sfh=False, cont_only=False, error_floor=0.0,
+def _worker(tid, n_seeds, maxfev, outdir, seeds, frozen, fixed, warm_from,
+            flat_sfh=False, cont_only=False, error_floor=0.0,
             method="Powell", zcontinuous=1):
-    S = get_sps(fix_oii=fix_oii, wave_file=wave_file, zcontinuous=zcontinuous)
+    S = get_sps(zcontinuous=zcontinuous)
     return fit_one(tid, S["sps"], S["cue"], S["lines"], S["line_waves"],
                    n_seeds, maxfev, Path(outdir), seeds=seeds, frozen=frozen, fixed=fixed,
                    warm_from=warm_from, flat_sfh=flat_sfh, cont_only=cont_only,
@@ -509,12 +468,6 @@ def main(argv=None):
     p.add_argument("-m", "--maxfev", type=int, default=120_000)
     p.add_argument("--limit", type=int, default=None)
     p.add_argument("--skip-existing", action="store_true")
-    p.add_argument("--fix-oii", action="store_true",
-                   help="correct the [O II] 3726/3729 wavelengths in cue_emlines_info.dat")
-    p.add_argument("--wave-file", default=None,
-                   help="replace the whole Cue wavelength array from this .dat "
-                        "(e.g. src/hubersed/data/cue_emlines_info_corrected.dat); "
-                        "pair with --fix eline_delta_zred=0")
     p.add_argument("-w", "--workers", type=int, default=1)
     p.add_argument("--freeze-hypers", action="store_true",
                    help="fix the 5 PSD hyperparameters (Run A)")
@@ -613,7 +566,7 @@ def main(argv=None):
                                  mp_context=mp.get_context("spawn")) as ex:
             futs = {ex.submit(_worker, t, args.n_seeds, args.maxfev, str(out),
                               seeds.get(t), args.freeze_hypers, fixed_for(t),
-                              args.warm_from, args.fix_oii, args.wave_file,
+                              args.warm_from,
                               flat_sfh=args.flat_sfh_prior,
                               cont_only=args.continuum_only,
                               error_floor=args.error_floor,
@@ -624,12 +577,12 @@ def main(argv=None):
                 try:
                     results[t] = fu.result()
                 except Exception as e:
-                    results[t] = {"target_id": t, "status": f"error:{type(e).__name__}"}
+                    results[t] = {"target_id": t,
+                                  "status": f"error:{type(e).__name__}: {e}"}
                 print(f"[{n}/{len(todo)}] {t} done: {results[t].get('status')}", flush=True)
         recs = [results[t] for t in todo if t in results]
     else:
-        S = get_sps(fix_oii=args.fix_oii, wave_file=args.wave_file,
-                    zcontinuous=args.zcontinuous)
+        S = get_sps(zcontinuous=args.zcontinuous)
         recs = []
         for i, tid in enumerate(todo, 1):
             print(f"[{i}/{len(todo)}] {tid}", flush=True)
