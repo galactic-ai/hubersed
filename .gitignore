@@ -17,3 +17,5 @@ wheels/
 .ruff_cache/
 .ipynb_checkpoints/
 .DS_Store
+!src/hubersed/**/data/
+!src/hubersed/**/data/**
