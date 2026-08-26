@@ -176,13 +176,6 @@ def build_full_model(continuum_template, theta_best_cont, cont_model, redshift):
         "prior": TopHat(mini=10.0, maxi=250.0),
     }
 
-    # add eline_delta_zred since DESI is on Earth and there is a systematic offset with the line list
-    full_template["eline_delta_zred"] = {
-        "N": 1,
-        "isfree": False,
-        "init": -2.1e-5,
-        "units": "km/s",
-    }
 
     full_template = adjust_stochastic_params(full_template)
     return HyperSpecModel(full_template), full_template
@@ -243,14 +236,6 @@ def build_full_cue_model(continuum_template, theta_best_cont, cont_model, redshi
     #     "prior": TopHat(mini=46.0, maxi=52.0),
     #     "units": "log10(ionizing photons / s)",
     # }
-
-    # add eline_delta_zred since DESI is on Earth and there is a systematic offset with the line list
-    full_template["eline_delta_zred"] = {
-        "N": 1,
-        "isfree": False,
-        "init": -2.1e-5,
-        "units": "z offset",
-    }
 
     full_template = adjust_stochastic_params(full_template)
     return HyperSpecModel(full_template), full_template
