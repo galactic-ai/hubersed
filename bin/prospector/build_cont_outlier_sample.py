@@ -1,4 +1,5 @@
 import argparse
+import csv
 from pathlib import Path
 
 import numpy as np
@@ -27,6 +28,19 @@ def flow_scores(tag, flow_dir):
             set(int(x) for x in d["outlier_target_ids"]), float(d["threshold"]))
 
 
+def read_screen(path, value_col=None):
+    """(set of flagged TARGETIDs, {TARGETID: value_col}) from a contam_screens.py CSV.
+
+    Deliberately not tolerant of a missing file: silently skipping a contamination screen
+    is how 7 known star contaminants got back into the sample during planning.
+    """
+    with open(path, newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    flag = {int(r["target_id"]) for r in rows if r["flagged"] == "True"}
+    vals = {int(r["target_id"]): float(r[value_col]) for r in rows} if value_col else {}
+    return flag, vals
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -41,7 +55,15 @@ def main(argv=None):
     p.add_argument("--shred-kpc", type=float, default=10.0,
                    help="proper-kpc radius for the shred neighbour search (z<0.02 only)")
     p.add_argument("--keep-flagged", action="store_true",
-                   help="keep zbad/shred contaminants instead of dropping them")
+                   help="keep zbad/shred/z/gaia/sga contaminants instead of dropping them")
+    p.add_argument("--zmin", type=float, default=0.01,
+                   help="drop very nearby resolved systems below this redshift")
+    p.add_argument("--zmax", type=float, default=0.6,
+                   help="drop the high-z end above this redshift")
+    p.add_argument("--gaia-list", default=str(PATHS["RESULTS"] / "gaia_star_screen.csv"),
+                   help="CSV from contam_screens.py; must exist")
+    p.add_argument("--sga-list", default=str(PATHS["RESULTS"] / "sga_proximity.csv"),
+                   help="CSV from contam_screens.py; must exist")
     args = p.parse_args(argv)
 
     lp, pct, out, thr = {}, {}, {}, {}
@@ -79,7 +101,20 @@ def main(argv=None):
             shred[t] = False
     print(f"  flagged zbad={sum(zbad.values())}  shred={sum(shred.values())}")
 
-    keep = sel if args.keep_flagged else [t for t in sel if not zbad[t] and not shred[t]]
+    # external contamination screens (bin/prospector/contam_screens.py)
+    gaia_flag, _ = read_screen(args.gaia_list)
+    sga_flag, sga_r = read_screen(args.sga_list, "r_ell")
+    zcut = {t: not (args.zmin <= zvac[iv[t]] <= args.zmax) for t in sel}
+    n_z, n_gaia, n_sga = (sum(zcut.values()),
+                          sum(t in gaia_flag for t in sel),
+                          sum(t in sga_flag for t in sel))
+    print(f"  flagged z<{args.zmin} or z>{args.zmax}={n_z}  gaia={n_gaia}  sga={n_sga}")
+
+    keep = sel if args.keep_flagged else [
+        t for t in sel
+        if not zbad[t] and not shred[t] and not zcut[t]
+        and t not in gaia_flag and t not in sga_flag
+    ]
     print(f"  kept after contaminant cut: {len(keep)}")
 
     score = {t: 0.5 * (pct[TAGS[0]][t] + pct[TAGS[1]][t]) for t in keep}
@@ -106,11 +141,18 @@ def main(argv=None):
         pct_cont15=np.array([pct[TAGS[1]][t] for t in top]),
         zbad=np.array([zbad[t] for t in top]),
         shred=np.array([shred[t] for t in top]),
+        gaia_flagged=np.array([t in gaia_flag for t in top]),
+        sga_flagged=np.array([t in sga_flag for t in top]),
+        sga_r_ell=np.array([sga_r.get(t, np.nan) for t in top]),
         provenance=np.array(
             f"cont10latent AND cont15latent outliers, corrected-[OII]3729 run; "
             f"VAC-matched; ranked by mean DESI rank-percentile (NOT mock-CDF); "
             f"contaminants {'kept' if args.keep_flagged else 'dropped'} "
-            f"(zbad={sum(zbad.values())}, shred={sum(shred.values())})"),
+            f"(zbad={sum(zbad.values())}, shred={sum(shred.values())}, "
+            f"z outside [{args.zmin}, {args.zmax}]={n_z}, gaia={n_gaia}, sga={n_sga}); "
+            f"screens {Path(args.gaia_list).name} + {Path(args.sga_list).name} "
+            f"(SGA-2020 stands in for SGA-2025); {len(keep)} survivors before the top-"
+            f"{args.n_targets} cut"),
     )
     print(f"\nwrote {outp}  n={len(top)}")
     print(f"{'TARGETID':>18} {'z':>7} {'logM':>6} {'sigma':>7} {'pct10':>8} {'pct15':>8}")
