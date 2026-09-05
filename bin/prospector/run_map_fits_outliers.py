@@ -313,7 +313,7 @@ def warm_theta(model, path, z, th0):
 
 def fit_one(tid, sps, cue_sps, lines, line_waves, n_seeds, maxfev, out, seeds=None,
             frozen=False, fixed=None, warm_from=None, flat_sfh=False, cont_only=False,
-            error_floor=0.0, method="Powell", zcontinuous=1):
+            error_floor=0.0, method="Powell", zcontinuous=1, spectra_npz=None):
     """cont_only: fit build_continuum_model on line-masked pixels -- 15 free parameters
     (logzsol, dust2, logmass, 9x logsfr_ratios, dust_ratio, dust_index, sigma_smooth),
     no Cue nebular, plain FSPS sps.
@@ -329,9 +329,22 @@ def fit_one(tid, sps, cue_sps, lines, line_waves, n_seeds, maxfev, out, seeds=No
     LogUniform floors stop it, which is why sigma_reg sits at exactly 0.1 in 10 of the
     20 emline_map_fits and sigma_dyn at exactly 0.001 in 8.
     """
-    idx = int(tids_to_indices(np.array([tid], np.int64))[0])
-    spec, ivar, z, tid_chk = load_by_index(idx)
-    assert int(tid_chk) == tid, f"TARGETID mismatch: asked {tid}, got {tid_chk}"
+    if spectra_npz:
+        # Spectrum supplied from outside the chunk store -- same WAVE_OBS grid, same
+        # flambda units (1e-17 erg/s/cm^2/A) that load_by_index returns. Used to fit a
+        # DIFFERENT observation of a target the store already holds, e.g. the main-survey
+        # coadd of an SV3 object (2026-08-31g).
+        ov = np.load(spectra_npz)
+        hit = np.where(ov["target_ids"].astype(np.int64) == tid)[0]
+        if not len(hit):
+            raise SystemExit(f"--spectra-npz {spectra_npz}: no row for TARGETID {tid}")
+        k = int(hit[0])
+        spec, ivar, z = ov["spec"][k], ov["ivar"][k], float(ov["z"][k])
+        assert len(spec) == len(WAVE_OBS), "override spectrum is off the WAVE_OBS grid"
+    else:
+        idx = int(tids_to_indices(np.array([tid], np.int64))[0])
+        spec, ivar, z, tid_chk = load_by_index(idx)
+        assert int(tid_chk) == tid, f"TARGETID mismatch: asked {tid}, got {tid_chk}"
 
     flux = flambda_to_maggies(WAVE_OBS, spec)
     iv = ivar_flambda_to_ivar_maggies(WAVE_OBS, ivar)
@@ -451,12 +464,13 @@ def fit_one(tid, sps, cue_sps, lines, line_waves, n_seeds, maxfev, out, seeds=No
 
 def _worker(tid, n_seeds, maxfev, outdir, seeds, frozen, fixed, warm_from,
             flat_sfh=False, cont_only=False, error_floor=0.0,
-            method="Powell", zcontinuous=1):
+            method="Powell", zcontinuous=1, spectra_npz=None):
     S = get_sps(zcontinuous=zcontinuous)
     return fit_one(tid, S["sps"], S["cue"], S["lines"], S["line_waves"],
                    n_seeds, maxfev, Path(outdir), seeds=seeds, frozen=frozen, fixed=fixed,
                    warm_from=warm_from, flat_sfh=flat_sfh, cont_only=cont_only,
-                   error_floor=error_floor, method=method, zcontinuous=zcontinuous)
+                   error_floor=error_floor, method=method, zcontinuous=zcontinuous,
+                   spectra_npz=spectra_npz)
 
 
 def main(argv=None):
@@ -503,6 +517,10 @@ def main(argv=None):
                         "takes 42580 to chi2_red = 1 and matches alf's fitted jitter of "
                         "1.39. A pure multiplicative rescale would change nothing; this "
                         "reweights high-S/N pixels against low-S/N ones.")
+    p.add_argument("--spectra-npz", default=None, metavar="PATH",
+                   help="npz with target_ids/spec/ivar/z overriding the chunk store, on "
+                        "the WAVE_OBS grid in 1e-17 erg/s/cm^2/A. For fitting a different "
+                        "OBSERVATION of a target the store already holds.")
     p.add_argument("--continuum-only", action="store_true",
                    help="fit build_continuum_model (15 free: logzsol, dust2, logmass, "
                         "9x logsfr_ratios, dust_ratio, dust_index, sigma_smooth) on "
@@ -571,7 +589,8 @@ def main(argv=None):
                               cont_only=args.continuum_only,
                               error_floor=args.error_floor,
                               method=args.optimizer,
-                              zcontinuous=args.zcontinuous): t for t in todo}
+                              zcontinuous=args.zcontinuous,
+                              spectra_npz=args.spectra_npz): t for t in todo}
             for n, fu in enumerate(as_completed(futs), 1):
                 t = futs[fu]
                 try:
@@ -594,7 +613,8 @@ def main(argv=None):
                                     cont_only=args.continuum_only,
                                     error_floor=args.error_floor,
                                     method=args.optimizer,
-                                    zcontinuous=args.zcontinuous))
+                                    zcontinuous=args.zcontinuous,
+                                    spectra_npz=args.spectra_npz))
             except Exception as e:
                 print(f"    FAILED {type(e).__name__}: {e}", flush=True)
                 recs.append({"target_id": int(tid), "status": f"error:{type(e).__name__}"})
