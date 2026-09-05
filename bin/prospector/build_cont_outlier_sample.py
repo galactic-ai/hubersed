@@ -28,6 +28,35 @@ def flow_scores(tag, flow_dir):
             set(int(x) for x in d["outlier_target_ids"]), float(d["threshold"]))
 
 
+LAM_MAX = 9824.0   # DESI red-arm cutoff; Halpha 6563 leaves it at z = 0.497
+
+
+def source_class(S, i, z):
+    """'emission' | 'weak-em' | 'continuum' for row i of the FASTSPEC table.
+
+    Above z = 0.497 Halpha is off the red end, so HALPHA_EW = 0 means NOT MEASURED and
+    the classification falls back to Hbeta / [OII] / [OIII]. Getting this wrong labels
+    every high-z object 'featureless'.
+    """
+    def snr(ln):
+        f, iv = float(S[f"{ln}_FLUX"][i]), float(S[f"{ln}_FLUX_IVAR"][i])
+        return f * np.sqrt(iv) if iv > 0 else 0.0
+
+    if 6563.0 * (1 + z) < LAM_MAX:
+        ew, s_ha = float(S["HALPHA_EW"][i]), snr("HALPHA")
+        if s_ha > 5 and ew > 10:
+            return "emission"
+        return "weak-em" if s_ha > 5 and ew > 3 else "continuum"
+
+    strong = max(snr("HBETA"), snr("OIII_5007"), min(snr("OII_3726"), snr("OII_3729")))
+    nspec = sum(x > 3 for x in [snr("OIII_5007"), snr("NII_6584"), snr("OI_6300"),
+                                min(snr("SII_6716"), snr("SII_6731")),
+                                min(snr("OII_3726"), snr("OII_3729"))])
+    if strong > 5 and nspec >= 2:
+        return "emission"
+    return "weak-em" if strong > 3 else "continuum"
+
+
 def read_screen(path, value_col=None):
     """(set of flagged TARGETIDs, {TARGETID: value_col}) from a contam_screens.py CSV.
 
@@ -53,7 +82,13 @@ def main(argv=None):
     p.add_argument("--lines", default=str(PATHS["RESULTS"] / "lineEW_flow" / "desi_lines.h5"),
                    help="h5 carrying the pipeline redshifts used to build the latents")
     p.add_argument("--shred-kpc", type=float, default=10.0,
-                   help="proper-kpc radius for the shred neighbour search (z<0.02 only)")
+                   help="proper-kpc radius for the shred neighbour search")
+    p.add_argument("--shred-zmax", type=float, default=0.02,
+                   help="run the shred test below this redshift. The original 0.02 misses "
+                        "shreds at 0.02-0.06 that a 1.5-arcsec fibre still lands on a knot "
+                        "of: 39627758174736675 has THREE DESI targets inside 2.6 kpc and "
+                        "Dn4000 = 0.809, below any stellar population. 10 proper kpc is "
+                        "self-limiting at high z (1.6 arcsec at z=0.5), so 1.0 is safe.")
     p.add_argument("--keep-flagged", action="store_true",
                    help="keep zbad/shred/z/gaia/sga contaminants instead of dropping them")
     p.add_argument("--zmin", type=float, default=0.01,
@@ -64,6 +99,13 @@ def main(argv=None):
                    help="CSV from contam_screens.py; must exist")
     p.add_argument("--sga-list", default=str(PATHS["RESULTS"] / "sga_proximity.csv"),
                    help="CSV from contam_screens.py; must exist")
+    p.add_argument("--source-class", nargs="*", default=None,
+                   choices=["emission", "weak-em", "continuum"],
+                   help="keep only these SOURCE types. Independent of the flow selection: "
+                        "every candidate is a continuum-FLOW outlier regardless.")
+    p.add_argument("--extra-list", nargs="*", default=None,
+                   help="optional CSV from agn_star_screen.py (BPT AGN + non-stellar point "
+                        "sources). Omit to reproduce the pre-2026-08-31 sample exactly.")
     args = p.parse_args(argv)
 
     lp, pct, out, thr = {}, {}, {}, {}
@@ -92,7 +134,7 @@ def main(argv=None):
         i = iv[t]
         zp = zpipe.get(t, np.nan)
         zbad[t] = bool(np.isfinite(zp) and abs(zp - zvac[i]) / (1 + zvac[i]) > 0.01)
-        if zvac[i] < 0.02:
+        if zvac[i] < args.shred_zmax:
             kpc_per_as = Planck18.kpc_proper_per_arcmin(zvac[i]).to(u.kpc / u.arcsec).value
             rad = args.shred_kpc / kpc_per_as          # physical radius -> arcsec at this z
             sep = sky[i].separation(sky).arcsec
@@ -104,18 +146,30 @@ def main(argv=None):
     # external contamination screens (bin/prospector/contam_screens.py)
     gaia_flag, _ = read_screen(args.gaia_list)
     sga_flag, sga_r = read_screen(args.sga_list, "r_ell")
+    extra_flag = set()
+    for x in (args.extra_list or []):
+        extra_flag |= read_screen(x)[0]
     zcut = {t: not (args.zmin <= zvac[iv[t]] <= args.zmax) for t in sel}
     n_z, n_gaia, n_sga = (sum(zcut.values()),
                           sum(t in gaia_flag for t in sel),
                           sum(t in sga_flag for t in sel))
-    print(f"  flagged z<{args.zmin} or z>{args.zmax}={n_z}  gaia={n_gaia}  sga={n_sga}")
+    n_extra = sum(t in extra_flag for t in sel)
+    print(f"  flagged z<{args.zmin} or z>{args.zmax}={n_z}  gaia={n_gaia}  sga={n_sga}"
+          f"  agn/point-source={n_extra}")
 
     keep = sel if args.keep_flagged else [
         t for t in sel
         if not zbad[t] and not shred[t] and not zcut[t]
-        and t not in gaia_flag and t not in sga_flag
+        and t not in gaia_flag and t not in sga_flag and t not in extra_flag
     ]
     print(f"  kept after contaminant cut: {len(keep)}")
+
+    if args.source_class:
+        cls = {t: source_class(S, iv[t], float(zvac[iv[t]])) for t in keep}
+        n_by = {c: sum(v == c for v in cls.values()) for c in
+                ("emission", "weak-em", "continuum")}
+        keep = [t for t in keep if cls[t] in args.source_class]
+        print(f"  source class {n_by} -> keeping {args.source_class}: {len(keep)}")
 
     score = {t: 0.5 * (pct[TAGS[0]][t] + pct[TAGS[1]][t]) for t in keep}
     top = sorted(keep, key=lambda t: score[t])[: args.n_targets]
@@ -149,7 +203,8 @@ def main(argv=None):
             f"VAC-matched; ranked by mean DESI rank-percentile (NOT mock-CDF); "
             f"contaminants {'kept' if args.keep_flagged else 'dropped'} "
             f"(zbad={sum(zbad.values())}, shred={sum(shred.values())}, "
-            f"z outside [{args.zmin}, {args.zmax}]={n_z}, gaia={n_gaia}, sga={n_sga}); "
+            f"z outside [{args.zmin}, {args.zmax}]={n_z}, gaia={n_gaia}, sga={n_sga}, "
+            f"agn/point-source={n_extra}); "
             f"screens {Path(args.gaia_list).name} + {Path(args.sga_list).name} "
             f"(SGA-2020 stands in for SGA-2025); {len(keep)} survivors before the top-"
             f"{args.n_targets} cut"),
