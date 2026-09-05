@@ -14,9 +14,12 @@ from build_cont_outlier_sample import DEFAULT_FLOW_DIR, TAGS, flow_scores  # noq
 from hubersed.paths import PATHS  # noqa: E402
 
 GAIA_RADIUS = 2.0        # arcsec, cone radius
-GAIA_G_MAX = 16.0        # mag
+GAIA_G_MAX = 16.0        # mag -- applies ONLY to the bright-neighbour (PSF-wing) test
 GAIA_PLX_SNR = 5.0       # parallax / parallax_error
-GAIA_PM = 3.0            # mas/yr
+GAIA_PM = 3.0            # mas/yr, bare total PM, used only by the wing test
+GAIA_ONSRC = 1.0         # arcsec: inside this the Gaia source IS the target
+GAIA_PM_SNR = 5.0        # total proper motion / its error, for the on-source test
+GAIA_RUWE_MAX = 1.4      # above this the astrometric solution is blended/untrustworthy
 SGA_BOX = 0.25           # deg, half-height of the Dec box (RA half-width is this / cos dec)
 DL_TAP = "https://datalab.noirlab.edu/tap"
 
@@ -50,7 +53,8 @@ def gaia_screen(ra, dec):
     from astroquery.gaia import Gaia
 
     # The `AS sep` alias is load-bearing: ORDER BY on the bare expression is rejected.
-    q = (f"SELECT TOP 1 parallax,parallax_error,pm,phot_g_mean_mag,"
+    q = (f"SELECT TOP 1 parallax,parallax_error,pm,pmra,pmra_error,pmdec,pmdec_error,"
+         f"ruwe,phot_g_mean_mag,"
          f"DISTANCE(POINT(ra,dec),POINT({ra},{dec}))*3600 AS sep FROM gaiadr3.gaia_source "
          f"WHERE 1=CONTAINS(POINT(ra,dec),CIRCLE({ra},{dec},{GAIA_RADIUS / 3600})) "
          f"ORDER BY sep ASC")
@@ -59,10 +63,21 @@ def gaia_screen(ra, dec):
     plx, plx_err = _col(t, "parallax"), _col(t, "parallax_error")
     snr = plx / plx_err if np.isfinite(plx) and np.isfinite(plx_err) and plx_err > 0 else np.nan
     pm, g = _col(t, "pm"), _col(t, "phot_g_mean_mag")
+    sep, ruwe = _col(t, "sep"), _col(t, "ruwe")
+
+    # Error on the TOTAL pm, propagated from the components: pm = hypot(pmra, pmdec).
+    pmra, pmdec = _col(t, "pmra"), _col(t, "pmdec")
+    pmra_e, pmdec_e = _col(t, "pmra_error"), _col(t, "pmdec_error")
+    pm_err = np.hypot(pmra * pmra_e, pmdec * pmdec_e) / pm if pm > 0 else np.nan
+    pm_snr = pm / pm_err if np.isfinite(pm_err) and pm_err > 0 else np.nan
+
+    onsource = bool(sep < GAIA_ONSRC and ruwe < GAIA_RUWE_MAX
+                    and (snr > GAIA_PLX_SNR or pm_snr > GAIA_PM_SNR))
     # NaN comparisons are False, so a 2-parameter solution simply does not flag.
-    flagged = bool(g < GAIA_G_MAX and (snr > GAIA_PLX_SNR or pm > GAIA_PM))
-    return {"sep_arcsec": _col(t, "sep"), "parallax": plx, "parallax_over_error": snr,
-            "pm": pm, "phot_g_mean_mag": g, "flagged": flagged}
+    wing = bool(g < GAIA_G_MAX and (snr > GAIA_PLX_SNR or pm > GAIA_PM))
+    return {"sep_arcsec": sep, "parallax": plx, "parallax_over_error": snr,
+            "pm": pm, "pm_over_error": pm_snr, "ruwe": ruwe, "phot_g_mean_mag": g,
+            "onsource_star": onsource, "wing_star": wing, "flagged": bool(onsource or wing)}
 
 
 def ellipse_radius(ra, dec, g_ra, g_dec, g_d26, g_pa, g_ba):
