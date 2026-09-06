@@ -49,6 +49,28 @@ SUM_ROWS = ["mean", "chi2min", "error", "cl2.5", "cl16", "cl50", "cl84", "cl98",
             "lo_prior", "hi_prior"]
 ELEMENTS = ["a", "C", "N", "Na", "Mg", "Si", "Ca", "Ti"]
 
+# Conroy+2018 Sec 2.1.2 library correction, replicated from
+# alf/scripts/read_alf.py:251-320 (m11 default tables). Applies to a (O proxy),
+# Mg, and the Ca~Ti~Si group; C, N, Na are "group2" — correction is ZERO by design.
+_LIB_FEH = [-1.6, -1.4, -1.2, -1.0, -0.8, -0.6, -0.4, -0.2, 0.0, 0.2]
+_LIB_OFE = [0.6, 0.5, 0.5, 0.4, 0.3, 0.2, 0.2, 0.1, 0.0, 0.0]
+_LIB_MGFE = [0.4, 0.4, 0.4, 0.4, 0.34, 0.22, 0.14, 0.11, 0.05, 0.04]
+_LIB_CAFE = [0.32, 0.3, 0.28, 0.26, 0.26, 0.17, 0.12, 0.06, 0.0, 0.0]
+ERR_FLOOR = 0.1  # dex, Beverage-style abundance uncertainty floor
+
+
+def _lib_corr(elem, zh_chain):
+    """Per-sample correction added to [X/Fe], interpolated in zH (extrapolated flat-ish)."""
+    if elem == "a":
+        tab = _LIB_OFE
+    elif elem == "Mg":
+        tab = _LIB_MGFE
+    elif elem in ("Ca", "Ti", "Si"):
+        tab = _LIB_CAFE
+    else:
+        return 0.0
+    return np.interp(zh_chain, _LIB_FEH, tab)
+
 
 def load_run(stem):
     """Return (chain dict, sum dict) with the column alignment ASSERTED, not assumed."""
@@ -136,7 +158,19 @@ def main(argv=None):
                     if t.isdigit() and len(t) >= 16), None)
         C, S = load_run(s)
         cv = convergence(C)
-        xfe = {e: np.percentile(C[e] - C["FeH"], [16, 50, 84]) for e in ELEMENTS}
+        xfe = {e: np.percentile(C[e] - C["FeH"] + _lib_corr(e, C["zH"]), [16, 50, 84])
+               for e in ELEMENTS}
+        # error floor: widen any percentile pair narrower than ERR_FLOOR
+        for e in ELEMENTS:
+            lo, med, hi = xfe[e]
+            half = max((hi - lo) / 2, ERR_FLOOR)
+            xfe[e] = np.array([med - half, med, med + half])
+        # rail check vs alf priors from the .sum lo/hi_prior rows
+        railed = [e for e in ELEMENTS + ["zH", "FeH"]
+                  if abs(np.median(C[e]) - S["lo_prior"][e]) < 0.02
+                  or abs(np.median(C[e]) - S["hi_prior"][e]) < 0.02]
+        if railed:
+            print(f"  RAIL WARNING {Path(s).name}: {railed}")
         zh, feh = np.median(C["zH"]), np.median(C["FeH"])
         pz, pchi = pros.get(tid, (np.nan, np.nan)) if tid is not None else (np.nan, np.nan)
         rows.append(dict(tid=tid, name=Path(s).name, zH=zh, FeH=feh, pros_logzsol=pz,
