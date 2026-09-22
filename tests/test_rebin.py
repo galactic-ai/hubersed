@@ -1,9 +1,8 @@
-"""The two trapz_rebin copies conserve flux and agree, so one of them can go."""
+"""trapz_rebin conserves flux, keeps a flat input flat, and refuses bins outside its input."""
 
 import numpy as np
 import pytest
 
-from hubersed import utils
 from hubersed.prospector import rebin
 
 # DESI-like pixels and a coarser constant-velocity grid that does not line up with them
@@ -28,16 +27,3 @@ def test_edges_outside_input_raise():
     """Bins that reach past the input wavelengths are refused."""
     with pytest.raises(ValueError, match="within input x range"):
         rebin.trapz_rebin(X, Y, edges=[X[0] - 1.0, X[1]])
-
-
-def test_utils_and_rebin_versions_agree():
-    """The numba copy in utils gives the same answer as the numpy copy in rebin."""
-    np.testing.assert_allclose(
-        utils.trapz_rebin(X, Y, edges=EDGES), rebin.trapz_rebin(X, Y, edges=EDGES), rtol=1e-10
-    )
-
-
-def test_centers2edges_versions_agree():
-    """Both centers2edges copies give the same edges on an uneven grid."""
-    centers = rebin.common_obs_edges()[:50]
-    np.testing.assert_allclose(utils.centers2edges(centers), rebin.centers2edges(centers))
