@@ -1,3 +1,8 @@
+"""Fit DESI spectra with prospector at the MAP and report the reduced chi-squared.
+
+Each galaxy gets a continuum-only fit first, which seeds a full fit with nebular emission.
+"""
+
 import os
 
 os.environ.setdefault("OMP_NUM_THREADS", "1")
@@ -35,9 +40,38 @@ from scipy.optimize import minimize
 
 
 def _map_optimize(neg, theta_init, n_seeds=3, jitter=0.03, maxfev=20_000):
-    """Powell multi-start that ALWAYS tries the (valid) unjittered init first and
-    treats the 1e18 sentinel as invalid (Cue throws out-of-range -> sentinel, which
-    is finite, so the stock guard misses it)."""
+    """Minimize an objective with Powell from several starting points and keep the best.
+
+    Parameters
+    ----------
+    neg : callable
+        Negative log probability of a parameter vector. It returns 1e18 for invalid points,
+        for example when Cue is asked for parameters outside its training range.
+    theta_init : np.ndarray
+        Starting parameter vector. It is always the first start.
+    n_seeds : int
+        Number of extra starts, each ``theta_init`` plus Gaussian jitter.
+    jitter : float
+        Standard deviation of the jitter, in the units of each parameter.
+    maxfev : int
+        Maximum number of objective calls for each Powell run.
+
+    Returns
+    -------
+    scipy.optimize.OptimizeResult or None
+        The run with the lowest objective, or None if no run finished below 1e10.
+
+    Notes
+    -----
+    The jitter for start ``s`` is drawn with ``np.random.default_rng(s)``, so every galaxy
+    gets the same offsets. The value 1e18 is finite, so a plain ``np.isfinite`` check would
+    not catch it, which is why starts at or above 1e17 are treated as invalid.
+
+    If a jittered start is invalid, Powell runs again from ``theta_init`` instead. The
+    number of runs stays at ``n_seeds + 1``, but the number of distinct starting points
+    then varies from galaxy to galaxy. We plan to change this to redraw until the start is
+    valid. ``tests/test_equal_budget.py`` pins the current behaviour.
+    """
     starts = [theta_init] + [
         theta_init + np.random.default_rng(s).normal(0, jitter, theta_init.shape)
         for s in range(n_seeds)
@@ -61,18 +95,30 @@ def _map_optimize(neg, theta_init, n_seeds=3, jitter=0.03, maxfev=20_000):
 
 @cache
 def _fsps():
+    """Build the FSPS stellar population source once per process."""
     return P.build_sps()
 
 
 @cache
 def _cue():
+    """Build the Cue nebular emission source once per process."""
     return P.build_cue_sps()
 
 
 @cache
 def _lsf_sigma_kms():
-    """DESI instrumental resolution sigma(lambda) in km/s for prospect obs.resolution
-    (= C_KMS/(2.355*R)). Safe to pass because build_sps zeroes the library resolution."""
+    """Return the DESI instrumental resolution as a Gaussian sigma for prospect.
+
+    Returns
+    -------
+    np.ndarray
+        Sigma in km/s on ``WAVE_OBS``, computed as ``C_KMS / (2.355 * R)``.
+
+    Notes
+    -----
+    Passing this to prospect is safe because ``build_sps`` sets the library resolution to
+    zero, so prospect does not refuse data that is sharper than the templates.
+    """
     from hubersed.prospector.lsf import C_KMS, desi_resolution
 
     R = desi_resolution(WAVE_OBS)
@@ -80,8 +126,31 @@ def _lsf_sigma_kms():
 
 
 def load_by_index(gidx):
-    """Load one DESI spectrum by GLOBAL index (numeric chunk order), un-normalized
-    to flambda exactly as parameter_file.get_outlier_info does."""
+    """Load one DESI spectrum by its global index and undo the spender normalization.
+
+    Parameters
+    ----------
+    gidx : int
+        Global index. The spectrum is row ``gidx % 1024`` of the file
+        ``DESIchunk1024_{gidx // 1024}.pkl``, counting chunks in numeric order.
+
+    Returns
+    -------
+    spec : np.ndarray
+        Flux density f_lambda in units of 1e-17 erg/s/cm^2/A, on ``WAVE_OBS``.
+    ivar : np.ndarray
+        Inverse variance of ``spec``, in (1e-17 erg/s/cm^2/A)^-2.
+    z : float
+        Redshift.
+    tid : int
+        DESI TARGETID. Callers should check it matches the galaxy they asked for.
+
+    Notes
+    -----
+    spender reads the same files in string order (0, 1, 10, 100, ...), so a row in an
+    encoder output file is not a global index. Go from TARGETID to index with
+    ``tids_to_indices``. ``tests/test_targetid.py`` pins both orders.
+    """
     chunk, row = gidx // CHUNK, gidx % CHUNK
     with open(DATA_PATH / "desi_spectra" / f"DESIchunk1024_{chunk}.pkl", "rb") as f:
         s, w, z, tid, norm, *_ = pickle.load(f)
@@ -93,10 +162,28 @@ def load_by_index(gidx):
 
 
 def tids_to_indices(tids):
-    """Map TARGETIDs -> numeric global indices. all_target_ids.npy is in NUMERIC
-    chunk order, the same order load_by_index decodes (chunk=idx//1024,row=idx%1024),
-    so this pairing is self-consistent. (Never mix with the spender encoder's
-    lexicographic order -- that was the bug; we don't use encoder indices here.)"""
+    """Find the global index of each TARGETID.
+
+    Parameters
+    ----------
+    tids : np.ndarray
+        TARGETIDs as int64.
+
+    Returns
+    -------
+    np.ndarray
+        Global indices for ``load_by_index``, in the same order as ``tids``.
+
+    Raises
+    ------
+    ValueError
+        If any TARGETID is missing from ``all_target_ids.npy``. Nothing is dropped.
+
+    Notes
+    -----
+    ``all_target_ids.npy`` lists TARGETIDs in numeric chunk order, the order
+    ``load_by_index`` uses. This was checked against all 249 chunk files on 2026-09-22.
+    """
     all_tids = np.load(DATA_PATH / "all_target_ids.npy").astype(np.int64)
     order = np.argsort(all_tids)
     sa = all_tids[order]
@@ -110,7 +197,38 @@ def tids_to_indices(tids):
 
 
 def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000):
-    """Continuum MAP -> full MAP (no emcee) -> reduced chi^2 over the full mask."""
+    """Fit one galaxy at the MAP and return its reduced chi-squared.
+
+    The continuum fit uses a mask that hides emission lines. Its best values seed the full
+    fit, which uses every good pixel.
+
+    Parameters
+    ----------
+    gidx : int
+        Global index of the galaxy, as used by ``load_by_index``.
+    use_cue : bool
+        Model nebular emission with Cue instead of FSPS.
+    cont_nseeds, full_nseeds : int
+        Extra jittered starts for the continuum and full fits.
+    maxfev : int
+        Maximum objective calls for each Powell run.
+
+    Returns
+    -------
+    dict
+        Always has ``gidx`` and ``status``. When ``status`` is ``"ok"`` it also has
+        ``id`` (TARGETID), ``z``, ``chi2``, ``ndof``, ``chi2_red``, ``npix``, ``theta``,
+        ``theta_labels``, ``theta_dict``, and the spectra ``model``, ``flux``, ``unc`` and
+        ``mask`` in maggies. Other statuses are ``load_fail:<error>``, ``below_zfloor``,
+        ``too_masked``, ``cont_fail`` and ``full_fail``.
+
+    Notes
+    -----
+    ``theta_labels`` holds ``free_params``, one name per parameter, while ``theta`` has
+    one entry per value. ``logsfr_ratios`` has 9 values, so the two lists do not line up
+    by position. Read values from ``theta_dict``. ``tests/test_theta_dict.py`` shows the
+    shift.
+    """
     try:
         spec, ivar, redshift, tid = load_by_index(gidx)
     except Exception as e:
@@ -205,11 +323,20 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
 
 
 def _work(args):
+    """Unpack one task tuple for the process pool and run ``map_chi2_one``."""
     gi, use_cue, cns, fns, mf = args
     return map_chi2_one(int(gi), use_cue=use_cue, cont_nseeds=cns, full_nseeds=fns, maxfev=mf)
 
 
 def main():
+    """Fit a random sample or the flagged outliers and save the results.
+
+    The first argument is the number of random galaxies (default 100). Options are
+    ``--cue``, ``--seed``, ``--workers``, ``--limit``, ``--outfile``, ``--tag``, ``--rich``
+    for a larger optimizer budget, ``--outliers`` to fit the TARGETIDs in ``--outfile``,
+    and ``--worst`` to take the outliers in order of isolation forest score. Results go to
+    ``results/map_chi2_*.npy`` and ``results/map_chi2_*_full.pkl``.
+    """
     N = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 100
     use_cue = "--cue" in sys.argv
     seed = 0
