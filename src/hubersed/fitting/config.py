@@ -158,7 +158,7 @@ def build_continuum_model(redshift, logmass_init=None):
     return HyperSpecModel(template), template
 
 
-def build_full_model(continuum_template, theta_best_cont, cont_model, redshift):
+def build_full_model(continuum_template, theta_best_cont, cont_model):
     """Build the full model with FSPS nebular emission, seeded from the continuum fit.
 
     Parameters
@@ -169,8 +169,6 @@ def build_full_model(continuum_template, theta_best_cont, cont_model, redshift):
         Best parameter vector of the continuum fit.
     cont_model : prospect.models.sedmodel.HyperSpecModel
         The continuum model, used to find parameters in ``theta_best_cont`` by name.
-    redshift : float
-        Redshift. Not used, the value comes from ``continuum_template``.
 
     Returns
     -------
@@ -251,9 +249,7 @@ def build_full_model(continuum_template, theta_best_cont, cont_model, redshift):
     return HyperSpecModel(full_template), full_template
 
 
-def build_full_cue_model(
-    continuum_template, theta_best_cont, cont_model, redshift, free_dust1=False
-):
+def build_full_cue_model(continuum_template, theta_best_cont, cont_model, *, free_dust1=False):
     """Build the full model with Cue nebular emission, seeded from the continuum fit.
 
     Parameters
@@ -264,8 +260,6 @@ def build_full_cue_model(
         Best parameter vector of the continuum fit.
     cont_model : prospect.models.sedmodel.HyperSpecModel
         The continuum model, used to find parameters in ``theta_best_cont`` by name.
-    redshift : float
-        Redshift. Not used, the value comes from ``continuum_template``.
     free_dust1 : bool
         Fit ``dust1`` on its own with a TopHat(0, 3) prior instead of tying it to
         ``dust2 * dust_ratio``. ``dust_ratio`` is then fixed.

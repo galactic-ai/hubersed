@@ -276,9 +276,9 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
     # full MAP (continuum + nebular); Cue or FSPS
     if use_cue:
         sps = _cue()
-        fmodel, ftemplate = build_full_cue_model(ctemplate, theta_cont, cmodel, redshift)
+        fmodel, ftemplate = build_full_cue_model(ctemplate, theta_cont, cmodel)
     else:
-        fmodel, ftemplate = build_full_model(ctemplate, theta_cont, cmodel, redshift)
+        fmodel, ftemplate = build_full_model(ctemplate, theta_cont, cmodel)
 
     def neg_full(th):
         with warnings.catch_warnings():

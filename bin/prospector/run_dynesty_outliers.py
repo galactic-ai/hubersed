@@ -67,7 +67,7 @@ def run_one(tid, args, out):
     )
 
     cont_model, cont_tmpl = build_continuum_model(z)
-    model, tmpl = build_full_cue_model(cont_tmpl, cont_model.theta, cont_model, z)
+    model, tmpl = build_full_cue_model(cont_tmpl, cont_model.theta, cont_model)
     if args.freeze_hypers:
         for k, v in dict(FROZEN_HYPERS, tau_in=universe_age_gyr(z)).items():
             tmpl[k]["isfree"] = False

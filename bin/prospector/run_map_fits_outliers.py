@@ -461,7 +461,7 @@ def fit_one(
         model, tmpl, sps_use = cont_model, cont_tmpl, sps
     else:
         model, tmpl = build_full_cue_model(
-            cont_tmpl, cont_model.theta, cont_model, z, free_dust1=free_dust1
+            cont_tmpl, cont_model.theta, cont_model, free_dust1=free_dust1
         )
         sps_use = cue_sps
     if frozen or fixed or flat_sfh:

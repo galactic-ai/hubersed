@@ -19,7 +19,7 @@ def model(request):
 
     cont_model, cont_template = build_continuum_model(Z)
     build = build_full_model if request.param == "fsps" else build_full_cue_model
-    return build(cont_template, cont_model.theta, cont_model, Z)[0]
+    return build(cont_template, cont_model.theta, cont_model)[0]
 
 
 def test_logsfr_ratios_fills_nine_slots(model):
