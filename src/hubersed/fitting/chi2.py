@@ -4,22 +4,21 @@ os.environ.setdefault("OMP_NUM_THREADS", "1")
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("MKL_NUM_THREADS", "1")
 
-import sys
-import pickle
-import warnings
 import multiprocessing as mp
+import pickle
+import sys
+import warnings
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import cache
 
 import numpy as np
 from prospect.fitting import lnprobfn
 
-from hubersed.prospector import parameter_file as P
-from hubersed.fitting.config import build_continuum_model, build_full_model, build_full_cue_model
 from hubersed.conversion import flambda_to_maggies, ivar_flambda_to_ivar_maggies
+from hubersed.fitting.config import build_continuum_model, build_full_cue_model, build_full_model
 from hubersed.paths import PATHS
-from hubersed.prospector.rebin import prep_spectrum, common_obs_edges
-
+from hubersed.prospector import parameter_file as P
+from hubersed.prospector.rebin import common_obs_edges
 
 DATA_PATH = PATHS["DATA"]
 RESULTS_PATH = PATHS["RESULTS"]
@@ -74,7 +73,7 @@ def _cue():
 def _lsf_sigma_kms():
     """DESI instrumental resolution sigma(lambda) in km/s for prospect obs.resolution
     (= C_KMS/(2.355*R)). Safe to pass because build_sps zeroes the library resolution."""
-    from hubersed.prospector.lsf import desi_resolution, C_KMS
+    from hubersed.prospector.lsf import C_KMS, desi_resolution
 
     R = desi_resolution(WAVE_OBS)
     return (C_KMS / (2.355 * R)).astype(np.float64)

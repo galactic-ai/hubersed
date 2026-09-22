@@ -25,16 +25,12 @@ import numpy as np
 
 np.seterr(**np_err)
 
-from scipy.optimize import minimize
-from scipy.signal import medfilt
-
 from prospect.fitting import lnprobfn
 from prospect.models import priors
 from prospect.models.sedmodel import HyperSpecModel, SpecModel
 from prospect.models.transforms import logsfr_ratios_to_masses
-from prospect.sources import SSPBasis
-
-from hubersed.prospector.utils import universe_age_gyr
+from scipy.optimize import minimize
+from scipy.signal import medfilt
 
 from hubersed.conversion import flambda_to_maggies, ivar_flambda_to_ivar_maggies
 from hubersed.fitting.chi2 import WAVE_OBS, load_by_index, tids_to_indices
@@ -43,7 +39,13 @@ from hubersed.paths import PATHS
 from hubersed.plotting.sfh import sfh_figure
 from hubersed.plotting.spectra import plot_residual, residual_chi, spectrum_figure
 from hubersed.prospector.lsf import C_KMS, desi_resolution
-from hubersed.prospector.parameter_file import build_cue_sps, build_obs, build_sps, mask_spectral_lines
+from hubersed.prospector.parameter_file import (
+    build_cue_sps,
+    build_obs,
+    build_sps,
+    mask_spectral_lines,
+)
+from hubersed.prospector.utils import universe_age_gyr
 
 LSF = (C_KMS / (2.355 * desi_resolution(WAVE_OBS))).astype(np.float64)
 

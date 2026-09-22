@@ -16,10 +16,10 @@ import csv
 import sys
 from pathlib import Path
 
-import numpy as np
-from astropy.io import fits
-from astropy.coordinates import SkyCoord
 import astropy.units as u
+import numpy as np
+from astropy.coordinates import SkyCoord
+from astropy.io import fits
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build_cont_outlier_sample import DEFAULT_FLOW_DIR, TAGS, flow_scores, read_screen  # noqa: E402

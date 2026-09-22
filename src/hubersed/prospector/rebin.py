@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.sparse import csr_matrix, lil_matrix
 
-from hubersed.prospector.lsf import desi_resolution   # calibrated median R(lambda)
+from hubersed.prospector.lsf import desi_resolution  # calibrated median R(lambda)
 
 C_KMS = 299792.458
 MILES_FWHM_A = 2.5                     # MILES restframe resolution [A FWHM]

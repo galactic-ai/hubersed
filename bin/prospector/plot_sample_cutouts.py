@@ -6,12 +6,13 @@
 import argparse
 
 import matplotlib
+
 matplotlib.use("Agg")
 import numpy as np
 from astropy.io import fits
+from hubersed.plotting.cutouts import cutout_grid
 
 from hubersed.paths import PATHS
-from hubersed.plotting.cutouts import cutout_grid
 
 
 def main(argv=None):

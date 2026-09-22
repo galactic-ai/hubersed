@@ -1,22 +1,22 @@
 # %%
-import os
 import glob
+import os
 
-import numpy as np
-import matplotlib.pyplot as plt
 import astropy.io.fits as fits
+import matplotlib.pyplot as plt
+import numpy as np
 from tqdm import tqdm
 
-from hubersed.prospector.lsf import (
-    DESI_WAV,
-    C_KMS,
-    resolution_to_sigma_kms,
-    sigma_kms_to_R,
-    sample_target_ids,
-    lookup_healpix,
-    coadd_url,
-)
 from hubersed.paths import PATHS
+from hubersed.prospector.lsf import (
+    C_KMS,
+    DESI_WAV,
+    coadd_url,
+    lookup_healpix,
+    resolution_to_sigma_kms,
+    sample_target_ids,
+    sigma_kms_to_R,
+)
 
 DATA_PATH = PATHS["DATA"]
 RESULTS_PATH = PATHS["RESULTS"]

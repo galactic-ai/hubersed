@@ -1,11 +1,10 @@
 import copy
 
 import numpy as np
-
-from prospect.models.priors import TopHat, ClippedNormal, LogUniform, Uniform
-from prospect.models.transforms import dustratio_to_dust1
-from prospect.models.templates import TemplateLibrary, adjust_stochastic_params
+from prospect.models.priors import ClippedNormal, LogUniform, TopHat, Uniform
 from prospect.models.sedmodel import HyperSpecModel
+from prospect.models.templates import TemplateLibrary, adjust_stochastic_params
+from prospect.models.transforms import dustratio_to_dust1
 
 from hubersed.prospector.utils import make_stochastic_agebins, universe_age_gyr
 

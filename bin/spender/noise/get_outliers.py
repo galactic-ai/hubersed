@@ -1,6 +1,7 @@
 import argparse
-import numpy as np
+
 import h5py
+import numpy as np
 import torch
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler

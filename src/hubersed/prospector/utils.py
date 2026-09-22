@@ -1,6 +1,6 @@
-from astropy.cosmology import Planck18 as cosmo
-import numpy as np
 import astropy.units as u
+import numpy as np
+from astropy.cosmology import Planck18 as cosmo
 
 __all__ = [
     "universe_age_gyr",
@@ -189,6 +189,7 @@ def _parse_line_file(filepath):
 
 def load_lines():
     from pathlib import Path
+
     import numpy as np
 
     ab_lines_path = Path(__file__).parent / "data" / "absorption_lines.txt"

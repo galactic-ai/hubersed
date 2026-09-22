@@ -18,7 +18,6 @@ np.seterr(divide="ignore", invalid="ignore", over="ignore", under="ignore")
 
 import dynesty
 from dynesty.utils import resample_equal
-
 from prospect.fitting import lnprobfn
 from prospect.models.sedmodel import HyperSpecModel
 from prospect.sources import SSPBasis
@@ -28,7 +27,12 @@ from hubersed.fitting.chi2 import WAVE_OBS, load_by_index, tids_to_indices
 from hubersed.fitting.config import build_continuum_model, build_full_cue_model
 from hubersed.paths import PATHS
 from hubersed.prospector.lsf import C_KMS, desi_resolution
-from hubersed.prospector.parameter_file import build_cue_sps, build_obs, build_sps, mask_spectral_lines
+from hubersed.prospector.parameter_file import (
+    build_cue_sps,
+    build_obs,
+    build_sps,
+    mask_spectral_lines,
+)
 from hubersed.prospector.utils import universe_age_gyr
 
 LSF = (C_KMS / (2.355 * desi_resolution(WAVE_OBS))).astype(np.float64)

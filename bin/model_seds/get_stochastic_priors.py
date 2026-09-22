@@ -5,12 +5,13 @@ from pathlib import Path
 import numpy as np
 
 from hubersed.distributions import (
-    sample_truncated_normal,
     sample_log_uniform,
+    sample_truncated_normal,
     sample_uniform,
 )
 from hubersed.paths import PATHS
 from hubersed.prospector.utils import universe_age_gyr
+
 
 def parse_args(argv=None):
     p = argparse.ArgumentParser(

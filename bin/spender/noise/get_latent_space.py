@@ -4,8 +4,8 @@ from pathlib import Path
 
 import h5py
 import torch
-from spender.data import desi
 from spender import load_model
+from spender.data import desi
 
 
 def process_loader_h5(

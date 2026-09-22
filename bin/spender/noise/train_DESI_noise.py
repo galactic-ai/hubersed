@@ -62,7 +62,6 @@ def get_all_parameters(models, instruments):
         if inst == None:
             continue
         instr_params += inst.parameters()
-        s = [p.numel() for p in inst.parameters()]
     if instr_params != []:
         dicts.append({"params": instr_params, "lr": 1e-4})
         n_parameters += sum([p.numel() for p in instr_params if p.requires_grad])

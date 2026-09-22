@@ -1,9 +1,9 @@
 import pickle
 
-import numpy as np
 import astropy.io.fits as fits
 import astropy.table as aTable
-from scipy.sparse import lil_matrix, csr_matrix
+import numpy as np
+from scipy.sparse import csr_matrix, lil_matrix
 
 from hubersed.paths import PATHS
 

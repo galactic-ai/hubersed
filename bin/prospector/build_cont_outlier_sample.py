@@ -2,12 +2,12 @@ import argparse
 import csv
 from pathlib import Path
 
+import astropy.units as u
 import numpy as np
 import torch
-from astropy.io import fits
 from astropy.coordinates import SkyCoord
-import astropy.units as u
 from astropy.cosmology import Planck18
+from astropy.io import fits
 from scipy.stats import rankdata
 
 from hubersed.paths import PATHS

@@ -1,9 +1,7 @@
-import sys
 import json
-
-from itertools import combinations
-from pathlib import Path
+import sys
 from collections import Counter
+from pathlib import Path
 
 import numpy as np
 import torch

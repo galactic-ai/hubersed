@@ -1,19 +1,16 @@
+import pickle
+
 import h5py
 import torch
-
-from hubersed.spender.utils import load_models
-from hubersed.spender.quantities import normalize_spectra
-from hubersed.conversion import maggies_to_flambda
-from hubersed.paths import PATHS
-from hubersed.utils import nanstd
-
+from huggingface_hub import batch_bucket_files
 from spender.data import desi
 from spender.instrument import get_skyline_mask
 
-from huggingface_hub import batch_bucket_files
-
-import pickle
-
+from hubersed.conversion import maggies_to_flambda
+from hubersed.paths import PATHS
+from hubersed.spender.quantities import normalize_spectra
+from hubersed.spender.utils import load_models
+from hubersed.utils import nanstd
 
 DATA_PATH = PATHS["DATA"]
 RESULTS_PATH = PATHS["RESULTS"]

@@ -3,13 +3,12 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import prospect.models as _pm
 import scipy.special as ssp
 from scipy.stats import truncnorm
 
 from hubersed.paths import PATHS
 from hubersed.prospector.utils import make_stochastic_agebins, universe_age_gyr
-
-import prospect.models as _pm
 
 GALLAZZI = Path(_pm.__file__).parent / "prior_data/gallazzi_05_massmet.txt"
 FSF_VAC = PATHS["DATA"] / "fastspec-iron-sv3-bright.fits"

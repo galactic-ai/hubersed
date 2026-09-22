@@ -1,7 +1,6 @@
 import torch
-
-from spender.flow import NeuralDensityEstimator
 from spender import load_model
+from spender.flow import NeuralDensityEstimator
 
 
 def _load_flow_model(filename, n_latent, **kwargs):

@@ -1,25 +1,26 @@
 import argparse
 from pathlib import Path
-import numpy as np
-import torch
+
 import h5py
 import matplotlib
+import numpy as np
+import torch
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from scipy.stats import ks_2samp
-from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.model_selection import cross_val_score
-
-from nflows.flows import Flow
 from nflows.distributions import StandardNormal
+from nflows.flows import Flow
 from nflows.transforms import (
     CompositeTransform,
-    RandomPermutation,
     MaskedAffineAutoregressiveTransform,
     MaskedPiecewiseRationalQuadraticAutoregressiveTransform,
+    RandomPermutation,
 )
+from scipy.stats import ks_2samp
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import StandardScaler
+
 from hubersed.paths import PATHS
 
 DATA, RES = PATHS["DATA"], PATHS["RESULTS"]

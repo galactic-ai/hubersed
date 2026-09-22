@@ -1,10 +1,9 @@
+import numpy as np
 from prospect.observation import Spectrum
 from prospect.sources import FastStepBasis, SSPBasis
-import numpy as np
 
-from hubersed.prospector.utils import load_lines
 from hubersed.prospector.lsf import DESI_WAV
-
+from hubersed.prospector.utils import load_lines
 
 WAVE_OBS = DESI_WAV.astype(np.float32)
 

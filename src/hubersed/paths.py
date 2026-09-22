@@ -1,7 +1,7 @@
+import os
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Union
-from collections.abc import Iterable
-import os
 
 PathLike = Union[str, Path]
 

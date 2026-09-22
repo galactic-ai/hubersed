@@ -1,6 +1,6 @@
-import torch
 import numba
 import numpy as np
+import torch
 
 
 def nanstd(x, dim=None, keepdim=False, eps=0.0):

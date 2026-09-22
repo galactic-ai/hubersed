@@ -98,7 +98,6 @@ def sec4_ranks(d):
 
 
 def sec5_ensemble(d, tid, sets, union, inter):
-    S = d["lp_desi"].shape[0]
     cm, cd = combiners(d["lp_mock"]), combiners(d["lp_desi"])
     print(f"\n[5] ensemble scores (threshold = {100 * Q:.1f}% quantile of the same combiner "
           "applied to the mocks)")
