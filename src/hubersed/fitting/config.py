@@ -280,9 +280,8 @@ def build_full_cue_model(
     Notes
     -----
     Cue adds ``gas_lognH``, ``gas_logno`` and ``gas_logco``. Its ``gas_logz`` prior comes
-    from the prospect template and is TopHat(-2.2, 0.5). ``gas_logqion`` is listed as free
-    but the Cue template has no such parameter, so it is not fit. The five SFH
-    hyperparameters are free, as in ``build_full_model``.
+    from the prospect template and is TopHat(-2.2, 0.5). The five SFH hyperparameters are
+    free, as in ``build_full_model``.
     """
     full_template = copy.deepcopy(continuum_template)
     nebular = copy.deepcopy(TemplateLibrary["cue_stellar_nebular"])
@@ -303,7 +302,6 @@ def build_full_cue_model(
         "gas_lognH",
         "gas_logno",
         "gas_logco",
-        "gas_logqion",
         "dust2",
         "dust_ratio",
         "dust_index",
