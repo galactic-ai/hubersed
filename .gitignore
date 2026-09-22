@@ -12,7 +12,10 @@ wheels/
 # ignore
 /results/
 /data/
-/tmp/
+/tmp/seedscan/
+/tmp/**/*.pt
+/tmp/**/*.pkl
+/tmp/figs/post_SFbaseline_full.png
 
 .ruff_cache/
 .ipynb_checkpoints/
