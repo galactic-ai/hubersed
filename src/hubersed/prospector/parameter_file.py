@@ -72,8 +72,10 @@ def build_sps(zcontinuous=1):
 
     Notes
     -----
-    This replaces ``SSPBasis.spectral_resolution`` with zeros on the class itself, so the
-    change applies to every SSPBasis in the process, not only the one returned.
+    The MILES templates have lower resolution than DESI spectra, so prospect would refuse to
+    blur the model to the DESI line spread function. Setting the template resolution to zero
+    lets it through. This replaces ``SSPBasis.spectral_resolution`` with zeros on the class
+    itself, so the change applies to every SSPBasis in the process, not only the one returned.
     """
     sps = FastStepBasis(zcontinuous=zcontinuous)
     SSPBasis.spectral_resolution = property(lambda self: np.zeros_like(self.ssp.wavelengths))
