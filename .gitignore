@@ -12,6 +12,7 @@ wheels/
 # ignore
 /results/*
 !/results/.gitkeep
+!/results/desi_lsf_calibration.npz
 /data/
 /tmp/seedscan/
 /tmp/**/*.pt
