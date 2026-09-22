@@ -27,10 +27,11 @@ ln -sf "$ROOT/data/desi_spectra/DESIchunk1024_10.pkl" "$OUT/_chunks/"
 uv run python bin/spender/noise/get_latent_space.py "$OUT/_chunks" \
     data/checkpoints/spender_asc_run_10latent_zmax.pt "$OUT/latents.h5" --snr_min 3
 
-# Left out, already broken at 32ced0e: compare_alf_solar_scaled (bad import),
-# pilot_twobranch_priors (no docstring), plot_sample_cutouts (missing module).
+# Left out, already broken at 32ced0e: pilot_twobranch_priors (no docstring),
+# plot_sample_cutouts (missing module).
 for script in \
-    bin/alf/make_alf_input.py bin/alf/read_alf_sample.py \
+    "-m hubersed.alf.make_alf_input" "-m hubersed.alf.read_alf_sample" \
+    experiments/2026-08-25_compare_alf_solar_scaled.py \
     bin/model_seds/get_stochastic_priors.py bin/model_seds/make_model_seds.py \
     bin/prospector/agn_star_screen.py bin/prospector/build_cont_outlier_sample.py \
     bin/prospector/contam_screens.py \
@@ -40,6 +41,6 @@ for script in \
     bin/spender/noise/flow_null_and_reverse.py bin/spender/noise/get_latent_space.py \
     bin/spender/noise/get_outliers.py bin/spender/noise/get_outliers_flow.py \
     bin/spender/noise/plot_latent_umap_score.py bin/spender/noise/train_DESI_noise.py; do
-    uv run python "$script" --help > /dev/null || { echo "smoke failed: $script"; exit 1; }
+    uv run python $script --help > /dev/null || { echo "smoke failed: $script"; exit 1; }
 done
 echo "golden outputs written to $OUT"

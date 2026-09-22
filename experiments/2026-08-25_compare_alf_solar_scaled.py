@@ -35,14 +35,12 @@ are not comparable to each other; the solar-scaled one IS comparable to Prospect
 import argparse
 import glob
 import pickle
-import sys
 from math import comb
 from pathlib import Path
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from bin.alf.read_alf_sample import load_run  # noqa: E402
+from hubersed.alf.read_alf_sample import load_run
 
 
 def alf_set(results_dir, tag):
