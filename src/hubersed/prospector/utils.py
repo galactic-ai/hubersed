@@ -1,3 +1,5 @@
+"""Star formation history age bins, the age of the universe, and spectral line lists."""
+
 import astropy.units as u
 import numpy as np
 from astropy.cosmology import Planck18 as cosmo
@@ -14,37 +16,44 @@ BASE_EDGES_GYR = np.array([0, 0.03, 0.10, 0.33, 1.10, 3.60, 11.70, 13.80])
 
 
 def universe_age_gyr(z):
-    """Get the age of the universe in Gyr at redshift z.
+    """Return the age of the universe at redshift z in the Planck18 cosmology.
 
     Parameters
     ----------
-    z : float
-        Redshift
+    z : float or np.ndarray
+        Redshift.
 
     Returns
     -------
-    np.array
-        Age of universe.
+    float or np.ndarray
+        Age in Gyr.
     """
     return cosmo.age(z).to_value(u.Gyr)
 
 
 def make_agebins_for_z(z):
-    """Make age bins for continuity SFH model at redshift z.
+    """Return lookback-time bins for a continuity star formation history at redshift z.
+
+    The edges are ``BASE_EDGES_GYR`` with the last one capped at the age of the universe.
 
     Parameters
     ----------
     z : float
-        Redshift
+        Redshift.
 
     Returns
     -------
-    edges : np.array
-        Array of bin edges in Gyr.
-    mids : np.array
-        Array of bin midpoints in Gyr.
-    dt_yr : np.array
-        Array of bin widths in years.
+    edges : np.ndarray
+        Bin edges in Gyr.
+    mids : np.ndarray
+        Bin midpoints in Gyr.
+    dt_yr : np.ndarray
+        Bin widths in years.
+
+    Raises
+    ------
+    ValueError
+        If fewer than two edges are left.
     """
     # Universe age at this z (in Gyr)
     Tuz = universe_age_gyr(z)
@@ -73,18 +82,21 @@ def make_agebins_for_z(z):
 
 
 def make_stochastic_agebins(z):
-    """ready to use for fsps or be in the dictionary.
-    Make age bins for stochastic SFH model at redshift z.
+    """Return the 10 lookback-time bins of the stochastic star formation history at redshift z.
+
+    The first two bins are 1 to 5 Myr and 5 to 10 Myr. The other eight are evenly spaced
+    in log time from 10 Myr to 0.95 times the age of the universe.
 
     Parameters
     ----------
     z : float
-        Redshift
+        Redshift.
 
     Returns
     -------
-    age_bins_log : np.array
-        Array of shape (10, 2) with log10(yr) bin edges.
+    np.ndarray
+        Bin start and end as log10 of lookback time in years, shape ``(10, 2)``. This is the
+        ``agebins`` format prospect expects.
     """
     t_univ = universe_age_gyr(z)
     # each bin should be in Gyr, shape (n, 2) (start, end)
@@ -103,18 +115,19 @@ def make_stochastic_agebins(z):
 
 
 def _airtovac(w):
-    # From https://github.com/desihub/prospect/blob/1694e3f2eb35e33778f9ab73dc535719f45a959b/py/prospect/viewer/cds.py#L34
-    """Convert air wavelengths to vacuum wavelengths. Don't convert less than 2000 Å.
+    """Convert an air wavelength to vacuum. Wavelengths below 2000 Angstrom are returned as is.
+
+    Copied from desihub/prospect, py/prospect/viewer/cds.py at commit 1694e3f.
 
     Parameters
     ----------
-    w : :class:`float`
-        Wavelength [Å] of the line in air.
+    w : float
+        Wavelength in air, in Angstrom.
 
     Returns
     -------
-    :class:`float`
-        Wavelength [Å] of the line in vacuum.
+    float
+        Wavelength in vacuum, in Angstrom.
     """
     if w < 2000.0:
         return w
@@ -137,8 +150,8 @@ def _parse_line_file(filepath):
     Returns
     -------
     np.ndarray
-        Structured array with fields: name (U20), longname (U40),
-        wave_vac (float64), major (bool).
+        Structured array with the fields name, longname, wave_vac in Angstrom, and major.
+        Air wavelengths in the file are converted to vacuum.
     """
     names = []
     longnames = []
@@ -160,7 +173,6 @@ def _parse_line_file(filepath):
             is_vacuum = parts[3].strip() == "True"
             is_major = parts[4].strip() == "True"
 
-            # Convert air -> vacuum if needed
             if not is_vacuum:
                 wave = float(_airtovac(np.array([wave]))[0])
 
@@ -188,6 +200,15 @@ def _parse_line_file(filepath):
 
 
 def load_lines():
+    """Load the emission and absorption line lists shipped in ``prospector/data``.
+
+    Returns
+    -------
+    dict
+        ``emission`` and ``absorption`` are the structured arrays from ``_parse_line_file``.
+        ``all_waves`` holds every vacuum wavelength and ``major_waves`` only the lines
+        marked major, both sorted and in Angstrom.
+    """
     from pathlib import Path
 
     import numpy as np
