@@ -1,4 +1,4 @@
-"""_map_optimize gives every galaxy the same Powell budget: n_seeds + 1 runs, same options."""
+"""Every galaxy gets the same Powell budget, n_seeds + 1 runs with the same options."""
 
 import numpy as np
 import pytest
@@ -16,7 +16,7 @@ def quadratic(theta):
 
 
 def valid_only_at_init(theta):
-    """Objective whose every jittered start is invalid (the 1e18 sentinel)."""
+    """Objective that returns the invalid value 1e18 everywhere except the initial point."""
     return quadratic(theta) if np.array_equal(theta, INIT) else 1e18
 
 

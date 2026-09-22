@@ -1,4 +1,4 @@
-"""TARGETID <-> global index: load_by_index uses numeric chunk order, spender's loader string order."""
+"""Match galaxies by TARGETID. load_by_index uses numeric chunk order, spender uses string order."""
 
 import numpy as np
 import pytest
@@ -22,7 +22,7 @@ def chunk_dir(tmp_path, monkeypatch):
         spec = torch.ones(ROWS, 2)  # two pixels are enough
         one = torch.ones(ROWS)
         tid = torch.from_numpy(TIDS[k * ROWS : (k + 1) * ROWS])
-        # spec, ivar, z, TARGETID, norm, zerr: the six tensors of a real chunk
+        # A real chunk holds six tensors, spec, ivar, z, TARGETID, norm and zerr
         batch = [spec, spec, one, tid, one, one]
         DESI.save_batch(str(chunk_dir), batch, tag="chunk1024", counter=k)
     np.save(tmp_path / "all_target_ids.npy", TIDS)
@@ -33,7 +33,7 @@ def chunk_dir(tmp_path, monkeypatch):
 @pytest.mark.usefixtures("chunk_dir")
 @pytest.mark.parametrize("gidx", [2048, 10 * ROWS, N_CHUNKS * ROWS - 1])
 def test_tid_round_trip(gidx):
-    """TARGETID -> tids_to_indices -> load_by_index gives back the same galaxy."""
+    """A TARGETID sent through tids_to_indices and load_by_index comes back unchanged."""
     tid = TIDS[gidx]
     idx = int(chi2.tids_to_indices(np.array([tid], np.int64))[0])
     _, _, _, loaded_tid = chi2.load_by_index(idx)
@@ -43,15 +43,15 @@ def test_tid_round_trip(gidx):
 
 @pytest.mark.usefixtures("chunk_dir")
 def test_unknown_tid_raises():
-    """One unknown TARGETID fails the whole call; nothing is dropped or guessed."""
-    # above every stored TARGETID: the case the searchsorted clip exists for
+    """One unknown TARGETID fails the whole call, so nothing is dropped or guessed."""
+    # A TARGETID above every stored one is the case the searchsorted clip is there for
     unknown = TIDS.max() + 1
     with pytest.raises(ValueError, match="1/2 TARGETIDs not found"):
         chi2.tids_to_indices(np.array([TIDS[0], unknown], np.int64))
 
 
 def test_encoder_row_is_not_global_index(chunk_dir):
-    """Encoder row 2048 is chunk 10, not global index 2048: spender reads files in string order."""
+    """The spender loader reads chunk files in string order, so encoder row 2048 holds chunk 10."""
     loader = DESI.get_data_loader(str(chunk_dir), tag="chunk1024", which="all")
     encoder_tids = torch.cat([batch[3] for batch in loader]).numpy()
     np.testing.assert_array_equal(encoder_tids[:2048], TIDS[:2048])

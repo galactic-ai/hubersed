@@ -1,4 +1,4 @@
-"""theta is read by name via theta_index: logsfr_ratios fills 9 slots, so positional labels shift."""
+"""Read theta by name. logsfr_ratios fills 9 slots, so labels matched by position shift."""
 
 import numpy as np
 import pytest
@@ -30,8 +30,8 @@ def test_logsfr_ratios_fills_nine_slots(model):
 
 
 def test_positional_labels_misread_gas_logu(model):
-    """Zipping free_params with theta reads gas_logu from the wrong slot; theta_index does not."""
-    theta = np.arange(len(model.theta), dtype=float)  # value = slot number
+    """Matching free_params to theta by position misreads gas_logu. theta_index reads it right."""
+    theta = np.arange(len(model.theta), dtype=float)  # each value is its own slot number
     by_name = theta[model.theta_index["gas_logu"]][0]
     by_position = dict(zip(model.free_params, theta, strict=False))["gas_logu"]
     assert by_position == by_name - 8

@@ -1,7 +1,6 @@
-"""Pin hubersed.conversion against astropy units.
+"""Check hubersed.conversion against astropy units.
 
-Maggies are tied to 3631 Jy explicitly: astropy's ``u.ABflux`` is 10**(-48.6/2.5)
-erg/s/cm^2/Hz = 3630.78 Jy, which differs from the code's 3631 Jy by 6e-5.
+Maggies use 3631 Jy directly, because astropy's u.ABflux is 3630.78 Jy and differs by 6e-5.
 """
 
 import astropy.units as u
@@ -20,13 +19,13 @@ TO_JY = u.zero_point_flux(3631 * u.Jy)
 
 
 def _astropy_flambda(maggies):
-    """Maggies -> f_lambda [erg/s/cm^2/A] through astropy equivalencies."""
+    """Convert maggies to f_lambda in erg/s/cm^2/A with astropy."""
     fnu = (maggies * u.mgy).to(u.Jy, TO_JY)
     return fnu.to(FLAM, u.spectral_density(WAVE * u.AA)).value
 
 
 def test_maggies_to_flambda_is_cgs():
-    """maggies_to_flambda returns f_lambda in plain cgs, no 1e-17 factor."""
+    """maggies_to_flambda returns f_lambda in plain cgs units, without the 1e-17 factor."""
     np.testing.assert_allclose(maggies_to_flambda(WAVE, MAGGIES), _astropy_flambda(MAGGIES))
 
 
@@ -37,7 +36,7 @@ def test_flambda_to_maggies_takes_desi_units():
 
 
 def test_round_trip_is_off_by_1e_minus_17():
-    """The two functions are not inverses: the round trip scales by 1e-17."""
+    """The two functions are not inverses. A round trip scales the flux by 1e-17."""
     back = flambda_to_maggies(WAVE, maggies_to_flambda(WAVE, MAGGIES))
     np.testing.assert_allclose(back, 1e-17 * MAGGIES)
 
