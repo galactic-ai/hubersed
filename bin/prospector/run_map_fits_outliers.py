@@ -466,13 +466,13 @@ def fit_one(tid, sps, cue_sps, lines, line_waves, n_seeds, maxfev, out, seeds=No
 
 def _worker(tid, n_seeds, maxfev, outdir, seeds, frozen, fixed, warm_from,
             flat_sfh=False, cont_only=False, error_floor=0.0,
-            method="Powell", zcontinuous=1, spectra_npz=None):
+            method="Powell", zcontinuous=1, spectra_npz=None, free_dust1=False):
     S = get_sps(zcontinuous=zcontinuous)
     return fit_one(tid, S["sps"], S["cue"], S["lines"], S["line_waves"],
                    n_seeds, maxfev, Path(outdir), seeds=seeds, frozen=frozen, fixed=fixed,
                    warm_from=warm_from, flat_sfh=flat_sfh, cont_only=cont_only,
                    error_floor=error_floor, method=method, zcontinuous=zcontinuous,
-                   spectra_npz=spectra_npz)
+                   spectra_npz=spectra_npz, free_dust1=free_dust1)
 
 
 def main(argv=None):
@@ -529,6 +529,10 @@ def main(argv=None):
                         "line-masked pixels, with plain FSPS and no Cue nebular. The 5 "
                         "PSD hyperparameters are frozen -- with them free the MAP "
                         "objective is unbounded (see fit_one's docstring).")
+    p.add_argument("--free-dust1", action="store_true",
+                   help="free dust1 (TopHat 0-3) instead of tying it to dust2 * dust_ratio. "
+                        "Full Cue model only; ignored with --continuum-only. "
+                        "See build_full_cue_model and dust_issue/04_proposal.md.")
     args = p.parse_args(argv)
 
     out = Path(args.outdir)
@@ -592,7 +596,8 @@ def main(argv=None):
                               error_floor=args.error_floor,
                               method=args.optimizer,
                               zcontinuous=args.zcontinuous,
-                              spectra_npz=args.spectra_npz): t for t in todo}
+                              spectra_npz=args.spectra_npz,
+                              free_dust1=args.free_dust1): t for t in todo}
             for n, fu in enumerate(as_completed(futs), 1):
                 t = futs[fu]
                 try:
@@ -616,7 +621,8 @@ def main(argv=None):
                                     error_floor=args.error_floor,
                                     method=args.optimizer,
                                     zcontinuous=args.zcontinuous,
-                                    spectra_npz=args.spectra_npz))
+                                    spectra_npz=args.spectra_npz,
+                                    free_dust1=args.free_dust1))
             except Exception as e:
                 print(f"    FAILED {type(e).__name__}: {e}", flush=True)
                 recs.append({"target_id": int(tid), "status": f"error:{type(e).__name__}"})
