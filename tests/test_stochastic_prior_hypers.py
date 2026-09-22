@@ -28,15 +28,20 @@ transforms = pytest.importorskip("prospect.models.hyperparam_transforms")
 
 # 10 bins => 9 log SFR ratios, matching make_stochastic_agebins.
 AGEBINS = np.log10(
-    np.array([[0.001, 0.005], [0.005, 0.01]]
-             + [[a, b] for a, b in zip(np.geomspace(0.01, 12.0, 9)[:-1],
-                                       np.geomspace(0.01, 12.0, 9)[1:])]) * 1e9)
-HYPERS = np.array([0.17, 2.5, 13.0, 0.005, 0.025])   # DEFAULT_SET_VALS ordering
+    np.array(
+        [[0.001, 0.005], [0.005, 0.01]]
+        + [
+            [a, b]
+            for a, b in zip(np.geomspace(0.01, 12.0, 9)[:-1], np.geomspace(0.01, 12.0, 9)[1:])
+        ]
+    )
+    * 1e9
+)
+HYPERS = np.array([0.17, 2.5, 13.0, 0.005, 0.025])  # DEFAULT_SET_VALS ordering
 
 
 def ratio_covar(psd):
-    return transforms.sfr_covar_to_sfr_ratio_covar(
-        transforms.get_sfr_covar(psd, agebins=AGEBINS))
+    return transforms.sfr_covar_to_sfr_ratio_covar(transforms.get_sfr_covar(psd, agebins=AGEBINS))
 
 
 def mvn_logpdf(x, S):
@@ -50,7 +55,9 @@ def test_sigma_scales_the_covariance_quadratically():
     """The premise of the whole argument: Sigma is homogeneous of degree 2 in sigma."""
     p = HYPERS.copy()
     S1 = ratio_covar(p)
-    q = p.copy(); q[0] *= 3.0; q[3] *= 3.0
+    q = p.copy()
+    q[0] *= 3.0
+    q[3] *= 3.0
     S3 = ratio_covar(q)
     np.testing.assert_allclose(S3, 9.0 * S1, rtol=1e-10)
 
@@ -61,12 +68,16 @@ def test_map_objective_is_unbounded_in_the_sigma_funnel():
     x0 = rng.normal(scale=0.3, size=len(AGEBINS) - 1)
 
     def lnp(scale):
-        p = HYPERS.copy(); p[0] *= scale; p[3] *= scale
+        p = HYPERS.copy()
+        p[0] *= scale
+        p[3] *= scale
         return mvn_logpdf(x0 * scale, ratio_covar(p))
 
     mahal = []
     for s in (1.0, 1e-1, 1e-2, 1e-3):
-        p = HYPERS.copy(); p[0] *= s; p[3] *= s
+        p = HYPERS.copy()
+        p[0] *= s
+        p[3] *= s
         S = ratio_covar(p)
         mahal.append((x0 * s) @ np.linalg.solve(S, x0 * s))
 
@@ -89,10 +100,16 @@ def test_continuum_model_is_15_free_with_hypers_frozen():
     labels = model.theta_labels()
     assert len(labels) == 15, f"expected 15 free, got {len(labels)}: {labels}"
 
-    named = {lab.rsplit("_", 1)[0] if lab.startswith("logsfr_ratios_") else lab
-             for lab in labels}
-    assert named == {"logzsol", "dust2", "logmass", "logsfr_ratios",
-                     "dust_ratio", "dust_index", "sigma_smooth"}
+    named = {lab.rsplit("_", 1)[0] if lab.startswith("logsfr_ratios_") else lab for lab in labels}
+    assert named == {
+        "logzsol",
+        "dust2",
+        "logmass",
+        "logsfr_ratios",
+        "dust_ratio",
+        "dust_index",
+        "sigma_smooth",
+    }
     assert sum(lab.startswith("logsfr_ratios_") for lab in labels) == 9
 
     for k in ("sigma_reg", "tau_eq", "tau_in", "sigma_dyn", "tau_dyn"):

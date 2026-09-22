@@ -85,9 +85,7 @@ for i in range(0, total_samples, batch_size):
     flambda_norm, norms, good_mask = normalize_spectra(
         flambda, redshifts_batch, wavelength, inplace=False
     )
-    flambda_norm = flambda_norm[
-        :, :-1
-    ]  # remove last point to match instrument wave grid
+    flambda_norm = flambda_norm[:, :-1]  # remove last point to match instrument wave grid
 
     print(
         f"Processing batch {i} - {i + batch_size}, "

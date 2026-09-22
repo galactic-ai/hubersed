@@ -10,6 +10,7 @@ from hubersed.paths import PATHS
 
 RESULTS_DIR = PATHS["RESULTS"]
 
+
 def load_flagged(pt_path):
     """(target_ids, metadata) as the output"""
     d = torch.load(pt_path, weights_only=False)
@@ -23,6 +24,7 @@ def load_flagged(pt_path):
     }
     return tids, meta
 
+
 def core(pt_paths, k=None):
     sets, metas = [], []
     for p in pt_paths:
@@ -34,11 +36,11 @@ def core(pt_paths, k=None):
     # if number of sets to intersect is not specified, use all sets
     if k is None:
         k = N
-    
+
     votes = Counter()
     for s in sets:
         votes.update(s)
-    
+
     core_tids = {t for t, v in votes.items() if v >= k}
 
     union = set().union(*sets)
@@ -53,6 +55,7 @@ def core(pt_paths, k=None):
 
     return core_tids, metas, counts
 
+
 if __name__ == "__main__":
     d = Path(sys.argv[1]) if len(sys.argv) > 1 else RESULTS_DIR / "noised_cue_meanzero_wide_flow"
     paths = [d / f"desi_outliers_flow_nsf_{t}_snr3.pt" for t in ("6latent", "10latent", "15latent")]
@@ -60,7 +63,9 @@ if __name__ == "__main__":
     print(json.dumps(counts, indent=2))
 
     for m in metas:
-        print(f"{m['tag']}: {m['n']} flagged, c2st={m['c2st']:.3f}, threshold={m['threshold']:.3f}, mock_file={m['mock_file']}")
+        print(
+            f"{m['tag']}: {m['n']} flagged, c2st={m['c2st']:.3f}, threshold={m['threshold']:.3f}, mock_file={m['mock_file']}"
+        )
 
     torch.save(
         {

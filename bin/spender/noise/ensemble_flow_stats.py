@@ -11,7 +11,7 @@ from hubersed.paths import PATHS
 
 RES = PATHS["RESULTS"]
 TAGS = ("6latent", "10latent", "15latent", "cont10latent", "cont15latent")
-Q = 0.001                      # same 0.1% mock quantile rule as the single-seed script
+Q = 0.001  # same 0.1% mock quantile rule as the single-seed script
 
 
 def jac(a, b):
@@ -29,9 +29,7 @@ def combiners(lp):
     med  = median log p. Robust to a single member that blows up on a point.
     """
     S = lp.shape[0]
-    return {"mix": logsumexp(lp, axis=0) - np.log(S),
-            "mean": lp.mean(0),
-            "med": np.median(lp, 0)}
+    return {"mix": logsumexp(lp, axis=0) - np.log(S), "mean": lp.mean(0), "med": np.median(lp, 0)}
 
 
 def sec1_members(d, tid):
@@ -40,14 +38,20 @@ def sec1_members(d, tid):
     print(f"\n[1] {S} members  (DESI N={len(tid)})")
     print("    seed  NLLtrain  NLLvalid     gap      thr   n_out    pct   KSmax   C2ST")
     for i, s in enumerate(d["seeds"]):
-        print(f"    {int(s):4d}  {d['nll_train'][i]:8.3f}  {d['nll_valid'][i]:8.3f}  "
-              f"{d['nll_valid'][i] - d['nll_train'][i]:+6.3f}  {d['thr'][i]:8.3f}  "
-              f"{n[i]:5d}  {100 * n[i] / len(tid):5.3f}  {d['ks_max'][i]:5.3f}  {d['c2st'][i]:5.3f}")
-    print(f"    n_out  mean {n.mean():.1f}  std {n.std(ddof=1):.1f}  min {n.min()}  max {n.max()}"
-          f"   spread/mean = {(n.max() - n.min()) / n.mean():.2f}")
+        print(
+            f"    {int(s):4d}  {d['nll_train'][i]:8.3f}  {d['nll_valid'][i]:8.3f}  "
+            f"{d['nll_valid'][i] - d['nll_train'][i]:+6.3f}  {d['thr'][i]:8.3f}  "
+            f"{n[i]:5d}  {100 * n[i] / len(tid):5.3f}  {d['ks_max'][i]:5.3f}  {d['c2st'][i]:5.3f}"
+        )
+    print(
+        f"    n_out  mean {n.mean():.1f}  std {n.std(ddof=1):.1f}  min {n.min()}  max {n.max()}"
+        f"   spread/mean = {(n.max() - n.min()) / n.mean():.2f}"
+    )
     print(f"    thr    mean {d['thr'].mean():.3f}  std {d['thr'].std(ddof=1):.3f}")
-    print(f"    C2ST   mean {np.nanmean(d['c2st']):.3f}  max {np.nanmax(d['c2st']):.3f}"
-          "   (0.5 = flow reproduces the mocks; >0.6 = it does not)")
+    print(
+        f"    C2ST   mean {np.nanmean(d['c2st']):.3f}  max {np.nanmax(d['c2st']):.3f}"
+        "   (0.5 = flow reproduces the mocks; >0.6 = it does not)"
+    )
     return n
 
 
@@ -60,11 +64,15 @@ def sec2_sets(d, tid):
     union = set.union(*sets)
     print(f"\n[2] outlier-set reproducibility across seeds")
     print(f"    pairwise Jaccard: mean {js.mean():.3f}  min {js.min():.3f}  max {js.max():.3f}")
-    print(f"    seed0 vs seed1 specifically: J = {jac(sets[0], sets[1]):.3f}  "
-          f"|0\\1| = {len(sets[0] - sets[1])}  |1\\0| = {len(sets[1] - sets[0])}")
+    print(
+        f"    seed0 vs seed1 specifically: J = {jac(sets[0], sets[1]):.3f}  "
+        f"|0\\1| = {len(sets[0] - sets[1])}  |1\\0| = {len(sets[1] - sets[0])}"
+    )
     print(f"    union over all {S} seeds        : {len(union)}")
-    print(f"    intersection over all {S} seeds : {len(inter)}  "
-          f"({100 * len(inter) / max(len(union), 1):.1f}% of union)")
+    print(
+        f"    intersection over all {S} seeds : {len(inter)}  "
+        f"({100 * len(inter) / max(len(union), 1):.1f}% of union)"
+    )
     print(f"    median single-seed list size   : {np.median([len(s) for s in sets]):.0f}")
     return sets, union, inter
 
@@ -91,24 +99,30 @@ def sec4_ranks(d):
     R = np.vstack([rankdata(d["lp_desi"][i]) for i in range(S)])
     C = np.corrcoef(R)
     off = C[np.triu_indices(S, 1)]
-    print(f"\n[4] Spearman rho of DESI log p between seeds: mean {off.mean():.4f}  "
-          f"min {off.min():.4f}  max {off.max():.4f}")
+    print(
+        f"\n[4] Spearman rho of DESI log p between seeds: mean {off.mean():.4f}  "
+        f"min {off.min():.4f}  max {off.max():.4f}"
+    )
     pct = R / R.shape[1]
     return pct
 
 
 def sec5_ensemble(d, tid, sets, union, inter):
     cm, cd = combiners(d["lp_mock"]), combiners(d["lp_desi"])
-    print(f"\n[5] ensemble scores (threshold = {100 * Q:.1f}% quantile of the same combiner "
-          "applied to the mocks)")
+    print(
+        f"\n[5] ensemble scores (threshold = {100 * Q:.1f}% quantile of the same combiner "
+        "applied to the mocks)"
+    )
     ens = {}
     for k in ("mix", "mean", "med"):
         t = float(np.quantile(cm[k], Q))
         s = set(tid[cd[k] <= t].tolist())
         ens[k] = s
         jm = np.mean([jac(s, x) for x in sets])
-        print(f"    {k:>4}  thr {t:9.3f}  n_out {len(s):5d}   J vs union {jac(s, union):.3f}  "
-              f"J vs intersection {jac(s, inter):.3f}  mean J vs single seeds {jm:.3f}")
+        print(
+            f"    {k:>4}  thr {t:9.3f}  n_out {len(s):5d}   J vs union {jac(s, union):.3f}  "
+            f"J vs intersection {jac(s, inter):.3f}  mean J vs single seeds {jm:.3f}"
+        )
     return ens
 
 
@@ -123,7 +137,7 @@ def sec6_splithalf(d, tid, js_single, rng, n_rep=20):
     out = {k: [] for k in ("mix", "mean", "med")}
     for _ in range(n_rep):
         p = rng.permutation(S)
-        A, B = p[:h], p[h:2 * h]
+        A, B = p[:h], p[h : 2 * h]
         for k in out:
             sa = combiners(d["lp_desi"][A])[k]
             sb = combiners(d["lp_desi"][B])[k]
@@ -134,8 +148,10 @@ def sec6_splithalf(d, tid, js_single, rng, n_rep=20):
     print(f"    single-seed pairwise J (from [2]) : {js_single:.3f}   <- the baseline to beat")
     for k, v in out.items():
         v = np.array(v)
-        print(f"    {k:>4}-ensemble split-half J        : {v.mean():.3f} +/- {v.std(ddof=1):.3f}"
-              f"   (gain {v.mean() - js_single:+.3f})")
+        print(
+            f"    {k:>4}-ensemble split-half J        : {v.mean():.3f} +/- {v.std(ddof=1):.3f}"
+            f"   (gain {v.mean() - js_single:+.3f})"
+        )
 
 
 def sec7_sample20(d, tid, votes, ens, pct, sample):
@@ -155,8 +171,10 @@ def sec7_sample20(d, tid, votes, ens, pct, sample):
         k = votes.get(int(t), 0)
         flags = "".join("Y" if int(t) in ens[c] else "." for c in ("mix", "mean", "med"))
         nrob += k == S
-        print(f"    {int(t):17d}  {k:3d}/{S}  {p.min():9.5f} {np.median(p):9.5f} "
-              f"{p.max():9.5f}   {flags}")
+        print(
+            f"    {int(t):17d}  {k:3d}/{S}  {p.min():9.5f} {np.median(p):9.5f} "
+            f"{p.max():9.5f}   {flags}"
+        )
     print(f"    unanimous ({S}/{S}) under this tag: {nrob}/{len(sample)}")
 
 
@@ -168,19 +186,23 @@ def sec8_vs_stored(d, tid, tag):
     if not f.exists():
         return
     import torch
+
     st = torch.load(f, weights_only=False)
     a = set(int(x) for x in st["outlier_target_ids"])
     b = set(tid[d["lp_desi"][0] <= d["thr"][0]].tolist())
     print(f"\n[8] stored seed-0 ({f.parent.name}/) vs seed-0 here")
-    print(f"    stored n={len(a)} thr={st['threshold']:.3f}   |   here n={len(b)} "
-          f"thr={d['thr'][0]:.3f}   J = {jac(a, b):.3f}")
+    print(
+        f"    stored n={len(a)} thr={st['threshold']:.3f}   |   here n={len(b)} "
+        f"thr={d['thr'][0]:.3f}   J = {jac(a, b):.3f}"
+    )
     print("    -> at fixed seed the two should agree. Any gap here is float/hardware noise,")
     print("       i.e. a floor under section [2] that is NOT attributable to the seed.")
 
 
 def main():
-    p = argparse.ArgumentParser(description=__doc__,
-                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     p.add_argument("--dir", type=Path, default=RES / "flow_ensemble")
     p.add_argument("--tags", nargs="*", default=None)
     p.add_argument("--method", default="nsf")

@@ -50,9 +50,17 @@ from hubersed.prospector.utils import universe_age_gyr
 LSF = (C_KMS / (2.355 * desi_resolution(WAVE_OBS))).astype(np.float64)
 
 AIR_LINES = {
-    "[OII]": 3727.4, "[NeIII]": 3868.8, "Hd": 4101.7, "Hg": 4340.5, "Hb": 4861.3,
-    "[OIII]4959": 4958.9, "[OIII]5007": 5006.8, "Ha": 6562.8,
-    "[NII]6584": 6583.5, "[SII]6716": 6716.4, "[SII]6731": 6730.8,
+    "[OII]": 3727.4,
+    "[NeIII]": 3868.8,
+    "Hd": 4101.7,
+    "Hg": 4340.5,
+    "Hb": 4861.3,
+    "[OIII]4959": 4958.9,
+    "[OIII]5007": 5006.8,
+    "Ha": 6562.8,
+    "[NII]6584": 6583.5,
+    "[SII]6716": 6716.4,
+    "[SII]6731": 6730.8,
 }
 BALMER = ("Hd", "Hg", "Hb", "Ha")
 
@@ -65,6 +73,7 @@ def vacuum_lines(sps):
         assert abs(fw[j] - lam) / lam * C_KMS < 200, f"{k}: no FSPS line within 200 km/s"
         out[k] = float(fw[j])
     return out
+
 
 def safe_lnprior(model, theta):
     try:
@@ -87,8 +96,19 @@ def jitter_scale(model, theta, frac):
     return scale
 
 
-def map_fit(model, obs, sps, n_seeds, maxfev, theta0=None, jitter_frac=0.02, seed=0,
-            max_tries=400, tag="", method="Powell"):
+def map_fit(
+    model,
+    obs,
+    sps,
+    n_seeds,
+    maxfev,
+    theta0=None,
+    jitter_frac=0.02,
+    seed=0,
+    max_tries=400,
+    tag="",
+    method="Powell",
+):
     def neg(th):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -117,12 +137,17 @@ def map_fit(model, obs, sps, n_seeds, maxfev, theta0=None, jitter_frac=0.02, see
         # converges onto a V-shaped minimum and reports success. That is the suspected
         # cause of MAPs landing at logzsol = +0.2500 to four decimal places. Nelder-Mead
         # does no line search and is the control.
-        opts = ({"maxiter": maxfev // 10, "maxfev": maxfev, "ftol": 1e-6}
-                if method == "Powell" else
-                {"maxiter": maxfev, "maxfev": maxfev, "fatol": 1e-6, "xatol": 1e-4})
+        opts = (
+            {"maxiter": maxfev // 10, "maxfev": maxfev, "ftol": 1e-6}
+            if method == "Powell"
+            else {"maxiter": maxfev, "maxfev": maxfev, "fatol": 1e-6, "xatol": 1e-4}
+        )
         r = minimize(neg, st, method=method, options=opts)
-        print(f"{tag} start {k}/{len(starts) - 1}  fun {r.fun:.1f}  nfev {r.nfev}  "
-              f"success {r.success}  {time.time() - t0:.0f}s", flush=True)
+        print(
+            f"{tag} start {k}/{len(starts) - 1}  fun {r.fun:.1f}  nfev {r.nfev}  "
+            f"success {r.success}  {time.time() - t0:.0f}s",
+            flush=True,
+        )
         if np.isfinite(r.fun) and r.fun < 1e10:
             res.append(r)
     res.sort(key=lambda r: r.fun)
@@ -132,18 +157,24 @@ def map_fit(model, obs, sps, n_seeds, maxfev, theta0=None, jitter_frac=0.02, see
     funs = np.array([r.fun for r in res], float)
     f_ok = np.array([r.fun for r in res if r.success], float)
     info = {
-        "n_starts": len(starts), "n_ok": len(res), "n_converged": int(f_ok.size),
+        "n_starts": len(starts),
+        "n_ok": len(res),
+        "n_converged": int(f_ok.size),
         "fun_all": funs.tolist(),
         "gap_best_second": float(f_ok[1] - f_ok[0]) if f_ok.size > 1 else np.nan,
-        "success": [bool(r.success) for r in res], "nfev": [int(r.nfev) for r in res],
-        "jitter_frac": jitter_frac, "seed": seed, "maxfev": maxfev,
+        "success": [bool(r.success) for r in res],
+        "nfev": [int(r.nfev) for r in res],
+        "jitter_frac": jitter_frac,
+        "seed": seed,
+        "maxfev": maxfev,
     }
     return res[0], info
 
 
 def theta_dict(model, theta):
-    return {k: np.atleast_1d(np.asarray(theta, float)[v]).copy()
-            for k, v in model.theta_index.items()}
+    return {
+        k: np.atleast_1d(np.asarray(theta, float)[v]).copy() for k, v in model.theta_index.items()
+    }
 
 
 def chi2_parts(model, theta, obs, sps, line_pix):
@@ -160,10 +191,13 @@ def chi2_parts(model, theta, obs, sps, line_pix):
     mean = lambda x: float(x.mean()) if x.size else np.nan
     return sp, {
         "chi2_red": float(r2[m].sum() / max(int(m.sum()) - len(theta), 1)),
-        "chi2": float(r2[m].sum()), "npix": int(m.sum()), "ntheta": len(theta),
+        "chi2": float(r2[m].sum()),
+        "npix": int(m.sum()),
+        "ntheta": len(theta),
         "chi2_line_frac": float(r2[lp].sum() / r2[m].sum()) if r2[m].sum() else np.nan,
         "npix_line_frac": float(lp.sum() / m.sum()),
-        "chi2_per_pix_line": mean(r2[lp]), "chi2_per_pix_cont": mean(r2[cp]),
+        "chi2_per_pix_line": mean(r2[lp]),
+        "chi2_per_pix_cont": mean(r2[cp]),
     }
 
 
@@ -187,31 +221,47 @@ def sfh_from_theta(model, theta):
     ratios = np.atleast_1d(model.params["logsfr_ratios"])
     masses = logsfr_ratios_to_masses(logmass=logmass, logsfr_ratios=ratios, agebins=ab)
     flat = logsfr_ratios_to_masses(logmass=logmass, logsfr_ratios=np.zeros_like(ratios), agebins=ab)
-    dt = np.diff(10 ** ab, axis=1)[:, 0]
+    dt = np.diff(10**ab, axis=1)[:, 0]
     sfr = masses / dt
     m_cur = masses.sum() * 0.6
     m_ge = np.cumsum(masses[::-1])[::-1]
     edges = np.append(10 ** ab[:, 0], 10 ** ab[-1, 1]) / 1e9
     edges[0] = max(edges[0], 1e-4)
-    return dict(edges_gyr=edges, ssfr=sfr / m_cur, ssfr_inplace=sfr / np.maximum(m_ge, 1.0),
-                cmf=np.cumsum(masses) / masses.sum(),
-                cmf_flat_null=np.cumsum(flat) / flat.sum(), agebins=ab)
+    return dict(
+        edges_gyr=edges,
+        ssfr=sfr / m_cur,
+        ssfr_inplace=sfr / np.maximum(m_ge, 1.0),
+        cmf=np.cumsum(masses) / masses.sum(),
+        cmf_flat_null=np.cumsum(flat) / flat.sum(),
+        agebins=ab,
+    )
 
 
 def lnp_split(model, theta, obs, sps):
     lnprior = safe_lnprior(model, theta)
-    lnpost = float(lnprobfn(np.asarray(theta, float), model=model, observations=obs,
-                            sps=sps, nested=False))
+    lnpost = float(
+        lnprobfn(np.asarray(theta, float), model=model, observations=obs, sps=sps, nested=False)
+    )
     return {"lnpost": lnpost, "lnprior": lnprior, "lnlike": lnpost - lnprior}
 
 
 def plot_fit(tid, z, wave, flux, unc, mask, model_sp, lines, chi2_red, out):
     fig, ax = spectrum_figure(
-        wave, z=z, figsize=(11, 6),
-        data=np.where(mask, flux, np.nan), unc=np.where(mask, unc, np.nan), band_kw={},
+        wave,
+        z=z,
+        figsize=(11, 6),
+        data=np.where(mask, flux, np.nan),
+        unc=np.where(mask, unc, np.nan),
+        band_kw={},
         medfilt=np.where(mask, medfilt(np.where(mask, flux, 0.0), 9), np.nan),
-        models=[{"flux": np.where(mask, model_sp, np.nan),
-                 "label": f"Cue MAP  $\\chi^2_\\nu$={chi2_red:.2f}", "color": "#b2182b", "lw": 1.0}],
+        models=[
+            {
+                "flux": np.where(mask, model_sp, np.nan),
+                "label": f"Cue MAP  $\\chi^2_\\nu$={chi2_red:.2f}",
+                "color": "#b2182b",
+                "lw": 1.0,
+            }
+        ],
     )
     ax[0].set_ylabel("flux [maggies]")
     ax[0].set_ylim(np.nanmin(flux[mask]) * 1.1, np.nanpercentile(flux[mask], 99.8) * 1.2)
@@ -224,8 +274,9 @@ def plot_fit(tid, z, wave, flux, unc, mask, model_sp, lines, chi2_red, out):
 
 
 def plot_sfh(tid, sfh, out):
-    fig, ax = sfh_figure(sfh["edges_gyr"], sfh["ssfr"], sfh["cmf"],
-                         ssfr_inplace=sfh["ssfr_inplace"])
+    fig, ax = sfh_figure(
+        sfh["edges_gyr"], sfh["ssfr"], sfh["cmf"], ssfr_inplace=sfh["ssfr_inplace"]
+    )
     ax[1].stairs(sfh["cmf_flat_null"], sfh["edges_gyr"], color="0.6", ls="--", lw=1.2)
     fig.savefig(out / f"{tid}_sfh.pdf", bbox_inches="tight")
     plt.close(fig)
@@ -240,8 +291,9 @@ def get_sps(zcontinuous=1):
     # config is fine and is the normal path: ProcessPoolExecutor hands each worker
     # many targets, so every task after the first sees a populated cache.
     key = int(zcontinuous)
-    assert not (_SPS and _SPS.get("key") != key), \
+    assert not (_SPS and _SPS.get("key") != key), (
         f"get_sps() cached with {_SPS.get('key')}; {key} would be ignored"
+    )
     if not _SPS:
         _SPS["key"] = key
         _SPS["sps"] = build_sps(zcontinuous=zcontinuous)
@@ -255,7 +307,7 @@ def get_sps(zcontinuous=1):
 
 FROZEN_HYPERS = {"sigma_reg": 1.5, "sigma_dyn": 0.1, "tau_eq": 2.5, "tau_dyn": 0.025}
 
-FLAT_SFH_RANGE = 5.0   # dex, symmetric
+FLAT_SFH_RANGE = 5.0  # dex, symmetric
 
 
 def _build_model(tmpl, flat_sfh=False):
@@ -287,10 +339,11 @@ def _build_model(tmpl, flat_sfh=False):
         return HyperSpecModel(tmpl)
     n = len(np.asarray(tmpl["agebins"]["init"], float)) - 1
     tmpl["logsfr_ratios"]["prior"] = priors.TopHat(
-        mini=np.full(n, -FLAT_SFH_RANGE), maxi=np.full(n, FLAT_SFH_RANGE))
+        mini=np.full(n, -FLAT_SFH_RANGE), maxi=np.full(n, FLAT_SFH_RANGE)
+    )
     for k in ("sigma_reg", "tau_eq", "tau_in", "sigma_dyn", "tau_dyn"):
         if k in tmpl:
-            tmpl[k]["isfree"] = False   # inert under SpecModel, but do not let them into theta
+            tmpl[k]["isfree"] = False  # inert under SpecModel, but do not let them into theta
     return SpecModel(tmpl)
 
 
@@ -303,8 +356,11 @@ def freeze_hypers(template, z):
 
 
 def warm_theta(model, path, z, th0):
-    src = dict(zip(*(lambda r: (r["labels"], np.asarray(r["theta"], float)))(
-        pickle.load(open(path, "rb")))))
+    src = dict(
+        zip(
+            *(lambda r: (r["labels"], np.asarray(r["theta"], float)))(pickle.load(open(path, "rb")))
+        )
+    )
     src.setdefault("tau_in", universe_age_gyr(z) * (1 - 1e-6))
     for k, v in FROZEN_HYPERS.items():
         src.setdefault(k, v)
@@ -313,10 +369,27 @@ def warm_theta(model, path, z, th0):
     return th
 
 
-def fit_one(tid, sps, cue_sps, lines, line_waves, n_seeds, maxfev, out, seeds=None,
-            frozen=False, fixed=None, warm_from=None, flat_sfh=False, cont_only=False,
-            error_floor=0.0, method="Powell", zcontinuous=1, spectra_npz=None,
-            free_dust1=False):
+def fit_one(
+    tid,
+    sps,
+    cue_sps,
+    lines,
+    line_waves,
+    n_seeds,
+    maxfev,
+    out,
+    seeds=None,
+    frozen=False,
+    fixed=None,
+    warm_from=None,
+    flat_sfh=False,
+    cont_only=False,
+    error_floor=0.0,
+    method="Powell",
+    zcontinuous=1,
+    spectra_npz=None,
+    free_dust1=False,
+):
     """cont_only: fit build_continuum_model on line-masked pixels -- 15 free parameters
     (logzsol, dust2, logmass, 9x logsfr_ratios, dust_ratio, dust_index, sigma_smooth),
     no Cue nebular, plain FSPS sps.
@@ -357,7 +430,9 @@ def fit_one(tid, sps, cue_sps, lines, line_waves, n_seeds, maxfev, out, seeds=No
 
     m_cont = mask_spectral_lines(WAVE_OBS, mask, z, halfwidth_kms=1500.0, line_waves=line_waves)
     line_pix = mask & ~m_cont
-    tight = mask & ~mask_spectral_lines(WAVE_OBS, mask, z, halfwidth_kms=300.0, line_waves=line_waves)
+    tight = mask & ~mask_spectral_lines(
+        WAVE_OBS, mask, z, halfwidth_kms=300.0, line_waves=line_waves
+    )
 
     # Fractional error floor, added IN QUADRATURE: sigma_eff^2 = sigma^2 + (f*flux)^2.
     #
@@ -375,7 +450,7 @@ def fit_one(tid, sps, cue_sps, lines, line_waves, n_seeds, maxfev, out, seeds=No
     # Applied to the DATA rather than the model so the noise model does not depend on
     # theta. At S/N ~60 the resulting noise bias is negligible.
     if error_floor and error_floor > 0:
-        unc = np.sqrt(unc ** 2 + (float(error_floor) * np.abs(flux)) ** 2)
+        unc = np.sqrt(unc**2 + (float(error_floor) * np.abs(flux)) ** 2)
 
     # cont_only fits the line-masked pixels only; the Cue arm fits everything and
     # accounts for the lines with free nebular parameters.
@@ -385,8 +460,9 @@ def fit_one(tid, sps, cue_sps, lines, line_waves, n_seeds, maxfev, out, seeds=No
     if cont_only:
         model, tmpl, sps_use = cont_model, cont_tmpl, sps
     else:
-        model, tmpl = build_full_cue_model(cont_tmpl, cont_model.theta, cont_model, z,
-                                           free_dust1=free_dust1)
+        model, tmpl = build_full_cue_model(
+            cont_tmpl, cont_model.theta, cont_model, z, free_dust1=free_dust1
+        )
         sps_use = cue_sps
     if frozen or fixed or flat_sfh:
         if frozen:
@@ -402,16 +478,25 @@ def fit_one(tid, sps, cue_sps, lines, line_waves, n_seeds, maxfev, out, seeds=No
     for k, v in (seeds or {}).items():
         if k in model.theta_index and np.isfinite(v):
             lo, hi = model.config_dict[k]["prior"].range
-            th0[model.theta_index[k]] = np.clip(v, float(np.atleast_1d(lo)[0]),
-                                                float(np.atleast_1d(hi)[0]))
+            th0[model.theta_index[k]] = np.clip(
+                v, float(np.atleast_1d(lo)[0]), float(np.atleast_1d(hi)[0])
+            )
 
     warm = Path(warm_from) / f"{tid}.pkl" if warm_from else None
     if warm and warm.exists():
         th0 = warm_theta(model, warm, z, th0)
 
     t0 = time.time()
-    best, info = map_fit(model, obs, sps_use, n_seeds=n_seeds, maxfev=maxfev,
-                         theta0=th0, tag=f"  {tid}", method=method)
+    best, info = map_fit(
+        model,
+        obs,
+        sps_use,
+        n_seeds=n_seeds,
+        maxfev=maxfev,
+        theta0=th0,
+        tag=f"  {tid}",
+        method=method,
+    )
     if best is None:
         return {"target_id": tid, "z": float(z), "status": "map_failed", "optim": info}
     info["seconds"] = time.time() - t0
@@ -425,12 +510,27 @@ def fit_one(tid, sps, cue_sps, lines, line_waves, n_seeds, maxfev, out, seeds=No
     sfh = sfh_from_theta(model, best.x)
 
     rec = {
-        "target_id": tid, "z": float(z), "status": "ok", "wave": WAVE_OBS,
-        "flux": flux, "unc": unc, "mask": mask, "line_pix": line_pix, "tight_pix": tight,
-        "model": sp, "theta": best.x, "theta_dict": td, "labels": model.theta_labels(),
-        "ndim": len(best.x), "stats": stats, "stats_tight": stats_tight,
-        "line_ratios": lr, "lnp": lnp_split(model, best.x, obs, sps_use),
-        "optim": info, "sfh": sfh, "lines": lines,
+        "target_id": tid,
+        "z": float(z),
+        "status": "ok",
+        "wave": WAVE_OBS,
+        "flux": flux,
+        "unc": unc,
+        "mask": mask,
+        "line_pix": line_pix,
+        "tight_pix": tight,
+        "model": sp,
+        "theta": best.x,
+        "theta_dict": td,
+        "labels": model.theta_labels(),
+        "ndim": len(best.x),
+        "stats": stats,
+        "stats_tight": stats_tight,
+        "line_ratios": lr,
+        "lnp": lnp_split(model, best.x, obs, sps_use),
+        "optim": info,
+        "sfh": sfh,
+        "lines": lines,
         "nlines": 0 if cont_only else len(model.emline_info),
         "nebemlineinspec": bool(np.any(model.params.get("nebemlineinspec"))),
         "lsf": "median desi_resolution",
@@ -446,13 +546,14 @@ def fit_one(tid, sps, cue_sps, lines, line_waves, n_seeds, maxfev, out, seeds=No
         # to FROZEN_HYPERS (1.5, 0.1). Those differ by 8.8x and 20x and neither has a
         # recorded source, so which one produced a given fit has to be on the record.
         "hypers": "frozen" if (frozen or cont_only) else "free",
-        "hyper_values": {k: float(np.atleast_1d(model.params[k])[0])
-                         for k in ("sigma_reg", "tau_eq", "tau_in", "sigma_dyn", "tau_dyn")
-                         if k in model.params},
+        "hyper_values": {
+            k: float(np.atleast_1d(model.params[k])[0])
+            for k in ("sigma_reg", "tau_eq", "tau_in", "sigma_dyn", "tau_dyn")
+            if k in model.params
+        },
         "fixed": dict(fixed or {}),
         "sfh_prior": f"tophat+/-{FLAT_SFH_RANGE}" if flat_sfh else "gp_stochastic",
-        "eline_waves": None if cont_only else
-            np.asarray(cue_sps.emline_wavelengths, float).copy(),
+        "eline_waves": None if cont_only else np.asarray(cue_sps.emline_wavelengths, float).copy(),
     }
     # Write the record BEFORE plotting.
     with open(out / f"{tid}.pkl", "wb") as f:
@@ -466,75 +567,148 @@ def fit_one(tid, sps, cue_sps, lines, line_waves, n_seeds, maxfev, out, seeds=No
     return rec
 
 
-def _worker(tid, n_seeds, maxfev, outdir, seeds, frozen, fixed, warm_from,
-            flat_sfh=False, cont_only=False, error_floor=0.0,
-            method="Powell", zcontinuous=1, spectra_npz=None, free_dust1=False):
+def _worker(
+    tid,
+    n_seeds,
+    maxfev,
+    outdir,
+    seeds,
+    frozen,
+    fixed,
+    warm_from,
+    flat_sfh=False,
+    cont_only=False,
+    error_floor=0.0,
+    method="Powell",
+    zcontinuous=1,
+    spectra_npz=None,
+    free_dust1=False,
+):
     S = get_sps(zcontinuous=zcontinuous)
-    return fit_one(tid, S["sps"], S["cue"], S["lines"], S["line_waves"],
-                   n_seeds, maxfev, Path(outdir), seeds=seeds, frozen=frozen, fixed=fixed,
-                   warm_from=warm_from, flat_sfh=flat_sfh, cont_only=cont_only,
-                   error_floor=error_floor, method=method, zcontinuous=zcontinuous,
-                   spectra_npz=spectra_npz, free_dust1=free_dust1)
+    return fit_one(
+        tid,
+        S["sps"],
+        S["cue"],
+        S["lines"],
+        S["line_waves"],
+        n_seeds,
+        maxfev,
+        Path(outdir),
+        seeds=seeds,
+        frozen=frozen,
+        fixed=fixed,
+        warm_from=warm_from,
+        flat_sfh=flat_sfh,
+        cont_only=cont_only,
+        error_floor=error_floor,
+        method=method,
+        zcontinuous=zcontinuous,
+        spectra_npz=spectra_npz,
+        free_dust1=free_dust1,
+    )
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(description="MAP fits (Cue, free PSD) for emission-line OOD outliers.")
-    p.add_argument("-s", "--sample", type=str,
-                   default=str(PATHS["RESULTS"] / "emline_outlier_sample20.npz"))
+    p = argparse.ArgumentParser(
+        description="MAP fits (Cue, free PSD) for emission-line OOD outliers."
+    )
+    p.add_argument(
+        "-s", "--sample", type=str, default=str(PATHS["RESULTS"] / "emline_outlier_sample20.npz")
+    )
     p.add_argument("-o", "--outdir", type=str, default=str(PATHS["RESULTS"] / "emline_map_fits"))
     p.add_argument("-n", "--n-seeds", type=int, default=6)
     p.add_argument("-m", "--maxfev", type=int, default=120_000)
     p.add_argument("--limit", type=int, default=None)
     p.add_argument("--skip-existing", action="store_true")
     p.add_argument("-w", "--workers", type=int, default=1)
-    p.add_argument("--freeze-hypers", action="store_true",
-                   help="fix the 5 PSD hyperparameters (Run A)")
-    p.add_argument("--fix", action="append", default=[], metavar="NAME=VALUE",
-                   help="fix a parameter at ONE value for the whole sample, "
-                        "e.g. --fix logzsol=-2.5 (Run B)")
-    p.add_argument("--fix-from-sample", default="", metavar="NAME[,NAME...]",
-                   help="fix parameters at the PER-GALAXY value held in the sample npz "
-                        "column of the same name, matched by TARGETID. Use to pin "
-                        "logzsol to what alf measured for each object and see what chi2 "
-                        "and the SFH do with metallicity out of the degeneracy.")
-    p.add_argument("--flat-sfh-prior", action="store_true",
-                   help=f"replace the GP stochastic prior on logsfr_ratios with "
-                        f"TopHat(+/-{FLAT_SFH_RANGE} dex) and use SpecModel instead of "
-                        f"HyperSpecModel. Removes the young-bin clamp (see "
-                        f"knowledge/stochastic_prior_young_bin_clamp.md) but also removes "
-                        f"bin-count insensitivity -- do not compare across nbins.")
-    p.add_argument("--warm-from", default=None, metavar="DIR",
-                   help="seed start 0 from the MAP in DIR/<tid>.pkl instead of the prior init")
-    p.add_argument("--zcontinuous", type=int, default=1, choices=[1, 2],
-                   help="1 = linear interpolation in log Z (kink at every MIST node). "
-                        "2 = convolve with a closed-box MDF, smooth in logzsol, but a "
-                        "MODEL change: logzsol becomes an MDF scale parameter with a "
-                        "built-in metallicity spread, NOT comparable to zcontinuous=1 "
-                        "or to alf [Z/H]. See build_sps.")
-    p.add_argument("--optimizer", default="Powell", choices=["Powell", "Nelder-Mead"],
-                   help="scipy minimize method. Powell (default) does 1-D Brent line "
-                        "searches, which stall on the kinks ztinterp puts at every "
-                        "MIST node. Nelder-Mead does no line search.")
-    p.add_argument("--error-floor", type=float, default=0.0, metavar="FRAC",
-                   help="fractional error floor added IN QUADRATURE: "
-                        "sigma_eff^2 = sigma^2 + (FRAC*flux)^2. 0.037 is the value that "
-                        "takes 42580 to chi2_red = 1 and matches alf's fitted jitter of "
-                        "1.39. A pure multiplicative rescale would change nothing; this "
-                        "reweights high-S/N pixels against low-S/N ones.")
-    p.add_argument("--spectra-npz", default=None, metavar="PATH",
-                   help="npz with target_ids/spec/ivar/z overriding the chunk store, on "
-                        "the WAVE_OBS grid in 1e-17 erg/s/cm^2/A. For fitting a different "
-                        "OBSERVATION of a target the store already holds.")
-    p.add_argument("--continuum-only", action="store_true",
-                   help="fit build_continuum_model (15 free: logzsol, dust2, logmass, "
-                        "9x logsfr_ratios, dust_ratio, dust_index, sigma_smooth) on "
-                        "line-masked pixels, with plain FSPS and no Cue nebular. The 5 "
-                        "PSD hyperparameters are frozen -- with them free the MAP "
-                        "objective is unbounded (see fit_one's docstring).")
-    p.add_argument("--free-dust1", action="store_true",
-                   help="free dust1 (TopHat 0-3) instead of tying it to dust2 * dust_ratio. "
-                        "Full Cue model only; ignored with --continuum-only. "
-                        "See build_full_cue_model and dust_issue/04_proposal.md.")
+    p.add_argument(
+        "--freeze-hypers", action="store_true", help="fix the 5 PSD hyperparameters (Run A)"
+    )
+    p.add_argument(
+        "--fix",
+        action="append",
+        default=[],
+        metavar="NAME=VALUE",
+        help="fix a parameter at ONE value for the whole sample, e.g. --fix logzsol=-2.5 (Run B)",
+    )
+    p.add_argument(
+        "--fix-from-sample",
+        default="",
+        metavar="NAME[,NAME...]",
+        help="fix parameters at the PER-GALAXY value held in the sample npz "
+        "column of the same name, matched by TARGETID. Use to pin "
+        "logzsol to what alf measured for each object and see what chi2 "
+        "and the SFH do with metallicity out of the degeneracy.",
+    )
+    p.add_argument(
+        "--flat-sfh-prior",
+        action="store_true",
+        help=f"replace the GP stochastic prior on logsfr_ratios with "
+        f"TopHat(+/-{FLAT_SFH_RANGE} dex) and use SpecModel instead of "
+        f"HyperSpecModel. Removes the young-bin clamp (see "
+        f"knowledge/stochastic_prior_young_bin_clamp.md) but also removes "
+        f"bin-count insensitivity -- do not compare across nbins.",
+    )
+    p.add_argument(
+        "--warm-from",
+        default=None,
+        metavar="DIR",
+        help="seed start 0 from the MAP in DIR/<tid>.pkl instead of the prior init",
+    )
+    p.add_argument(
+        "--zcontinuous",
+        type=int,
+        default=1,
+        choices=[1, 2],
+        help="1 = linear interpolation in log Z (kink at every MIST node). "
+        "2 = convolve with a closed-box MDF, smooth in logzsol, but a "
+        "MODEL change: logzsol becomes an MDF scale parameter with a "
+        "built-in metallicity spread, NOT comparable to zcontinuous=1 "
+        "or to alf [Z/H]. See build_sps.",
+    )
+    p.add_argument(
+        "--optimizer",
+        default="Powell",
+        choices=["Powell", "Nelder-Mead"],
+        help="scipy minimize method. Powell (default) does 1-D Brent line "
+        "searches, which stall on the kinks ztinterp puts at every "
+        "MIST node. Nelder-Mead does no line search.",
+    )
+    p.add_argument(
+        "--error-floor",
+        type=float,
+        default=0.0,
+        metavar="FRAC",
+        help="fractional error floor added IN QUADRATURE: "
+        "sigma_eff^2 = sigma^2 + (FRAC*flux)^2. 0.037 is the value that "
+        "takes 42580 to chi2_red = 1 and matches alf's fitted jitter of "
+        "1.39. A pure multiplicative rescale would change nothing; this "
+        "reweights high-S/N pixels against low-S/N ones.",
+    )
+    p.add_argument(
+        "--spectra-npz",
+        default=None,
+        metavar="PATH",
+        help="npz with target_ids/spec/ivar/z overriding the chunk store, on "
+        "the WAVE_OBS grid in 1e-17 erg/s/cm^2/A. For fitting a different "
+        "OBSERVATION of a target the store already holds.",
+    )
+    p.add_argument(
+        "--continuum-only",
+        action="store_true",
+        help="fit build_continuum_model (15 free: logzsol, dust2, logmass, "
+        "9x logsfr_ratios, dust_ratio, dust_index, sigma_smooth) on "
+        "line-masked pixels, with plain FSPS and no Cue nebular. The 5 "
+        "PSD hyperparameters are frozen -- with them free the MAP "
+        "objective is unbounded (see fit_one's docstring).",
+    )
+    p.add_argument(
+        "--free-dust1",
+        action="store_true",
+        help="free dust1 (TopHat 0-3) instead of tying it to dust2 * dust_ratio. "
+        "Full Cue model only; ignored with --continuum-only. "
+        "See build_full_cue_model and dust_issue/04_proposal.md.",
+    )
     args = p.parse_args(argv)
 
     out = Path(args.outdir)
@@ -550,9 +724,10 @@ def main(argv=None):
     # -- which -1.0 is for the continuum outliers -- starts every restart in the same
     # wrong basin. Backward compatible: files without the column behave as before.
     _z0 = d["logzsol"] if "logzsol" in d.files else np.full(len(d["target_ids"]), -1.0)
-    seeds = {int(t): {"logmass": float(m), "eline_sigma": float(s), "logzsol": float(zz)}
-             for t, m, s, zz in zip(d["target_ids"], d["logmstar"],
-                                    d["narrow_sigma"], _z0)}
+    seeds = {
+        int(t): {"logmass": float(m), "eline_sigma": float(s), "logzsol": float(zz)}
+        for t, m, s, zz in zip(d["target_ids"], d["logmstar"], d["narrow_sigma"], _z0)
+    }
 
     fixed = dict(kv.split("=") for kv in args.fix)
     fixed = {k: float(v) for k, v in fixed.items()}
@@ -563,8 +738,9 @@ def main(argv=None):
     persist = {}
     for k in (s.strip() for s in args.fix_from_sample.split(",") if s.strip()):
         if k not in d.files:
-            raise SystemExit(f"--fix-from-sample {k}: no column '{k}' in {args.sample}. "
-                             f"has: {sorted(d.files)}")
+            raise SystemExit(
+                f"--fix-from-sample {k}: no column '{k}' in {args.sample}. has: {sorted(d.files)}"
+            )
         persist[k] = {int(t): float(v) for t, v in zip(d["target_ids"], d[k])}
         print(f"fixing {k} per galaxy from {args.sample}", flush=True)
 
@@ -577,36 +753,48 @@ def main(argv=None):
         return f
 
     if args.freeze_hypers or fixed or persist:
-        print(f"frozen hypers: {args.freeze_hypers}   fixed: {fixed}"
-              f"   per-galaxy: {sorted(persist)}", flush=True)
+        print(
+            f"frozen hypers: {args.freeze_hypers}   fixed: {fixed}   per-galaxy: {sorted(persist)}",
+            flush=True,
+        )
 
-    todo = [int(t) for t in tids
-            if not (args.skip_existing and (out / f"{t}.pkl").exists())]
+    todo = [int(t) for t in tids if not (args.skip_existing and (out / f"{t}.pkl").exists())]
     print(f"{len(todo)}/{len(tids)} to fit, {args.workers} worker(s)", flush=True)
 
     if args.workers > 1:
         results = {}
         # fork copies only the calling thread; torch/BLAS mutexes held by the
         # parent's other threads stay locked forever in the child -> futex deadlock.
-        with ProcessPoolExecutor(max_workers=args.workers,
-                                 mp_context=mp.get_context("spawn")) as ex:
-            futs = {ex.submit(_worker, t, args.n_seeds, args.maxfev, str(out),
-                              seeds.get(t), args.freeze_hypers, fixed_for(t),
-                              args.warm_from,
-                              flat_sfh=args.flat_sfh_prior,
-                              cont_only=args.continuum_only,
-                              error_floor=args.error_floor,
-                              method=args.optimizer,
-                              zcontinuous=args.zcontinuous,
-                              spectra_npz=args.spectra_npz,
-                              free_dust1=args.free_dust1): t for t in todo}
+        with ProcessPoolExecutor(
+            max_workers=args.workers, mp_context=mp.get_context("spawn")
+        ) as ex:
+            futs = {
+                ex.submit(
+                    _worker,
+                    t,
+                    args.n_seeds,
+                    args.maxfev,
+                    str(out),
+                    seeds.get(t),
+                    args.freeze_hypers,
+                    fixed_for(t),
+                    args.warm_from,
+                    flat_sfh=args.flat_sfh_prior,
+                    cont_only=args.continuum_only,
+                    error_floor=args.error_floor,
+                    method=args.optimizer,
+                    zcontinuous=args.zcontinuous,
+                    spectra_npz=args.spectra_npz,
+                    free_dust1=args.free_dust1,
+                ): t
+                for t in todo
+            }
             for n, fu in enumerate(as_completed(futs), 1):
                 t = futs[fu]
                 try:
                     results[t] = fu.result()
                 except Exception as e:
-                    results[t] = {"target_id": t,
-                                  "status": f"error:{type(e).__name__}: {e}"}
+                    results[t] = {"target_id": t, "status": f"error:{type(e).__name__}: {e}"}
                 print(f"[{n}/{len(todo)}] {t} done: {results[t].get('status')}", flush=True)
         recs = [results[t] for t in todo if t in results]
     else:
@@ -615,21 +803,35 @@ def main(argv=None):
         for i, tid in enumerate(todo, 1):
             print(f"[{i}/{len(todo)}] {tid}", flush=True)
             try:
-                recs.append(fit_one(tid, S["sps"], S["cue"], S["lines"], S["line_waves"],
-                                    args.n_seeds, args.maxfev, out, seeds=seeds.get(tid),
-                                    frozen=args.freeze_hypers, fixed=fixed_for(tid),
-                                    warm_from=args.warm_from, flat_sfh=args.flat_sfh_prior,
-                                    cont_only=args.continuum_only,
-                                    error_floor=args.error_floor,
-                                    method=args.optimizer,
-                                    zcontinuous=args.zcontinuous,
-                                    spectra_npz=args.spectra_npz,
-                                    free_dust1=args.free_dust1))
+                recs.append(
+                    fit_one(
+                        tid,
+                        S["sps"],
+                        S["cue"],
+                        S["lines"],
+                        S["line_waves"],
+                        args.n_seeds,
+                        args.maxfev,
+                        out,
+                        seeds=seeds.get(tid),
+                        frozen=args.freeze_hypers,
+                        fixed=fixed_for(tid),
+                        warm_from=args.warm_from,
+                        flat_sfh=args.flat_sfh_prior,
+                        cont_only=args.continuum_only,
+                        error_floor=args.error_floor,
+                        method=args.optimizer,
+                        zcontinuous=args.zcontinuous,
+                        spectra_npz=args.spectra_npz,
+                        free_dust1=args.free_dust1,
+                    )
+                )
             except Exception as e:
                 print(f"    FAILED {type(e).__name__}: {e}", flush=True)
                 recs.append({"target_id": int(tid), "status": f"error:{type(e).__name__}"})
 
     summary = []
+
     def par(rec, name, default=np.nan):
         """A parameter's value whether it was free, --fix'd, or frozen in the template.
 
@@ -653,40 +855,48 @@ def main(argv=None):
             continue
         v = np.array([rec["line_ratios"][k] for k in lines])
         b = np.array([rec["line_ratios"][k] for k in BALMER])
-        summary.append({
-            "target_id": int(tid), "z": rec["z"], "status": "ok",
-            "chi2_red": rec["stats"]["chi2_red"],
-            "line_per_pix": rec["stats_tight"]["chi2_per_pix_line"],
-            "cont_per_pix": rec["stats_tight"]["chi2_per_pix_cont"],
-            "rms_all": float(np.sqrt(np.nanmean((v - 1) ** 2))),
-            "rms_balmer": float(np.sqrt(np.nanmean((b - 1) ** 2))),
-            # Every parameter goes through par(): theta_dict holds only what THIS fit was
-            # free to move, and which parameters those are changes with --continuum-only,
-            # --freeze-hypers and --fix-from-sample. An unguarded lookup KeyErrors AFTER
-            # all the per-galaxy pkls are written, which has now happened twice
-            # (eline_sigma, then logzsol). Do not add a bare theta_dict[...] here.
-            "eline_sigma": par(rec, "eline_sigma"),
-            "logzsol": par(rec, "logzsol"),
-            "logmass": par(rec, "logmass"),
-            "sigma_reg": par(rec, "sigma_reg", FROZEN_HYPERS["sigma_reg"]),
-            "cont_only": bool(rec.get("cont_only", False)),
-            "cmf_dev": float(np.max(np.abs(rec["sfh"]["cmf"] - rec["sfh"]["cmf_flat_null"]))),
-            "n_converged": rec["optim"]["n_converged"],
-            "gap_best_second": rec["optim"]["gap_best_second"],
-            "seconds": rec["optim"].get("seconds", np.nan),
-        })
+        summary.append(
+            {
+                "target_id": int(tid),
+                "z": rec["z"],
+                "status": "ok",
+                "chi2_red": rec["stats"]["chi2_red"],
+                "line_per_pix": rec["stats_tight"]["chi2_per_pix_line"],
+                "cont_per_pix": rec["stats_tight"]["chi2_per_pix_cont"],
+                "rms_all": float(np.sqrt(np.nanmean((v - 1) ** 2))),
+                "rms_balmer": float(np.sqrt(np.nanmean((b - 1) ** 2))),
+                # Every parameter goes through par(): theta_dict holds only what THIS fit was
+                # free to move, and which parameters those are changes with --continuum-only,
+                # --freeze-hypers and --fix-from-sample. An unguarded lookup KeyErrors AFTER
+                # all the per-galaxy pkls are written, which has now happened twice
+                # (eline_sigma, then logzsol). Do not add a bare theta_dict[...] here.
+                "eline_sigma": par(rec, "eline_sigma"),
+                "logzsol": par(rec, "logzsol"),
+                "logmass": par(rec, "logmass"),
+                "sigma_reg": par(rec, "sigma_reg", FROZEN_HYPERS["sigma_reg"]),
+                "cont_only": bool(rec.get("cont_only", False)),
+                "cmf_dev": float(np.max(np.abs(rec["sfh"]["cmf"] - rec["sfh"]["cmf_flat_null"]))),
+                "n_converged": rec["optim"]["n_converged"],
+                "gap_best_second": rec["optim"]["gap_best_second"],
+                "seconds": rec["optim"].get("seconds", np.nan),
+            }
+        )
 
     with open(out / "summary.pkl", "wb") as f:
         pickle.dump(summary, f)
 
     okr = [s for s in summary if s["status"] == "ok"]
-    print(f"\n{'TARGETID':>19}{'z':>8}{'chi2':>8}{'line':>8}{'cont':>7}{'rmsAll':>8}"
-          f"{'rmsBal':>8}{'e_sig':>7}{'logZ':>7}{'cmfdev':>8}{'conv':>6}")
+    print(
+        f"\n{'TARGETID':>19}{'z':>8}{'chi2':>8}{'line':>8}{'cont':>7}{'rmsAll':>8}"
+        f"{'rmsBal':>8}{'e_sig':>7}{'logZ':>7}{'cmfdev':>8}{'conv':>6}"
+    )
     for s in okr:
-        print(f"{s['target_id']:>19d}{s['z']:>8.4f}{s['chi2_red']:>8.3f}{s['line_per_pix']:>8.2f}"
-              f"{s['cont_per_pix']:>7.3f}{s['rms_all']:>8.4f}{s['rms_balmer']:>8.4f}"
-              f"{s['eline_sigma']:>7.1f}{s['logzsol']:>7.2f}{s['cmf_dev']:>8.3f}"
-              f"{s['n_converged']:>6d}")
+        print(
+            f"{s['target_id']:>19d}{s['z']:>8.4f}{s['chi2_red']:>8.3f}{s['line_per_pix']:>8.2f}"
+            f"{s['cont_per_pix']:>7.3f}{s['rms_all']:>8.4f}{s['rms_balmer']:>8.4f}"
+            f"{s['eline_sigma']:>7.1f}{s['logzsol']:>7.2f}{s['cmf_dev']:>8.3f}"
+            f"{s['n_converged']:>6d}"
+        )
     print(f"\n{len(okr)}/{len(tids)} ok -> {out}")
     return 0
 

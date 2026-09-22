@@ -127,9 +127,7 @@ def main(args: argparse.Namespace) -> None:
     inst = desi.DESI()
 
     model = (
-        load_model(
-            args.checkpoint, inst, map_location="cpu", weights_only=False, mmap=True
-        )
+        load_model(args.checkpoint, inst, map_location="cpu", weights_only=False, mmap=True)
         .float()
         .to(device)
     )
@@ -182,15 +180,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Generate latent space (spectra or noise) from trained autoencoder"
     )
-    parser.add_argument(
-        "datadir", type=str, help="Directory containing DESI training data"
-    )
-    parser.add_argument(
-        "checkpoint", type=str, help="Path to the trained autoencoder checkpoint"
-    )
-    parser.add_argument(
-        "outfile", type=str, help="Output file to save the latent representations"
-    )
+    parser.add_argument("datadir", type=str, help="Directory containing DESI training data")
+    parser.add_argument("checkpoint", type=str, help="Path to the trained autoencoder checkpoint")
+    parser.add_argument("outfile", type=str, help="Output file to save the latent representations")
     parser.add_argument(
         "-b",
         "--batch_size",

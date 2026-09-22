@@ -4,8 +4,9 @@ from scipy.sparse import csr_matrix, lil_matrix
 from hubersed.prospector.lsf import desi_resolution  # calibrated median R(lambda)
 
 C_KMS = 299792.458
-MILES_FWHM_A = 2.5                     # MILES restframe resolution [A FWHM]
-MILES_LAM_MIN, MILES_LAM_MAX = 3750.0, 7200.0   # MILES restframe coverage; outside = BaSeL R~200
+MILES_FWHM_A = 2.5  # MILES restframe resolution [A FWHM]
+MILES_LAM_MIN, MILES_LAM_MAX = 3750.0, 7200.0  # MILES restframe coverage; outside = BaSeL R~200
+
 
 # The median kernel: sigma to convolve DESI data -> MILES resolution
 def _miles_sigma_obs_A(wave_obs, z):
@@ -13,7 +14,7 @@ def _miles_sigma_obs_A(wave_obs, z):
     lam_rest = wave_obs / (1.0 + z)
     sig = np.full_like(wave_obs, np.inf, dtype=float)
     inwin = (lam_rest >= MILES_LAM_MIN) & (lam_rest <= MILES_LAM_MAX)
-    sig[inwin] = (MILES_FWHM_A * (1.0 + z)) / 2.355   # restframe FWHM stretched by (1+z)
+    sig[inwin] = (MILES_FWHM_A * (1.0 + z)) / 2.355  # restframe FWHM stretched by (1+z)
     return sig, inwin
 
 
@@ -72,7 +73,7 @@ def degrade_to_miles(wave_obs, flux, ivar, z):
     """
     sig_conv, good = match_kernel_sigma_A(wave_obs, z)
     M = _variable_gaussian_matrix(wave_obs, sig_conv)
-    w = (ivar > 0).astype(float)                          # good-pixel weight
+    w = (ivar > 0).astype(float)  # good-pixel weight
     den = M.dot(w)
     num = M.dot(flux * w)
     # renormalize by the convolved good-pixel weight so zeroed bad pixels don't bias neighbours
@@ -80,7 +81,7 @@ def degrade_to_miles(wave_obs, flux, ivar, z):
     var = np.zeros_like(ivar, dtype=float)
     gi = ivar > 0
     var[gi] = 1.0 / ivar[gi]
-    var_num = M.multiply(M).dot(var)                      # Var(num) = sum_j M_ij^2 var_j
+    var_num = M.multiply(M).dot(var)  # Var(num) = sum_j M_ij^2 var_j
     # flux_deg = num/den  ->  Var(flux_deg) = Var(num)/den^2  ->  ivar_deg = den^2 / Var(num).
     # The den^2 is essential: near bad pixels den -> 0, and without it ivar_deg blows up.
     ivar_deg = np.zeros_like(var_num)
@@ -88,9 +89,10 @@ def degrade_to_miles(wave_obs, flux, ivar, z):
     ivar_deg[m2] = den[m2] ** 2 / var_num[m2]
     return flux_deg, ivar_deg, good
 
+
 # trapz_rebin edges: one common, non-uniform (constant-velocity) grid
 def common_obs_edges(lam_min=3600.0, lam_max=9824.0, dv_kms=60.0):
-    """Constant-velocity (log-lambda) observed-frame bin EDGES, applied to ALL spectra. 
+    """Constant-velocity (log-lambda) observed-frame bin EDGES, applied to ALL spectra.
     dv ~ 30 km/s Nyquist-samples MILES (~64 km/s sigma at 5000 A) while
     still being coarser than DESI native (~15 km/s). Uniform in velocity => non-uniform
     in Angstrom, which is exactly the 'doesn't have to be uniform' scheme."""
@@ -98,12 +100,13 @@ def common_obs_edges(lam_min=3600.0, lam_max=9824.0, dv_kms=60.0):
     n = int(np.log(lam_max / lam_min) / np.log(step))
     return lam_min * step ** np.arange(n + 1)
 
+
 def centers2edges(centers):
     """Bin centers -> edges (matches provabgs.util.centers2edges)."""
     c = np.asarray(centers, float)
     e = np.empty(c.size + 1)
     e[1:-1] = 0.5 * (c[1:] + c[:-1])
-    e[0]  = c[0]  - 0.5 * (c[1]  - c[0])
+    e[0] = c[0] - 0.5 * (c[1] - c[0])
     e[-1] = c[-1] + 0.5 * (c[-1] - c[-2])
     return e
 
@@ -111,7 +114,8 @@ def centers2edges(centers):
 def trapz_rebin(x, y, xnew=None, edges=None):
     """Flux-conserving trapezoidal rebin of density y(x) onto `edges`.
     Standalone equivalent of provabgs.util.trapz_rebin (pure numpy)."""
-    x = np.asarray(x, float); y = np.asarray(y, float)
+    x = np.asarray(x, float)
+    y = np.asarray(y, float)
     if edges is None:
         edges = centers2edges(xnew)
     edges = np.asarray(edges, float)
@@ -121,8 +125,8 @@ def trapz_rebin(x, y, xnew=None, edges=None):
     k = np.clip(np.searchsorted(x, edges, side="right") - 1, 0, x.size - 2)
     t = edges - x[k]
     slope = (y[k + 1] - y[k]) / (x[k + 1] - x[k])
-    I_edges = Ix[k] + y[k] * t + 0.5 * slope * t * t   # cum. integral at the edges
-    return np.diff(I_edges) / np.diff(edges)           # mean density per bin
+    I_edges = Ix[k] + y[k] * t + 0.5 * slope * t * t  # cum. integral at the edges
+    return np.diff(I_edges) / np.diff(edges)  # mean density per bin
 
 
 def rebin(wave_obs, flux, ivar, edges):
@@ -137,7 +141,7 @@ def rebin(wave_obs, flux, ivar, edges):
     resampling.) Returns (centers, flux_reb, ivar_reb, mask_reb)."""
     centers = 0.5 * (edges[1:] + edges[:-1])
     nb = centers.size
-    b = np.searchsorted(edges, wave_obs, side="right") - 1          # native pixel -> bin index
+    b = np.searchsorted(edges, wave_obs, side="right") - 1  # native pixel -> bin index
     keep = (b >= 0) & (b < nb) & (ivar > 0) & np.isfinite(flux)
     bb, w, f = b[keep], ivar[keep], flux[keep]
     ivar_reb = np.zeros(nb)
@@ -163,5 +167,5 @@ def prep_spectrum(wave_obs, flux, ivar, z, edges=None):
     flux[bad] = 0.0
     ivar[bad] = 0.0
     flux_d, ivar_d, good = degrade_to_miles(wave_obs, flux, ivar, z)
-    ivar_d = np.where(good, ivar_d, 0.0)     # drop BaSeL red/blue (outside MILES window)
+    ivar_d = np.where(good, ivar_d, 0.0)  # drop BaSeL red/blue (outside MILES window)
     return rebin(wave_obs, flux_d, ivar_d, edges)

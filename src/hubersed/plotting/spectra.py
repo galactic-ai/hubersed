@@ -55,15 +55,17 @@ def plot_spectrum(
         if unc is not None and band_kw is not None:
             u = np.asarray(unc, float)
             ax.fill_between(
-                w, data - u, data + u,
+                w,
+                data - u,
+                data + u,
                 **{"alpha": 0.25, "lw": 0, "color": "0.6", **band_kw},
             )
-        ax.plot(w, data, **{"color": "0.4", "lw": 0.5, "label": "DESI spectrum",
-                            **(data_kw or {})})
+        ax.plot(w, data, **{"color": "0.4", "lw": 0.5, "label": "DESI spectrum", **(data_kw or {})})
 
     if medfilt is not None:
-        ax.plot(w, medfilt, **{"color": "k", "lw": 1.0, "label": "median filter",
-                               **(medfilt_kw or {})})
+        ax.plot(
+            w, medfilt, **{"color": "k", "lw": 1.0, "label": "median filter", **(medfilt_kw or {})}
+        )
 
     for m in models or []:
         m = dict(m)
@@ -132,13 +134,17 @@ def spectrum_figure(
     """
     if apj_style:
         from hubersed.plotting.style import use_apj_style
+
         use_apj_style()
 
     n = 2 + int(extra_panels)
     if height_ratios is None:
         height_ratios = [3, 1] + [1] * int(extra_panels)
     fig, axes = plt.subplots(
-        n, 1, sharex=True, figsize=figsize,
+        n,
+        1,
+        sharex=True,
+        figsize=figsize,
         gridspec_kw={"height_ratios": height_ratios, "hspace": 0.05},
         squeeze=False,
     )
@@ -153,13 +159,16 @@ if __name__ == "__main__":  # synthetic smoke demo
 
     rng = np.random.default_rng(0)
     w = np.linspace(3600, 9800, 2000)
-    model = 10 * np.exp(-((w - 5000) / 1500) ** 2) + 2
+    model = 10 * np.exp(-(((w - 5000) / 1500) ** 2)) + 2
     data = model + rng.normal(0, 0.4, w.size)
     unc = np.full_like(w, 0.4)
 
     fig, ax = spectrum_figure(
-        w, z=0.02,
-        data=data, unc=unc, band_kw={},
+        w,
+        z=0.02,
+        data=data,
+        unc=unc,
+        band_kw={},
         medfilt=_mf(data, 21),
         models=[{"flux": model, "label": "MAP model", "color": "C3"}],
     )

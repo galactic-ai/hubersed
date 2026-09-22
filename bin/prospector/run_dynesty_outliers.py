@@ -62,8 +62,9 @@ def run_one(tid, args, out):
     sps, cue_sps = build_sps(), build_cue_sps()
     line_waves = sps.ssp.emline_wavelengths
     line_waves = line_waves[(line_waves > 3600) & (line_waves < 9824)]
-    line_pix = mask & ~mask_spectral_lines(WAVE_OBS, mask, z, halfwidth_kms=1500.0,
-                                           line_waves=line_waves)
+    line_pix = mask & ~mask_spectral_lines(
+        WAVE_OBS, mask, z, halfwidth_kms=1500.0, line_waves=line_waves
+    )
 
     cont_model, cont_tmpl = build_continuum_model(z)
     model, tmpl = build_full_cue_model(cont_tmpl, cont_model.theta, cont_model, z)
@@ -97,8 +98,11 @@ def run_one(tid, args, out):
 
     nlive = args.nlive or 10 * ndim * (1 if ordered else 2)
     ckpt = str(out / f"{tid}_dynesty.save")
-    print(f"  {tid}: ndim={ndim} nlive={nlive} ordered={ordered} "
-          f"sample={args.sample} bound={args.bound}", flush=True)
+    print(
+        f"  {tid}: ndim={ndim} nlive={nlive} ordered={ordered} "
+        f"sample={args.sample} bound={args.bound}",
+        flush=True,
+    )
 
     # dynesty checkpoints by pickling the whole sampler, which closes over loglike ->
     # model, obs and the FSPS/Cue SPS objects. Stdlib pickle cannot do local functions
@@ -113,8 +117,11 @@ def run_one(tid, args, out):
             dill.dumps((loglike, ptform))
             use_ckpt = True
         except Exception as e:
-            print(f"  {tid}: checkpointing DISABLED ({type(e).__name__}: {e}); "
-                  f"a killed run will restart from scratch", flush=True)
+            print(
+                f"  {tid}: checkpointing DISABLED ({type(e).__name__}: {e}); "
+                f"a killed run will restart from scratch",
+                flush=True,
+            )
 
     t0 = time.time()
     run_kw = dict(dlogz=args.dlogz, maxcall=args.maxcall, print_progress=True)
@@ -126,9 +133,15 @@ def run_one(tid, args, out):
         ds = dynesty.NestedSampler.restore(ckpt)
         ds.run_nested(resume=True, **run_kw)
     else:
-        ds = dynesty.NestedSampler(loglike, ptform, ndim, nlive=nlive, bound=args.bound,
-                                   sample=args.sample,
-                                   rstate=np.random.default_rng(args.seed))
+        ds = dynesty.NestedSampler(
+            loglike,
+            ptform,
+            ndim,
+            nlive=nlive,
+            bound=args.bound,
+            sample=args.sample,
+            rstate=np.random.default_rng(args.seed),
+        )
         ds.run_nested(**run_kw)
     res = ds.results
     secs = time.time() - t0
@@ -144,45 +157,78 @@ def run_one(tid, args, out):
     chi2 = float(np.sum(((flux[m] - sp[m]) / unc[m]) ** 2))
 
     rec = {
-        "target_id": int(tid), "z": float(z), "status": "ok",
-        "labels": labels, "ndim": ndim,
-        "eq_samples": eq, "logz": float(res.logz[-1]), "logzerr": float(res.logzerr[-1]),
-        "logl_max": float(res.logl.max()), "theta_max_logl": best,
-        "niter": int(res.niter), "ncall": int(np.sum(res.ncall)), "seconds": secs,
-        "model": sp, "wave": WAVE_OBS, "flux": flux, "unc": unc, "mask": mask,
+        "target_id": int(tid),
+        "z": float(z),
+        "status": "ok",
+        "labels": labels,
+        "ndim": ndim,
+        "eq_samples": eq,
+        "logz": float(res.logz[-1]),
+        "logzerr": float(res.logzerr[-1]),
+        "logl_max": float(res.logl.max()),
+        "theta_max_logl": best,
+        "niter": int(res.niter),
+        "ncall": int(np.sum(res.ncall)),
+        "seconds": secs,
+        "model": sp,
+        "wave": WAVE_OBS,
+        "flux": flux,
+        "unc": unc,
+        "mask": mask,
         "line_pix": line_pix,
-        "stats": {"chi2": chi2, "chi2_red": chi2 / max(int(m.sum()) - ndim, 1),
-                  "npix": int(m.sum()), "ntheta": ndim},
-        "config": {"nlive": nlive, "bound": args.bound, "sample": args.sample,
-                   "dlogz": args.dlogz, "maxcall": args.maxcall, "seed": args.seed,
-                   "ordered_taus": ordered, "hypers": "frozen" if args.freeze_hypers else "free",
-                   "nebular": "cue_stellar_nebular", "lsf": "median desi_resolution",
-                   "git_sha": git_sha()},
+        "stats": {
+            "chi2": chi2,
+            "chi2_red": chi2 / max(int(m.sum()) - ndim, 1),
+            "npix": int(m.sum()),
+            "ntheta": ndim,
+        },
+        "config": {
+            "nlive": nlive,
+            "bound": args.bound,
+            "sample": args.sample,
+            "dlogz": args.dlogz,
+            "maxcall": args.maxcall,
+            "seed": args.seed,
+            "ordered_taus": ordered,
+            "hypers": "frozen" if args.freeze_hypers else "free",
+            "nebular": "cue_stellar_nebular",
+            "lsf": "median desi_resolution",
+            "git_sha": git_sha(),
+        },
     }
     with open(out / f"{tid}.pkl", "wb") as f:
         pickle.dump(rec, f)
-    print(f"  {tid}: done  logz={rec['logz']:.1f}+/-{rec['logzerr']:.1f}  "
-          f"chi2_red={rec['stats']['chi2_red']:.3f}  ncall={rec['ncall']:.3g}  "
-          f"{secs / 3600:.2f} h", flush=True)
+    print(
+        f"  {tid}: done  logz={rec['logz']:.1f}+/-{rec['logzerr']:.1f}  "
+        f"chi2_red={rec['stats']['chi2_red']:.3f}  ncall={rec['ncall']:.3g}  "
+        f"{secs / 3600:.2f} h",
+        flush=True,
+    )
     return rec
 
 
 def main(argv=None):
     p = argparse.ArgumentParser(description="dynesty posteriors for the emission-line outliers.")
-    p.add_argument("-t", "--tid", type=int, action="append", required=True,
-                   help="repeatable")
+    p.add_argument("-t", "--tid", type=int, action="append", required=True, help="repeatable")
     p.add_argument("-o", "--outdir", default=str(PATHS["RESULTS"] / "emline_dynesty"))
     p.add_argument("--nlive", type=int, default=None, help="default 10*ndim per mode")
     p.add_argument("--sample", default="rslice")
     p.add_argument("--bound", default="multi")
     p.add_argument("--dlogz", type=float, default=1.0)
-    p.add_argument("--maxcall", type=int, default=5_000_000,
-                   help="~17 h at 12.5 ms/call; dlogz should stop the run well before this")
+    p.add_argument(
+        "--maxcall",
+        type=int,
+        default=5_000_000,
+        help="~17 h at 12.5 ms/call; dlogz should stop the run well before this",
+    )
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--no-checkpoint", action="store_true")
     p.add_argument("--checkpoint-every", type=float, default=900.0, help="seconds")
-    p.add_argument("--order-taus", action="store_true",
-                   help="impose tau_eq < tau_in, breaking the exact exchange symmetry")
+    p.add_argument(
+        "--order-taus",
+        action="store_true",
+        help="impose tau_eq < tau_in, breaking the exact exchange symmetry",
+    )
     p.add_argument("--freeze-hypers", action="store_true")
     p.add_argument("--skip-existing", action="store_true")
     args = p.parse_args(argv)

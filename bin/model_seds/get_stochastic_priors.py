@@ -18,12 +18,26 @@ def parse_args(argv=None):
         description="Draw the stochastic-SFH prior sample used for generating mock SEDs.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    p.add_argument("-n", "--sample-size", type=int, default=500_000, help="Number of samples to draw")
+    p.add_argument(
+        "-n", "--sample-size", type=int, default=500_000, help="Number of samples to draw"
+    )
     p.add_argument("-s", "--seed", type=int, default=42, help="Random seed for reproducibility")
-    p.add_argument("--cue", action=argparse.BooleanOptionalAction, default=True,
-               help="Cue (Li+24) nebular model with free N/O, C/O, nH")
-    p.add_argument("-o", "--out", type=Path, default=None, help="Output file path (default: DATA_PATH/prospector_model/stochastic_priors_sample[_cue]_{n}.npz)")
-    p.add_argument("-f", "--force", action="store_true", help="Overwrite existing output file if it exists")
+    p.add_argument(
+        "--cue",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Cue (Li+24) nebular model with free N/O, C/O, nH",
+    )
+    p.add_argument(
+        "-o",
+        "--out",
+        type=Path,
+        default=None,
+        help="Output file path (default: DATA_PATH/prospector_model/stochastic_priors_sample[_cue]_{n}.npz)",
+    )
+    p.add_argument(
+        "-f", "--force", action="store_true", help="Overwrite existing output file if it exists"
+    )
 
     return p.parse_args(argv)
 
@@ -37,13 +51,10 @@ def main(argv=None):
     data_path.mkdir(parents=True, exist_ok=True)
 
     out = args.out or data_path / (
-        f"stochastic_priors_sample_cue_{n}.npz" if args.cue 
-        else f"stochastic_priors_sample_{n}.npz"
+        f"stochastic_priors_sample_cue_{n}.npz" if args.cue else f"stochastic_priors_sample_{n}.npz"
     )
     if out.exists() and not args.force:
-        raise SystemExit(
-            f"refusing to overwrite existing file {out}. Use --force to overwrite."
-        )
+        raise SystemExit(f"refusing to overwrite existing file {out}. Use --force to overwrite.")
 
     # from Wan+24 Stochastic prior model
 
@@ -141,6 +152,7 @@ def main(argv=None):
     #     f'{DATA_PATH}/stochastic_priors_sample_{n}.npz',
     #     f"buckets/nikhil0504/hubersed-data/prospector_model/stochastic_priors_sample_{n}.npz",
     # )
+
 
 if __name__ == "__main__":
     sys.exit(main())

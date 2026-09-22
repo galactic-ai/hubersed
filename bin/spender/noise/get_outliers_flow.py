@@ -42,11 +42,7 @@ def build_flow(method, dim, hidden, n_transforms, num_bins=8, tail_bound=10.0):
                 )
             )
         else:
-            ts.append(
-                MaskedAffineAutoregressiveTransform(
-                    features=dim, hidden_features=hidden
-                )
-            )
+            ts.append(MaskedAffineAutoregressiveTransform(features=dim, hidden_features=hidden))
         ts.append(RandomPermutation(features=dim))
     return Flow(CompositeTransform(ts), StandardNormal([dim]))
 
@@ -74,9 +70,7 @@ def load_h5(path):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument(
-        "--tag", default="10latent", help="6latent/10latent/15latent/cont10latent"
-    )
+    ap.add_argument("--tag", default="10latent", help="6latent/10latent/15latent/cont10latent")
     ap.add_argument("--method", default="maf", choices=["maf", "nsf"])
     ap.add_argument("--epochs", type=int, default=80)
     ap.add_argument("--batch", type=int, default=4096)
@@ -84,9 +78,7 @@ def main():
     ap.add_argument("--num_bins", type=int, default=10, help="spline bins (nsf only)")
     ap.add_argument("--hidden", type=int, default=128, help="hidden layer size")
     ap.add_argument("--lr", type=float, default=1e-3)
-    ap.add_argument(
-        "--device", default="cpu"
-    )  # flow is tiny; cpu avoids mps nflows gaps
+    ap.add_argument("--device", default="cpu")  # flow is tiny; cpu avoids mps nflows gaps
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--desi", type=Path, required=True, help="DESI latent h5")
     ap.add_argument("--mock", type=Path, required=True, help="mock latent h5")
@@ -96,8 +88,7 @@ def main():
         default=None,
         help="where to write flow / outliers / pdf (default: results/)",
     )
-    ap.add_argument("-f", "--force", action="store_true",
-                    help="overwrite existing outputs")
+    ap.add_argument("-f", "--force", action="store_true", help="overwrite existing outputs")
     args = ap.parse_args()
     torch.manual_seed(args.seed)
     rng = np.random.default_rng(args.seed)
@@ -132,9 +123,7 @@ def main():
     Xtr = torch.from_numpy(mock_s[tr_idx]).to(dev)
     Xval = torch.from_numpy(mock_s[val_idx]).to(dev)
 
-    nde = build_flow(
-        args.method, D, args.hidden, args.num_transforms, args.num_bins
-    ).to(dev)
+    nde = build_flow(args.method, D, args.hidden, args.num_transforms, args.num_bins).to(dev)
     print(
         f"flow: method={args.method} transforms={args.num_transforms} hidden={args.hidden}"
         + (f" bins={args.num_bins}" if args.method == "nsf" else "")
@@ -151,9 +140,7 @@ def main():
     for ep in range(args.epochs):
         nde.train()
         tl = []
-        for b in torch.split(
-            torch.from_numpy(rng.permutation(Xtr.shape[0])), args.batch
-        ):
+        for b in torch.split(torch.from_numpy(rng.permutation(Xtr.shape[0])), args.batch):
             opt.zero_grad()
             loss = -nde.log_prob(Xtr[b.to(dev)]).mean()
             loss.backward()
@@ -166,9 +153,7 @@ def main():
         hist["train"].append(float(np.mean(tl)))
         hist["valid"].append(vl)
         if ep % 10 == 0 or ep == args.epochs - 1:
-            print(
-                f"  epoch {ep:3d}  train NLL {hist['train'][-1]:.3f}  valid NLL {vl:.3f}"
-            )
+            print(f"  epoch {ep:3d}  train NLL {hist['train'][-1]:.3f}  valid NLL {vl:.3f}")
 
     # ---- VALIDATION: did it train correctly? ----
     nde.eval()
@@ -192,9 +177,7 @@ def main():
         f"  (gap {hist['valid'][-1] - hist['train'][-1]:+.3f})"
     )
     print(f"  sample-vs-mock per-dim KS: max {max(ks):.3f} median {np.median(ks):.3f}")
-    print(
-        f"  sample-vs-mock C-2ST accuracy = {c2st:.3f}  (0.5 = flow reproduces mocks)"
-    )
+    print(f"  sample-vs-mock C-2ST accuracy = {c2st:.3f}  (0.5 = flow reproduces mocks)")
 
     # ---- SCORE DESI ----
     with torch.no_grad():
@@ -223,10 +206,7 @@ def main():
         else f"desi_outliers_{args.tag}_snr3.pt"
     )
     if iso_file.exists():
-        iso = set(
-            int(x)
-            for x in torch.load(iso_file, weights_only=False)["outlier_target_ids"]
-        )
+        iso = set(int(x) for x in torch.load(iso_file, weights_only=False)["outlier_target_ids"])
         fl = set(int(x) for x in out_tid)
         print(
             f"  IsoForest outliers: {len(iso)}  | flow∩iso = {len(fl & iso)}  "

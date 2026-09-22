@@ -71,22 +71,31 @@ def main(argv=None):
     p = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
     p.add_argument("--tid", type=int, default=39633140817331167)
     p.add_argument("-o", "--out", required=True)
-    p.add_argument("--observed", action="store_true",
-                   help="write observed-frame lambda instead of de-redshifting")
-    p.add_argument("--intervals", default="0.40,0.47,0.47,0.55,0.55,0.70,0.70,0.88",
-                   help="flat list of interval edges in MICRONS, l1,l2,l1,l2,... "
-                        "Default is four intervals over 4000-8800 A, in the spirit of "
-                        "the 3700-8850 A range Choi+2019 used (galaxy_sed.tex:131). "
-                        "alf caps this at nlint_max=10 intervals.")
-    p.add_argument("--mask", default="5876,5913",
-                   help="flat list of REST-FRAME Angstrom edges l1,l2,l1,l2,... set to "
-                        "wgt=0. Applied in the rest frame even under --observed. Default "
-                        "is Na D: the allindices.dat NaD feature band 5876.875-5909.375 "
-                        "(air), padded ~2 A to cover the air-to-vacuum offset. Masked "
-                        "because Na I 5895 is 'well-known to be affected by' the ISM "
-                        "(CvD14 ms.tex:879-882) and Beverage+2025 masks it "
-                        "(suspense_abundances.tex:214) -- alf would read it as a stellar "
-                        "Na abundance. Pass '' to disable.")
+    p.add_argument(
+        "--observed",
+        action="store_true",
+        help="write observed-frame lambda instead of de-redshifting",
+    )
+    p.add_argument(
+        "--intervals",
+        default="0.40,0.47,0.47,0.55,0.55,0.70,0.70,0.88",
+        help="flat list of interval edges in MICRONS, l1,l2,l1,l2,... "
+        "Default is four intervals over 4000-8800 A, in the spirit of "
+        "the 3700-8850 A range Choi+2019 used (galaxy_sed.tex:131). "
+        "alf caps this at nlint_max=10 intervals.",
+    )
+    p.add_argument(
+        "--mask",
+        default="5876,5913",
+        help="flat list of REST-FRAME Angstrom edges l1,l2,l1,l2,... set to "
+        "wgt=0. Applied in the rest frame even under --observed. Default "
+        "is Na D: the allindices.dat NaD feature band 5876.875-5909.375 "
+        "(air), padded ~2 A to cover the air-to-vacuum offset. Masked "
+        "because Na I 5895 is 'well-known to be affected by' the ISM "
+        "(CvD14 ms.tex:879-882) and Beverage+2025 masks it "
+        "(suspense_abundances.tex:214) -- alf would read it as a stellar "
+        "Na abundance. Pass '' to disable.",
+    )
     a = p.parse_args(argv)
 
     idx = int(tids_to_indices(np.array([a.tid], np.int64))[0])
@@ -162,8 +171,7 @@ def main(argv=None):
             (home / d).mkdir(exist_ok=True)
         if not (home / "src" / "alf.f90").exists():
             print(f"  WARNING {home} has no src/alf.f90 -- is alf cloned there?")
-            print( "          git clone https://github.com/cconroy20/alf "
-                  f"{home}")
+            print(f"          git clone https://github.com/cconroy20/alf {home}")
 
     with open(out_path, "w") as f:
         for l1, l2 in iv_pairs:
@@ -171,20 +179,20 @@ def main(argv=None):
         for L, F, E, W, R in zip(lam[keep], flx, er, wgt, ires[keep]):
             f.write(f"{L:10.4f} {F:14.6e} {E:14.6e} {W:5.2f} {R:9.3f}\n")
 
-    snr = (flux[keep][wgt > 0] / err[keep][wgt > 0])
+    snr = flux[keep][wgt > 0] / err[keep][wgt > 0]
     dl = float(np.median(np.diff(lam[keep])))
     print(f"wrote {out_path}")
     print(f"  TARGETID {a.tid}   z = {z:.7f}   frame: {frame}")
     print(f"  {int(keep.sum())} pixels, {int((wgt == 0).sum())} zero-weighted")
     for m1, m2, n in masked:
-        print(f"  masked rest {m1:.1f}-{m2:.1f} A: {n} px"
-              + ("   <-- ZERO, check frame/interval coverage" if n == 0 else ""))
-    print(f"  lambda {lam[keep].min():.1f} - {lam[keep].max():.1f} A, "
-          f"median spacing {dl:.3f} A")
+        print(
+            f"  masked rest {m1:.1f}-{m2:.1f} A: {n} px"
+            + ("   <-- ZERO, check frame/interval coverage" if n == 0 else "")
+        )
+    print(f"  lambda {lam[keep].min():.1f} - {lam[keep].max():.1f} A, median spacing {dl:.3f} A")
     print(f"  intervals (um): " + ", ".join(f"{l1}-{l2}" for l1, l2 in iv_pairs))
     print(f"  ires {ires[keep].min():.1f} - {ires[keep].max():.1f} km/s")
-    print(f"  median S/N: {np.median(snr):.1f} /pixel, "
-          f"{np.median(snr) / np.sqrt(dl):.1f} /A")
+    print(f"  median S/N: {np.median(snr):.1f} /pixel, {np.median(snr) / np.sqrt(dl):.1f} /A")
     print("\n  alf's published mock tests span S/N = 20, 30, 50, 100 per A")
     print("  (Conroy+2018 sec 3.2, ms.tex:995-1053).")
     print("\n  next:")

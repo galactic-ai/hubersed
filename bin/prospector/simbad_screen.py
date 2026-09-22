@@ -11,6 +11,7 @@ round-trip each and only the head of the ranking can reach the sample.
 MANUAL_EXCLUDE carries findings that are not reducible to a screen -- an individual
 redshift refutation. Each entry cites the log entry that established it.
 """
+
 import argparse
 import csv
 import sys
@@ -32,24 +33,37 @@ STAR_TYPES = {"Star", "Pe*", "WD*", "HB*", "RGB*", "*", "PM*", "HV*"}
 
 # TARGETID -> (reason, log entry). Not screenable; each was an individual investigation.
 MANUAL_EXCLUDE = {
-    39633322460057381: ("redshift refuted -- the single feature carrying z=0.5526 cannot "
-                        "be [OIII]", "2026-08-27h"),
+    39633322460057381: (
+        "redshift refuted -- the single feature carrying z=0.5526 cannot be [OIII]",
+        "2026-08-27h",
+    ),
 }
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(description=__doc__,
-                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     p.add_argument("-o", "--out", default=str(PATHS["RESULTS"] / "simbad_screen.csv"))
-    p.add_argument("-n", "--n-query", type=int, default=45,
-                   help="how far down the ranked survivor list to query")
+    p.add_argument(
+        "-n",
+        "--n-query",
+        type=int,
+        default=45,
+        help="how far down the ranked survivor list to query",
+    )
     p.add_argument("--flow-dir", default=str(DEFAULT_FLOW_DIR))
     p.add_argument("--vac", default=str(PATHS["DATA"] / "fastspec-iron-sv3-bright.fits"))
-    p.add_argument("--screens", nargs="*", default=[
-        str(PATHS["RESULTS"] / "gaia_star_screen.csv"),
-        str(PATHS["RESULTS"] / "sga_proximity.csv"),
-        str(PATHS["RESULTS"] / "agn_star_screen.csv")],
-        help="screens already applied; their flags are excluded before ranking")
+    p.add_argument(
+        "--screens",
+        nargs="*",
+        default=[
+            str(PATHS["RESULTS"] / "gaia_star_screen.csv"),
+            str(PATHS["RESULTS"] / "sga_proximity.csv"),
+            str(PATHS["RESULTS"] / "agn_star_screen.csv"),
+        ],
+        help="screens already applied; their flags are excluded before ranking",
+    )
     args = p.parse_args(argv)
 
     from astroquery.simbad import Simbad
@@ -69,10 +83,9 @@ def main(argv=None):
     for s in args.screens:
         dropped |= read_screen(s)[0]
     z = md["Z"]
-    surv = [t for t in sorted(common) if t in idx and t not in dropped
-            and 0.01 <= z[idx[t]] <= 0.6]
+    surv = [t for t in sorted(common) if t in idx and t not in dropped and 0.01 <= z[idx[t]] <= 0.6]
     surv.sort(key=lambda t: 0.5 * (pct[TAGS[0]][t] + pct[TAGS[1]][t]))
-    todo = surv[:args.n_query]
+    todo = surv[: args.n_query]
     print(f"ranked survivors: {len(surv)}; querying the top {len(todo)}")
 
     s = Simbad()
@@ -106,14 +119,25 @@ def main(argv=None):
         is_agn = otype in AGN_TYPES and sep < SEP_MAX
         is_star = (otype in STAR_TYPES or sptype.startswith("dC")) and sep < SEP_MAX
         man = t in MANUAL_EXCLUDE
-        rows.append({"target_id": t, "rank": n, "z_desi": float(z[i]), "simbad": name,
-                     "otype": otype, "sp_type": sptype, "sep_arcsec": sep, "z_simbad": zext,
-                     "simbad_agn": is_agn, "simbad_star": is_star,
-                     "manual_exclude": man,
-                     "manual_reason": MANUAL_EXCLUDE[t][0] if man else "",
-                     "flagged": bool(is_agn or is_star or man)})
+        rows.append(
+            {
+                "target_id": t,
+                "rank": n,
+                "z_desi": float(z[i]),
+                "simbad": name,
+                "otype": otype,
+                "sp_type": sptype,
+                "sep_arcsec": sep,
+                "z_simbad": zext,
+                "simbad_agn": is_agn,
+                "simbad_star": is_star,
+                "manual_exclude": man,
+                "manual_reason": MANUAL_EXCLUDE[t][0] if man else "",
+                "flagged": bool(is_agn or is_star or man),
+            }
+        )
         if is_agn or is_star or man:
-            why = MANUAL_EXCLUDE[t][1] if man else f"{otype} {name} at {sep:.2f}\""
+            why = MANUAL_EXCLUDE[t][1] if man else f'{otype} {name} at {sep:.2f}"'
             print(f"  rank {n:>3}  {t}  FLAG  {why}")
 
     outp = Path(args.out)
@@ -122,9 +146,11 @@ def main(argv=None):
         w.writeheader()
         w.writerows(rows)
     nf = sum(r["flagged"] for r in rows)
-    print(f"\n  simbad_agn={sum(r['simbad_agn'] for r in rows)}  "
-          f"simbad_star={sum(r['simbad_star'] for r in rows)}  "
-          f"manual={sum(r['manual_exclude'] for r in rows)}  flagged={nf}")
+    print(
+        f"\n  simbad_agn={sum(r['simbad_agn'] for r in rows)}  "
+        f"simbad_star={sum(r['simbad_star'] for r in rows)}  "
+        f"manual={sum(r['manual_exclude'] for r in rows)}  flagged={nf}"
+    )
     print(f"wrote {outp}")
 
 

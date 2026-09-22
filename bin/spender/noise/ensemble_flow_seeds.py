@@ -18,6 +18,7 @@ every seed. Stats live in ensemble_flow_stats.py so re-analysis needs no retrain
   python bin/spender/noise/ensemble_flow_seeds.py --tag cont10latent --seeds 20 \
       --device cuda:0 --outdir results/flow_ensemble
 """
+
 import argparse
 import json
 import sys
@@ -43,8 +44,10 @@ MOCK_DIR = DATA / "latents" / "noised_cue_meanzero_wide"
 
 
 def paths_for(tag):
-    return (MOCK_DIR / f"prospector_noise_spec_cue_{tag}_snr3.h5",
-            DATA / "latents" / f"spender_spec_{tag}_snr3.h5")
+    return (
+        MOCK_DIR / f"prospector_noise_spec_cue_{tag}_snr3.h5",
+        DATA / "latents" / f"spender_spec_{tag}_snr3.h5",
+    )
 
 
 def score(nde, X, dev, chunk=200_000):
@@ -52,7 +55,7 @@ def score(nde, X, dev, chunk=200_000):
     out = []
     with torch.no_grad():
         for i in range(0, len(X), chunk):
-            out.append(nde.log_prob(torch.from_numpy(X[i:i + chunk]).to(dev)).cpu().numpy())
+            out.append(nde.log_prob(torch.from_numpy(X[i : i + chunk]).to(dev)).cpu().numpy())
     return np.concatenate(out).astype(np.float32)
 
 
@@ -71,7 +74,8 @@ def train_one(seed, mock_s, dev, a):
     opt = torch.optim.Adam(nde.parameters(), lr=a.lr)
     steps = max(1, (Xtr.shape[0] + a.batch - 1) // a.batch)
     sched = torch.optim.lr_scheduler.OneCycleLR(
-        opt, max_lr=a.lr, steps_per_epoch=steps, epochs=a.epochs)
+        opt, max_lr=a.lr, steps_per_epoch=steps, epochs=a.epochs
+    )
 
     tr_last = vl = np.nan
     for ep in range(a.epochs):
@@ -105,16 +109,23 @@ def validate(nde, mock_s, val_idx, dev, n_c2st, rng):
         i1, i2 = rng.choice(n, k, replace=False), rng.choice(n, k, replace=False)
         Xc = np.vstack([samp[i1], real[i2]])
         yc = np.r_[np.zeros(k), np.ones(k)]
-        c2st = cross_val_score(HistGradientBoostingClassifier(max_iter=120, random_state=0),
-                               Xc, yc, cv=3, scoring="accuracy").mean()
+        c2st = cross_val_score(
+            HistGradientBoostingClassifier(max_iter=120, random_state=0),
+            Xc,
+            yc,
+            cv=3,
+            scoring="accuracy",
+        ).mean()
     return float(max(ks)), float(np.median(ks)), float(c2st)
 
 
 def main():
-    p = argparse.ArgumentParser(description=__doc__,
-                                formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--tag", required=True,
-                   help="6latent/10latent/15latent/cont10latent/cont15latent")
+    p = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    p.add_argument(
+        "--tag", required=True, help="6latent/10latent/15latent/cont10latent/cont15latent"
+    )
     p.add_argument("--seeds", type=int, default=20, help="number of ensemble members")
     p.add_argument("--seed0", type=int, default=0, help="first seed; members are seed0..seed0+S-1")
     p.add_argument("--method", default="nsf", choices=["maf", "nsf"])
@@ -142,18 +153,25 @@ def main():
     mock_s = scaler.transform(mock).astype(np.float32)
     desi_s = scaler.transform(desi).astype(np.float32)
     S = a.seeds
-    print(f"tag={a.tag} dim={mock.shape[1]} mock={mock.shape[0]} desi={desi.shape[0]} "
-          f"seeds={a.seed0}..{a.seed0 + S - 1} device={dev} encoder={mock_ckpt}", flush=True)
+    print(
+        f"tag={a.tag} dim={mock.shape[1]} mock={mock.shape[0]} desi={desi.shape[0]} "
+        f"seeds={a.seed0}..{a.seed0 + S - 1} device={dev} encoder={mock_ckpt}",
+        flush=True,
+    )
 
     lp_mock = np.empty((S, mock_s.shape[0]), np.float32)
     lp_desi = np.empty((S, desi_s.shape[0]), np.float32)
-    thr = np.empty(S); thr_ho = np.empty(S); c2st = np.empty(S)
-    ks_max = np.empty(S); ks_med = np.empty(S)
-    nll_tr = np.empty(S); nll_val = np.empty(S)
+    thr = np.empty(S)
+    thr_ho = np.empty(S)
+    c2st = np.empty(S)
+    ks_max = np.empty(S)
+    ks_med = np.empty(S)
+    nll_tr = np.empty(S)
+    nll_val = np.empty(S)
     seeds = np.arange(a.seed0, a.seed0 + S)
     a.outdir.mkdir(parents=True, exist_ok=True)
     out_f = a.outdir / f"ens_{a.method}_{a.tag}.npz"
-    vrng = np.random.default_rng(12345)   # validation subsampling only, not a member seed
+    vrng = np.random.default_rng(12345)  # validation subsampling only, not a member seed
 
     for i, sd in enumerate(seeds):
         t0 = time.time()
@@ -166,25 +184,53 @@ def main():
         thr_ho[i] = float(np.quantile(lp_mock[i][val_idx], 0.001))
         ks_max[i], ks_med[i], c2st[i] = validate(nde, mock_s, val_idx, dev, a.c2st_n, vrng)
         n_out = int((lp_desi[i] <= thr[i]).sum())
-        print(f"  seed {sd:2d}  NLL {nll_tr[i]:7.3f}/{nll_val[i]:7.3f}  thr {thr[i]:8.3f}  "
-              f"outliers {n_out:5d} ({100 * n_out / len(desi_tid):.3f}%)  "
-              f"KS {ks_max[i]:.3f}  C2ST {c2st[i]:.3f}  [{time.time() - t0:.0f}s]", flush=True)
+        print(
+            f"  seed {sd:2d}  NLL {nll_tr[i]:7.3f}/{nll_val[i]:7.3f}  thr {thr[i]:8.3f}  "
+            f"outliers {n_out:5d} ({100 * n_out / len(desi_tid):.3f}%)  "
+            f"KS {ks_max[i]:.3f}  C2ST {c2st[i]:.3f}  [{time.time() - t0:.0f}s]",
+            flush=True,
+        )
         del nde
         if dev.type == "cuda":
             torch.cuda.empty_cache()
         # Checkpoint every member: a 20-seed run is ~an hour and a crash at member 19
         # should not cost the first 18.
         np.savez_compressed(
-            out_f, seeds=seeds[:i + 1], lp_mock=lp_mock[:i + 1], lp_desi=lp_desi[:i + 1],
-            desi_tid=desi_tid, thr=thr[:i + 1], thr_heldout=thr_ho[:i + 1],
-            c2st=c2st[:i + 1], ks_max=ks_max[:i + 1], ks_med=ks_med[:i + 1],
-            nll_train=nll_tr[:i + 1], nll_valid=nll_val[:i + 1],
-            scaler_mean=scaler.mean_, scaler_scale=scaler.scale_,
-            tag=a.tag, method=a.method, encoder=mock_ckpt,
-            mock_file=str(mock_f), desi_file=str(desi_f),
-            hyper=json.dumps({k: getattr(a, k) for k in
-                              ("epochs", "batch", "num_transforms", "num_bins", "hidden",
-                               "lr", "device", "c2st_n")}))
+            out_f,
+            seeds=seeds[: i + 1],
+            lp_mock=lp_mock[: i + 1],
+            lp_desi=lp_desi[: i + 1],
+            desi_tid=desi_tid,
+            thr=thr[: i + 1],
+            thr_heldout=thr_ho[: i + 1],
+            c2st=c2st[: i + 1],
+            ks_max=ks_max[: i + 1],
+            ks_med=ks_med[: i + 1],
+            nll_train=nll_tr[: i + 1],
+            nll_valid=nll_val[: i + 1],
+            scaler_mean=scaler.mean_,
+            scaler_scale=scaler.scale_,
+            tag=a.tag,
+            method=a.method,
+            encoder=mock_ckpt,
+            mock_file=str(mock_f),
+            desi_file=str(desi_f),
+            hyper=json.dumps(
+                {
+                    k: getattr(a, k)
+                    for k in (
+                        "epochs",
+                        "batch",
+                        "num_transforms",
+                        "num_bins",
+                        "hidden",
+                        "lr",
+                        "device",
+                        "c2st_n",
+                    )
+                }
+            ),
+        )
     print(f"wrote {out_f}  ({out_f.stat().st_size / 1e6:.1f} MB)", flush=True)
 
 

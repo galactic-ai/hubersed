@@ -36,11 +36,17 @@ def module_scope(tree):
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             names.add(node.name)
         elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
-            names |= {t.id for t in ast.walk(node)
-                      if isinstance(t, ast.Name) and isinstance(t.ctx, ast.Store)}
+            names |= {
+                t.id
+                for t in ast.walk(node)
+                if isinstance(t, ast.Name) and isinstance(t.ctx, ast.Store)
+            }
         elif isinstance(node, (ast.For, ast.With, ast.If, ast.Try)):
-            names |= {t.id for t in ast.walk(node)
-                      if isinstance(t, ast.Name) and isinstance(t.ctx, ast.Store)}
+            names |= {
+                t.id
+                for t in ast.walk(node)
+                if isinstance(t, ast.Name) and isinstance(t.ctx, ast.Store)
+            }
     return names
 
 
@@ -68,12 +74,12 @@ def local_scope(fn):
 @pytest.mark.parametrize("func", FUNCS)
 def test_no_undefined_names(func):
     tree = ast.parse(SRC.read_text())
-    fn = next((n for n in ast.walk(tree)
-               if isinstance(n, ast.FunctionDef) and n.name == func), None)
+    fn = next(
+        (n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == func), None
+    )
     assert fn is not None, f"{func} not found in {SRC.name}"
     known = module_scope(tree) | local_scope(fn)
-    used = {n.id for n in ast.walk(fn)
-            if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
+    used = {n.id for n in ast.walk(fn) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
     missing = sorted(used - known)
     assert not missing, (
         f"{func}() references names that do not resolve: {missing}. "
@@ -85,11 +91,14 @@ def test_no_undefined_names(func):
 def test_fit_one_and_worker_agree():
     """_worker forwards to fit_one; a parameter on one and not the other is the bug."""
     tree = ast.parse(SRC.read_text())
-    get = lambda name: next(n for n in ast.walk(tree)
-                            if isinstance(n, ast.FunctionDef) and n.name == name)
+    get = lambda name: next(
+        n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == name
+    )
     kw = lambda fn: {x.arg for x in fn.args.args + fn.args.kwonlyargs} - {"self"}
-    only_in_fit_one = kw(get("fit_one")) - kw(get("_worker")) - {
-        "sps", "cue_sps", "lines", "line_waves", "out"}   # supplied from get_sps/paths
+    only_in_fit_one = (
+        kw(get("fit_one")) - kw(get("_worker")) - {"sps", "cue_sps", "lines", "line_waves", "out"}
+    )  # supplied from get_sps/paths
     assert not only_in_fit_one, (
         f"fit_one takes {sorted(only_in_fit_one)} that _worker cannot pass, so the "
-        "parallel path (-w >1) and the serial path would behave differently.")
+        "parallel path (-w >1) and the serial path would behave differently."
+    )

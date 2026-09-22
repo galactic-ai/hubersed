@@ -27,8 +27,8 @@ CHUNK = 1024
 N_TOTAL = 254976
 Z_FLOOR = 0.01
 
-EDGES = common_obs_edges() 
-WAVE_C = (0.5 * (EDGES[1:] + EDGES[:-1])).astype(np.float32)   # coarse centers, for the checkpoint
+EDGES = common_obs_edges()
+WAVE_C = (0.5 * (EDGES[1:] + EDGES[:-1])).astype(np.float32)  # coarse centers, for the checkpoint
 
 
 from scipy.optimize import minimize
@@ -117,7 +117,7 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
         return dict(gidx=gidx, status=f"load_fail:{type(e).__name__}")
     if redshift < Z_FLOOR:
         return dict(gidx=gidx, id=tid, z=redshift, status="below_zfloor")
-    
+
     spec_maggies = flambda_to_maggies(WAVE_OBS, spec)
     ivar_maggies = ivar_flambda_to_ivar_maggies(WAVE_OBS, ivar)
     sigma = 1 / np.sqrt(np.where(ivar_maggies > 0, ivar_maggies, np.inf))
@@ -128,13 +128,15 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
     sps = _fsps()
     fw = sps.ssp.emline_wavelengths
     fopt = fw[(fw > 3600) & (fw < 9824)]
-    mask_em = P.mask_spectral_lines(
-        WAVE_OBS, mask, redshift, halfwidth_kms=1500.0, line_waves=fopt
+    mask_em = P.mask_spectral_lines(WAVE_OBS, mask, redshift, halfwidth_kms=1500.0, line_waves=fopt)
+    res = _lsf_sigma_kms()
+
+    obs_em = P.build_obs(
+        spec=spec_maggies, unc=sigma, mask=mask_em, resolution=res, wavelength=WAVE_OBS
     )
-    res = (_lsf_sigma_kms())
-    
-    obs_em   = P.build_obs(spec=spec_maggies, unc=sigma, mask=mask_em, resolution=res, wavelength=WAVE_OBS)
-    obs_full = P.build_obs(spec=spec_maggies, unc=sigma, mask=mask,  resolution=res, wavelength=WAVE_OBS)
+    obs_full = P.build_obs(
+        spec=spec_maggies, unc=sigma, mask=mask, resolution=res, wavelength=WAVE_OBS
+    )
 
     # continuum MAP (seeds logmass/logzsol/sigma_smooth for the full model)
     cmodel, ctemplate = build_continuum_model(redshift)
@@ -143,16 +145,12 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             try:
-                lp = lnprobfn(
-                    th, model=cmodel, observations=obs_em, sps=sps, nested=False
-                )
+                lp = lnprobfn(th, model=cmodel, observations=obs_em, sps=sps, nested=False)
                 return -lp if np.isfinite(lp) else 1e18
             except Exception:
                 return 1e18
 
-    bc = _map_optimize(
-        neg_cont, cmodel.theta.copy(), n_seeds=cont_nseeds, maxfev=maxfev
-    )
+    bc = _map_optimize(neg_cont, cmodel.theta.copy(), n_seeds=cont_nseeds, maxfev=maxfev)
     if bc is None:
         return dict(gidx=gidx, id=tid, z=redshift, status="cont_fail")
     theta_cont = bc.x
@@ -160,9 +158,7 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
     # full MAP (continuum + nebular); Cue or FSPS
     if use_cue:
         sps = _cue()
-        fmodel, ftemplate = build_full_cue_model(
-            ctemplate, theta_cont, cmodel, redshift
-        )
+        fmodel, ftemplate = build_full_cue_model(ctemplate, theta_cont, cmodel, redshift)
     else:
         fmodel, ftemplate = build_full_model(ctemplate, theta_cont, cmodel, redshift)
 
@@ -170,16 +166,12 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             try:
-                lp = lnprobfn(
-                    th, model=fmodel, observations=obs_full, sps=sps, nested=False
-                )
+                lp = lnprobfn(th, model=fmodel, observations=obs_full, sps=sps, nested=False)
                 return -lp if np.isfinite(lp) else 1e18
             except Exception:
                 return 1e18
 
-    bf = _map_optimize(
-        neg_full, fmodel.theta.copy(), n_seeds=full_nseeds, maxfev=maxfev
-    )
+    bf = _map_optimize(neg_full, fmodel.theta.copy(), n_seeds=full_nseeds, maxfev=maxfev)
     if bf is None:
         return dict(gidx=gidx, id=tid, z=redshift, status="full_fail")
     theta_map = bf.x
@@ -191,8 +183,7 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
     chi2 = float(np.nansum(resid**2))
     ndof = int(m.sum()) - len(theta_map)
     theta_dict = {
-        k: np.asarray(theta_map[v], dtype=np.float32)
-        for k, v in fmodel.theta_index.items()
+        k: np.asarray(theta_map[v], dtype=np.float32) for k, v in fmodel.theta_index.items()
     }  # keyed by name (multi-elem safe)
     return dict(
         gidx=gidx,
@@ -215,9 +206,7 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
 
 def _work(args):
     gi, use_cue, cns, fns, mf = args
-    return map_chi2_one(
-        int(gi), use_cue=use_cue, cont_nseeds=cns, full_nseeds=fns, maxfev=mf
-    )
+    return map_chi2_one(int(gi), use_cue=use_cue, cont_nseeds=cns, full_nseeds=fns, maxfev=mf)
 
 
 def main():
@@ -255,17 +244,13 @@ def main():
 
         worst = "--worst" in sys.argv
         blob = torch.load(RESULTS_PATH / outfile, weights_only=False)
-        tids = np.asarray(blob["outlier_target_ids"]).astype(
-            np.int64
-        )  # TARGETIDs (canonical)
+        tids = np.asarray(blob["outlier_target_ids"]).astype(np.int64)  # TARGETIDs (canonical)
         # order the outliers by IsoForest score (lower = more anomalous) if requested
         if worst and "scores_desi" in blob and "desi_target_ids" in blob:
             dtid = np.asarray(blob["desi_target_ids"]).astype(np.int64)
             dscore = np.asarray(blob["scores_desi"])
             score_of = dict(zip(dtid.tolist(), dscore.tolist()))
-            tids = tids[
-                np.argsort([score_of[int(t)] for t in tids])
-            ]  # most anomalous first
+            tids = tids[np.argsort([score_of[int(t)] for t in tids])]  # most anomalous first
         idxs = tids_to_indices(tids)  # -> numeric global indices
         # self-check: load_by_index must return the SAME TARGETID we asked for
         for g, t in list(zip(idxs, tids))[:3]:
@@ -278,9 +263,7 @@ def main():
             )
         N = idxs.size
         modetag = (
-            "outliers"
-            if limit is None
-            else (f"outliers_worst{N}" if worst else f"outliers_n{N}")
+            "outliers" if limit is None else (f"outliers_worst{N}" if worst else f"outliers_n{N}")
         )
         print(
             f"fitting {N} outliers by TARGETID (from {outfile}; {'WORST by IsoForest score' if worst else 'random subset' if limit else 'all'}); self-check passed"
@@ -293,9 +276,7 @@ def main():
     out = []
     # output paths up front so the serial loop can checkpoint the FULL pkl (theta+spectra)
     tag = "cue" if use_cue else "fsps"
-    suffix = (
-        f"{modetag}_lsf" + ("_rich" if rich else "") + (f"_{runtag}" if runtag else "")
-    )
+    suffix = f"{modetag}_lsf" + ("_rich" if rich else "") + (f"_{runtag}" if runtag else "")
     full_pkl = RESULTS_PATH / f"map_chi2_{tag}_{suffix}_full.pkl"
 
     def _checkpoint():
@@ -312,19 +293,11 @@ def main():
 
     if workers <= 1:
         for k, gi in enumerate(idxs):
-            r = map_chi2_one(
-                int(gi), use_cue=use_cue, cont_nseeds=cns, full_nseeds=fns, maxfev=mf
-            )
+            r = map_chi2_one(int(gi), use_cue=use_cue, cont_nseeds=cns, full_nseeds=fns, maxfev=mf)
             out.append(r)
-            s = (
-                f"chi2_red {r['chi2_red']:.2f}"
-                if r.get("status") == "ok"
-                else r.get("status")
-            )
+            s = f"chi2_red {r['chi2_red']:.2f}" if r.get("status") == "ok" else r.get("status")
             print(f"[{k + 1}/{N}] idx {gi}  {s}")
-            if (
-                k + 1
-            ) % 50 == 0:  # incremental full-pkl checkpoint -> survive crash/interrupt
+            if (k + 1) % 50 == 0:  # incremental full-pkl checkpoint -> survive crash/interrupt
                 _checkpoint()
                 print(f"  [checkpoint {k + 1}/{N} -> {full_pkl.name}]", flush=True)
     else:
@@ -332,22 +305,13 @@ def main():
         ckpt = RESULTS_PATH / f"map_chi2_{tag0}_{modetag}.npy"
         ctx = mp.get_context("spawn")
         with ProcessPoolExecutor(max_workers=workers, mp_context=ctx) as ex:
-            futs = {
-                ex.submit(_work, (int(gi), use_cue, cns, fns, mf)): int(gi)
-                for gi in idxs
-            }
+            futs = {ex.submit(_work, (int(gi), use_cue, cns, fns, mf)): int(gi) for gi in idxs}
             for k, fut in enumerate(as_completed(futs)):
                 r = fut.result()
                 out.append(r)
-                s = (
-                    f"chi2_red {r['chi2_red']:.2f}"
-                    if r.get("status") == "ok"
-                    else r.get("status")
-                )
+                s = f"chi2_red {r['chi2_red']:.2f}" if r.get("status") == "ok" else r.get("status")
                 print(f"[{k + 1}/{N}] idx {r.get('gidx')}  {s}", flush=True)
-                if (
-                    k + 1
-                ) % 25 == 0:  # incremental checkpoint -> survive crash/interrupt
+                if (k + 1) % 25 == 0:  # incremental checkpoint -> survive crash/interrupt
                     np.save(
                         ckpt,
                         np.array(
@@ -368,15 +332,11 @@ def main():
     if ok:
         c = np.array([r["chi2_red"] for r in ok])
         print(f"\n=== {len(ok)}/{N} fit  (cue={use_cue}) ===")
-        print(
-            f"chi2_red p16,50,84,95,99 = {np.percentile(c, [16, 50, 84, 95, 99]).round(2)}"
-        )
+        print(f"chi2_red p16,50,84,95,99 = {np.percentile(c, [16, 50, 84, 95, 99]).round(2)}")
         print(
             f"frac chi2_red > 2: {100 * np.mean(c > 2):.1f}%   > 3: {100 * np.mean(c > 3):.1f}%   > 5: {100 * np.mean(c > 5):.1f}%"
         )
-    fname = (
-        f"map_chi2_{tag}_{suffix}.npy"  # tag/suffix/full_pkl computed before the loop
-    )
+    fname = f"map_chi2_{tag}_{suffix}.npy"  # tag/suffix/full_pkl computed before the loop
     np.save(
         RESULTS_PATH / fname,
         np.array(

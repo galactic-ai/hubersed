@@ -13,11 +13,11 @@ EM_LINES_A = load_lines()["emission"]["wave_vac"]
 
 # build obs
 def build_obs(
-    spec: np.ndarray, 
-    unc: np.ndarray, 
-    mask: np.ndarray, 
-    resolution: np.ndarray | None = None, 
-    wavelength: np.ndarray = WAVE_OBS
+    spec: np.ndarray,
+    unc: np.ndarray,
+    mask: np.ndarray,
+    resolution: np.ndarray | None = None,
+    wavelength: np.ndarray = WAVE_OBS,
 ) -> list:
     """
     Build the observation dictionary for the fit.
@@ -53,9 +53,7 @@ def build_obs(
 # build sps
 def build_sps(zcontinuous=1):
     sps = FastStepBasis(zcontinuous=zcontinuous)
-    SSPBasis.spectral_resolution = property(
-        lambda self: np.zeros_like(self.ssp.wavelengths)
-    )
+    SSPBasis.spectral_resolution = property(lambda self: np.zeros_like(self.ssp.wavelengths))
     return sps
 
 
@@ -67,7 +65,6 @@ def build_cue_sps():
     from prospect.sources import NebStepBasis
 
     return NebStepBasis()
-
 
 
 def mask_spectral_lines(wave_obs, mask, z, line_waves=EM_LINES_A, halfwidth_kms=500.0):

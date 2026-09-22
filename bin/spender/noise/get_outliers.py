@@ -57,9 +57,7 @@ def main():
     print(
         f"DESI {tuple(desi_latents.shape)} from {args.desi}  |  mock {tuple(p_l.shape)} from {args.mock}"
     )
-    assert desi_latents.shape[1] == p_l.shape[1], (
-        "latent dim mismatch between DESI and mock files!"
-    )
+    assert desi_latents.shape[1] == p_l.shape[1], "latent dim mismatch between DESI and mock files!"
 
     # IsolationForest: fit on mocks (normal), score DESI
     scaler = StandardScaler()

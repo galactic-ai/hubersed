@@ -60,9 +60,7 @@ def lookup_healpix(target_ids, zpix_file=ZPIX_FILE):
 def coadd_url(hpix, survey="sv3", program="bright"):
     """Construct the URL for a DESI coadd FITS file."""
     filename = f"coadd-{survey}-{program}-{hpix}.fits"
-    return (
-        f"{DESI_BASE_URL}/healpix/{survey}/{program}/{str(hpix)[:-2]}/{hpix}/{filename}"
-    )
+    return f"{DESI_BASE_URL}/healpix/{survey}/{program}/{str(hpix)[:-2]}/{hpix}/{filename}"
 
 
 # ──────────────────────────────────────────────

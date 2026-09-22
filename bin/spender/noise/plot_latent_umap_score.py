@@ -26,7 +26,9 @@ def load_latents(path):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--latents", type=Path, default=DATA / "latents" / "spender_spec_10latent_snr3.h5")
+    ap.add_argument(
+        "--latents", type=Path, default=DATA / "latents" / "spender_spec_10latent_snr3.h5"
+    )
     ap.add_argument("--scores", type=Path, default=RES / "desi_outliers_flow_nsf_10latent_snr3.pt")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--proj", default="umap", choices=["umap", "pca"])
@@ -55,8 +57,10 @@ def main():
 
     if args.proj == "umap":
         emb = umap.UMAP(
-            n_components=2, random_state=args.seed,
-            n_neighbors=args.n_neighbors, min_dist=args.min_dist,
+            n_components=2,
+            random_state=args.seed,
+            n_neighbors=args.n_neighbors,
+            min_dist=args.min_dist,
         ).fit_transform(lat_s)
         xlab, ylab = "UMAP 1", "UMAP 2"
     else:
@@ -70,13 +74,27 @@ def main():
 
     fig, ax = plt.subplots(figsize=(7, 6))
     sc = ax.scatter(
-        emb[order, 0], emb[order, 1], c=lp_m[order], cmap="cividis",
-        vmin=vmin, vmax=vmax, s=3, alpha=0.35, linewidths=0, rasterized=True,
+        emb[order, 0],
+        emb[order, 1],
+        c=lp_m[order],
+        cmap="cividis",
+        vmin=vmin,
+        vmax=vmax,
+        s=3,
+        alpha=0.35,
+        linewidths=0,
+        rasterized=True,
     )
     ax.scatter(
-        emb[out_mask, 0], emb[out_mask, 1],
-        facecolors="none", edgecolors="firebrick", linewidths=0.4, s=6, alpha=0.5,
-        label=f"flow outliers (n={out_mask.sum()})", rasterized=True,
+        emb[out_mask, 0],
+        emb[out_mask, 1],
+        facecolors="none",
+        edgecolors="firebrick",
+        linewidths=0.4,
+        s=6,
+        alpha=0.5,
+        label=f"flow outliers (n={out_mask.sum()})",
+        rasterized=True,
     )
     fig.colorbar(sc, ax=ax, label="flow log p")
     ax.set_xlabel(xlab)

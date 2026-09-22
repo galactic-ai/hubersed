@@ -28,12 +28,23 @@ def plot_ssfr(
     guides : vertical lines at these lookback times [Gyr] (first dotted, rest dashed).
     """
     edges = np.asarray(edges, float)
-    ax.stairs(np.asarray(ssfr, float), edges,
-              **{"color": "C3", "lw": 1.8, "label": label, **(ssfr_kw or {})})
+    ax.stairs(
+        np.asarray(ssfr, float),
+        edges,
+        **{"color": "C3", "lw": 1.8, "label": label, **(ssfr_kw or {})},
+    )
     if ssfr_inplace is not None:
-        ax.stairs(np.asarray(ssfr_inplace, float), edges,
-                  **{"color": "rebeccapurple", "lw": 1.5, "ls": "--",
-                     "label": label_inplace, **(inplace_kw or {})})
+        ax.stairs(
+            np.asarray(ssfr_inplace, float),
+            edges,
+            **{
+                "color": "rebeccapurple",
+                "lw": 1.5,
+                "ls": "--",
+                "label": label_inplace,
+                **(inplace_kw or {}),
+            },
+        )
     for g in guides:
         ax.axvline(g, color="0.6", ls=":" if g == guides[0] else "--", lw=0.8)
 
@@ -82,13 +93,17 @@ def sfh_figure(
     """
     if apj_style:
         from hubersed.plotting.style import use_apj_style
+
         use_apj_style()
 
     n = 2 + int(extra_panels)
     if height_ratios is None:
         height_ratios = [2, 1] + [1] * int(extra_panels)
     fig, axes = plt.subplots(
-        n, 1, sharex=True, figsize=figsize,
+        n,
+        1,
+        sharex=True,
+        figsize=figsize,
         gridspec_kw={"height_ratios": height_ratios, "hspace": 0.05},
         squeeze=False,
     )

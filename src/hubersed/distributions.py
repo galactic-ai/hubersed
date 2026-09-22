@@ -37,6 +37,4 @@ def sample_truncated_normal(mean, std, low, high, size=1, *, rng):
     """
     a = (low - mean) / std
     b = (high - mean) / std
-    return scipy.stats.truncnorm.rvs(
-        a, b, loc=mean, scale=std, size=size, random_state=rng
-    )
+    return scipy.stats.truncnorm.rvs(a, b, loc=mean, scale=std, size=size, random_state=rng)

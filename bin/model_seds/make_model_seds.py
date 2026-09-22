@@ -81,7 +81,6 @@ def build_base_template(nebular):
         # FSPS / Byler+2017 CLOUDY grids; free gas_logz/u only
         t.update(copy.deepcopy(TemplateLibrary["nebular"]))
 
-
     t["nebemlineinspec"] = {"N": 1, "isfree": False, "init": False}
 
     t["dust_type"]["init"] = 4
@@ -262,20 +261,31 @@ def worker_block(start, stop):
 
     return start, stop, block, ratios_block, lum_block
 
+
 def parse_args(argv=None):
     p = argparse.ArgumentParser(
         description="Generate mock DESI spectra from the stochastic-SFH prior sample.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     p.add_argument("--nebular", choices=["cue", "fsps"], default="cue")
-    p.add_argument("-n", "--sample-size", type=int, default=None,
-                   help="number of spectra; default = largest N with a priors npz on disk")
-    p.add_argument("--seed", type=int, default=42,
-                   help="seed for the logsfr_ratios draw. Keyed per-index, so it is "
-                        "independent of --workers and completion order. Recorded in h5 attrs.")
+    p.add_argument(
+        "-n",
+        "--sample-size",
+        type=int,
+        default=None,
+        help="number of spectra; default = largest N with a priors npz on disk",
+    )
+    p.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="seed for the logsfr_ratios draw. Keyed per-index, so it is "
+        "independent of --workers and completion order. Recorded in h5 attrs.",
+    )
     p.add_argument("-o", "--out", type=Path, default=None)
-    p.add_argument("-f", "--force", action="store_true",
-                   help="overwrite the output h5 if it exists")
+    p.add_argument(
+        "-f", "--force", action="store_true", help="overwrite the output h5 if it exists"
+    )
     p.add_argument("--workers", type=int, default=8)
     p.add_argument("--chunk-size", type=int, default=500)
     return p.parse_args(argv)
@@ -301,8 +311,7 @@ def main(argv=None):
     n_wave = DESI_WAV.size
 
     print(
-        f"nebular={nebular}  n={n_spectra}  seed={args.seed}  "
-        f"priors={priors_path(nebular, n).name}"
+        f"nebular={nebular}  n={n_spectra}  seed={args.seed}  priors={priors_path(nebular, n).name}"
     )
 
     with h5py.File(output_file, "w") as hf:
@@ -333,9 +342,7 @@ def main(argv=None):
             # _sample_size, _cue, _git_sha). h5py rejects chunk/filter options on
             # scalar datasets, and they are metadata anyway -> carry them as attrs.
             if np.ndim(arr) == 0:
-                hf.attrs[f"priors{key}" if key.startswith("_") else f"priors_{key}"] = (
-                    arr.item()
-                )
+                hf.attrs[f"priors{key}" if key.startswith("_") else f"priors_{key}"] = arr.item()
             else:
                 hf.create_dataset(f"priors/{key}", data=arr, compression="gzip")
 
@@ -346,8 +353,7 @@ def main(argv=None):
         hf.attrs["priors_file"] = priors_path(nebular, n).name
 
         blocks = [
-            (s, min(s + args.chunk_size, n_spectra))
-            for s in range(0, n_spectra, args.chunk_size)
+            (s, min(s + args.chunk_size, n_spectra)) for s in range(0, n_spectra, args.chunk_size)
         ]
 
         # spawn: fork deadlocks with JAX/cuejax

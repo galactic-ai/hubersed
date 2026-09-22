@@ -151,13 +151,9 @@ def _losses(model, instrument, batch, similarity=False, slope=0, skip=False):
     return loss, sim_loss, s
 
 
-def get_losses(
-    model, instrument, batch, aug_fct=None, similarity=True, consistency=True, slope=0
-):
+def get_losses(model, instrument, batch, aug_fct=None, similarity=True, consistency=True, slope=0):
 
-    loss, sim_loss, s = _losses(
-        model, instrument, batch, similarity=similarity, slope=slope
-    )
+    loss, sim_loss, s = _losses(model, instrument, batch, similarity=similarity, slope=slope)
 
     if aug_fct is not None:
         batch_copy = aug_fct(batch, z_max=args.z_max)
@@ -198,18 +194,13 @@ def load_model(filename, models, instruments):
             from collections import OrderedDict
 
             model_struct["model"][i] = OrderedDict(
-                [
-                    (k.replace("mlp.mlp", "mlp"), v)
-                    for k, v in model_struct["model"][i].items()
-                ]
+                [(k.replace("mlp.mlp", "mlp"), v) for k, v in model_struct["model"][i].items()]
             )
         # backwards compat: add instrument to encoder
         try:
             model.load_state_dict(model_struct["model"][i], strict=False)
         except RuntimeError:
-            model_struct["model"][i]["encoder.instrument.wave_obs"] = instruments[
-                i
-            ].wave_obs
+            model_struct["model"][i]["encoder.instrument.wave_obs"] = instruments[i].wave_obs
             model_struct["model"][i]["encoder.instrument.skyline_mask"] = instruments[
                 i
             ].skyline_mask
@@ -250,9 +241,7 @@ def train(
     if torch.cuda.is_available():
         accelerator = Accelerator(mixed_precision="fp16")
     else:
-        accelerator = Accelerator(
-            mixed_precision="fp16", cpu=True
-        )  # full precision on CPU/MPS
+        accelerator = Accelerator(mixed_precision="fp16", cpu=True)  # full precision on CPU/MPS
 
     models = [accelerator.prepare(model) for model in models]
     instruments = [accelerator.prepare(instrument) for instrument in instruments]
@@ -397,9 +386,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("dir", help="data file directory")
     parser.add_argument("outfile", help="output file name")
-    parser.add_argument(
-        "-n", "--latents", help="latent dimensionality", type=int, default=2
-    )
+    parser.add_argument("-n", "--latents", help="latent dimensionality", type=int, default=2)
     parser.add_argument("-b", "--batch_size", help="batch size", type=int, default=512)
     parser.add_argument(
         "-l",
@@ -412,15 +399,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "-zmax", "--z_max", help="constrain redshifts to z_max", type=float, default=0.8
     )
-    parser.add_argument(
-        "-a", "--augmentation", help="add augmentation loss", action="store_true"
-    )
-    parser.add_argument(
-        "-s", "--similarity", help="add similarity loss", action="store_true"
-    )
-    parser.add_argument(
-        "-c", "--consistency", help="add consistency loss", action="store_true"
-    )
+    parser.add_argument("-a", "--augmentation", help="add augmentation loss", action="store_true")
+    parser.add_argument("-s", "--similarity", help="add similarity loss", action="store_true")
+    parser.add_argument("-c", "--consistency", help="add consistency loss", action="store_true")
     parser.add_argument(
         "-C",
         "--clobber",

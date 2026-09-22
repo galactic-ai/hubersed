@@ -16,9 +16,7 @@ def maggies_to_flambda(wave, maggies):
 
 def flambda_to_maggies(wave_A, flambda):
     # flambda: erg/s/cm^2/Å ; wave_A: Å
-    flambda_cgs = (
-        flambda * 1e-17
-    )  # DESI spectra are in 1e-17 erg/s/cm^2/Å, convert to cgs
+    flambda_cgs = flambda * 1e-17  # DESI spectra are in 1e-17 erg/s/cm^2/Å, convert to cgs
     return flambda_cgs * (wave_A**2) * 1e-8 / C_CGS / FNU_PER_MAGGIE
 
 
