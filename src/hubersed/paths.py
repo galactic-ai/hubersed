@@ -1,3 +1,9 @@
+"""Project directory paths.
+
+Importing this module creates data/, results/, logs/, .cache/, tmp/ and config/ under the
+repository root if they are missing, and checks each one can be written to.
+"""
+
 import os
 from collections.abc import Iterable
 from pathlib import Path
@@ -7,14 +13,20 @@ PathLike = Union[str, Path]
 
 
 def get_paths(base: PathLike | None = None) -> dict[str, Path]:
-    """
-    Return a dictionary of useful project paths (as Path objects).
-    If base is None the function will assume the repository/project root is
-    two parents above this file (typical src/package layout).
-    Keys: ROOT, SRC, DATA, RESULTS, LOGS, CACHE, CONFIG, TMP
+    """Return the main project directories.
+
+    Parameters
+    ----------
+    base : str or Path, optional
+        Repository root. By default it is two levels above this file, which is the root
+        for the src/hubersed layout.
+
+    Returns
+    -------
+    dict of str to Path
+        Paths keyed by ROOT, SRC, DATA, RESULTS, LOGS, CACHE, CONFIG and TMP.
     """
     if base is None:
-        # typically: /.../repo/src/package/paths.py -> repo is parents[2]
         base_path = Path(__file__).resolve().parents[2]
     else:
         base_path = Path(base).resolve()
@@ -33,11 +45,19 @@ def get_paths(base: PathLike | None = None) -> dict[str, Path]:
 
 
 def ensure_dirs(paths: Iterable[PathLike], *, create: bool = True) -> dict[str, bool]:
-    """
-    Ensure each path in `paths` exists and is writable.
-    - paths: iterable of Path or string paths (or mapping values).
-    - create: if True, missing directories will be created (mkdir(parents=True)).
-    Returns a dict mapping string(path) -> bool indicating whether the path is ready (exists and writable).
+    """Check that each directory exists and can be written to, creating it if asked.
+
+    Parameters
+    ----------
+    paths : iterable of str or Path
+        Directories to check.
+    create : bool
+        Create missing directories, including their parents.
+
+    Returns
+    -------
+    dict of str to bool
+        True for each directory that exists and passed a test write of a small file.
     """
     status = {}
     for p in paths:
@@ -47,7 +67,7 @@ def ensure_dirs(paths: Iterable[PathLike], *, create: bool = True) -> dict[str, 
                 if create:
                     path.mkdir(parents=True, exist_ok=True)
             ready = path.is_dir() and os.access(str(path), os.W_OK)
-            # final check: try to create and remove a tiny temp file to test writability more reliably
+            # also write and delete a small file, a stricter test than os.access
             if ready:
                 test_file = path / ".write_test"
                 try:
@@ -63,9 +83,8 @@ def ensure_dirs(paths: Iterable[PathLike], *, create: bool = True) -> dict[str, 
     return status
 
 
-# convenience: a ready-to-use PATHS mapping for the current project layout
 PATHS = get_paths()
 
-# ensure common directories exist on import (can be turned off by callers using ensure_dirs manually)
+# runs on every import, see the module docstring
 _defaults = [PATHS[k] for k in ("DATA", "RESULTS", "LOGS", "CACHE", "TMP", "CONFIG")]
 _ensure_status = ensure_dirs(_defaults, create=True)
