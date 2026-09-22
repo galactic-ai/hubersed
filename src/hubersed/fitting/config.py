@@ -1,3 +1,9 @@
+"""Build the prospector models used for MAP fits of DESI spectra.
+
+The continuum model is fit first. Its best values seed a full model that adds nebular
+emission from either FSPS or Cue.
+"""
+
 import copy
 
 import numpy as np
@@ -24,6 +30,19 @@ DEFAULT_SET_VALS = {
 
 
 def get_priors(redshift):
+    """Return the priors shared by the continuum and full models.
+
+    Parameters
+    ----------
+    redshift : float
+        Redshift of the galaxy. It sets the upper limit of ``tau_eq`` and ``tau_in`` to
+        the age of the universe in Gyr.
+
+    Returns
+    -------
+    dict
+        Prior objects keyed by parameter name.
+    """
     tau_max = universe_age_gyr(redshift)
     return {
         "logmass": Uniform(mini=7.0, maxi=12.0),
@@ -40,7 +59,30 @@ def get_priors(redshift):
 
 
 def build_continuum_model(redshift, logmass_init=None):
-    """Build the continuum-only HyperSpecModel."""
+    """Build the continuum-only model with a stochastic star formation history.
+
+    Parameters
+    ----------
+    redshift : float
+        Redshift, held fixed in the fit.
+    logmass_init : float, optional
+        Starting value of ``logmass`` in log10 solar masses. The default is 8.7.
+
+    Returns
+    -------
+    model : prospect.models.sedmodel.HyperSpecModel
+        The model with 15 free parameters.
+    template : dict
+        The parameter template the model was built from.
+
+    Notes
+    -----
+    The free parameters are ``logmass``, ``logzsol``, ``dust2``, ``dust_ratio``,
+    ``dust_index``, ``sigma_smooth`` and the 9 ``logsfr_ratios``. The five SFH
+    hyperparameters ``sigma_reg``, ``tau_eq``, ``tau_in``, ``sigma_dyn`` and ``tau_dyn``
+    are fixed. ``dust1`` follows ``dust2 * dust_ratio``. ``tests/test_stochastic_prior_hypers.py``
+    checks the free set and explains why the hyperparameters must stay fixed at the MAP.
+    """
     tau_in = universe_age_gyr(redshift)
     set_vals = DEFAULT_SET_VALS.copy()
     set_vals["tau_in"] = tau_in
@@ -117,13 +159,45 @@ def build_continuum_model(redshift, logmass_init=None):
 
 
 def build_full_model(continuum_template, theta_best_cont, cont_model, redshift):
-    """Build the full nebular HyperSpecModel seeded from continuum MAP."""
+    """Build the full model with FSPS nebular emission, seeded from the continuum fit.
+
+    Parameters
+    ----------
+    continuum_template : dict
+        Template returned by ``build_continuum_model``.
+    theta_best_cont : np.ndarray
+        Best parameter vector of the continuum fit.
+    cont_model : prospect.models.sedmodel.HyperSpecModel
+        The continuum model, used to find parameters in ``theta_best_cont`` by name.
+    redshift : float
+        Redshift. Not used, the value comes from ``continuum_template``.
+
+    Returns
+    -------
+    model : prospect.models.sedmodel.HyperSpecModel
+        The full model, with 15 named free parameters and 23 values.
+    template : dict
+        The parameter template the model was built from.
+
+    Notes
+    -----
+    ``logmass``, ``logzsol`` and ``sigma_smooth`` start at their continuum values. The five
+    SFH hyperparameters are free here, unlike in the continuum model.
+    ``tests/test_stochastic_prior_hypers.py`` shows the MAP objective has no lower bound
+    when they are free.
+
+    The ``gas_logz`` prior is TopHat(-2.0, 0.5), but the FSPS nebular grid only covers
+    -1.3 to 0.3 and FSPS clamps values outside it. Values past either end give the same
+    spectrum. We plan to change the prior to TopHat(-1.3, 0.3).
+
+    ``eline_sigma`` starts at 200 km/s here and at 100 km/s in the Cue model. This was not
+    intended, and we plan to start both at 100 km/s.
+    """
     nebular_template = copy.deepcopy(TemplateLibrary["nebular"])
     full_template = copy.deepcopy(continuum_template)
     full_template.update(nebular_template)
 
-    # Prospector handles emission lines separately from FSPS
-    # so we can apply independent gas velocity dispersion
+    # prospect adds the emission lines itself, so they can have their own velocity dispersion
     full_template["nebemlineinspec"] = {
         "N": 1,
         "isfree": False,
@@ -177,10 +251,39 @@ def build_full_model(continuum_template, theta_best_cont, cont_model, redshift):
     return HyperSpecModel(full_template), full_template
 
 
-# use Cue
 def build_full_cue_model(
     continuum_template, theta_best_cont, cont_model, redshift, free_dust1=False
 ):
+    """Build the full model with Cue nebular emission, seeded from the continuum fit.
+
+    Parameters
+    ----------
+    continuum_template : dict
+        Template returned by ``build_continuum_model``.
+    theta_best_cont : np.ndarray
+        Best parameter vector of the continuum fit.
+    cont_model : prospect.models.sedmodel.HyperSpecModel
+        The continuum model, used to find parameters in ``theta_best_cont`` by name.
+    redshift : float
+        Redshift. Not used, the value comes from ``continuum_template``.
+    free_dust1 : bool
+        Fit ``dust1`` on its own with a TopHat(0, 3) prior instead of tying it to
+        ``dust2 * dust_ratio``. ``dust_ratio`` is then fixed.
+
+    Returns
+    -------
+    model : prospect.models.sedmodel.HyperSpecModel
+        The full model, with 18 named free parameters and 26 values by default.
+    template : dict
+        The parameter template the model was built from.
+
+    Notes
+    -----
+    Cue adds ``gas_lognH``, ``gas_logno`` and ``gas_logco``. Its ``gas_logz`` prior comes
+    from the prospect template and is TopHat(-2.2, 0.5). ``gas_logqion`` is listed as free
+    but the Cue template has no such parameter, so it is not fit. The five SFH
+    hyperparameters are free, as in ``build_full_model``.
+    """
     full_template = copy.deepcopy(continuum_template)
     nebular = copy.deepcopy(TemplateLibrary["cue_stellar_nebular"])
     full_template.update(nebular)
@@ -211,9 +314,6 @@ def build_full_cue_model(
         "tau_in",
     ]
     if free_dust1:
-        # Retire the dust1 = dust2 * dust_ratio coupling (config.py dustratio_to_dust1)
-        # and let the birth-cloud optical depth vary on its own. This is the change
-        # proposed in dust_issue/04_proposal.md.
         full_template["dust1"] = {
             "N": 1,
             "isfree": True,
@@ -237,14 +337,6 @@ def build_full_cue_model(
         "units": "km/s",
         "prior": TopHat(mini=10.0, maxi=250.0),
     }
-
-    # full_template["gas_logqion"] = {
-    #     "N": 1,
-    #     "isfree": True,
-    #     "init": 49.5,
-    #     "prior": TopHat(mini=46.0, maxi=52.0),
-    #     "units": "log10(ionizing photons / s)",
-    # }
 
     full_template = adjust_stochastic_params(full_template)
     return HyperSpecModel(full_template), full_template
