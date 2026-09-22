@@ -80,8 +80,8 @@ def build_continuum_model(redshift, logmass_init=None):
     The free parameters are ``logmass``, ``logzsol``, ``dust2``, ``dust_ratio``,
     ``dust_index``, ``sigma_smooth`` and the 9 ``logsfr_ratios``. The five SFH
     hyperparameters ``sigma_reg``, ``tau_eq``, ``tau_in``, ``sigma_dyn`` and ``tau_dyn``
-    are fixed. ``dust1`` follows ``dust2 * dust_ratio``. ``tests/test_stochastic_prior_hypers.py``
-    checks the free set and explains why the hyperparameters must stay fixed at the MAP.
+    are fixed in this model. ``dust1`` follows ``dust2 * dust_ratio``.
+    ``tests/test_stochastic_prior_hypers.py`` checks the free set.
     """
     tau_in = universe_age_gyr(redshift)
     set_vals = DEFAULT_SET_VALS.copy()
@@ -182,9 +182,9 @@ def build_full_model(continuum_template, theta_best_cont, cont_model, redshift):
     Notes
     -----
     ``logmass``, ``logzsol`` and ``sigma_smooth`` start at their continuum values. The five
-    SFH hyperparameters are free here, unlike in the continuum model.
-    ``tests/test_stochastic_prior_hypers.py`` shows the MAP objective has no lower bound
-    when they are free.
+    SFH hyperparameters are free here on purpose, unlike in the continuum model. With them
+    free, shrinking ``sigma_reg`` and ``sigma_dyn`` keeps raising the prior term, so a fit can
+    drift toward their prior floors. ``tests/test_stochastic_prior_hypers.py`` shows this.
 
     The ``gas_logz`` prior is TopHat(-2.0, 0.5), but the FSPS nebular grid only covers
     -1.3 to 0.3 and FSPS clamps values outside it. Values past either end give the same
@@ -281,7 +281,7 @@ def build_full_cue_model(
     -----
     Cue adds ``gas_lognH``, ``gas_logno`` and ``gas_logco``. Its ``gas_logz`` prior comes
     from the prospect template and is TopHat(-2.2, 0.5). The five SFH hyperparameters are
-    free, as in ``build_full_model``.
+    free on purpose, as in ``build_full_model``.
     """
     full_template = copy.deepcopy(continuum_template)
     nebular = copy.deepcopy(TemplateLibrary["cue_stellar_nebular"])
