@@ -10,7 +10,8 @@ wheels/
 .venv
 
 # ignore
-/results/
+/results/*
+!/results/.gitkeep
 /data/
 /tmp/seedscan/
 /tmp/**/*.pt

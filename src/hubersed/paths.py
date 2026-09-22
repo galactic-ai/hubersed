@@ -1,7 +1,7 @@
 """Project directory paths.
 
-Importing this module creates data/, results/, logs/, .cache/, tmp/ and config/ under the
-repository root if they are missing, and checks each one can be written to.
+Importing this module does not touch the disk. git keeps an empty results/ in every clone,
+so scripts can write there directly. data/ has to be provided.
 """
 
 import os
@@ -84,7 +84,3 @@ def ensure_dirs(paths: Iterable[PathLike], *, create: bool = True) -> dict[str, 
 
 
 PATHS = get_paths()
-
-# runs on every import, see the module docstring
-_defaults = [PATHS[k] for k in ("DATA", "RESULTS", "LOGS", "CACHE", "TMP", "CONFIG")]
-_ensure_status = ensure_dirs(_defaults, create=True)
