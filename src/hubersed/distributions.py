@@ -30,7 +30,7 @@ def sample_clipped_normal(mean, std, low, high, size=1, *, rng):
     return samples
 
 
-# truncated normal sampling -- NOT WIRED IN, see docstring
+# scipy truncated normal sampling
 def sample_truncated_normal(mean, std, low, high, size=1, *, rng):
     """
     Truncated normal on [low, high] with mean and std. Uses scipy.stats.truncnorm.rvs.
