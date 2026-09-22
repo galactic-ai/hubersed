@@ -13,7 +13,7 @@ import torch
 from accelerate import Accelerator
 from spender import SpectrumAutoencoder
 from spender.data import desi
-from spender.util import mem_report, resample_to_restframe
+from spender.util import mem_report
 from torch import nn
 
 sys.path.insert(1, "./")
@@ -77,51 +77,6 @@ def consistency_loss(s, s_aug, individual=False):
     if individual:
         return x, sim_loss
     return sim_loss.sum()
-
-
-def similarity_loss(
-    instrument, model, spec, w, z, s, slope=0.5, individual=False, wid=5, amp=3
-):
-    m = base(model)
-    spec, w = resample_to_restframe(
-        instrument.wave_obs, m.decoder.wave_rest, spec, w, z
-    )
-
-    batch_size, spec_size = spec.shape
-    _, s_size = s.shape
-    device = s.device
-
-    # pairwise dissimilarity of spectra
-    S = (spec[None, :, :] - spec[:, None, :]) ** 2
-
-    # pairwise weights
-    non_zero = w > 1e-6
-    N = non_zero[None, :, :] * non_zero[:, None, :]
-    W = (1 / w)[None, :, :] + (1 / w)[:, None, :]
-    W = N / W
-
-    N = N.sum(-1)
-    N[N == 0] = 1
-    # dissimilarity of spectra
-    # of order unity, larger for spectrum pairs with more comparable bins
-    spec_sim = (W * S).sum(-1) / N
-
-    # dissimilarity of latents
-    s_sim = ((s[None, :, :] - s[:, None, :]) ** 2).sum(-1) / s_size
-
-    # only give large loss of (dis)similarities are different (either way)
-    x = s_sim - spec_sim
-    sim_loss = torch.sigmoid(slope * x - 0.5 * wid) + torch.sigmoid(
-        -slope * x - 0.5 * wid
-    )
-    diag_mask = torch.diag(torch.ones(batch_size, device=device, dtype=bool))
-    sim_loss[diag_mask] = 0
-
-    if individual:
-        return s_sim, spec_sim, sim_loss
-    # total loss: sum over N^2 terms,
-    # needs to have amplitude of N terms to compare to fidelity loss
-    return amp * sim_loss.sum() / batch_size
 
 
 def restframe_weight(model, mu=5000, sigma=2000, amp=30):
