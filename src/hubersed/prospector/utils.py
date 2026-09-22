@@ -6,13 +6,9 @@ from astropy.cosmology import Planck18 as cosmo
 
 __all__ = [
     "universe_age_gyr",
-    "make_agebins_for_z",
     "make_stochastic_agebins",
     "load_lines",
 ]
-
-# From Leja et al. 2019 (Non parameteric models paper)
-BASE_EDGES_GYR = np.array([0, 0.03, 0.10, 0.33, 1.10, 3.60, 11.70, 13.80])
 
 
 def universe_age_gyr(z):
@@ -29,56 +25,6 @@ def universe_age_gyr(z):
         Age in Gyr.
     """
     return cosmo.age(z).to_value(u.Gyr)
-
-
-def make_agebins_for_z(z):
-    """Return lookback-time bins for a continuity star formation history at redshift z.
-
-    The edges are ``BASE_EDGES_GYR`` with the last one capped at the age of the universe.
-
-    Parameters
-    ----------
-    z : float
-        Redshift.
-
-    Returns
-    -------
-    edges : np.ndarray
-        Bin edges in Gyr.
-    mids : np.ndarray
-        Bin midpoints in Gyr.
-    dt_yr : np.ndarray
-        Bin widths in years.
-
-    Raises
-    ------
-    ValueError
-        If fewer than two edges are left.
-    """
-    # Universe age at this z (in Gyr)
-    Tuz = universe_age_gyr(z)
-
-    # Keep lookback bins but cap the max lookback at Tuz
-    edges = BASE_EDGES_GYR.copy()
-    edges[-1] = min(edges[-1], Tuz)
-
-    # Ensure monotonic & at least 2 edges
-    edges = np.unique(edges)
-
-    if len(edges) < 2:
-        raise ValueError("Universe age at this z is smaller than first bin edge.")
-
-    dt_gyr = np.diff(edges)
-
-    # Drop any zero-width tail bins (can happen if Tuz cuts through first/last edge)
-    keep = dt_gyr > 0
-    edges = edges[np.concatenate([keep, [True]])]
-
-    dt_gyr = np.diff(edges)
-    mids = 0.5 * (edges[1:] + edges[:-1])
-    dt_yr = dt_gyr * 1e9
-
-    return edges, mids, dt_yr
 
 
 def make_stochastic_agebins(z):
