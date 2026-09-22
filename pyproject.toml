@@ -55,6 +55,11 @@ astro-cue = { git = "https://github.com/galactic-ai/cue", rev = "cuejax" }
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-W error::DeprecationWarning"
+markers = [
+    "fsps: needs python-fsps and SPS_HOME (builds prospect models or SPS)",
+    "data: reads files under data/",
+    "slow: takes more than a few seconds",
+]
 
 [tool.deptry]
 known_first_party = ["hubersed"]
