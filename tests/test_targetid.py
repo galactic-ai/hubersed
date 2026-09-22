@@ -1,3 +1,5 @@
+"""TARGETID <-> global index: load_by_index uses numeric chunk order, spender's loader string order."""
+
 import numpy as np
 import pytest
 import torch
@@ -5,7 +7,7 @@ from spender.data.desi import DESI
 
 from hubersed.fitting import chi2
 
-ROWS = 1024 
+ROWS = 1024
 N_CHUNKS = 11  # the fewest chunks for which "10" sorts before "2"
 # DESI-sized TARGETIDs, shuffled so that sorted order differs from index order
 TIDS = np.random.default_rng(0).permutation(N_CHUNKS * ROWS) + 39_627_000_000_000_000
