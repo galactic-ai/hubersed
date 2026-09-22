@@ -1,3 +1,5 @@
+"""Normalize spectra the way spender expects."""
+
 import torch
 
 
@@ -9,43 +11,36 @@ def normalize_spectra(
     wave_max: float = 5850.0,
     inplace: bool = True,
 ):
-    """
-    Vectorized equivalent of:
-
-        for redshift, spec in zip(redshifts, flambda):
-            norm = 0
-            wave_rest = wavelength / (1 + redshift)
-            sel = (wave_rest > 5300) & (wave_rest < 5850)
-            if sel.count_nonzero() > 0:
-                norm = torch.median(spec[sel])
-            if not torch.isfinite(norm):
-                norm = 0
-            else:
-                spec /= norm
+    """Divide each spectrum by its median flux in a rest-frame window.
 
     Parameters
     ----------
     flambda : torch.Tensor
-        (N, n_wave) spectra
+        Spectra, shape ``(N, n_wave)``.
     redshifts : torch.Tensor
-        (N,) redshifts
-    wavelength: torch.Tensor
-        (n_wave,) observed-frame wavelengths
-    wave_min, wave_max: float
-        rest-frame window to require
-    inplace   : bool
-        if False, returns a normalized copy
+        Redshifts, shape ``(N,)``.
+    wavelength : torch.Tensor
+        Observed wavelength in Angstrom, shape ``(n_wave,)``.
+    wave_min, wave_max : float
+        Rest-frame window in Angstrom. Pixels strictly inside it set the median.
+    inplace : bool
+        Change ``flambda`` itself. If False, a normalized copy is returned.
 
     Returns
     -------
-    flambda_out : torch.Tensor
-        normalized spectra (same tensor if inplace=True)
-    norms       : torch.Tensor
-        (N,) normalization factors (0 for spectra not normalized)
-    good_mask   : torch.Tensor
-        (N,) boolean, True where normalization was applied
-    """
+    flambda : torch.Tensor
+        The normalized spectra.
+    norms : torch.Tensor
+        The median of each spectrum, shape ``(N,)``. Zero when the window has no pixels
+        or the median is not finite.
+    good_mask : torch.Tensor
+        True for spectra that were normalized, shape ``(N,)``.
 
+    Notes
+    -----
+    NaNs inside the window are ignored by the median. Spectra with a zero norm are left
+    unchanged.
+    """
     if not inplace:
         flambda = flambda.clone()
 
@@ -83,9 +78,9 @@ def normalize_spectra(
 
 
 def compute_ivar(flux, snr):
-    """Compute inverse variance from flux and SNR.
-    sigma = flux / snr
-    ivar = 1 / sigma^2
+    """Return the inverse variance implied by a flux and a signal-to-noise ratio.
+
+    The noise is ``flux / snr`` and the inverse variance is one over its square.
 
     Parameters
     ----------
@@ -99,7 +94,6 @@ def compute_ivar(flux, snr):
     ivar : torch.Tensor
         Inverse variance values.
     """
-
     sigma = flux / snr
     ivar = 1.0 / (sigma**2)
     return ivar
