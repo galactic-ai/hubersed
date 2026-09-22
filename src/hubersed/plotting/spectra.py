@@ -1,3 +1,5 @@
+"""Plot spectra, models and residuals against rest wavelength."""
+
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
@@ -8,12 +10,26 @@ REST_WAVE_LABEL = r"rest wavelength [$\mathrm{\AA}$]"
 
 
 def _rest(wave, z):
+    """Divide wavelength by 1 + z, or return it unchanged when z is None."""
     w = np.asarray(wave, float)
     return w / (1.0 + z) if z is not None else w
 
 
 def residual_chi(data, model, unc, mask=None):
-    """Signed residual in sigma: (data - model) / unc. NaN where unc<=0 or masked."""
+    """Return the residual in units of the uncertainty, (data - model) / unc.
+
+    Parameters
+    ----------
+    data, model, unc : np.ndarray
+        Observed flux, model flux and one sigma uncertainty, in the same units.
+    mask : np.ndarray, optional
+        True for pixels to keep.
+
+    Returns
+    -------
+    np.ndarray
+        The residual. NaN where ``unc`` is not positive and finite, or where ``mask`` is False.
+    """
     data, model, unc = (np.asarray(a, float) for a in (data, model, unc))
     out = np.full(data.shape, np.nan)
     good = np.isfinite(unc) & (unc > 0)
@@ -36,18 +52,36 @@ def plot_spectrum(
     medfilt_kw=None,
     band_kw=None,
 ):
-    """Top panel: data (optional +/-unc band), median-filtered data, and models.
+    """Draw a spectrum, its median-filtered version, and any number of models.
 
     Parameters
     ----------
-    ax : matplotlib Axes
-    wave : (N,) wavelength. Rest-frame unless `z` given (then observed / (1+z)).
-    data, unc : (N,) observed flux and 1-sigma uncertainty. Pass band_kw (even {})
-        to draw the +/-unc band.
-    medfilt : (N,) pre-computed median-filtered data, or None. Compute it yourself
-        (scipy.signal.medfilt) so this module stays IO-free.
-    models : list of dicts, each {"flux": (N,) [, "wave", "label", color, ls, ...]}.
-        Non-"flux"/"wave" keys pass to ax.plot. "wave" defaults to the data wave.
+    ax : matplotlib.axes.Axes
+        Axes to draw on.
+    wave : np.ndarray
+        Wavelength in Angstrom. If ``z`` is given it is taken as observed and shifted to
+        rest frame, otherwise it is used as it is.
+    z : float, optional
+        Redshift.
+    data, unc : np.ndarray, optional
+        Observed flux and its one sigma uncertainty. The y label assumes DESI units of
+        1e-17 erg/s/cm^2/A.
+    medfilt : np.ndarray, optional
+        Median-filtered data, computed by the caller, for example with
+        ``scipy.signal.medfilt``.
+    models : list of dict, optional
+        One dict per model with a ``flux`` key, an optional ``wave`` key, and any other
+        keys passed to ``ax.plot``, such as ``label`` or ``color``.
+    data_kw, medfilt_kw : dict, optional
+        Extra keyword arguments for the data and median-filter lines.
+    band_kw : dict, optional
+        Keyword arguments for the uncertainty band. The band is drawn only when this is
+        given, so pass ``{}`` for the default look.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The same axes.
     """
     w = _rest(wave, z)
 
@@ -93,10 +127,37 @@ def plot_residual(
     line_kw=None,
     **plot_kw,
 ):
-    """Bottom panel: residual chi vs rest wavelength.
+    """Draw the residual in units of sigma against rest wavelength.
 
-    Give `chi` directly, or (`data`, `model`, `unc`) to compute it. Grey dashed
-    guides at +/- each value in `levels` (default +/-2, +/-5), plus a solid zero.
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes to draw on.
+    wave : np.ndarray
+        Wavelength in Angstrom, shifted to rest frame when ``z`` is given.
+    z : float, optional
+        Redshift.
+    chi : np.ndarray, optional
+        Residual to plot. If not given it is computed from ``data``, ``model``, ``unc``
+        and ``mask`` with ``residual_chi``.
+    data, model, unc, mask : np.ndarray, optional
+        Inputs for ``residual_chi``.
+    levels : tuple of float
+        Dashed guide lines are drawn at plus and minus each level, with a solid line at zero.
+    line_kw : dict, optional
+        Extra keyword arguments for the guide lines.
+    **plot_kw
+        Extra keyword arguments for the residual line.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The same axes.
+
+    Raises
+    ------
+    ValueError
+        If neither ``chi`` nor all of ``data``, ``model`` and ``unc`` are given.
     """
     w = _rest(wave, z)
     if chi is None:
@@ -123,14 +184,32 @@ def spectrum_figure(
     apj_style=True,
     **spectrum_kwargs,
 ):
-    """Stacked spectrum + residual sharing the rest-wavelength x-axis.
+    """Make a figure with the spectrum on top and an empty residual panel below.
 
-    Returns (fig, axes): axes[0]=spectrum, axes[1]=residual, axes[2:]=`extra_panels`
-    blank Axes (also sharing x) for manual additions, e.g. a PolyOptCal response.
+    The residual is left for the caller to draw with ``plot_residual``, so it is always
+    clear which model it compares against.
 
-    Only spectrum kwargs are forwarded to plot_spectrum. Draw the residual yourself
-    on axes[1] so *which* model it is against stays explicit. apj_style=False keeps
-    the active style.
+    Parameters
+    ----------
+    wave : np.ndarray
+        Wavelength in Angstrom, passed to ``plot_spectrum``.
+    extra_panels : int
+        Number of empty panels added below, sharing the x axis.
+    height_ratios : list of float, optional
+        Panel heights. The default is 3 for the spectrum and 1 for each other panel.
+    figsize : tuple of float
+        Figure size in inches.
+    apj_style : bool
+        Apply ``use_apj_style`` first. False keeps the active style.
+    **spectrum_kwargs
+        Passed to ``plot_spectrum``.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        The figure.
+    axes : np.ndarray of matplotlib.axes.Axes
+        Spectrum panel, residual panel, then the extra panels.
     """
     if apj_style:
         from hubersed.plotting.style import use_apj_style

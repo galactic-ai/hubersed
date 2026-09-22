@@ -1,3 +1,5 @@
+"""Plot star formation histories against lookback time."""
+
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
@@ -19,13 +21,29 @@ def plot_ssfr(
     ssfr_kw=None,
     inplace_kw=None,
 ):
-    """Top panel: sSFR(t) as steps, log-log.
+    """Draw specific star formation rate per age bin as steps on log axes.
 
-    ssfr : (N,) sSFR per bin, normalised by FINAL stellar mass.
-    ssfr_inplace : (N,) optional second curve normalised by mass formed by that time
-        (the dashed "mass in place" curve in the reference figure).
-    quenched_divide : horizontal dash-dot at this sSFR (None to skip).
-    guides : vertical lines at these lookback times [Gyr] (first dotted, rest dashed).
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes to draw on.
+    edges : np.ndarray
+        Lookback-time bin edges in Gyr, one more than the bins.
+    ssfr : np.ndarray
+        sSFR in 1/yr for each bin, divided by the final stellar mass.
+    ssfr_inplace : np.ndarray, optional
+        A second sSFR curve divided by the mass already formed at that time, drawn dashed.
+    guides : tuple of float
+        Lookback times in Gyr for vertical guide lines. The first is dotted, the rest dashed.
+    label, label_inplace : str
+        Legend labels of the two curves.
+    ssfr_kw, inplace_kw : dict, optional
+        Extra keyword arguments for ``ax.stairs`` of each curve.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The same axes.
     """
     edges = np.asarray(edges, float)
     ax.stairs(
@@ -56,9 +74,25 @@ def plot_ssfr(
 
 
 def plot_cumulative_mass(ax, edges, cmf, *, guides=(_10MYR, _100MYR), **step_kw):
-    """Bottom panel: cumulative mass fraction vs lookback time (log x, linear y).
+    """Draw the cumulative mass fraction per age bin as steps against log lookback time.
 
-    cmf : (N,) cumulative mass fraction per bin (0 at recent times -> 1 at oldest).
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes to draw on.
+    edges : np.ndarray
+        Lookback-time bin edges in Gyr, one more than the bins.
+    cmf : np.ndarray
+        Cumulative mass fraction for each bin, between 0 and 1.
+    guides : tuple of float
+        Lookback times in Gyr for vertical guide lines.
+    **step_kw
+        Extra keyword arguments for ``ax.stairs``.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The same axes.
     """
     edges = np.asarray(edges, float)
     ax.stairs(np.asarray(cmf, float), edges, **{"color": "C0", "lw": 1.8, **step_kw})
@@ -86,10 +120,29 @@ def sfh_figure(
     ssfr_kwargs=None,
     cmf_kwargs=None,
 ):
-    """Stacked sSFR + cumulative-mass panels sharing the lookback-time x-axis.
+    """Make a figure with sSFR on top and cumulative mass fraction below, sharing lookback time.
 
-    Returns (fig, axes): axes[0]=sSFR, axes[1]=cumulative mass, axes[2:]=`extra_panels`
-    blank Axes (sharing x) for manual additions. apj_style=False keeps active style.
+    Parameters
+    ----------
+    edges, ssfr, cmf, ssfr_inplace
+        Passed to ``plot_ssfr`` and ``plot_cumulative_mass``.
+    extra_panels : int
+        Number of empty panels added below, sharing the x axis.
+    height_ratios : list of float, optional
+        Panel heights. The default is 2 for sSFR and 1 for each other panel.
+    figsize : tuple of float
+        Figure size in inches.
+    apj_style : bool
+        Apply ``use_apj_style`` first. False keeps the active style.
+    ssfr_kwargs, cmf_kwargs : dict, optional
+        Extra keyword arguments for the two plotting functions.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        The figure.
+    axes : np.ndarray of matplotlib.axes.Axes
+        sSFR panel, cumulative mass panel, then the extra panels.
     """
     if apj_style:
         from hubersed.plotting.style import use_apj_style
