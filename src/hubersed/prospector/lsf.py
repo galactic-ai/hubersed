@@ -1,3 +1,5 @@
+"""DESI line spread function, measured from the per-target resolution matrices."""
+
 import pickle
 
 import astropy.io.fits as fits
@@ -9,36 +11,51 @@ from hubersed.paths import PATHS
 
 RESULTS_PATH = PATHS["RESULTS"]
 
-# ──────────────────────────────────────────────
-# Constants
-# ──────────────────────────────────────────────
 C_KMS = 299792.458
 DESI_BASE_URL = "https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/"
 DESI_WAV = np.linspace(3600.0, 9824.0, 7781, dtype=np.float64)
 ZPIX_FILE = DESI_BASE_URL + "zcatalog/v1/zpix-sv3-bright.fits"
 
 
-# ──────────────────────────────────────────────
-# Step 1: Load pkl and sample target_ids
-# ──────────────────────────────────────────────
 def sample_target_ids(pkl_file, n_sample=100, seed=42):
-    """Load a batch pkl file and return N random target_ids."""
+    """Return a random sample of TARGETIDs from one spender chunk file.
+
+    Parameters
+    ----------
+    pkl_file : str or Path
+        A chunk pickle, a list of six tensors with the TARGETIDs fourth.
+    n_sample : int
+        How many TARGETIDs to return, at most the number in the file.
+    seed : int
+        Seed for ``np.random.default_rng``.
+
+    Returns
+    -------
+    np.ndarray
+        The sampled TARGETIDs.
+    """
     with open(pkl_file, "rb") as f:
         batch = pickle.load(f)
-    # batch = [spec, w, z, target_id, norm, zerr]
     target_ids = batch[3].numpy()
     rng = np.random.default_rng(seed)
     idx = rng.choice(len(target_ids), min(n_sample, len(target_ids)), replace=False)
     return target_ids[idx]
 
 
-# ──────────────────────────────────────────────
-# Step 2: Look up healpix from zpix catalog
-# ──────────────────────────────────────────────
 def lookup_healpix(target_ids, zpix_file=ZPIX_FILE):
-    """Map target_ids to healpix numbers using zpix catalog.
+    """Find the HEALPix pixel of each TARGETID in the DESI zpix catalog.
 
-    Returns dict: {target_id: healpix}
+    Parameters
+    ----------
+    target_ids : iterable of int
+        TARGETIDs to look up.
+    zpix_file : str
+        Path or URL of the zpix catalog. The default is the DR1 SV3 bright catalog.
+
+    Returns
+    -------
+    dict
+        HEALPix number keyed by TARGETID. Missing TARGETIDs are left out with a warning.
     """
     zpix = aTable.Table.read(zpix_file)
     zpix_tids = zpix["TARGETID"]
@@ -54,23 +71,32 @@ def lookup_healpix(target_ids, zpix_file=ZPIX_FILE):
     return tid_to_hpix
 
 
-# ──────────────────────────────────────────────
-# Step 3: Build coadd URL
-# ──────────────────────────────────────────────
 def coadd_url(hpix, survey="sv3", program="bright"):
-    """Construct the URL for a DESI coadd FITS file."""
+    """Return the DR1 URL of the coadd FITS file for one HEALPix pixel."""
     filename = f"coadd-{survey}-{program}-{hpix}.fits"
     return f"{DESI_BASE_URL}/healpix/{survey}/{program}/{str(hpix)[:-2]}/{hpix}/{filename}"
 
 
-# ──────────────────────────────────────────────
-# Step 4: Extract resolution matrix for one target
-# ──────────────────────────────────────────────
 def extract_resolution(coadd_file, target_id):
-    """Extract per-arm resolution data for a single target.
+    """Read the resolution matrix of one target in each spectrograph arm.
 
-    Returns dict: {band: (wave, res_matrix)}
-        where res_matrix is shape (ndiag, nwave_arm)
+    Parameters
+    ----------
+    coadd_file : str or Path
+        DESI coadd FITS file.
+    target_id : int
+        TARGETID to read.
+
+    Returns
+    -------
+    dict
+        ``(wave, res_matrix)`` keyed by the lower-case arm prefix of the HDU name.
+        ``res_matrix`` has shape ``(ndiag, nwave_arm)`` in the banded diagonal format.
+
+    Raises
+    ------
+    ValueError
+        If the TARGETID is not in the file.
     """
     hdulist = fits.open(coadd_file, cache=True)
     all_tids = hdulist[1].data["TARGETID"]
@@ -93,24 +119,23 @@ def extract_resolution(coadd_file, target_id):
     return {b: (waves[b], result[b]) for b in result}
 
 
-# ──────────────────────────────────────────────
-# Step 5: Convert banded resolution to sigma(lambda)
-# ──────────────────────────────────────────────
 def resolution_to_sigma_kms(wave, res_banded):
-    """Convert banded resolution matrix to sigma in km/s.
+    """Turn a banded resolution matrix into a Gaussian sigma in km/s.
 
-    The resolution matrix is a banded Gaussian. The ratio of
-    the first off-diagonal to the diagonal gives sigma in pixels:
-        R[center+1]/R[center] = exp(-0.5 / sigma_pix^2)
+    Treating each row as a Gaussian, the first off-diagonal divided by the diagonal equals
+    ``exp(-0.5 / sigma_pix**2)``, which gives sigma in pixels.
 
     Parameters
     ----------
-    wave : 1D array, wavelength in Angstroms
-    res_banded : 2D array, shape (ndiag, nwave)
+    wave : np.ndarray
+        Wavelength in Angstrom.
+    res_banded : np.ndarray
+        Resolution matrix in banded format, shape ``(ndiag, nwave)``.
 
     Returns
     -------
-    sigma_kms : 1D array, sigma in km/s at each wavelength
+    np.ndarray
+        Sigma in km/s at each wavelength. NaN where the ratio is not between 0 and 1.
     """
     ndiag = res_banded.shape[0]
     center = ndiag // 2
@@ -123,8 +148,6 @@ def resolution_to_sigma_kms(wave, res_banded):
     ratio = np.full_like(r_center, np.nan)
     ratio[valid] = r_off1[valid] / r_center[valid]
 
-    # Gaussian: ratio = exp(-0.5 / sigma_pix^2)
-    # => sigma_pix = sqrt(-0.5 / ln(ratio))
     sigma_pix = np.full_like(ratio, np.nan)
     good = valid & (ratio > 0) & (ratio < 1)
     sigma_pix[good] = np.sqrt(-0.5 / np.log(ratio[good]))
@@ -138,12 +161,29 @@ def resolution_to_sigma_kms(wave, res_banded):
 
 
 def sigma_kms_to_R(wave, sigma_kms):
-    """Convert sigma in km/s to resolving power R = c / (2.355 * sigma)."""
+    """Convert a Gaussian sigma in km/s to resolving power, R = c / (2.355 sigma)."""
     return C_KMS / (2.355 * sigma_kms)
 
 
 def desi_resolution(wave):
-    """Calibrated DESI R(lambda) from actual resolution matrices."""
+    """Return the median DESI resolving power at each wavelength.
+
+    Parameters
+    ----------
+    wave : np.ndarray
+        Wavelength in Angstrom.
+
+    Returns
+    -------
+    np.ndarray
+        Resolving power R, interpolated from ``results/desi_lsf_calibration.npz``.
+
+    Notes
+    -----
+    The calibration file is written by ``bin/model_seds/build_desi_resolution.py`` from the
+    resolution matrices of sampled targets. ``results/`` is not tracked by git, so the file
+    must be rebuilt on a new machine. The function prints a line on every call.
+    """
     print("Loading calibrated DESI resolution from resolution matrices...")
     cal = np.load(RESULTS_PATH / "desi_lsf_calibration.npz")
     R_median = cal["R_median"]
@@ -152,22 +192,23 @@ def desi_resolution(wave):
 
 
 def build_desi_resolution_matrix(wave=DESI_WAV):
-    """Build sparse resolution matrix from DESI R(lambda) curve.
+    """Build a sparse matrix that applies the median DESI line spread function.
 
     Parameters
     ----------
-    wave : 1D array
-        Wavelength grid in Angstroms.
+    wave : np.ndarray
+        Wavelength in Angstrom. The default is the DESI grid.
 
     Returns
     -------
     scipy.sparse.csr_matrix
-        Shape (nwave, nwave). Multiply by flux to apply LSF.
+        Shape ``(nwave, nwave)``. Each row is a Gaussian out to 4 sigma that sums to one.
+        Multiply a flux vector by it to blur that flux to DESI resolution.
     """
     c_kms = 299792.458
     R = desi_resolution(wave)
 
-    # R(lambda) -> sigma in km/s -> sigma in pixels
+    # resolving power to sigma in km/s, then to sigma in pixels
     sigma_kms = c_kms / (2.355 * R)
     dwave = np.gradient(wave)
     dpix_kms = dwave / wave * c_kms
