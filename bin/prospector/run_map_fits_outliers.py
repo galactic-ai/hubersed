@@ -313,7 +313,8 @@ def warm_theta(model, path, z, th0):
 
 def fit_one(tid, sps, cue_sps, lines, line_waves, n_seeds, maxfev, out, seeds=None,
             frozen=False, fixed=None, warm_from=None, flat_sfh=False, cont_only=False,
-            error_floor=0.0, method="Powell", zcontinuous=1, spectra_npz=None):
+            error_floor=0.0, method="Powell", zcontinuous=1, spectra_npz=None,
+            free_dust1=False):
     """cont_only: fit build_continuum_model on line-masked pixels -- 15 free parameters
     (logzsol, dust2, logmass, 9x logsfr_ratios, dust_ratio, dust_index, sigma_smooth),
     no Cue nebular, plain FSPS sps.
@@ -382,7 +383,8 @@ def fit_one(tid, sps, cue_sps, lines, line_waves, n_seeds, maxfev, out, seeds=No
     if cont_only:
         model, tmpl, sps_use = cont_model, cont_tmpl, sps
     else:
-        model, tmpl = build_full_cue_model(cont_tmpl, cont_model.theta, cont_model, z)
+        model, tmpl = build_full_cue_model(cont_tmpl, cont_model.theta, cont_model, z,
+                                           free_dust1=free_dust1)
         sps_use = cue_sps
     if frozen or fixed or flat_sfh:
         if frozen:

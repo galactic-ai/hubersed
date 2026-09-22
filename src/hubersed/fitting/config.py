@@ -182,7 +182,8 @@ def build_full_model(continuum_template, theta_best_cont, cont_model, redshift):
 
 
 # use Cue
-def build_full_cue_model(continuum_template, theta_best_cont, cont_model, redshift):
+def build_full_cue_model(continuum_template, theta_best_cont, cont_model, redshift,
+                         free_dust1=False):
     full_template = copy.deepcopy(continuum_template)
     nebular = copy.deepcopy(TemplateLibrary["cue_stellar_nebular"])
     full_template.update(nebular)
@@ -212,6 +213,19 @@ def build_full_cue_model(continuum_template, theta_best_cont, cont_model, redshi
         "tau_dyn",
         "tau_in",
     ]
+    if free_dust1:
+        # Retire the dust1 = dust2 * dust_ratio coupling (config.py dustratio_to_dust1)
+        # and let the birth-cloud optical depth vary on its own. This is the change
+        # proposed in dust_issue/04_proposal.md.
+        full_template["dust1"] = {
+            "N": 1,
+            "isfree": True,
+            "init": 0.0,
+            "units": "birth-cloud optical depth (freed from dust_ratio)",
+            "prior": TopHat(mini=0.0, maxi=3.0),
+        }
+        vary_params = [p for p in vary_params if p != "dust_ratio"] + ["dust1"]
+
     for key in full_template:
         full_template[key]["isfree"] = key in vary_params
 
