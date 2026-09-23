@@ -1,3 +1,10 @@
+"""Pick the DESI galaxies that both continuum flows flag as outliers and save a target list.
+
+Candidates are matched to the FastSpecFit catalogue, cleaned of contaminants and ranked by
+the mean of their two DESI log p percentiles. Run it as
+``python -m hubersed.detect.build_cont_outlier_sample``.
+"""
+
 import argparse
 import csv
 from pathlib import Path
@@ -12,14 +19,33 @@ from scipy.stats import rankdata
 
 from hubersed.paths import PATHS
 
-# corrected-[OII]3729 run. The repo copy of noised_cue_meanzero_wide_flow/ is the stale
-# Jul-21 PRE-fix output -- do not point at it.
+# Default location of the flow outputs this sample is built from.
 DEFAULT_FLOW_DIR = PATHS["RESULTS"] / "wide_flow_corrected"
 TAGS = ("cont10latent", "cont15latent")
 
 
 def flow_scores(tag, flow_dir):
-    """(target_id -> log p) and (target_id -> DESI rank percentile) plus the outlier set."""
+    """Load the DESI flow scores for one tag.
+
+    Parameters
+    ----------
+    tag : str
+        Latent tag in the file name ``desi_outliers_flow_nsf_<tag>_snr3.pt``.
+    flow_dir : str or Path
+        Directory holding that file.
+
+    Returns
+    -------
+    lp : dict
+        Log probability keyed by TARGETID.
+    pct : dict
+        Rank percentile of the log probability among all DESI galaxies, keyed by TARGETID.
+        Low values are the least likely galaxies.
+    outliers : set of int
+        TARGETIDs the flow flagged as outliers.
+    threshold : float
+        Log probability threshold used for the outliers.
+    """
     d = torch.load(Path(flow_dir) / f"desi_outliers_flow_nsf_{tag}_snr3.pt", weights_only=False)
     tid = np.asarray(d["desi_target_ids"], np.int64)
     lp = np.asarray(d["log_p_desi"], np.float64)
@@ -36,14 +62,29 @@ LAM_MAX = 9824.0  # DESI red-arm cutoff; Halpha 6563 leaves it at z = 0.497
 
 
 def source_class(S, i, z):
-    """'emission' | 'weak-em' | 'continuum' for row i of the FASTSPEC table.
+    """Classify one galaxy as emission, weak emission or continuum from its line fits.
 
-    Above z = 0.497 Halpha is off the red end, so HALPHA_EW = 0 means NOT MEASURED and
-    the classification falls back to Hbeta / [OII] / [OIII]. Getting this wrong labels
-    every high-z object 'featureless'.
+    When the observed Halpha wavelength is below LAM_MAX the class uses the Halpha S/N and
+    equivalent width. Otherwise it uses the strongest of Hbeta, [OIII]5007 and the weaker
+    [OII] line, together with how many of five line groups have S/N above 3.
+
+    Parameters
+    ----------
+    S : astropy.io.fits.FITS_rec
+        The FASTSPEC table.
+    i : int
+        Row of the galaxy in S.
+    z : float
+        Redshift used to place Halpha.
+
+    Returns
+    -------
+    str
+        ``"emission"``, ``"weak-em"`` or ``"continuum"``.
     """
 
     def snr(ln):
+        """Return the S/N of line ln in row i, or 0 when its inverse variance is not positive."""
         f, iv = float(S[f"{ln}_FLUX"][i]), float(S[f"{ln}_FLUX_IVAR"][i])
         return f * np.sqrt(iv) if iv > 0 else 0.0
 
@@ -70,10 +111,23 @@ def source_class(S, i, z):
 
 
 def read_screen(path, value_col=None):
-    """(set of flagged TARGETIDs, {TARGETID: value_col}) from a contam_screens.py CSV.
+    """Read a screen CSV with target_id and flagged columns.
 
-    Deliberately not tolerant of a missing file: silently skipping a contamination screen
-    is how 7 known star contaminants got back into the sample during planning.
+    A missing file raises on purpose, so a screen cannot be skipped silently.
+
+    Parameters
+    ----------
+    path : str or Path
+        CSV written by contam_screens.py or agn_star_screen.py.
+    value_col : str, optional
+        Column to return as floats for every row.
+
+    Returns
+    -------
+    flag : set of int
+        TARGETIDs whose flagged column is ``"True"``.
+    vals : dict
+        value_col keyed by TARGETID, or empty when value_col is None.
     """
     with open(path, newline="") as fh:
         rows = list(csv.DictReader(fh))
@@ -83,6 +137,13 @@ def read_screen(path, value_col=None):
 
 
 def main(argv=None):
+    """Build the sample and write it as an npz file.
+
+    Parameters
+    ----------
+    argv : list of str, optional
+        Command line arguments. None reads sys.argv.
+    """
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -91,7 +152,7 @@ def main(argv=None):
     p.add_argument(
         "--flow-dir",
         default=str(DEFAULT_FLOW_DIR),
-        help="dir holding desi_outliers_flow_nsf_<tag>_snr3.pt from the CORRECTED-[OII]3729 run",
+        help="dir holding desi_outliers_flow_nsf_<tag>_snr3.pt for each tag",
     )
     p.add_argument("--vac", default=str(PATHS["DATA"] / "fastspec-iron-sv3-bright.fits"))
     p.add_argument(
@@ -109,11 +170,7 @@ def main(argv=None):
         "--shred-zmax",
         type=float,
         default=0.02,
-        help="run the shred test below this redshift. The original 0.02 misses "
-        "shreds at 0.02-0.06 that a 1.5-arcsec fibre still lands on a knot "
-        "of: 39627758174736675 has THREE DESI targets inside 2.6 kpc and "
-        "Dn4000 = 0.809, below any stellar population. 10 proper kpc is "
-        "self-limiting at high z (1.6 arcsec at z=0.5), so 1.0 is safe.",
+        help="run the shred test only below this redshift",
     )
     p.add_argument(
         "--keep-flagged",
@@ -151,8 +208,7 @@ def main(argv=None):
         "--extra-list",
         nargs="*",
         default=None,
-        help="optional CSV from agn_star_screen.py (BPT AGN + non-stellar point "
-        "sources). Omit to reproduce the pre-2026-08-31 sample exactly.",
+        help="optional CSVs from agn_star_screen.py whose flagged targets are also dropped",
     )
     args = p.parse_args(argv)
 
@@ -185,7 +241,7 @@ def main(argv=None):
         zbad[t] = bool(np.isfinite(zp) and abs(zp - zvac[i]) / (1 + zvac[i]) > 0.01)
         if zvac[i] < args.shred_zmax:
             kpc_per_as = Planck18.kpc_proper_per_arcmin(zvac[i]).to(u.kpc / u.arcsec).value
-            rad = args.shred_kpc / kpc_per_as  # physical radius -> arcsec at this z
+            rad = args.shred_kpc / kpc_per_as  # proper radius in arcsec at this z
             sep = sky[i].separation(sky).arcsec
             shred[t] = bool(((sep < rad) & (sep > 0) & (np.abs(zvac - zvac[i]) < 0.002)).sum() > 0)
         else:
