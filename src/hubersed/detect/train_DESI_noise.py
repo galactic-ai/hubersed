@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+"""Train a spender autoencoder on DESI spectra scaled by the square root of their weights.
+
+Redshift is set to zero for every spectrum. Run it with
+``python -m hubersed.detect.train_DESI_noise DIR OUTFILE``.
+"""
 
 import argparse
 import functools
@@ -15,10 +20,25 @@ from torch import nn
 
 
 def base(m):
+    """Return the wrapped module if ``m`` has a ``module`` attribute, else ``m`` itself."""
     return m.module if hasattr(m, "module") else m
 
 
 def prepare_train(seq, niter=800):
+    """Fill in the default iteration count and encoder switches for each training mode.
+
+    Parameters
+    ----------
+    seq : list of dict
+        Training modes. Each dict needs a ``data`` entry and is changed in place.
+    niter : int
+        Iteration count given to modes that have no ``iteration`` entry.
+
+    Returns
+    -------
+    list of dict
+        The same list. Modes without ``encoder`` get their ``data`` entry as ``encoder``.
+    """
     for d in seq:
         if "iteration" not in d:
             d["iteration"] = niter
@@ -28,6 +48,18 @@ def prepare_train(seq, niter=800):
 
 
 def build_ladder(train_sequence):
+    """Map each epoch to the index of the training mode it belongs to.
+
+    Parameters
+    ----------
+    train_sequence : list of dict
+        Training modes, each with an ``iteration`` count.
+
+    Returns
+    -------
+    numpy.ndarray of int
+        One entry per epoch holding the index of its mode in ``train_sequence``.
+    """
     n_iter = sum([item["iteration"] for item in train_sequence])
 
     ladder = np.zeros(n_iter, dtype="int")
@@ -40,6 +72,25 @@ def build_ladder(train_sequence):
 
 
 def get_all_parameters(models, instruments):
+    """Collect optimizer parameter groups for the encoders, the shared decoder and instruments.
+
+    The decoder parameters are taken from the first model only. Instrument parameters go in a
+    second group with learning rate 1e-4, and that group is printed when it exists.
+
+    Parameters
+    ----------
+    models : list of torch.nn.Module
+        Autoencoders, possibly wrapped.
+    instruments : list
+        Instruments. Entries equal to None are skipped.
+
+    Returns
+    -------
+    dicts : list of dict
+        Parameter groups for a torch optimizer.
+    n_parameters : int
+        Number of trainable parameter elements over all groups.
+    """
     model_params = []
     # multiple encoders
     for model in models:
@@ -65,6 +116,23 @@ def get_all_parameters(models, instruments):
 
 
 def consistency_loss(s, s_aug, individual=False):
+    """Penalise the distance between latents of original and augmented spectra.
+
+    Parameters
+    ----------
+    s : torch.Tensor
+        Latents of shape (batch, latent size).
+    s_aug : torch.Tensor
+        Latents of the augmented batch, same shape as ``s``.
+    individual : bool
+        Return per-spectrum values instead of the summed loss.
+
+    Returns
+    -------
+    torch.Tensor or tuple of torch.Tensor
+        The summed loss, or the scaled squared distance and the per-spectrum loss when
+        ``individual`` is True.
+    """
     batch_size, s_size = s.shape
     x = torch.sum((s_aug - s) ** 2 / (0.5) ** 2, dim=1) / s_size
     sim_loss = torch.sigmoid(x) - 0.5  # zero = perfect alignment
@@ -74,6 +142,24 @@ def consistency_loss(s, s_aug, individual=False):
 
 
 def restframe_weight(model, mu=5000, sigma=2000, amp=30):
+    """Return a Gaussian weight over the decoder rest-frame wavelength grid.
+
+    Parameters
+    ----------
+    model : torch.nn.Module
+        Autoencoder, possibly wrapped.
+    mu : float
+        Centre of the Gaussian on the ``wave_rest`` grid.
+    sigma : float
+        Width parameter of the Gaussian.
+    amp : float
+        Peak value.
+
+    Returns
+    -------
+    torch.Tensor
+        Weight for each rest-frame wavelength bin.
+    """
     m = base(model)
     x = m.decoder.wave_rest
     return amp * torch.exp(-((0.5 * (x - mu) / sigma) ** 2))
@@ -82,6 +168,34 @@ def restframe_weight(model, mu=5000, sigma=2000, amp=30):
 def similarity_restframe(
     instrument, model, s=None, slope=1.0, individual=False, wid=5, bound=[4000, 7000]
 ):
+    """Penalise pairs whose latent distance and decoded spectrum distance disagree.
+
+    Decoded spectra are divided by their median inside ``bound`` before the pairwise
+    distances are taken. ``instrument`` is not used.
+
+    Parameters
+    ----------
+    instrument : object
+        Unused.
+    model : torch.nn.Module
+        Autoencoder, possibly wrapped.
+    s : torch.Tensor
+        Latents of shape (batch, latent size).
+    slope : float
+        Steepness of the sigmoid penalty.
+    individual : bool
+        Return the pairwise terms instead of the total loss.
+    wid : float
+        Width of the tolerated band of distance differences.
+    bound : list of float
+        Lower and upper rest-frame wavelength of the normalisation window.
+
+    Returns
+    -------
+    torch.Tensor or tuple of torch.Tensor
+        The pairwise loss summed and divided by the batch size, or the latent distances,
+        spectrum distances and pairwise loss when ``individual`` is True.
+    """
     m = base(model)
     _, s_size = s.shape
     device = s.device
@@ -109,13 +223,39 @@ def similarity_restframe(
     if individual:
         return s_sim, spec_sim, sim_loss
 
-    # total loss: sum over N^2 terms,
-    # needs to have amplitude of N terms to compare to fidelity loss
+    # The total sums N^2 terms, so divide by N to match the scale of the fidelity loss.
     return sim_loss.sum() / batch_size
 
 
 def _losses(model, instrument, batch, similarity=False, slope=0, skip=False):
+    """Compute the fit loss and optional similarity loss for one batch.
 
+    The model sees ``spec * sqrt(w)`` at redshift zero. Pixels with zero weight are masked.
+
+    Parameters
+    ----------
+    model : torch.nn.Module
+        Autoencoder, possibly wrapped.
+    instrument : object
+        Instrument passed to the model loss.
+    batch : tuple of torch.Tensor
+        Spectra, weights and redshifts.
+    similarity : bool
+        Add the similarity loss.
+    slope : float
+        Slope passed to the similarity loss.
+    skip : bool
+        Only encode, and return 0 for both losses.
+
+    Returns
+    -------
+    loss : torch.Tensor or int
+        Model loss.
+    sim_loss : torch.Tensor or int
+        Similarity loss, or 0.
+    s : torch.Tensor
+        Latents of the batch.
+    """
     spec, w, z = batch
 
     snr = spec * torch.sqrt(w)
@@ -147,7 +287,34 @@ def _losses(model, instrument, batch, similarity=False, slope=0, skip=False):
 
 
 def get_losses(model, instrument, batch, aug_fct=None, similarity=True, consistency=True, slope=0):
+    """Compute all loss terms for one batch, with an optional augmented copy.
 
+    When ``aug_fct`` is given it reads ``args.z_max`` from module scope, which only exists
+    when this file runs as a script.
+
+    Parameters
+    ----------
+    model : torch.nn.Module
+        Autoencoder, possibly wrapped.
+    instrument : object
+        Instrument passed to the model loss.
+    batch : tuple of torch.Tensor
+        Spectra, weights and redshifts.
+    aug_fct : callable, optional
+        Function that returns an augmented copy of the batch.
+    similarity : bool
+        Add the similarity loss.
+    consistency : bool
+        Add the consistency loss when ``aug_fct`` is given.
+    slope : float
+        Slope for the similarity loss and scale of the consistency loss.
+
+    Returns
+    -------
+    tuple
+        Loss, similarity loss, augmented loss, augmented similarity loss and consistency
+        loss. Terms that are switched off are 0.
+    """
     loss, sim_loss, s = _losses(model, instrument, batch, similarity=similarity, slope=slope)
 
     if aug_fct is not None:
@@ -167,6 +334,27 @@ def get_losses(model, instrument, batch, aug_fct=None, similarity=True, consiste
 
 
 def checkpoint(accelerator, args, optimizer, scheduler, n_encoder, outfile, losses):
+    """Save the unwrapped model state dicts and the loss history.
+
+    ``optimizer``, ``scheduler`` and ``n_encoder`` are accepted but not saved.
+
+    Parameters
+    ----------
+    accelerator : accelerate.Accelerator
+        Accelerator that prepared the models.
+    args : list of torch.nn.Module
+        Models to save.
+    optimizer : torch.optim.Optimizer
+        Unused.
+    scheduler : object
+        Unused.
+    n_encoder : int
+        Unused.
+    outfile : str
+        Output file path.
+    losses : numpy.ndarray
+        Loss history to store.
+    """
     unwrapped = [accelerator.unwrap_model(args_i).state_dict() for args_i in args]
 
     accelerator.save(
@@ -180,18 +368,36 @@ def checkpoint(accelerator, args, optimizer, scheduler, n_encoder, outfile, loss
 
 
 def load_model(filename, models, instruments):
+    """Load model weights and loss history from a checkpoint.
+
+    Parameters
+    ----------
+    filename : str
+        Checkpoint written by ``checkpoint``.
+    models : list of torch.nn.Module
+        Models that receive the weights in place.
+    instruments : list
+        Instruments matching ``models``. The first one sets the device.
+
+    Returns
+    -------
+    models : list of torch.nn.Module
+        The same models after loading.
+    losses : numpy.ndarray
+        Loss history stored in the checkpoint.
+    """
     device = instruments[0].wave_obs.device
     model_struct = torch.load(filename, map_location=device, weights_only=False)
     # wave_rest = model_struct['model'][0]['decoder.wave_rest']
     for i, model in enumerate(models):
-        # backwards compat: encoder.mlp instead of encoder.mlp.mlp
+        # Older checkpoints name these layers mlp.mlp, so rename them to mlp.
         if "encoder.mlp.mlp.0.weight" in model_struct["model"][i].keys():
             from collections import OrderedDict
 
             model_struct["model"][i] = OrderedDict(
                 [(k.replace("mlp.mlp", "mlp"), v) for k, v in model_struct["model"][i].items()]
             )
-        # backwards compat: add instrument to encoder
+        # Older checkpoints lack the encoder instrument buffers, so add them and retry.
         try:
             model.load_state_dict(model_struct["model"][i], strict=False)
         except RuntimeError:
@@ -220,7 +426,42 @@ def train(
     similarity=False,
     consistency=False,
 ):
+    """Train the autoencoders and save a checkpoint every fifth epoch and at the end.
 
+    The training modes come from ``train_sequence`` and the similarity slopes from
+    ``ANNEAL_SCHEDULE``, both read from module scope, so this only runs when the file is
+    executed as a script.
+
+    Parameters
+    ----------
+    models : list of torch.nn.Module
+        One autoencoder per instrument.
+    instruments : list
+        Instruments matching ``models``.
+    trainloaders : list
+        Training data loaders, one per instrument.
+    validloaders : list
+        Validation data loaders, one per instrument.
+    n_epoch : int
+        Number of epochs to run. Resumed training adds the epochs already stored in
+        ``losses``.
+    outfile : str, optional
+        Checkpoint path. Defaults to ``checkpoint.pt`` in the working directory.
+    losses : numpy.ndarray, optional
+        Loss history from an earlier run to continue from.
+    verbose : bool
+        Print losses and memory use.
+    lr : float
+        Maximum learning rate of the one-cycle schedule.
+    n_batch : int, optional
+        Batches per epoch. None uses every batch.
+    aug_fcts : list
+        Augmentation function or None for each instrument.
+    similarity : bool
+        Add the similarity loss.
+    consistency : bool
+        Add the consistency loss.
+    """
     n_encoder = len(models)
     model_parameters, n_parameters = get_all_parameters(models, instruments)
 
@@ -232,7 +473,7 @@ def train(
     optimizer = torch.optim.Adam(model_parameters, lr=lr, eps=1e-4)
     scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, lr, total_steps=n_epoch)
 
-    # choose accelerator: fp16 only on CUDA
+    # Choose the accelerator, fp16 only on CUDA.
     if torch.cuda.is_available():
         accelerator = Accelerator(mixed_precision="fp16")
     else:
@@ -286,7 +527,7 @@ def train(
             for p in base(models[which]).encoder.parameters():
                 p.requires_grad = mode["encoder"][which]
 
-            # optional: training on single dataset
+            # Skip this encoder when its dataset is switched off in this mode.
             if not mode["data"][which]:
                 continue
 
@@ -308,13 +549,13 @@ def train(
                 # sum up all losses
                 loss = functools.reduce(lambda a, b: a + b, losses)
                 accelerator.backward(loss)
-                # clip gradients: stabilizes training with similarity
+                # Clip gradients to stabilize training with the similarity loss.
                 accelerator.clip_grad_norm_(model_parameters[0]["params"], 1.0)
                 # once per batch
                 optimizer.step()
                 optimizer.zero_grad()
 
-                # logging: training
+                # Accumulate the training losses.
                 detailed_loss[0][which][epoch_] += tuple(
                     l.item() if hasattr(l, "item") else 0 for l in losses
                 )
@@ -344,7 +585,7 @@ def train(
                         consistency=consistency,
                         slope=slope,
                     )
-                    # logging: validation
+                    # Accumulate the validation losses.
                     detailed_loss[1][which][epoch_] += tuple(
                         l.item() if hasattr(l, "item") else 0 for l in losses
                     )
@@ -411,7 +652,7 @@ if __name__ == "__main__":
     n_encoder = len(instruments)
 
     # restframe wavelength for reconstructed spectra
-    # Note: represents joint dataset wavelength range
+    # The range covers the joint dataset.
     if args.z_max > 0.01:  # DESI BGS
         lmbda_min = instruments[0].wave_obs[0] / (1.0 + args.z_max)  # 2000 A
         lmbda_max = instruments[0].wave_obs[-1]  # 9824 A
