@@ -169,11 +169,6 @@ def main(argv=None):
     print(f"saved {out}  (n={n}, cue={args.cue}, seed={args.seed}, keys={len(arrays)})")
     return 0
 
-    # hffs.put(
-    #     f'{DATA_PATH}/stochastic_priors_sample_{n}.npz',
-    #     f"buckets/nikhil0504/hubersed-data/prospector_model/stochastic_priors_sample_{n}.npz",
-    # )
-
 
 if __name__ == "__main__":
     sys.exit(main())

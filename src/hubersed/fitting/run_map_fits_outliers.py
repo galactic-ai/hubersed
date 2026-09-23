@@ -373,8 +373,6 @@ def plot_fit(tid, z, wave, flux, unc, mask, model_sp, lines, chi2_red, out):
     )
     ax[0].set_ylabel("flux [maggies]")
     ax[0].set_ylim(np.nanmin(flux[mask]) * 1.1, np.nanpercentile(flux[mask], 99.8) * 1.2)
-    # for lam in lines.values():
-    #     ax[0].axvline(lam, color="0.85", lw=0.7, zorder=0)
     plot_residual(ax[1], wave, z=z, chi=residual_chi(flux, model_sp, unc, mask))
     ax[1].set_ylim(-8, 8)
     fig.savefig(out / f"{tid}_spectrum.pdf", bbox_inches="tight")
