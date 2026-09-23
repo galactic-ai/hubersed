@@ -109,7 +109,7 @@ def main(n_sample=10):
 
     # Interpolate all curves onto the common DESI wavelength grid
     sigma_grid = np.full((len(all_sigma), len(DESI_WAV)), np.nan)
-    for i, (w, s) in enumerate(zip(all_wave, all_sigma)):
+    for i, (w, s) in enumerate(zip(all_wave, all_sigma, strict=True)):
         good = np.isfinite(s)
         if np.sum(good) < 10:
             continue

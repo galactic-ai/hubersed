@@ -334,7 +334,7 @@ def main(argv=None):
     print(f"screening {len(sel)} candidates")
 
     gaia_rows, sga_rows = [], []
-    for k, (t, r, d) in enumerate(zip(sel, ra, dec), 1):
+    for k, (t, r, d) in enumerate(zip(sel, ra, dec, strict=True), 1):
         gaia_rows.append({"target_id": t, **gaia_screen(r, d)})
         sga_rows.append({"target_id": t, **sga_screen(r, d, tap)})
         if k % 20 == 0 or k == len(sel):

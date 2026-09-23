@@ -66,7 +66,7 @@ def main(argv=None):
     for f in glob.glob(str(Path(a.prospector) / "3*.pkl")):
         r = pickle.load(open(f, "rb"))
         if isinstance(r, dict) and r.get("status") == "ok":
-            d = dict(zip(r["labels"], np.asarray(r["theta"], float)))
+            d = dict(zip(r["labels"], np.asarray(r["theta"], float), strict=True))
             s = r["sfh"]
             e = np.asarray(s["edges_gyr"], float)
             m = np.asarray(s.get("ssfr_inplace", s.get("ssfr")), float)

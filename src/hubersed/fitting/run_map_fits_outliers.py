@@ -766,7 +766,7 @@ def main(argv=None):
     _z0 = d["logzsol"] if "logzsol" in d.files else np.full(len(d["target_ids"]), -1.0)
     seeds = {
         int(t): {"logmass": float(m), "eline_sigma": float(s), "logzsol": float(zz)}
-        for t, m, s, zz in zip(d["target_ids"], d["logmstar"], d["narrow_sigma"], _z0)
+        for t, m, s, zz in zip(d["target_ids"], d["logmstar"], d["narrow_sigma"], _z0, strict=True)
     }
 
     fixed = dict(kv.split("=") for kv in args.fix)

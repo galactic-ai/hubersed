@@ -314,11 +314,11 @@ def main():
         if worst and "scores_desi" in blob and "desi_target_ids" in blob:
             dtid = np.asarray(blob["desi_target_ids"]).astype(np.int64)
             dscore = np.asarray(blob["scores_desi"])
-            score_of = dict(zip(dtid.tolist(), dscore.tolist()))
+            score_of = dict(zip(dtid.tolist(), dscore.tolist(), strict=True))
             tids = tids[np.argsort([score_of[int(t)] for t in tids])]  # most anomalous first
         idxs = tids_to_indices(tids)  # -> numeric global indices
         # self-check: load_by_index must return the SAME TARGETID we asked for
-        for g, t in list(zip(idxs, tids))[:3]:
+        for g, t in list(zip(idxs, tids, strict=True))[:3]:
             assert load_by_index(int(g))[3] == int(t), "TID->index map mismatch!"
         if limit is not None and limit < idxs.size:
             idxs = (

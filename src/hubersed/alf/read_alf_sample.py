@@ -164,7 +164,7 @@ def load_run(stem):
             "alf's parameter set changed; update LABELS from alf.f90:655."
         )
     C = {k: M[:, i] for i, k in enumerate(LABELS)}
-    S = {r: dict(zip(LABELS, A[i])) for i, r in enumerate(SUM_ROWS)}
+    S = {r: dict(zip(LABELS, A[i], strict=True)) for i, r in enumerate(SUM_ROWS)}
 
     # Compare chain medians with the .sum 50th percentile. Column 0 is left out because
     # the .sum percentile rows store 0.0 there.
@@ -285,7 +285,7 @@ def main(argv=None):
     for f in glob.glob(str(Path(a.prospector) / "3*.pkl")):
         r = pickle.load(open(f, "rb"))
         if isinstance(r, dict) and r.get("status") == "ok":
-            d = dict(zip(r["labels"], np.asarray(r["theta"], float)))
+            d = dict(zip(r["labels"], np.asarray(r["theta"], float), strict=True))
             pros[int(r["target_id"])] = (d["logzsol"], r["stats"]["chi2_red"])
 
     rows = []

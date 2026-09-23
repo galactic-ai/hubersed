@@ -32,7 +32,9 @@ AGEBINS = np.log10(
         [[0.001, 0.005], [0.005, 0.01]]
         + [
             [a, b]
-            for a, b in zip(np.geomspace(0.01, 12.0, 9)[:-1], np.geomspace(0.01, 12.0, 9)[1:])
+            for a, b in zip(
+                np.geomspace(0.01, 12.0, 9)[:-1], np.geomspace(0.01, 12.0, 9)[1:], strict=True
+            )
         ]
     )
     * 1e9
@@ -88,7 +90,7 @@ def test_map_objective_is_unbounded_in_the_sigma_funnel():
     # ...while the log-determinant term grows without bound, at a rate set only by
     # the dimension. This is the number quoted in fit_one's docstring: 9*ln(10)=20.72.
     expected = (len(AGEBINS) - 1) * np.log(10.0)
-    for a, b in zip((1.0, 1e-1, 1e-2), (1e-1, 1e-2, 1e-3)):
+    for a, b in zip((1.0, 1e-1, 1e-2), (1e-1, 1e-2, 1e-3), strict=True):
         assert np.isclose(lnp(b) - lnp(a), expected, rtol=1e-6)
     assert lnp(1e-5) > lnp(1.0) + 100.0
 

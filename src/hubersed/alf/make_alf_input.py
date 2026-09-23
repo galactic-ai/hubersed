@@ -91,7 +91,7 @@ def main(argv=None):
 
     ed = [float(v) for v in a.intervals.split(",")]
     assert len(ed) % 2 == 0, "--intervals needs an even number of edges"
-    iv_pairs = list(zip(ed[::2], ed[1::2]))
+    iv_pairs = list(zip(ed[::2], ed[1::2], strict=True))
     assert len(iv_pairs) <= 10, "alf's nlint_max is 10 intervals"
 
     # keep only what alf can model and what falls in a requested interval
@@ -110,7 +110,7 @@ def main(argv=None):
     med = [float(v) for v in a.mask.split(",") if v.strip()]
     assert len(med) % 2 == 0, "--mask needs an even number of edges"
     masked = []
-    for m1, m2 in zip(med[::2], med[1::2]):
+    for m1, m2 in zip(med[::2], med[1::2], strict=True):
         sel = (rest >= m1) & (rest <= m2)
         # A count of 0 means the window missed the fitted intervals.
         masked.append((m1, m2, int(sel.sum())))
@@ -139,7 +139,7 @@ def main(argv=None):
     with open(out_path, "w") as f:
         for l1, l2 in iv_pairs:
             f.write(f"# {l1:.4f} {l2:.4f}\n")
-        for L, F, E, W, R in zip(lam[keep], flx, er, wgt, ires[keep]):
+        for L, F, E, W, R in zip(lam[keep], flx, er, wgt, ires[keep], strict=True):
             f.write(f"{L:10.4f} {F:14.6e} {E:14.6e} {W:5.2f} {R:9.3f}\n")
 
     snr = flux[keep][wgt > 0] / err[keep][wgt > 0]

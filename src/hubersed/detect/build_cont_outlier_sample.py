@@ -51,8 +51,8 @@ def flow_scores(tag, flow_dir):
     lp = np.asarray(d["log_p_desi"], np.float64)
     pct = rankdata(lp, "average") / len(lp)
     return (
-        dict(zip(tid.tolist(), lp)),
-        dict(zip(tid.tolist(), pct)),
+        dict(zip(tid.tolist(), lp, strict=True)),
+        dict(zip(tid.tolist(), pct, strict=True)),
         set(int(x) for x in d["outlier_target_ids"]),
         float(d["threshold"]),
     )
@@ -227,7 +227,9 @@ def main(argv=None):
     import h5py
 
     with h5py.File(args.lines, "r") as f:
-        zpipe = dict(zip(f["target_ids"][:].astype(np.int64).tolist(), f["zs"][:].tolist()))
+        zpipe = dict(
+            zip(f["target_ids"][:].astype(np.int64).tolist(), f["zs"][:].tolist(), strict=True)
+        )
 
     sel = sorted(t for t in common if t in iv)
     print(f"  of which in the FastSpecFit VAC: {len(sel)}")
