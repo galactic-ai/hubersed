@@ -8,24 +8,14 @@ import warnings
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
+# One BLAS thread per process. This has to run before numpy loads BLAS.
 for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(_v, "1")
 
-warnings.filterwarnings("ignore", category=UserWarning)
-warnings.filterwarnings("ignore", category=RuntimeWarning)
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-os.environ.setdefault("PYTHONWARNINGS", "ignore")
-np_err = dict(divide="ignore", invalid="ignore", over="ignore", under="ignore")
-
-import matplotlib
-
-matplotlib.use("Agg")
 import astropy.units as u
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-
-np.seterr(**np_err)
-
 from prospect.fitting import lnprobfn
 from prospect.models import priors
 from prospect.models.sedmodel import HyperSpecModel, SpecModel
@@ -51,6 +41,21 @@ from hubersed.sps.parameter_file import (
 from hubersed.sps.utils import universe_age_gyr
 
 LSF = (C_KMS / (2.355 * desi_resolution(WAVE_OBS))).astype(np.float64)
+
+
+def _quiet_process():
+    """Hide warnings and floating point errors, and draw figures without a display.
+
+    Called by ``main`` and by each worker process, so importing this module changes
+    nothing process wide.
+    """
+    warnings.filterwarnings("ignore", category=UserWarning)
+    warnings.filterwarnings("ignore", category=RuntimeWarning)
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    os.environ.setdefault("PYTHONWARNINGS", "ignore")
+    np.seterr(divide="ignore", invalid="ignore", over="ignore", under="ignore")
+    matplotlib.use("Agg")
+
 
 AIR_LINES = {
     "[OII]": 3727.4,
@@ -584,6 +589,7 @@ def _worker(
     spectra_npz=None,
     free_dust1=False,
 ):
+    _quiet_process()
     S = get_sps(zcontinuous=zcontinuous)
     return fit_one(
         tid,
@@ -609,6 +615,7 @@ def _worker(
 
 
 def main(argv=None):
+    _quiet_process()
     p = argparse.ArgumentParser(
         description="MAP fits (Cue, free PSD) for emission-line OOD outliers."
     )
