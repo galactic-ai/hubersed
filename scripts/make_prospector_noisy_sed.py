@@ -1,12 +1,13 @@
 import pickle
 
+import astropy.units as u
 import h5py
 import torch
 from huggingface_hub import batch_bucket_files
 from spender.data import desi
 from spender.instrument import get_skyline_mask
 
-from hubersed.conversion import maggies_to_flambda
+from hubersed.conversion import to_flambda
 from hubersed.detect.quantities import normalize_spectra
 from hubersed.detect.utils import load_models
 from hubersed.paths import PATHS
@@ -74,9 +75,8 @@ total_samples = redshifts.shape[0]
 idx = 0
 for i in range(0, total_samples, batch_size):
     fluxes_batch = fluxes[i : i + batch_size]  # in maggies
-    flambda = maggies_to_flambda(wavelength, fluxes_batch)  # in flambda
-    # to desi like units (they are in 1e-17 erg/s/cm2/Ang)
-    flambda = flambda / 1e-17
+    # DESI units, 1e-17 erg/s/cm2/Ang
+    flambda = torch.from_numpy(to_flambda(wavelength.numpy() * u.AA, fluxes_batch * u.mgy).value)
 
     redshifts_batch = redshifts[i : i + batch_size]
     redshifts_err_batch = torch.zeros_like(redshifts_batch)

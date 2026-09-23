@@ -16,13 +16,14 @@ import numpy as np
 
 np.seterr(divide="ignore", invalid="ignore", over="ignore", under="ignore")
 
+import astropy.units as u
 import dynesty
 from dynesty.utils import resample_equal
 from prospect.fitting import lnprobfn
 from prospect.models.sedmodel import HyperSpecModel
 from prospect.sources import SSPBasis
 
-from hubersed.conversion import flambda_to_maggies, ivar_flambda_to_ivar_maggies
+from hubersed.conversion import DESI_FLAM, ivar_to_maggies, to_maggies
 from hubersed.fitting.chi2 import WAVE_OBS
 from hubersed.io.desi import load_by_index, tids_to_indices
 from hubersed.paths import PATHS
@@ -52,8 +53,8 @@ def run_one(tid, args, out):
     spec, ivar, z, tid_chk = load_by_index(idx)
     assert int(tid_chk) == tid, f"TARGETID mismatch: asked {tid}, got {tid_chk}"
 
-    flux = flambda_to_maggies(WAVE_OBS, spec)
-    iv = ivar_flambda_to_ivar_maggies(WAVE_OBS, ivar)
+    flux = to_maggies(WAVE_OBS * u.AA, spec * DESI_FLAM).value
+    iv = ivar_to_maggies(WAVE_OBS * u.AA, ivar * DESI_FLAM**-2).value
     mask = (iv > 0) & np.isfinite(flux)
     iv = np.where(mask, iv, 0.0)
     unc = 1.0 / np.sqrt(np.where(iv > 0, iv, np.inf))

@@ -16,10 +16,11 @@ import warnings
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import cache
 
+import astropy.units as u
 import numpy as np
 from prospect.fitting import lnprobfn
 
-from hubersed.conversion import flambda_to_maggies, ivar_flambda_to_ivar_maggies
+from hubersed.conversion import DESI_FLAM, ivar_to_maggies, to_maggies
 from hubersed.io.desi import load_by_index, tids_to_indices
 from hubersed.paths import PATHS
 from hubersed.sps import parameter_file as P
@@ -165,8 +166,8 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
     if redshift < Z_FLOOR:
         return dict(gidx=gidx, id=tid, z=redshift, status="below_zfloor")
 
-    spec_maggies = flambda_to_maggies(WAVE_OBS, spec)
-    ivar_maggies = ivar_flambda_to_ivar_maggies(WAVE_OBS, ivar)
+    spec_maggies = to_maggies(WAVE_OBS * u.AA, spec * DESI_FLAM).value
+    ivar_maggies = ivar_to_maggies(WAVE_OBS * u.AA, ivar * DESI_FLAM**-2).value
     sigma = 1 / np.sqrt(np.where(ivar_maggies > 0, ivar_maggies, np.inf))
     mask = (sigma > 0) & np.isfinite(sigma) & np.isfinite(spec_maggies)
     if mask.sum() < 100:
