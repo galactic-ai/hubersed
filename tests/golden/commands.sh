@@ -27,8 +27,7 @@ ln -sf "$ROOT/data/desi_spectra/DESIchunk1024_10.pkl" "$OUT/_chunks/"
 uv run python bin/spender/noise/get_latent_space.py "$OUT/_chunks" \
     data/checkpoints/spender_asc_run_10latent_zmax.pt "$OUT/latents.h5" --snr_min 3
 
-# Left out, already broken at 32ced0e: pilot_twobranch_priors (no docstring),
-# plot_sample_cutouts (missing module).
+# Left out, already broken at 32ced0e: plot_sample_cutouts (missing module).
 for script in \
     "-m hubersed.alf.make_alf_input" "-m hubersed.alf.read_alf_sample" \
     experiments/2026-08-25_compare_alf_solar_scaled.py \
