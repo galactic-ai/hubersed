@@ -1,22 +1,9 @@
 #!/usr/bin/env python
-"""Train the NSF flow S times per latent set (one seed each) and keep every log p.
+"""Train the latent-space flow once per seed for one tag and save every member's log p.
 
-Motivation: seed 0 and seed 1 give different DESI outlier sets at the same nominal
-0.1% mock threshold. Without knowing how much of an outlier set is seed noise, no
-single-seed outlier list can be trusted, and the 20-galaxy sample was built from one.
-
-Architecture, optimiser, LR schedule and threshold rule are IDENTICAL to
-get_outliers_flow.py -- build_flow and load_h5 are imported from it rather than
-copied, so the two cannot drift. The seed is the only thing that changes between
-ensemble members, and it enters in exactly the two places it does there:
-torch.manual_seed (flow init) and np.random.default_rng (train/valid split +
-batch order).
-
-Writes one npz per tag holding log p for every mock and every DESI object for
-every seed. Stats live in ensemble_flow_stats.py so re-analysis needs no retrain.
-
-  python -m hubersed.detect.ensemble_flow_seeds --tag cont10latent --seeds 20 \
-      --device cuda:0 --outdir results/flow_ensemble
+The npz it writes holds log p of every mock and DESI object for each seed, and
+ensemble_flow_stats reads it. Run it with
+``python -m hubersed.detect.ensemble_flow_seeds --tag cont10latent --seeds 20``.
 """
 
 import argparse
@@ -35,12 +22,12 @@ from hubersed.detect.get_outliers_flow import build_flow, load_h5
 from hubersed.paths import PATHS
 
 DATA, RES = PATHS["DATA"], PATHS["RESULTS"]
-# The mock set behind results/wide_flow_corrected, i.e. the one the 20-galaxy sample
-# came from. cont15latent exists ONLY here, not in noised_cue_meanzero.
+# Mock latent directory used for every tag.
 MOCK_DIR = DATA / "latents" / "noised_cue_meanzero_wide"
 
 
 def paths_for(tag):
+    """Return the mock and DESI latent h5 paths for a latent tag."""
     return (
         MOCK_DIR / f"prospector_noise_spec_cue_{tag}_snr3.h5",
         DATA / "latents" / f"spender_spec_{tag}_snr3.h5",
@@ -48,7 +35,26 @@ def paths_for(tag):
 
 
 def score(nde, X, dev, chunk=200_000):
-    """log p in chunks; the full mock array does not need to sit on the GPU at once."""
+    """Return the flow log p of every row of X, computed in chunks.
+
+    Chunking means the whole array never has to sit on the device at once.
+
+    Parameters
+    ----------
+    nde : nflows.flows.Flow
+        Trained flow.
+    X : ndarray of float32, shape (N, D)
+        Standardised latents.
+    dev : torch.device
+        Device the flow lives on.
+    chunk : int, optional
+        Rows per chunk.
+
+    Returns
+    -------
+    ndarray of float32, shape (N,)
+        Log-density of each row.
+    """
     out = []
     with torch.no_grad():
         for i in range(0, len(X), chunk):
@@ -57,7 +63,35 @@ def score(nde, X, dev, chunk=200_000):
 
 
 def train_one(seed, mock_s, dev, a):
-    """One ensemble member. Returns (flow, val_idx, nll_train, nll_valid)."""
+    """Train one ensemble member with the given seed.
+
+    The seed sets the torch global RNG, which drives the flow initialisation, and a numpy
+    Generator, which draws the 90/10 train and validation split and the batch order. Training
+    uses Adam with a OneCycleLR schedule.
+
+    Parameters
+    ----------
+    seed : int
+        Member seed.
+    mock_s : ndarray of float32, shape (N, D)
+        Standardised mock latents.
+    dev : torch.device
+        Training device.
+    a : argparse.Namespace
+        Parsed arguments, of which ``method``, ``hidden``, ``num_transforms``, ``num_bins``,
+        ``lr``, ``batch`` and ``epochs`` are used.
+
+    Returns
+    -------
+    nde : nflows.flows.Flow
+        Trained flow.
+    val_idx : ndarray of int
+        Rows of ``mock_s`` held out for validation.
+    nll_train : float
+        Mean training loss over the last epoch.
+    nll_valid : float
+        Validation negative log-likelihood after the last epoch.
+    """
     torch.manual_seed(seed)
     rng = np.random.default_rng(seed)
 
@@ -94,7 +128,36 @@ def train_one(seed, mock_s, dev, a):
 
 
 def validate(nde, mock_s, val_idx, dev, n_c2st, rng):
-    """KS per dim + C-2ST of flow samples against held-out mocks. n_c2st=0 skips C-2ST."""
+    """Compare flow samples with held-out mocks by a per-dimension KS test and a C2ST.
+
+    Up to 20000 flow samples are compared with the same number of held-out mocks. The C2ST is
+    the mean 3-fold cross-validated accuracy of a gradient-boosting classifier trained to tell
+    the two apart.
+
+    Parameters
+    ----------
+    nde : nflows.flows.Flow
+        Trained flow.
+    mock_s : ndarray of float32, shape (N, D)
+        Standardised mock latents.
+    val_idx : ndarray of int
+        Held-out rows of ``mock_s``.
+    dev : torch.device
+        Device the flow lives on. Not used in the body.
+    n_c2st : int
+        Number of samples per class for the C2ST. Zero skips it.
+    rng : numpy.random.Generator
+        Draws the C2ST subsamples.
+
+    Returns
+    -------
+    ks_max : float
+        Largest KS statistic over dimensions.
+    ks_med : float
+        Median KS statistic over dimensions.
+    c2st : float
+        C2ST accuracy, or NaN when skipped.
+    """
     n = min(20000, len(val_idx))
     with torch.no_grad():
         samp = nde.sample(n).cpu().numpy()
@@ -117,6 +180,7 @@ def validate(nde, mock_s, val_idx, dev, n_c2st, rng):
 
 
 def main():
+    """Train every member for one tag, score mocks and DESI, and save the npz after each member."""
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -144,8 +208,8 @@ def main():
     if mock_ckpt != desi_ckpt and "unknown" not in (mock_ckpt, desi_ckpt):
         raise SystemExit(f"encoder mismatch: mock={mock_ckpt} vs DESI={desi_ckpt}")
 
-    # Fit on ALL mocks, so the scaler is seed-independent: every member sees the same
-    # input space and only the flow differs.
+    # Fit on all mocks so the scaler does not depend on the seed. Every member then sees the
+    # same input space and only the flow differs.
     scaler = StandardScaler().fit(mock)
     mock_s = scaler.transform(mock).astype(np.float32)
     desi_s = scaler.transform(desi).astype(np.float32)
@@ -176,7 +240,7 @@ def main():
         nde.eval()
         lp_mock[i] = score(nde, mock_s, dev)
         lp_desi[i] = score(nde, desi_s, dev)
-        # Same rule as get_outliers_flow.py: 0.1% quantile over ALL mocks.
+        # Threshold is the 0.1% quantile over all mocks, thr_ho over held-out mocks only.
         thr[i] = float(np.quantile(lp_mock[i], 0.001))
         thr_ho[i] = float(np.quantile(lp_mock[i][val_idx], 0.001))
         ks_max[i], ks_med[i], c2st[i] = validate(nde, mock_s, val_idx, dev, a.c2st_n, vrng)
@@ -190,8 +254,7 @@ def main():
         del nde
         if dev.type == "cuda":
             torch.cuda.empty_cache()
-        # Checkpoint every member: a 20-seed run is ~an hour and a crash at member 19
-        # should not cost the first 18.
+        # Save after every member so a crash keeps the finished ones.
         np.savez_compressed(
             out_f,
             seeds=seeds[: i + 1],
