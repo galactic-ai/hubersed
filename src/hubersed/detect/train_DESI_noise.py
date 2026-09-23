@@ -388,7 +388,7 @@ def load_model(filename, models, instruments):
     """
     device = instruments[0].wave_obs.device
     model_struct = torch.load(filename, map_location=device, weights_only=False)
-    # wave_rest = model_struct['model'][0]['decoder.wave_rest']
+    # wave_rest = model_struct['model'][0]['decoder.wave_rest']  # noqa: ERA001
     for i, model in enumerate(models):
         # Older checkpoints name these layers mlp.mlp, so rename them to mlp.
         if "encoder.mlp.mlp.0.weight" in model_struct["model"][i].keys():
