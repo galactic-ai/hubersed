@@ -7,17 +7,13 @@ import time
 import warnings
 from pathlib import Path
 
+# One BLAS thread per process. This has to run before numpy loads BLAS.
 for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(_v, "1")
-warnings.filterwarnings("ignore")
-os.environ.setdefault("PYTHONWARNINGS", "ignore")
-
-import numpy as np
-
-np.seterr(divide="ignore", invalid="ignore", over="ignore", under="ignore")
 
 import astropy.units as u
 import dynesty
+import numpy as np
 from dynesty.utils import resample_equal
 from prospect.fitting import lnprobfn
 from prospect.models.sedmodel import HyperSpecModel
@@ -39,6 +35,13 @@ from hubersed.sps.utils import universe_age_gyr
 
 LSF = (C_KMS / (2.355 * desi_resolution(WAVE_OBS))).astype(np.float64)
 FROZEN_HYPERS = {"sigma_reg": 1.5, "sigma_dyn": 0.1, "tau_eq": 2.5, "tau_dyn": 0.025}
+
+
+def _quiet_process():
+    """Hide warnings and floating point errors. Called by ``main``, not at import."""
+    warnings.filterwarnings("ignore")
+    os.environ.setdefault("PYTHONWARNINGS", "ignore")
+    np.seterr(divide="ignore", invalid="ignore", over="ignore", under="ignore")
 
 
 def git_sha():
@@ -209,6 +212,7 @@ def run_one(tid, args, out):
 
 
 def main(argv=None):
+    _quiet_process()
     p = argparse.ArgumentParser(description="dynesty posteriors for the emission-line outliers.")
     p.add_argument("-t", "--tid", type=int, action="append", required=True, help="repeatable")
     p.add_argument("-o", "--outdir", default=str(PATHS["RESULTS"] / "emline_dynesty"))
