@@ -25,7 +25,7 @@ from prospect.sources import SSPBasis
 
 from hubersed.conversion import DESI_FLAM, ivar_to_maggies, to_maggies
 from hubersed.fitting.chi2 import WAVE_OBS
-from hubersed.io.desi import load_by_index, tids_to_indices
+from hubersed.io.desi import load_spectrum
 from hubersed.paths import PATHS
 from hubersed.sps.config import build_continuum_model, build_full_cue_model
 from hubersed.sps.lsf import C_KMS, desi_resolution
@@ -49,9 +49,8 @@ def git_sha():
 
 
 def run_one(tid, args, out):
-    idx = int(tids_to_indices(np.array([tid], np.int64))[0])
-    spec, ivar, z, tid_chk = load_by_index(idx)
-    assert int(tid_chk) == tid, f"TARGETID mismatch: asked {tid}, got {tid_chk}"
+    s = load_spectrum(tid)
+    spec, ivar, z = s.flux.value, s.uncertainty.array, float(s.redshift.value)
 
     flux = to_maggies(WAVE_OBS * u.AA, spec * DESI_FLAM).value
     iv = ivar_to_maggies(WAVE_OBS * u.AA, ivar * DESI_FLAM**-2).value
