@@ -2,12 +2,21 @@
 
 import pickle
 
+import astropy.units as u
 import numpy as np
+from astropy.nddata import InverseVariance
+from specutils import Spectrum
 
+from hubersed.conversion import DESI_FLAM
 from hubersed.paths import PATHS
+from hubersed.sps.lsf import DESI_WAV
 
 DATA_PATH = PATHS["DATA"]
 CHUNK = 1024
+
+
+class TargetIDMismatchError(ValueError):
+    """The spectrum on disk has a different TARGETID from the one asked for."""
 
 
 def load_by_index(gidx):
@@ -79,3 +88,41 @@ def tids_to_indices(tids):
             f"{int((~ok).sum())}/{len(tids)} TARGETIDs not found in all_target_ids.npy"
         )
     return order[pos].astype(int)
+
+
+def load_spectrum(targetid):
+    """Load one DESI spectrum by TARGETID, with units, mask and redshift attached.
+
+    Parameters
+    ----------
+    targetid : int
+        DESI TARGETID.
+
+    Returns
+    -------
+    specutils.Spectrum
+        Flux in ``DESI_FLAM`` on the observed frame ``DESI_WAV`` grid in Angstrom, the
+        inverse variance as uncertainty, and the redshift. A pixel is masked when its
+        inverse variance is not positive or its flux is not finite. ``meta["targetid"]``
+        holds the TARGETID read from the file. Flux and inverse variance keep the float32
+        type of the chunk files.
+
+    Raises
+    ------
+    ValueError
+        If the TARGETID is missing from ``all_target_ids.npy``.
+    TargetIDMismatchError
+        If the file row found for the TARGETID holds a different TARGETID.
+    """
+    gidx = tids_to_indices(np.array([targetid], dtype=np.int64))[0]
+    flux, ivar, z, tid = load_by_index(gidx)
+    if tid != targetid:
+        raise TargetIDMismatchError(f"asked for TARGETID {targetid}, row {gidx} holds {tid}")
+    return Spectrum(
+        flux=flux * DESI_FLAM,
+        spectral_axis=DESI_WAV * u.AA,
+        uncertainty=InverseVariance(ivar * DESI_FLAM**-2),
+        mask=(ivar <= 0) | ~np.isfinite(flux),
+        redshift=z,
+        meta={"targetid": tid},
+    )

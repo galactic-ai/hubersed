@@ -8,6 +8,9 @@ from astropy.constants import c
 
 C_AA_PER_S = c.to(u.AA / u.s).value
 
+DESI_FLAM = u.def_unit("desi_flam", 1e-17 * u.erg / u.s / u.cm**2 / u.AA)
+"""Flux density unit of DESI spectra, 1e-17 erg/s/cm^2/A."""
+
 C_CGS = 2.99792458e10  # cm/s
 FNU_PER_MAGGIE = 3631e-23  # erg/s/cm^2/Hz
 
