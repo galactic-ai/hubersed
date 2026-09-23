@@ -4,7 +4,10 @@ import numpy as np
 import pytest
 from scipy.optimize import minimize
 
-from hubersed.fitting import chi2
+try:
+    from hubersed.fitting import chi2
+except (ImportError, RuntimeError, TypeError) as err:  # prospect reads SPS_HOME files on import
+    pytest.skip(f"prospect needs FSPS data: {err!r}", allow_module_level=True)
 
 INIT = np.zeros(3)
 MAXFEV = 200

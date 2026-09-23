@@ -24,7 +24,10 @@ Run with ``uv run pytest tests/test_stochastic_prior_hypers.py`` (never ``uvx``)
 import numpy as np
 import pytest
 
-transforms = pytest.importorskip("prospect.models.hyperparam_transforms")
+try:
+    from prospect.models import hyperparam_transforms as transforms
+except (ImportError, RuntimeError, TypeError) as err:  # prospect reads SPS_HOME files on import
+    pytest.skip(f"prospect needs FSPS data: {err!r}", allow_module_level=True)
 
 # 10 bins => 9 log SFR ratios, matching make_stochastic_agebins.
 AGEBINS = np.log10(
