@@ -1,3 +1,9 @@
+"""Flag BPT AGN and PSF-type sources with few forbidden lines among continuum-flow outliers.
+
+The pool is the DESI outliers shared by both continuum flows that are also in the fastspec VAC,
+and one row per target goes to a CSV. Run it as ``python -m hubersed.detect.agn_star_screen``.
+"""
+
 import argparse
 import csv
 from pathlib import Path
@@ -10,7 +16,7 @@ from hubersed.paths import PATHS
 
 SNMIN_BPT = 5.0  # sigma, per line, to attempt a BPT classification
 SNMIN_FORB = 3.0  # sigma, above which a forbidden line counts as present
-SEP_STAR = 0.5  # arcsec, rule C: the Gaia source must be inside the fibre core
+SEP_STAR = 0.5  # arcsec, the Gaia source must be inside the fibre core
 NSPECIES_MIN = 2  # independent forbidden species needed to call it an emission-line galaxy
 
 SINGLETS = ["OIII_5007", "NII_6584", "OI_6300"]
@@ -18,15 +24,30 @@ DOUBLETS = [("SII_6716", "SII_6731"), ("OII_3726", "OII_3729")]
 
 
 def snr(d, i, line):
+    """Return flux times sqrt(ivar) for one line of row ``i``, or 0 if the ivar is not positive."""
     f = float(d[f"{line}_FLUX"][i])
     iv = float(d[f"{line}_FLUX_IVAR"][i])
     return f * np.sqrt(iv) if iv > 0 else 0.0
 
 
 def forbidden(d, i):
-    """(strongest forbidden species, how many are present).
+    """Return the highest forbidden-line S/N and the number of species above SNMIN_FORB.
 
-    Doublets score on their weaker component; see the COHERENCE GATE note above.
+    Each doublet counts as one species and scores with the lower S/N of its two lines.
+
+    Parameters
+    ----------
+    d : astropy.io.fits.FITS_rec
+        Fastspec table with ``<line>_FLUX`` and ``<line>_FLUX_IVAR`` columns.
+    i : int
+        Row index into ``d``.
+
+    Returns
+    -------
+    max_snr : float
+        Highest S/N over the singlets and doublets.
+    n_species : int
+        Number of singlets and doublets with S/N above SNMIN_FORB.
     """
     s = [snr(d, i, ln) for ln in SINGLETS]
     s += [min(snr(d, i, a), snr(d, i, b)) for a, b in DOUBLETS]
@@ -34,7 +55,30 @@ def forbidden(d, i):
 
 
 def bpt(d, i):
-    """('AGN'|'composite'|'star-forming'|None, log[NII]/Ha, log[OIII]/Hb, log[SII]/Ha)."""
+    """Classify row ``i`` on the BPT diagram using the demarcation curves in the code.
+
+    A row is AGN if log [OIII]/Hb lies above the first [NII] curve or above the [SII]
+    curve, composite if it lies above the second [NII] curve, and star-forming otherwise.
+
+    Parameters
+    ----------
+    d : astropy.io.fits.FITS_rec
+        Fastspec table with line flux and ivar columns.
+    i : int
+        Row index into ``d``.
+
+    Returns
+    -------
+    cls : str or None
+        "AGN", "composite" or "star-forming". None if Halpha, Hbeta, [OIII] 5007 or
+        [NII] 6584 has S/N at or below SNMIN_BPT or a flux at or below 0.
+    log_n2_ha : float
+        log10 of [NII] 6584 over Halpha, or NaN when ``cls`` is None.
+    log_o3_hb : float
+        log10 of [OIII] 5007 over Hbeta, or NaN when ``cls`` is None.
+    log_s2_ha : float
+        log10 of the summed [SII] doublet over Halpha, or NaN if that sum is not positive.
+    """
     need = ["HALPHA", "HBETA", "OIII_5007", "NII_6584"]
     if any(snr(d, i, ln) <= SNMIN_BPT for ln in need):
         return None, np.nan, np.nan, np.nan
@@ -58,6 +102,13 @@ def bpt(d, i):
 
 
 def main(argv=None):
+    """Build the candidate pool, screen each target and write the CSV.
+
+    Parameters
+    ----------
+    argv : list of str or None, optional
+        Command line arguments. None reads ``sys.argv``.
+    """
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -67,12 +118,12 @@ def main(argv=None):
     p.add_argument(
         "--morph",
         default=str(PATHS["RESULTS"] / "cand231_morph.csv"),
-        help="LS_ID -> Legacy DR9 type join over the candidate pool; must exist",
+        help="CSV of target_id and Legacy DR9 type for the candidate pool. Must exist.",
     )
     p.add_argument(
         "--gaia-list",
         default=str(PATHS["RESULTS"] / "gaia_star_screen_v2.csv"),
-        help="v2 CSV, i.e. the one carrying onsource_star",
+        help="Gaia screen CSV with onsource_star and sep_arcsec columns",
     )
     args = p.parse_args(argv)
 
@@ -83,7 +134,7 @@ def main(argv=None):
     d, md = h["FASTSPEC"].data, h["METADATA"].data
     idx = {int(t): i for i, t in enumerate(np.asarray(md["TARGETID"]).astype("<i8"))}
 
-    # Same VAC-membership filter build_cont_outlier_sample.py applies: 512 -> 231.
+    # Same VAC-membership filter that build_cont_outlier_sample applies.
     pool = sorted(t for t in common if t in idx)
     print(f"common to both continuum flows: {len(common)}  in VAC: {len(pool)}")
 
@@ -140,7 +191,7 @@ def main(argv=None):
     print(f"  flagged (union)  : {n('flagged')}")
     print(f"wrote {outp}")
 
-    # Self-check against the 4 stars confirmed in 2026-08-27f.
+    # Print the screen results for four previously confirmed stars.
     known = [39632971447142040, 39627817423472029, 39633339602177656, 39627823475856431]
     by = {r["target_id"]: r for r in rows}
     print("\nself-check, the 4 confirmed stars of 2026-08-27f:")
