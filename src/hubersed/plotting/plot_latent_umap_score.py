@@ -1,3 +1,9 @@
+"""Plot a 2D UMAP or PCA projection of DESI latents coloured by flow log p.
+
+Flow outliers are circled in red and the figure is saved as a PNG. Run it as
+``python -m hubersed.plotting.plot_latent_umap_score``.
+"""
+
 import argparse
 from pathlib import Path
 
@@ -17,7 +23,22 @@ DATA, RES = PATHS["DATA"], PATHS["RESULTS"]
 
 
 def load_latents(path):
-    """Return (latents, target_ids). Catalogue key is TARGETID, never a position."""
+    """Read latents and TARGETIDs from an HDF5 latent file.
+
+    Match rows to a catalogue by TARGETID, never by row position.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        HDF5 file with ``latents`` and ``target_ids`` datasets.
+
+    Returns
+    -------
+    lat : numpy.ndarray
+        Latents as float32, one row per spectrum.
+    tid : numpy.ndarray
+        TARGETIDs as int64, aligned with ``lat``.
+    """
     with h5py.File(path, "r") as f:
         lat = np.asarray(f["latents"], np.float32)
         tid = np.asarray(f["target_ids"], np.int64)
@@ -25,6 +46,16 @@ def load_latents(path):
 
 
 def main():
+    """Join flow scores to latents by TARGETID, project to 2D and save the figure.
+
+    Latents are standardised with the scaler stored in ``flow_nsf_10latent.pt`` under the
+    results directory. Points with log p at or below the stored threshold are circled.
+
+    Raises
+    ------
+    SystemExit
+        If the output file exists and ``--force`` is not given.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "--latents", type=Path, default=DATA / "latents" / "spender_spec_10latent_snr3.h5"
@@ -44,7 +75,7 @@ def main():
     scores = torch.load(args.scores, weights_only=False)
     lp, score_tid, thr = scores["log_p_desi"], scores["desi_target_ids"], scores["threshold"]
 
-    # explicit TARGETID join -- latent h5 and score .pt are not guaranteed same order/length
+    # Explicit TARGETID join, since the latent h5 and score .pt may differ in order and length.
     tid_to_row = {int(t): i for i, t in enumerate(tid)}
     keep = np.array([t in tid_to_row for t in score_tid])
     rows = np.array([tid_to_row[int(t)] for t in score_tid[keep]])
