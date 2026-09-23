@@ -99,9 +99,12 @@ def process_loader_h5(
 
             if not d:  # lazily create datasets
                 nlat, L = lat.shape[1], spk.shape[1]
-                mk = lambda nm, c, dt: f.create_dataset(
-                    nm, shape=(0,) + c, maxshape=(None,) + c, dtype=dt, chunks=True
-                )
+
+                def mk(nm, c, dt):
+                    return f.create_dataset(
+                        nm, shape=(0,) + c, maxshape=(None,) + c, dtype=dt, chunks=True
+                    )
+
                 d["latents"] = mk("latents", (nlat,), "float32")
                 d["zs"] = mk("zs", (), "float32")
                 d["A"] = mk("A", (1,), "float32")

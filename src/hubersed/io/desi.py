@@ -50,7 +50,10 @@ def load_by_index(gidx):
         s, w, z, tid, norm, *_ = pickle.load(f)
     s = s * norm[:, None]
     w = w / norm[:, None] ** 2  # un-normalize
-    to = lambda x: x.cpu().numpy() if hasattr(x, "cpu") else np.asarray(x)
+
+    def to(x):
+        return x.cpu().numpy() if hasattr(x, "cpu") else np.asarray(x)
+
     s, w, z, tid = to(s)[row], to(w)[row], float(to(z)[row]), int(to(tid)[row])
     return s, w, z, tid
 

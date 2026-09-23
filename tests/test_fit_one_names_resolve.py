@@ -98,10 +98,13 @@ def test_no_undefined_names(func):
 def test_fit_one_and_worker_agree():
     """_worker forwards to fit_one; a parameter on one and not the other is the bug."""
     tree = ast.parse(SRC.read_text())
-    get = lambda name: next(
-        n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == name
-    )
-    kw = lambda fn: {x.arg for x in fn.args.args + fn.args.kwonlyargs} - {"self"}
+
+    def get(name):
+        return next(n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == name)
+
+    def kw(fn):
+        return {x.arg for x in fn.args.args + fn.args.kwonlyargs} - {"self"}
+
     only_in_fit_one = (
         kw(get("fit_one")) - kw(get("_worker")) - {"sps", "cue_sps", "lines", "line_waves", "out"}
     )  # supplied from get_sps/paths

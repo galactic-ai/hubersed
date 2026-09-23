@@ -275,7 +275,10 @@ def chi2_parts(model, theta, obs, sps, line_pix):
     r2 = np.zeros_like(flux)
     r2[m] = ((flux[m] - sp[m]) / unc[m]) ** 2
     lp, cp = m & line_pix, m & ~line_pix
-    mean = lambda x: float(x.mean()) if x.size else np.nan
+
+    def mean(x):
+        return float(x.mean()) if x.size else np.nan
+
     return sp, {
         "chi2_red": float(r2[m].sum() / max(int(m.sum()) - len(theta), 1)),
         "chi2": float(r2[m].sum()),

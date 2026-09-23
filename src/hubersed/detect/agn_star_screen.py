@@ -181,7 +181,9 @@ def main(argv=None):
         w.writeheader()
         w.writerows(rows)
 
-    n = lambda k: sum(r[k] for r in rows)
+    def n(k):
+        return sum(r[k] for r in rows)
+
     print(f"  BPT-classifiable : {sum(bool(r['bpt_class']) for r in rows)}")
     print(f"  bpt_agn          : {n('bpt_agn')}")
     print(
