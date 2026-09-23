@@ -17,7 +17,7 @@ cp data/prospector_model/stochastic_priors_sample_8.npz "$OUT/priors_fsps_8.npz"
 uv run python bin/model_seds/make_model_seds.py --nebular fsps -n 8 --seed 0 --workers 1 \
     -f -o "$OUT/mocks_fsps_8.h5"
 
-uv run python bin/prospector/run_map_fits_outliers.py \
+uv run python -m hubersed.fitting.run_map_fits_outliers \
     -s results/emline_outlier_sample20.npz --limit 1 -n 1 -m 2000 -w 1 -o "$OUT/map"
 
 # chunk 10 sorts before chunk 2 as text
@@ -35,7 +35,7 @@ for script in \
     bin/model_seds/get_stochastic_priors.py bin/model_seds/make_model_seds.py \
     bin/prospector/agn_star_screen.py bin/prospector/build_cont_outlier_sample.py \
     bin/prospector/contam_screens.py \
-    bin/prospector/run_dynesty_outliers.py bin/prospector/run_map_fits_outliers.py \
+    "-m hubersed.fitting.run_dynesty_outliers" "-m hubersed.fitting.run_map_fits_outliers" \
     bin/prospector/simbad_screen.py \
     bin/spender/noise/ensemble_flow_seeds.py bin/spender/noise/ensemble_flow_stats.py \
     bin/spender/noise/flow_null_and_reverse.py bin/spender/noise/get_latent_space.py \

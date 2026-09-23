@@ -84,3 +84,5 @@ convention = "numpy"
 [tool.ruff.lint.per-file-ignores]
 "bin/**" = ["D"]  # docstrings land after the Phase 1b move to src/
 "experiments/*" = ["D"]  # header format comes in Phase 4
+# moved from bin/prospector, docstring pass pending
+"src/hubersed/fitting/{run_map_fits_outliers,run_dynesty_outliers,save_results}.py" = ["D"]

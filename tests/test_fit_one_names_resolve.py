@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-SRC = Path(__file__).resolve().parents[1] / "bin" / "prospector" / "run_map_fits_outliers.py"
+SRC = Path(__file__).resolve().parents[1] / "src" / "hubersed" / "fitting" / "run_map_fits_outliers.py"
 # checked for undefined names; these are the ones that do real work before writing output
 FUNCS = ["fit_one", "_worker", "map_fit", "main"]
 
