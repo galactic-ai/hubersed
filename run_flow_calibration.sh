@@ -27,7 +27,7 @@ mkdir -p logs results/flow_calibration
 # costs nothing and removes the landmine that produced a zero-fit job before.
 export SPS_HOME=/work/11006/nikhilgaruda/ls6/research/fsps
 
-SCRIPT=bin/spender/noise/flow_null_and_reverse.py
+SCRIPT=hubersed.detect.flow_null_and_reverse
 TAGS="6latent 10latent 15latent cont10latent cont15latent"
 MODES="selfdist reverse"
 SEEDS=3
@@ -43,7 +43,7 @@ echo "=== preflight ==="
 fail=0
 for m in $MODES; do
   for t in $TAGS; do
-    python "$SCRIPT" --mode "$m" --tag "$t" --dry-run || { echo "PREFLIGHT FAIL $m/$t"; fail=1; }
+    python -m "$SCRIPT" --mode "$m" --tag "$t" --dry-run || { echo "PREFLIGHT FAIL $m/$t"; fail=1; }
   done
 done
 if [ "$fail" -ne 0 ]; then echo "aborting: preflight failed"; exit 1; fi
@@ -54,7 +54,7 @@ for m in $MODES; do
   for t in $TAGS; do
     g=$(( i % 3 ))
     (
-      python "$SCRIPT" --mode "$m" --tag "$t" --seeds "$SEEDS" --device "cuda:$g" \
+      python -m "$SCRIPT" --mode "$m" --tag "$t" --seeds "$SEEDS" --device "cuda:$g" \
         > "logs/flowcal_${m}_${t}.log" 2>&1
       echo "done ${m}/${t} gpu${g} rc=$?"
     ) &

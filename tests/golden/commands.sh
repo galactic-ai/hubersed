@@ -24,7 +24,7 @@ uv run python -m hubersed.fitting.run_map_fits_outliers \
 mkdir -p "$OUT/_chunks"
 ln -sf "$ROOT/data/desi_spectra/DESIchunk1024_2.pkl" "$OUT/_chunks/"
 ln -sf "$ROOT/data/desi_spectra/DESIchunk1024_10.pkl" "$OUT/_chunks/"
-uv run python bin/spender/noise/get_latent_space.py "$OUT/_chunks" \
+uv run python -m hubersed.detect.get_latent_space "$OUT/_chunks" \
     data/checkpoints/spender_asc_run_10latent_zmax.pt "$OUT/latents.h5" --snr_min 3
 
 # Left out, already broken at 32ced0e: plot_sample_cutouts (missing module).
@@ -32,14 +32,14 @@ for script in \
     "-m hubersed.alf.make_alf_input" "-m hubersed.alf.read_alf_sample" \
     experiments/2026-08-25_compare_alf_solar_scaled.py \
     "-m hubersed.mocks.get_stochastic_priors" "-m hubersed.mocks.make_model_seds" \
-    bin/prospector/agn_star_screen.py bin/prospector/build_cont_outlier_sample.py \
-    bin/prospector/contam_screens.py \
     "-m hubersed.fitting.run_dynesty_outliers" "-m hubersed.fitting.run_map_fits_outliers" \
-    bin/prospector/simbad_screen.py \
-    bin/spender/noise/ensemble_flow_seeds.py bin/spender/noise/ensemble_flow_stats.py \
-    bin/spender/noise/flow_null_and_reverse.py bin/spender/noise/get_latent_space.py \
-    bin/spender/noise/get_outliers.py bin/spender/noise/get_outliers_flow.py \
-    bin/spender/noise/plot_latent_umap_score.py bin/spender/noise/train_DESI_noise.py; do
+    "-m hubersed.detect.agn_star_screen" "-m hubersed.detect.build_cont_outlier_sample" \
+    "-m hubersed.detect.contam_screens" "-m hubersed.detect.simbad_screen" \
+    "-m hubersed.detect.ensemble_flow_seeds" "-m hubersed.detect.ensemble_flow_stats" \
+    "-m hubersed.detect.flow_null_and_reverse" "-m hubersed.detect.get_latent_space" \
+    "-m hubersed.detect.get_outliers" "-m hubersed.detect.get_outliers_flow" \
+    "-m hubersed.detect.train_DESI_noise" \
+    bin/spender/noise/plot_latent_umap_score.py; do
     uv run python $script --help > /dev/null || { echo "smoke failed: $script"; exit 1; }
 done
 echo "golden outputs written to $OUT"

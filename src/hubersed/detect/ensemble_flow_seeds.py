@@ -15,13 +15,12 @@ batch order).
 Writes one npz per tag holding log p for every mock and every DESI object for
 every seed. Stats live in ensemble_flow_stats.py so re-analysis needs no retrain.
 
-  python bin/spender/noise/ensemble_flow_seeds.py --tag cont10latent --seeds 20 \
+  python -m hubersed.detect.ensemble_flow_seeds --tag cont10latent --seeds 20 \
       --device cuda:0 --outdir results/flow_ensemble
 """
 
 import argparse
 import json
-import sys
 import time
 from pathlib import Path
 
@@ -32,10 +31,8 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import StandardScaler
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from get_outliers_flow import build_flow, load_h5  # noqa: E402
-
-from hubersed.paths import PATHS  # noqa: E402
+from hubersed.detect.get_outliers_flow import build_flow, load_h5
+from hubersed.paths import PATHS
 
 DATA, RES = PATHS["DATA"], PATHS["RESULTS"]
 # The mock set behind results/wide_flow_corrected, i.e. the one the 20-galaxy sample

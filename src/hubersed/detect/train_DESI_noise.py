@@ -3,9 +3,6 @@
 import argparse
 import functools
 import os
-
-# allows one to run fp16_train.py from home directory
-import sys
 import time
 
 import numpy as np
@@ -15,8 +12,6 @@ from spender import SpectrumAutoencoder
 from spender.data import desi
 from spender.util import mem_report
 from torch import nn
-
-sys.path.insert(1, "./")
 
 
 def base(m):

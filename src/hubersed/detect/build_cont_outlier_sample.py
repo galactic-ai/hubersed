@@ -192,7 +192,7 @@ def main(argv=None):
             shred[t] = False
     print(f"  flagged zbad={sum(zbad.values())}  shred={sum(shred.values())}")
 
-    # external contamination screens (bin/prospector/contam_screens.py)
+    # external contamination screens (detect/contam_screens.py)
     gaia_flag, _ = read_screen(args.gaia_list)
     sga_flag, sga_r = read_screen(args.sga_list, "r_ell")
     extra_flag = set()

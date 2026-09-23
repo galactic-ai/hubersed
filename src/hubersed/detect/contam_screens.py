@@ -1,6 +1,5 @@
 import argparse
 import csv
-import sys
 import time
 import warnings
 from pathlib import Path
@@ -8,10 +7,8 @@ from pathlib import Path
 import numpy as np
 from astropy.io import fits
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_cont_outlier_sample import DEFAULT_FLOW_DIR, TAGS, flow_scores  # noqa: E402
-
-from hubersed.paths import PATHS  # noqa: E402
+from hubersed.detect.build_cont_outlier_sample import DEFAULT_FLOW_DIR, TAGS, flow_scores
+from hubersed.paths import PATHS
 
 GAIA_RADIUS = 2.0  # arcsec, cone radius
 GAIA_G_MAX = 16.0  # mag -- applies ONLY to the bright-neighbour (PSF-wing) test

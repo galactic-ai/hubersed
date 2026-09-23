@@ -25,13 +25,12 @@ Architecture, optimiser, schedule and threshold rule are imported from
 get_outliers_flow.py / ensemble_flow_seeds.py, never copied, so they cannot drift
 from the production runs these numbers are meant to calibrate.
 
-  python bin/spender/noise/flow_null_and_reverse.py --mode selfdist \
+  python -m hubersed.detect.flow_null_and_reverse --mode selfdist \
       --tag cont10latent --seeds 3 --device cuda:0
 """
 
 import argparse
 import json
-import sys
 import time
 from pathlib import Path
 
@@ -39,11 +38,9 @@ import numpy as np
 import torch
 from sklearn.preprocessing import StandardScaler
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ensemble_flow_seeds import paths_for, score, train_one, validate  # noqa: E402
-from get_outliers_flow import load_h5  # noqa: E402
-
-from hubersed.paths import PATHS  # noqa: E402
+from hubersed.detect.ensemble_flow_seeds import paths_for, score, train_one, validate
+from hubersed.detect.get_outliers_flow import load_h5
+from hubersed.paths import PATHS
 
 RES = PATHS["RESULTS"]
 

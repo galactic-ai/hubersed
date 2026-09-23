@@ -7,9 +7,9 @@ from spender.data import desi
 from spender.instrument import get_skyline_mask
 
 from hubersed.conversion import maggies_to_flambda
+from hubersed.detect.quantities import normalize_spectra
+from hubersed.detect.utils import load_models
 from hubersed.paths import PATHS
-from hubersed.spender.quantities import normalize_spectra
-from hubersed.spender.utils import load_models
 from hubersed.utils import nanstd
 
 DATA_PATH = PATHS["DATA"]

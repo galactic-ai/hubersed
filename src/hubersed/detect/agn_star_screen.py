@@ -1,15 +1,12 @@
 import argparse
 import csv
-import sys
 from pathlib import Path
 
 import numpy as np
 from astropy.io import fits
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_cont_outlier_sample import DEFAULT_FLOW_DIR, TAGS, flow_scores  # noqa: E402
-
-from hubersed.paths import PATHS  # noqa: E402
+from hubersed.detect.build_cont_outlier_sample import DEFAULT_FLOW_DIR, TAGS, flow_scores
+from hubersed.paths import PATHS
 
 SNMIN_BPT = 5.0  # sigma, per line, to attempt a BPT classification
 SNMIN_FORB = 3.0  # sigma, above which a forbidden line counts as present

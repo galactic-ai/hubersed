@@ -14,7 +14,6 @@ redshift refutation. Each entry cites the log entry that established it.
 
 import argparse
 import csv
-import sys
 from pathlib import Path
 
 import astropy.units as u
@@ -22,10 +21,13 @@ import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_cont_outlier_sample import DEFAULT_FLOW_DIR, TAGS, flow_scores, read_screen  # noqa: E402
-
-from hubersed.paths import PATHS  # noqa: E402
+from hubersed.detect.build_cont_outlier_sample import (
+    DEFAULT_FLOW_DIR,
+    TAGS,
+    flow_scores,
+    read_screen,
+)
+from hubersed.paths import PATHS
 
 SEP_MAX = 2.0
 AGN_TYPES = {"BLL", "QSO", "AGN", "Sy1", "Sy2", "SyG", "QSO_Candidate", "Bla", "LIN", "rG"}
