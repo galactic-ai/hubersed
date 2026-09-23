@@ -105,7 +105,7 @@ def get_all_parameters(models, instruments):
     instr_params = []
     # instruments
     for inst in instruments:
-        if inst == None:
+        if inst is None:
             continue
         instr_params += inst.parameters()
     if instr_params != []:
@@ -601,7 +601,7 @@ def train(
             mem_report()
             losses = tuple(detailed_loss[0, :, epoch_, :])
             vlosses = tuple(detailed_loss[1, :, epoch_, :])
-            print("====> Epoch: %i" % (epoch_))
+            print(f"====> Epoch: {epoch_}")
             print("TRAINING Losses:", losses)
             print("VALIDATION Losses:", vlosses)
 

@@ -7,9 +7,8 @@ so scripts can write there directly. data/ has to be provided.
 import os
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Union
 
-PathLike = Union[str, Path]
+PathLike = str | Path
 
 
 def get_paths(base: PathLike | None = None) -> dict[str, Path]:
