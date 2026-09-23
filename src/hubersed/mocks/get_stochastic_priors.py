@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-from hubersed.distributions import (
+from hubersed.mocks.distributions import (
     sample_log_uniform,
     sample_truncated_normal,
     sample_uniform,

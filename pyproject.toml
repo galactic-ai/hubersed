@@ -86,3 +86,5 @@ convention = "numpy"
 "experiments/*" = ["D"]  # header format comes in Phase 4
 # moved from bin/prospector, docstring pass pending
 "src/hubersed/fitting/{run_map_fits_outliers,run_dynesty_outliers,save_results}.py" = ["D"]
+"src/hubersed/mocks/{make_model_seds,get_stochastic_priors}.py" = ["D"]
+"scripts/*" = ["D"]  # thin run-by-path scripts

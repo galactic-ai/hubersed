@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from hubersed.distributions import (
+from hubersed.mocks.distributions import (
     sample_clipped_normal,
     sample_log_uniform,
     sample_truncated_normal,

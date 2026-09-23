@@ -12,9 +12,9 @@ cd "$ROOT"
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1
 
 # make_model_seds only reads priors from data/prospector_model/
-uv run python bin/model_seds/get_stochastic_priors.py --no-cue -n 8 -s 0 -f
+uv run python -m hubersed.mocks.get_stochastic_priors --no-cue -n 8 -s 0 -f
 cp data/prospector_model/stochastic_priors_sample_8.npz "$OUT/priors_fsps_8.npz"
-uv run python bin/model_seds/make_model_seds.py --nebular fsps -n 8 --seed 0 --workers 1 \
+uv run python -m hubersed.mocks.make_model_seds --nebular fsps -n 8 --seed 0 --workers 1 \
     -f -o "$OUT/mocks_fsps_8.h5"
 
 uv run python -m hubersed.fitting.run_map_fits_outliers \
@@ -31,7 +31,7 @@ uv run python bin/spender/noise/get_latent_space.py "$OUT/_chunks" \
 for script in \
     "-m hubersed.alf.make_alf_input" "-m hubersed.alf.read_alf_sample" \
     experiments/2026-08-25_compare_alf_solar_scaled.py \
-    bin/model_seds/get_stochastic_priors.py bin/model_seds/make_model_seds.py \
+    "-m hubersed.mocks.get_stochastic_priors" "-m hubersed.mocks.make_model_seds" \
     bin/prospector/agn_star_screen.py bin/prospector/build_cont_outlier_sample.py \
     bin/prospector/contam_screens.py \
     "-m hubersed.fitting.run_dynesty_outliers" "-m hubersed.fitting.run_map_fits_outliers" \
