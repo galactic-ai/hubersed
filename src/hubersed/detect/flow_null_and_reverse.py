@@ -1,32 +1,9 @@
 #!/usr/bin/env python
-"""Two calibration runs the outlier pipeline is missing, sharing one script.
+"""Train flows on half of one latent set, then score the held-out half and the other set.
 
-Both answer "is a log p of X actually large?", which the 0.1%-mock-quantile rule
-asserts rather than measures.
-
---mode selfdist   Eisert+2024 sec 4.3.3 device. Split the mocks in half, train on
-                  A, score B. B is drawn from exactly the same distribution as the
-                  training set, so its log p distribution IS the null: what a
-                  genuinely in-distribution sample looks like under this flow. DESI
-                  scores are then reported in null units instead of raw nats, and
-                  the fraction of B below A's 0.1% threshold is the realised
-                  false-positive rate (nominally 0.001).
-
---mode reverse    Jin+2024 device, direction flipped. Train on DESI latents, score
-                  the mocks. If mocks are OOD to a DESI-trained flow in the same
-                  places DESI is OOD to a mock-trained flow, "the prior just does
-                  not cover it" gets much weaker as the sole explanation.
-                  CAVEAT for the write-up: this conflates prior coverage, model
-                  error, the skyline noise asymmetry (mocks are noiseless on the
-                  spender sky mask, DESI is not) and encoder domain shift. It is a
-                  consistency check, not a decomposition.
-
-Architecture, optimiser, schedule and threshold rule are imported from
-get_outliers_flow.py / ensemble_flow_seeds.py, never copied, so they cannot drift
-from the production runs these numbers are meant to calibrate.
-
-  python -m hubersed.detect.flow_null_and_reverse --mode selfdist \
-      --tag cont10latent --seeds 3 --device cuda:0
+With ``--mode selfdist`` the flows train on half the mocks and score the other half and DESI.
+With ``--mode reverse`` they train on half of DESI and score the other half and the mocks.
+Run it as ``python -m hubersed.detect.flow_null_and_reverse --mode selfdist --tag cont10latent``.
 """
 
 import argparse
@@ -46,9 +23,25 @@ RES = PATHS["RESULTS"]
 
 
 def halves(n, seed):
-    """Disjoint A/B split of range(n). Split seed is fixed across members so every
-    ensemble member sees the same held-out half -- otherwise the null moves with
-    the flow and the two effects cannot be separated."""
+    """Split range(n) into two disjoint random halves.
+
+    Use the same seed for every ensemble member so that all members share one
+    held-out half.
+
+    Parameters
+    ----------
+    n : int
+        Number of rows to split.
+    seed : int
+        Seed for the permutation.
+
+    Returns
+    -------
+    a : numpy.ndarray
+        The first n // 2 indices of the permutation.
+    b : numpy.ndarray
+        The remaining indices.
+    """
     idx = np.random.default_rng(seed).permutation(n)
     a, b = idx[: n // 2], idx[n // 2 :]
     assert not (set(a.tolist()) & set(b.tolist())), "A/B overlap"
@@ -57,6 +50,16 @@ def halves(n, seed):
 
 
 def main():
+    """Parse arguments, train one flow per seed and save the scores to an npz file.
+
+    The npz is rewritten after every seed, so a partial run keeps the finished seeds.
+
+    Raises
+    ------
+    SystemExit
+        If the mock and DESI latents come from different encoders, or if the output
+        file exists and ``--force`` is not given.
+    """
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -149,9 +152,7 @@ def main():
         lp_held[i] = score(nde, Xheld, dev)
         lp_other[i] = score(nde, Xother, dev)
         # Same rule as production: 0.1% quantile over the whole training pool.
-        # NB this is the 0.1% quantile of HALF the dataset, so ~the 77th order
-        # statistic rather than production's ~154th. Noisier by construction; that
-        # is the price of having a held-out half at all.
+        # The training pool is half the dataset, so this threshold is noisier.
         thr[i] = float(np.quantile(lp_train[i], 0.001))
         ks_max[i], ks_med[i], c2st[i] = validate(nde, Xtrain, val_idx, dev, a.c2st_n, vrng)
 
@@ -182,7 +183,7 @@ def main():
             lp_held=lp_held[: i + 1],
             lp_other=lp_other[: i + 1],
             # split_idx_* index the TRAINING dataset, which is the mocks under
-            # selfdist and DESI under reverse -- read them with `mode`.
+            # selfdist and DESI under reverse. Read them together with `mode`.
             names=np.array(names),
             split_idx_a=ia,
             split_idx_b=ib,
