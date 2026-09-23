@@ -1,3 +1,9 @@
+"""Fit DESI spectra by MAP, one TARGETID at a time, with prospector and Cue nebular emission.
+
+Run as ``python -m hubersed.fitting.run_map_fits_outliers``. Each galaxy gets a pickle with
+the best fit and its chi2 split into line and continuum pixels, plus spectrum and SFH figures.
+"""
+
 import argparse
 import multiprocessing as mp
 import os
@@ -74,6 +80,23 @@ BALMER = ("Hd", "Hg", "Hb", "Ha")
 
 
 def vacuum_lines(sps):
+    """Find the FSPS wavelength of each line in ``AIR_LINES``.
+
+    Parameters
+    ----------
+    sps : prospect.sources.SSPBasis
+        Source whose ``ssp.emline_wavelengths`` lists the FSPS lines.
+
+    Returns
+    -------
+    dict of str to float
+        FSPS line wavelength in Angstrom by line name.
+
+    Raises
+    ------
+    AssertionError
+        If no FSPS line lies within 200 km/s of a line in ``AIR_LINES``.
+    """
     fw = sps.ssp.emline_wavelengths
     out = {}
     for k, lam in AIR_LINES.items():
@@ -84,6 +107,7 @@ def vacuum_lines(sps):
 
 
 def safe_lnprior(model, theta):
+    """Return the log prior of ``theta``, or -inf if prospector fails or it is not finite."""
     try:
         v = float(np.squeeze(model.prior_product(np.asarray(theta, float), nested=False)))
         return v if np.isfinite(v) else -np.inf
@@ -92,6 +116,10 @@ def safe_lnprior(model, theta):
 
 
 def jitter_scale(model, theta, frac):
+    """Return the jitter width of each theta entry, ``frac`` times its prior range.
+
+    Entries whose prior has no finite range get ``frac`` itself.
+    """
     scale = np.full_like(theta, frac, dtype=float)
     for k, inds in model.theta_index.items():
         try:
@@ -117,6 +145,42 @@ def map_fit(
     tag="",
     method="Powell",
 ):
+    """Minimize the negative log posterior from several starts and keep the best.
+
+    Parameters
+    ----------
+    model : prospect.models.SpecModel
+        Model to fit.
+    obs : list
+        Prospector observations from ``build_obs``.
+    sps : prospect.sources.SSPBasis
+        Source used for the model spectrum.
+    n_seeds : int
+        Number of jittered starts added to the start at ``theta0``.
+    maxfev : int
+        Function evaluation budget of each start.
+    theta0 : np.ndarray, optional
+        First start. The default is ``model.theta``.
+    jitter_frac : float, optional
+        Jitter width as a fraction of each prior range, see ``jitter_scale``.
+    seed : int, optional
+        Seed of the jitter draws.
+    max_tries : int, optional
+        Most jitter draws to try. Draws outside the prior or with a failed model are skipped.
+    tag : str, optional
+        Prefix for progress lines.
+    method : {"Powell", "Nelder-Mead"}, optional
+        scipy ``minimize`` method.
+
+    Returns
+    -------
+    best : scipy.optimize.OptimizeResult or None
+        Lowest result, or None if every start failed.
+    info : dict
+        Start counts, every final value, success flags, and the gap between the two
+        best converged starts.
+    """
+
     def neg(th):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -140,11 +204,7 @@ def map_fit(
     res = []
     for k, st in enumerate(starts):
         t0 = time.time()
-        # Powell does 1-D Brent line searches. ztinterp is piecewise LINEAR in log Z
-        # (fsps.f90:238-244), so the objective has a kink at every MIST node; Brent
-        # converges onto a V-shaped minimum and reports success. That is the suspected
-        # cause of MAPs landing at logzsol = +0.2500 to four decimal places. Nelder-Mead
-        # does no line search and is the control.
+        # Nelder-Mead has no line search, so it is a check on Powell at metallicity kinks.
         opts = (
             {"maxiter": maxfev // 10, "maxfev": maxfev, "ftol": 1e-6}
             if method == "Powell"
@@ -180,12 +240,31 @@ def map_fit(
 
 
 def theta_dict(model, theta):
+    """Split a theta vector into arrays by parameter name, using ``model.theta_index``."""
     return {
         k: np.atleast_1d(np.asarray(theta, float)[v]).copy() for k, v in model.theta_index.items()
     }
 
 
 def chi2_parts(model, theta, obs, sps, line_pix):
+    """Compute the model spectrum and its chi2, split into line and continuum pixels.
+
+    Parameters
+    ----------
+    model, theta, obs, sps
+        As for ``map_fit``.
+    line_pix : np.ndarray of bool
+        Pixels near emission lines.
+
+    Returns
+    -------
+    sp : np.ndarray
+        Model flux in maggies.
+    stats : dict
+        ``chi2``, ``chi2_red`` (over pixels minus free parameters), pixel counts, the
+        fraction of chi2 and of pixels on lines, and the mean chi2 per line and per
+        continuum pixel.
+    """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         preds, _ = model.predict(np.asarray(theta, float), observations=obs, sps=sps)
@@ -210,6 +289,10 @@ def chi2_parts(model, theta, obs, sps, line_pix):
 
 
 def line_ratios(wave, flux, model_sp, z, mask, lines, halfwidth_kms=400.0):
+    """Return data over model flux, integrated within ``halfwidth_kms`` of each line.
+
+    Lines with fewer than 3 good pixels, or zero model flux, get NaN.
+    """
     out = {}
     for name, lam in lines.items():
         lo = lam * (1 + z)
@@ -223,6 +306,21 @@ def line_ratios(wave, flux, model_sp, z, mask, lines, halfwidth_kms=400.0):
 
 
 def sfh_from_theta(model, theta):
+    """Return the star formation history of ``theta`` in the model's age bins.
+
+    Returns
+    -------
+    dict
+        ``edges_gyr`` (lookback time bin edges in Gyr, first edge at least 1e-4),
+        ``ssfr`` and ``ssfr_inplace`` (SFR over current mass, and over the mass formed
+        by the end of each bin, that bin included), ``cmf`` (cumulative mass fraction),
+        ``cmf_flat_null`` (the same for all logsfr_ratios zero) and ``agebins``.
+
+    Notes
+    -----
+    Current mass is taken as 0.6 times the mass formed, a fixed value, as in
+    ``derived_quantities.compute_logssfr``.
+    """
     model.set_parameters(np.asarray(theta, float))
     ab = np.asarray(model.params["agebins"], float)
     logmass = float(np.atleast_1d(model.params["logmass"])[0])
@@ -246,6 +344,7 @@ def sfh_from_theta(model, theta):
 
 
 def lnp_split(model, theta, obs, sps):
+    """Return the log posterior, log prior and their difference, the log likelihood."""
     lnprior = safe_lnprior(model, theta)
     lnpost = float(
         lnprobfn(np.asarray(theta, float), model=model, observations=obs, sps=sps, nested=False)
@@ -254,6 +353,7 @@ def lnp_split(model, theta, obs, sps):
 
 
 def plot_fit(tid, z, wave, flux, unc, mask, model_sp, lines, chi2_red, out):
+    """Save the data, MAP model and residuals to ``out/<tid>_spectrum.pdf``."""
     fig, ax = spectrum_figure(
         wave,
         z=z,
@@ -282,6 +382,7 @@ def plot_fit(tid, z, wave, flux, unc, mask, model_sp, lines, chi2_red, out):
 
 
 def plot_sfh(tid, sfh, out):
+    """Save the SFH, with the flat SFH mass fraction dashed, to ``out/<tid>_sfh.pdf``."""
     fig, ax = sfh_figure(
         sfh["edges_gyr"], sfh["ssfr"], sfh["cmf"], ssfr_inplace=sfh["ssfr_inplace"]
     )
@@ -294,10 +395,14 @@ _SPS = {}
 
 
 def get_sps(zcontinuous=1):
-    # the cache is per-process; if it is already built with a DIFFERENT config, an
-    # override would be SILENTLY ignored -- fail loudly instead. Reuse with the same
-    # config is fine and is the normal path: ProcessPoolExecutor hands each worker
-    # many targets, so every task after the first sees a populated cache.
+    """Build the FSPS and Cue sources once per process and return them with the line lists.
+
+    Raises
+    ------
+    AssertionError
+        If the cache was built with a different ``zcontinuous``, which would otherwise
+        be ignored.
+    """
     key = int(zcontinuous)
     assert not (_SPS and _SPS.get("key") != key), (
         f"get_sps() cached with {_SPS.get('key')}; {key} would be ignored"
@@ -319,29 +424,14 @@ FLAT_SFH_RANGE = 5.0  # dex, symmetric
 
 
 def _build_model(tmpl, flat_sfh=False):
-    """HyperSpecModel (GP prior on the SFH) or SpecModel with a flat TopHat prior.
+    """Return a HyperSpecModel, or with ``flat_sfh`` a SpecModel with a TopHat SFH prior.
 
-    These two changes are COUPLED and neither works alone.
-
-    * Under ``HyperSpecModel``, ``ProspectorHyperParams._prior_product``
-      (``hyperparameters.py:53-62``) rebuilds the MVN from the PSD hypers itself and then
-      ``continue``s past ``logsfr_ratios`` in the generic loop. So editing
-      ``tmpl['logsfr_ratios']['prior']`` is dead code -- the GP prior is applied regardless.
-    * Under plain ``SpecModel``, ``ProspectorParams._prior_product``
-      (``parameters.py:196-197``) calls ``config_dict[k]['prior'](theta[inds])`` for every
-      parameter including ``logsfr_ratios``. But the prior that
-      ``templates.adjust_stochastic_params`` attached is ``MultiVariateNormal``, which
-      defines no ``__call__`` (``priors.py:269``); it inherits the scalar version and
-      returns a 9x9 NaN matrix. Verified: calling it on the 9 MAP ratios gives shape (9,9),
-      all non-finite.
-
-    So to escape the GP prior you must switch the model class AND replace the prior.
-
-    What you give up (see knowledge/stochastic_prior_young_bin_clamp.md):
-    the GP prior exists to make inference insensitive to bin count
-    (outlier_investigation_log.md, "Parameterization note"). With a flat prior, more bins
-    means more genuine freedom, so chi2 falls monotonically with nbins for reasons that
-    have nothing to do with the data. Fix nbins and never compare across it.
+    Notes
+    -----
+    A flat prior needs both the model class and the prior changed. HyperSpecModel builds
+    the logsfr_ratios prior from the hyperparameters and skips the configured one
+    (prospect ``hyperparameters.py:53-85``). SpecModel calls every configured prior, and
+    the stochastic ``MultiVariateNormal`` has no ``__call__`` (``priors.py:269``).
     """
     if not flat_sfh:
         return HyperSpecModel(tmpl)
@@ -356,6 +446,7 @@ def _build_model(tmpl, flat_sfh=False):
 
 
 def freeze_hypers(template, z):
+    """Fix the SFH hyperparameters at ``FROZEN_HYPERS``, with ``tau_in`` the age at ``z``."""
     vals = dict(FROZEN_HYPERS, tau_in=universe_age_gyr(z))
     for k, v in vals.items():
         template[k]["isfree"] = False
@@ -364,6 +455,17 @@ def freeze_hypers(template, z):
 
 
 def warm_theta(model, path, z, th0):
+    """Start theta from a saved fit, by parameter name.
+
+    Parameters the saved fit lacks take the hyperparameter defaults or ``th0``.
+
+    Raises
+    ------
+    ValueError
+        If the saved record's labels and theta disagree, see ``MapFitResult``.
+    AssertionError
+        If the start is outside the prior.
+    """
     with open(path, "rb") as f:
         res = MapFitResult.from_record(pickle.load(f))
     src = dict(zip(res.labels, res.vector(), strict=True))
@@ -396,26 +498,55 @@ def fit_one(
     spectra_npz=None,
     free_dust1=False,
 ):
-    """cont_only: fit build_continuum_model on line-masked pixels -- 15 free parameters
-    (logzsol, dust2, logmass, 9x logsfr_ratios, dust_ratio, dust_index, sigma_smooth),
-    no Cue nebular, plain FSPS sps.
+    """Fit one galaxy by MAP, save its record and figures, and return the record.
 
-    The 5 PSD hyperparameters are already isfree=False in build_continuum_model
-    (sps/config.py:122-131). That is not a convenience -- with them free the MAP
-    objective is UNBOUNDED. hyperparameters.py:53-62 scores logsfr_ratios with the
-    NORMALISED multivariate_normal pdf, and Sigma is linear in sigma_reg**2 and
-    sigma_dyn**2 (hyperparam_transforms.py:120-136), so shrinking both sigmas and the
-    ratios together holds the Mahalanobis term exactly constant while -0.5*ln|Sigma|
-    gains 9*ln(10) = 20.72 nats per decade, without limit. Measured on a saved fit:
-    lnP_sfh +37.55 -> +141.16 over five decades, Mahalanobis fixed at -1.914. Only the
-    LogUniform floors stop it, which is why sigma_reg sits at exactly 0.1 in 10 of the
-    20 emline_map_fits and sigma_dyn at exactly 0.001 in 8.
+    Parameters
+    ----------
+    tid : int
+        DESI TARGETID.
+    sps, cue_sps : prospect.sources.SSPBasis
+        FSPS source for the continuum fit and Cue source for the full fit.
+    lines : dict of str to float
+        Line wavelengths for ``line_ratios``, from ``vacuum_lines``.
+    line_waves : np.ndarray
+        FSPS line wavelengths in Angstrom, masked for the continuum pixels.
+    n_seeds, maxfev : int
+        Passed to ``map_fit``.
+    out : pathlib.Path
+        Output directory.
+    seeds : dict of str to float, optional
+        Start values by parameter name, clipped to the prior.
+    frozen : bool, optional
+        Fix the SFH hyperparameters, see ``freeze_hypers``.
+    fixed : dict of str to float, optional
+        Parameters fixed at the given values.
+    warm_from : str, optional
+        Directory with a saved ``<tid>.pkl`` to start from, see ``warm_theta``.
+    flat_sfh : bool, optional
+        Use a flat SFH prior, see ``_build_model``.
+    cont_only : bool, optional
+        Fit ``build_continuum_model`` with FSPS on line-masked pixels only. Its SFH
+        hyperparameters are fixed.
+    error_floor : float, optional
+        Fractional error floor added in quadrature.
+    method : {"Powell", "Nelder-Mead"}, optional
+        Passed to ``map_fit``.
+    zcontinuous : int, optional
+        FSPS metallicity interpolation mode of ``sps``, stored in the record.
+    spectra_npz : str, optional
+        npz file with ``target_ids``, ``spec``, ``ivar`` and ``z`` used instead of the
+        chunk files, on the ``WAVE_OBS`` grid in 1e-17 erg/s/cm^2/A.
+    free_dust1 : bool, optional
+        Fit dust1 on its own in the full Cue model.
+
+    Returns
+    -------
+    dict
+        The record written to ``out/<tid>.pkl``, or a short record with status
+        ``map_failed``.
     """
     if spectra_npz:
-        # Spectrum supplied from outside the chunk store -- same WAVE_OBS grid, same
-        # flambda units (1e-17 erg/s/cm^2/A) that load_spectrum returns. Used to fit a
-        # DIFFERENT observation of a target the store already holds, e.g. the main-survey
-        # coadd of an SV3 object (2026-08-31g).
+        # For a different observation of a galaxy the chunk files already hold.
         ov = np.load(spectra_npz)
         hit = np.where(ov["target_ids"].astype(np.int64) == tid)[0]
         if not len(hit):
@@ -439,21 +570,8 @@ def fit_one(
         WAVE_OBS, mask, z, halfwidth_kms=300.0, line_waves=line_waves
     )
 
-    # Fractional error floor, added IN QUADRATURE: sigma_eff^2 = sigma^2 + (f*flux)^2.
-    #
-    # This is not cosmetic. A pure multiplicative rescale of the errors divides chi2 by a
-    # constant and moves nothing -- same minimum, same relative depth of every local one.
-    # A floor proportional to flux changes the WEIGHTING: it downweights high-S/N pixels
-    # relative to low-S/N ones, which for this data means downweighting the red end
-    # (S/N ~80/A) against the blue (S/N ~22/A). That is exactly the artefact behind the
-    # "blue fits better than red" result, where the fractional residual is 13.81% blue vs
-    # 2.28% red and a 3.68% floor takes the whole spectrum to chi2_red = 1.
-    #
-    # Independent support for a floor of this size: alf fits jitter = 1.391 +- 0.022 on
-    # the same galaxy, i.e. 39% error inflation, as a free parameter.
-    #
-    # Applied to the DATA rather than the model so the noise model does not depend on
-    # theta. At S/N ~60 the resulting noise bias is negligible.
+    # A floor proportional to flux lowers the weight of high S/N pixels, unlike a plain
+    # rescale of the errors. It is added to the data errors so it does not depend on theta.
     if error_floor and error_floor > 0:
         unc = np.sqrt(unc**2 + (float(error_floor) * np.abs(flux)) ** 2)
 
@@ -542,14 +660,11 @@ def fit_one(
         "nebular": "none (continuum only)" if cont_only else "cue_stellar_nebular",
         "cont_only": bool(cont_only),
         "fit_mask_npix": int(fit_mask.sum()),
-        # unc above is POST-floor, so chi2 in this record is already the floored one.
+        # unc and every chi2 in this record include the error floor.
         "error_floor": float(error_floor or 0.0),
         "optimizer": str(method),
         "zcontinuous": int(zcontinuous),
-        # Record the VALUES, not just "frozen". build_continuum_model freezes at
-        # DEFAULT_SET_VALS (sigma_reg 0.17, sigma_dyn 0.005); --freeze-hypers overrides
-        # to FROZEN_HYPERS (1.5, 0.1). Those differ by 8.8x and 20x and neither has a
-        # recorded source, so which one produced a given fit has to be on the record.
+        # build_continuum_model and --freeze-hypers fix different values, so store them.
         "hypers": "frozen" if (frozen or cont_only) else "free",
         "hyper_values": {
             k: float(np.atleast_1d(model.params[k])[0])
@@ -589,6 +704,7 @@ def _worker(
     spectra_npz=None,
     free_dust1=False,
 ):
+    """Run ``fit_one`` in a worker process with that process's cached sources."""
     _quiet_process()
     S = get_sps(zcontinuous=zcontinuous)
     return fit_one(
@@ -615,6 +731,7 @@ def _worker(
 
 
 def main(argv=None):
+    """Fit every TARGETID in the sample file and write ``summary.pkl`` next to the fits."""
     _quiet_process()
     p = argparse.ArgumentParser(
         description="MAP fits (Cue, free PSD) for emission-line OOD outliers."
@@ -629,32 +746,29 @@ def main(argv=None):
     p.add_argument("--skip-existing", action="store_true")
     p.add_argument("-w", "--workers", type=int, default=1)
     p.add_argument(
-        "--freeze-hypers", action="store_true", help="fix the 5 PSD hyperparameters (Run A)"
+        "--freeze-hypers",
+        action="store_true",
+        help="fix the 5 SFH hyperparameters at FROZEN_HYPERS",
     )
     p.add_argument(
         "--fix",
         action="append",
         default=[],
         metavar="NAME=VALUE",
-        help="fix a parameter at ONE value for the whole sample, e.g. --fix logzsol=-2.5 (Run B)",
+        help="fix a parameter at one value for every galaxy, e.g. --fix logzsol=-2.5",
     )
     p.add_argument(
         "--fix-from-sample",
         default="",
         metavar="NAME[,NAME...]",
-        help="fix parameters at the PER-GALAXY value held in the sample npz "
-        "column of the same name, matched by TARGETID. Use to pin "
-        "logzsol to what alf measured for each object and see what chi2 "
-        "and the SFH do with metallicity out of the degeneracy.",
+        help="fix parameters at each galaxy's value in the sample npz column of the "
+        "same name, matched by TARGETID",
     )
     p.add_argument(
         "--flat-sfh-prior",
         action="store_true",
-        help=f"replace the GP stochastic prior on logsfr_ratios with "
-        f"TopHat(+/-{FLAT_SFH_RANGE} dex) and use SpecModel instead of "
-        f"HyperSpecModel. Removes the young-bin clamp (see "
-        f"knowledge/stochastic_prior_young_bin_clamp.md) but also removes "
-        f"bin-count insensitivity -- do not compare across nbins.",
+        help=f"use SpecModel with TopHat(+/-{FLAT_SFH_RANGE} dex) on logsfr_ratios "
+        f"instead of the stochastic SFH prior",
     )
     p.add_argument(
         "--warm-from",
@@ -667,54 +781,39 @@ def main(argv=None):
         type=int,
         default=1,
         choices=[1, 2],
-        help="1 = linear interpolation in log Z (kink at every MIST node). "
-        "2 = convolve with a closed-box MDF, smooth in logzsol, but a "
-        "MODEL change: logzsol becomes an MDF scale parameter with a "
-        "built-in metallicity spread, NOT comparable to zcontinuous=1 "
-        "or to alf [Z/H]. See build_sps.",
+        help="FSPS metallicity interpolation mode, passed to build_sps",
     )
     p.add_argument(
         "--optimizer",
         default="Powell",
         choices=["Powell", "Nelder-Mead"],
-        help="scipy minimize method. Powell (default) does 1-D Brent line "
-        "searches, which stall on the kinks ztinterp puts at every "
-        "MIST node. Nelder-Mead does no line search.",
+        help="scipy minimize method",
     )
     p.add_argument(
         "--error-floor",
         type=float,
         default=0.0,
         metavar="FRAC",
-        help="fractional error floor added IN QUADRATURE: "
-        "sigma_eff^2 = sigma^2 + (FRAC*flux)^2. 0.037 is the value that "
-        "takes 42580 to chi2_red = 1 and matches alf's fitted jitter of "
-        "1.39. A pure multiplicative rescale would change nothing; this "
-        "reweights high-S/N pixels against low-S/N ones.",
+        help="fractional error floor added in quadrature, sigma_eff^2 = sigma^2 + (FRAC*flux)^2",
     )
     p.add_argument(
         "--spectra-npz",
         default=None,
         metavar="PATH",
-        help="npz with target_ids/spec/ivar/z overriding the chunk store, on "
-        "the WAVE_OBS grid in 1e-17 erg/s/cm^2/A. For fitting a different "
-        "OBSERVATION of a target the store already holds.",
+        help="npz with target_ids, spec, ivar and z on the WAVE_OBS grid in "
+        "1e-17 erg/s/cm^2/A, used instead of the chunk files",
     )
     p.add_argument(
         "--continuum-only",
         action="store_true",
-        help="fit build_continuum_model (15 free: logzsol, dust2, logmass, "
-        "9x logsfr_ratios, dust_ratio, dust_index, sigma_smooth) on "
-        "line-masked pixels, with plain FSPS and no Cue nebular. The 5 "
-        "PSD hyperparameters are frozen -- with them free the MAP "
-        "objective is unbounded (see fit_one's docstring).",
+        help="fit build_continuum_model on line-masked pixels with FSPS and no "
+        "nebular emission; its SFH hyperparameters are fixed",
     )
     p.add_argument(
         "--free-dust1",
         action="store_true",
-        help="free dust1 (TopHat 0-3) instead of tying it to dust2 * dust_ratio. "
-        "Full Cue model only; ignored with --continuum-only. "
-        "See build_full_cue_model and dust_issue/04_proposal.md.",
+        help="fit dust1 with TopHat(0, 3) instead of dust2 * dust_ratio; "
+        "ignored with --continuum-only",
     )
     args = p.parse_args(argv)
 
@@ -726,10 +825,7 @@ def main(argv=None):
     if args.limit:
         tids = tids[: args.limit]
 
-    # Per-galaxy logzsol seed if the sample file carries one, else the old -1.0. The
-    # jitter is 2% of the prior range (+/-0.06 dex), so a seed 1.3 dex from the solution
-    # -- which -1.0 is for the continuum outliers -- starts every restart in the same
-    # wrong basin. Backward compatible: files without the column behave as before.
+    # Start logzsol at the sample's value when it has that column, else at -1.0.
     _z0 = d["logzsol"] if "logzsol" in d.files else np.full(len(d["target_ids"]), -1.0)
     seeds = {
         int(t): {"logmass": float(m), "eline_sigma": float(s), "logzsol": float(zz)}
@@ -739,9 +835,7 @@ def main(argv=None):
     fixed = dict(kv.split("=") for kv in args.fix)
     fixed = {k: float(v) for k, v in fixed.items()}
 
-    # Per-galaxy fixed values from a column of the sample npz. --fix is one value for the
-    # whole sample; this is for "fix logzsol at the value ANOTHER code measured for THIS
-    # galaxy". Matched by TARGETID, never by row position.
+    # Per galaxy fixed values from sample npz columns, matched by TARGETID.
     persist = {}
     for k in (s.strip() for s in args.fix_from_sample.split(",") if s.strip()):
         if k not in d.files:
@@ -770,8 +864,7 @@ def main(argv=None):
 
     if args.workers > 1:
         results = {}
-        # fork copies only the calling thread; torch/BLAS mutexes held by the
-        # parent's other threads stay locked forever in the child -> futex deadlock.
+        # spawn, not fork. A forked child can deadlock on locks held by the parent's threads.
         with ProcessPoolExecutor(
             max_workers=args.workers, mp_context=mp.get_context("spawn")
         ) as ex:
@@ -840,10 +933,9 @@ def main(argv=None):
     summary = []
 
     def par(rec, name, default=np.nan):
-        """A parameter's value whether it was free, --fix'd, or frozen in the template.
+        """Return a parameter's value whether it was free, fixed or a frozen hyperparameter.
 
-        Order: theta_dict (free) -> rec['fixed'] (--fix / --fix-from-sample) ->
-        rec['hyper_values'] (frozen PSD hypers) -> default.
+        Looks in ``theta_dict``, then ``fixed``, then ``hyper_values``, else ``default``.
         """
         td = rec.get("theta_dict") or {}
         if name in td:
@@ -872,11 +964,8 @@ def main(argv=None):
                 "cont_per_pix": rec["stats_tight"]["chi2_per_pix_cont"],
                 "rms_all": float(np.sqrt(np.nanmean((v - 1) ** 2))),
                 "rms_balmer": float(np.sqrt(np.nanmean((b - 1) ** 2))),
-                # Every parameter goes through par(): theta_dict holds only what THIS fit was
-                # free to move, and which parameters those are changes with --continuum-only,
-                # --freeze-hypers and --fix-from-sample. An unguarded lookup KeyErrors AFTER
-                # all the per-galaxy pkls are written, which has now happened twice
-                # (eline_sigma, then logzsol). Do not add a bare theta_dict[...] here.
+                # Use par for every parameter. Which are free depends on the flags, and a
+                # missing key here fails after all the fits are written.
                 "eline_sigma": par(rec, "eline_sigma"),
                 "logzsol": par(rec, "logzsol"),
                 "logmass": par(rec, "logmass"),

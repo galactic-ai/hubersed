@@ -85,7 +85,7 @@ convention = "numpy"
 [tool.ruff.lint.per-file-ignores]
 "experiments/*" = ["D"]  # header format comes in Phase 4
 # moved from bin/prospector, docstring pass pending
-"src/hubersed/fitting/{run_map_fits_outliers,run_dynesty_outliers,save_results}.py" = ["D"]
+"src/hubersed/fitting/{run_dynesty_outliers,save_results}.py" = ["D"]
 "src/hubersed/mocks/{make_model_seds,get_stochastic_priors}.py" = ["D"]
 "src/hubersed/detect/{agn_star_screen,build_cont_outlier_sample,contam_screens,ensemble_flow_seeds,ensemble_flow_stats,flow_null_and_reverse,get_latent_space,get_outliers,get_outliers_flow,outliers,simbad_screen,train_DESI_noise}.py" = ["D"]
 "src/hubersed/plotting/plot_latent_umap_score.py" = ["D"]
