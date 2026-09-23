@@ -557,7 +557,7 @@ def train(
 
                 # Accumulate the training losses.
                 detailed_loss[0][which][epoch_] += tuple(
-                    l.item() if hasattr(l, "item") else 0 for l in losses
+                    loss.item() if hasattr(loss, "item") else 0 for loss in losses
                 )
                 n_sample += batch_size
 
@@ -587,7 +587,7 @@ def train(
                     )
                     # Accumulate the validation losses.
                     detailed_loss[1][which][epoch_] += tuple(
-                        l.item() if hasattr(l, "item") else 0 for l in losses
+                        loss.item() if hasattr(loss, "item") else 0 for loss in losses
                     )
                     n_sample += batch_size
 

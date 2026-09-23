@@ -290,9 +290,9 @@ def main(argv=None):
 
     score = {t: 0.5 * (pct[TAGS[0]][t] + pct[TAGS[1]][t]) for t in keep}
     top = sorted(keep, key=lambda t: score[t])[: args.n_targets]
-    I = np.array([iv[t] for t in top])
+    rows = np.array([iv[t] for t in top])
 
-    ns = S["NARROW_SIGMA"][I].astype(np.float64)
+    ns = S["NARROW_SIGMA"][rows].astype(np.float64)
     ns = np.where(np.isfinite(ns) & (ns > 0), ns, 100.0)  # MAP seed only; 100 km/s fallback
 
     outp = Path(args.out)
@@ -300,13 +300,13 @@ def main(argv=None):
     np.savez(
         outp,
         target_ids=np.array(top, np.int64),
-        z=zvac[I].astype(np.float64),
-        logmstar=S["LOGMSTAR"][I].astype(np.float64),
+        z=zvac[rows].astype(np.float64),
+        logmstar=S["LOGMSTAR"][rows].astype(np.float64),
         narrow_sigma=ns,
-        dn4000=S["DN4000"][I].astype(np.float64),
-        halpha_ew=S["HALPHA_EW"][I].astype(np.float64),
-        snr_halpha=S["HALPHA_AMP"][I].astype(np.float64)
-        * np.sqrt(np.maximum(S["HALPHA_AMP_IVAR"][I], 0)),
+        dn4000=S["DN4000"][rows].astype(np.float64),
+        halpha_ew=S["HALPHA_EW"][rows].astype(np.float64),
+        snr_halpha=S["HALPHA_AMP"][rows].astype(np.float64)
+        * np.sqrt(np.maximum(S["HALPHA_AMP_IVAR"][rows], 0)),
         logp_cont10=np.array([lp[TAGS[0]][t] for t in top]),
         logp_cont15=np.array([lp[TAGS[1]][t] for t in top]),
         pct_cont10=np.array([pct[TAGS[0]][t] for t in top]),

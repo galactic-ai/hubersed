@@ -260,8 +260,8 @@ def candidate_pool(flow_dir, vac):
     M = fits.open(vac)["METADATA"].data
     iv = {int(t): i for i, t in enumerate(M["TARGETID"])}
     sel = sorted(t for t in common if t in iv)
-    I = np.array([iv[t] for t in sel])
-    return sel, M["RA"][I].astype(float), M["DEC"][I].astype(float)
+    rows = np.array([iv[t] for t in sel])
+    return sel, M["RA"][rows].astype(float), M["DEC"][rows].astype(float)
 
 
 def self_test():
