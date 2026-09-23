@@ -8,12 +8,14 @@ from spender.flow import NeuralDensityEstimator
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import trange
 
+from hubersed.paths import PATHS
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # ----------------------------------------------------------------------
 # Latents from single file
 # ----------------------------------------------------------------------
-blob = torch.load("../desi_noise_spender_10latent_space.pt", map_location="cpu")
+blob = torch.load(PATHS["DATA"] / "desi_noise_spender_10latent_space.pt", map_location="cpu")
 theta = blob["latents"].float()  # [N, 10]
 A = blob["A"].float()  # [N, 1]
 
