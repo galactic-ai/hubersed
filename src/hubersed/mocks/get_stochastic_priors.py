@@ -100,7 +100,7 @@ def main(argv=None):
     # tau_dyn truncated normal min 0.005 max 0.2 mu 0.01 sigma 0.02
     tau_dyns = sample_truncated_normal(0.01, 0.02, 0.005, 0.2, size=n, rng=rng)
 
-    # n uniform -1 to 0.4 (dust_index)
+    # dust_index uniform -2.5 to 0.4, the same range as the fit prior (sps/config.py)
     ns = sample_uniform(-2.5, 0.4, size=n, rng=rng)
 
     # tau_dust,2 truncated normal min 0.0 max 4 mu 0.3 sigma 1.0

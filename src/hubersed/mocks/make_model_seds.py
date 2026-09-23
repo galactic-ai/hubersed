@@ -140,7 +140,7 @@ def build_base_template(nebular):
         "isfree": True,
         "init": np.float64(0.0),
         "units": "power-law multiplication of Calzetti",
-        "prior": priors.TopHat(mini=-1.0, maxi=0.4),
+        "prior": priors.TopHat(mini=-2.5, maxi=0.4),
     }
 
     # velocity dispersion
