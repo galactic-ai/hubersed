@@ -20,11 +20,11 @@ import numpy as np
 from prospect.fitting import lnprobfn
 
 from hubersed.conversion import flambda_to_maggies, ivar_flambda_to_ivar_maggies
-from hubersed.fitting.config import build_continuum_model, build_full_cue_model, build_full_model
 from hubersed.io.desi import load_by_index, tids_to_indices
 from hubersed.paths import PATHS
-from hubersed.prospector import parameter_file as P
-from hubersed.prospector.rebin import common_obs_edges
+from hubersed.sps import parameter_file as P
+from hubersed.sps.config import build_continuum_model, build_full_cue_model, build_full_model
+from hubersed.sps.rebin import common_obs_edges
 
 DATA_PATH = PATHS["DATA"]
 RESULTS_PATH = PATHS["RESULTS"]
@@ -119,7 +119,7 @@ def _lsf_sigma_kms():
     Passing this to prospect is safe because ``build_sps`` sets the library resolution to
     zero, so prospect does not refuse data that is sharper than the templates.
     """
-    from hubersed.prospector.lsf import C_KMS, desi_resolution
+    from hubersed.sps.lsf import C_KMS, desi_resolution
 
     R = desi_resolution(WAVE_OBS)
     return (C_KMS / (2.355 * R)).astype(np.float64)

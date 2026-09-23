@@ -146,7 +146,7 @@ def _parse_line_file(filepath):
 
 
 def load_lines():
-    """Load the emission and absorption line lists shipped in ``prospector/data``.
+    """Load the emission and absorption line lists shipped in ``sps/data``.
 
     Returns
     -------

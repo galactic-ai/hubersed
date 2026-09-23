@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from hubersed.prospector import rebin
+from hubersed.sps import rebin
 
 # DESI-like pixels and a coarser constant-velocity grid that does not line up with them
 X = np.linspace(3600.0, 9824.0, 7781)

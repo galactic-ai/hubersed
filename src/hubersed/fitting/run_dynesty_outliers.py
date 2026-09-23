@@ -24,17 +24,17 @@ from prospect.sources import SSPBasis
 
 from hubersed.conversion import flambda_to_maggies, ivar_flambda_to_ivar_maggies
 from hubersed.fitting.chi2 import WAVE_OBS
-from hubersed.fitting.config import build_continuum_model, build_full_cue_model
 from hubersed.io.desi import load_by_index, tids_to_indices
 from hubersed.paths import PATHS
-from hubersed.prospector.lsf import C_KMS, desi_resolution
-from hubersed.prospector.parameter_file import (
+from hubersed.sps.config import build_continuum_model, build_full_cue_model
+from hubersed.sps.lsf import C_KMS, desi_resolution
+from hubersed.sps.parameter_file import (
     build_cue_sps,
     build_obs,
     build_sps,
     mask_spectral_lines,
 )
-from hubersed.prospector.utils import universe_age_gyr
+from hubersed.sps.utils import universe_age_gyr
 
 LSF = (C_KMS / (2.355 * desi_resolution(WAVE_OBS))).astype(np.float64)
 FROZEN_HYPERS = {"sigma_reg": 1.5, "sigma_dyn": 0.1, "tau_eq": 2.5, "tau_dyn": 0.025}

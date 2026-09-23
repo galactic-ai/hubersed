@@ -19,8 +19,8 @@ from prospect.observation import Spectrum
 from tqdm.auto import tqdm
 
 from hubersed.paths import PATHS
-from hubersed.prospector.lsf import DESI_WAV, build_desi_resolution_matrix
-from hubersed.prospector.utils import make_stochastic_agebins
+from hubersed.sps.lsf import DESI_WAV, build_desi_resolution_matrix
+from hubersed.sps.utils import make_stochastic_agebins
 
 # ignore warnings from zero ivar
 warnings.filterwarnings("ignore", category=RuntimeWarning)

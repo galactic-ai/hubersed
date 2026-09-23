@@ -10,7 +10,7 @@ from hubersed.mocks.distributions import (
     sample_uniform,
 )
 from hubersed.paths import PATHS
-from hubersed.prospector.utils import universe_age_gyr
+from hubersed.sps.utils import universe_age_gyr
 
 
 def parse_args(argv=None):

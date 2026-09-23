@@ -12,7 +12,7 @@ from prospect.models.sedmodel import HyperSpecModel
 from prospect.models.templates import TemplateLibrary, adjust_stochastic_params
 from prospect.models.transforms import dustratio_to_dust1
 
-from hubersed.prospector.utils import make_stochastic_agebins, universe_age_gyr
+from hubersed.sps.utils import make_stochastic_agebins, universe_age_gyr
 
 # ── Default initial values ───────────────────────────────────────────────────
 DEFAULT_SET_VALS = {

@@ -94,7 +94,7 @@ def test_map_objective_is_unbounded_in_the_sigma_funnel():
 
 def test_continuum_model_is_15_free_with_hypers_frozen():
     pytest.importorskip("fsps")
-    from hubersed.fitting.config import build_continuum_model
+    from hubersed.sps.config import build_continuum_model
 
     model, tmpl = build_continuum_model(0.0187021)
     labels = model.theta_labels()

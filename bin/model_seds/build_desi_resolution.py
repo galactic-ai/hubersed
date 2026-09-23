@@ -8,7 +8,7 @@ import numpy as np
 from tqdm import tqdm
 
 from hubersed.paths import PATHS
-from hubersed.prospector.lsf import (
+from hubersed.sps.lsf import (
     C_KMS,
     DESI_WAV,
     coadd_url,

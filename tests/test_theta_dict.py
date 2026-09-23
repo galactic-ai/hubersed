@@ -11,7 +11,7 @@ Z = 0.1
 def model(request):
     """Full MAP model with FSPS or Cue nebular emission, seeded from the continuum init."""
     pytest.importorskip("fsps")
-    from hubersed.fitting.config import (
+    from hubersed.sps.config import (
         build_continuum_model,
         build_full_cue_model,
         build_full_model,
