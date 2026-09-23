@@ -35,6 +35,7 @@ from scipy.signal import medfilt
 
 from hubersed.conversion import DESI_FLAM, ivar_to_maggies, to_maggies
 from hubersed.fitting.chi2 import WAVE_OBS
+from hubersed.fitting.result import MapFitResult
 from hubersed.io.desi import load_spectrum
 from hubersed.paths import PATHS
 from hubersed.plotting.sfh import sfh_figure
@@ -358,11 +359,9 @@ def freeze_hypers(template, z):
 
 
 def warm_theta(model, path, z, th0):
-    src = dict(
-        zip(
-            *(lambda r: (r["labels"], np.asarray(r["theta"], float)))(pickle.load(open(path, "rb")))
-        )
-    )
+    with open(path, "rb") as f:
+        res = MapFitResult.from_record(pickle.load(f))
+    src = dict(zip(res.labels, res.vector(), strict=True))
     src.setdefault("tau_in", universe_age_gyr(z) * (1 - 1e-6))
     for k, v in FROZEN_HYPERS.items():
         src.setdefault(k, v)
@@ -506,7 +505,7 @@ def fit_one(
 
     sp, stats = chi2_parts(model, best.x, obs, sps_use, line_pix)
     _, stats_tight = chi2_parts(model, best.x, obs, sps_use, tight)
-    td = theta_dict(model, best.x)
+    td = MapFitResult(tid, float(z), theta_dict(model, best.x), tuple(model.theta_labels())).theta
     lr = line_ratios(WAVE_OBS, flux, sp, z, mask, lines)
     sfh = sfh_from_theta(model, best.x)
 
