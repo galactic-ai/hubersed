@@ -166,7 +166,7 @@ def restframe_weight(model, mu=5000, sigma=2000, amp=30):
 
 
 def similarity_restframe(
-    instrument, model, s=None, slope=1.0, individual=False, wid=5, bound=[4000, 7000]
+    instrument, model, s=None, slope=1.0, individual=False, wid=5, bound=(4000, 7000)
 ):
     """Penalise pairs whose latent distance and decoded spectrum distance disagree.
 
@@ -187,7 +187,7 @@ def similarity_restframe(
         Return the pairwise terms instead of the total loss.
     wid : float
         Width of the tolerated band of distance differences.
-    bound : list of float
+    bound : tuple of float
         Lower and upper rest-frame wavelength of the normalisation window.
 
     Returns
@@ -502,7 +502,7 @@ def train(
                 print(f"====> Epoch: {epoch - 1}")
                 print("TRAINING Losses:", losses)
                 print("VALIDATION Losses:", vlosses)
-        except:  # OK if losses are empty
+        except Exception:  # OK if losses are empty
             pass
 
     if outfile is None:
