@@ -21,6 +21,7 @@ import numpy as np
 from prospect.fitting import lnprobfn
 
 from hubersed.conversion import DESI_FLAM, ivar_to_maggies, to_maggies
+from hubersed.fitting.result import MapFitResult
 from hubersed.io.desi import load_by_index, tids_to_indices
 from hubersed.paths import PATHS
 from hubersed.sps import parameter_file as P
@@ -154,10 +155,9 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
 
     Notes
     -----
-    ``theta_labels`` holds ``free_params``, one name per parameter, while ``theta`` has
-    one entry per value. ``logsfr_ratios`` has 9 values, so the two lists do not line up
-    by position. Read values from ``theta_dict``. ``tests/test_theta_dict.py`` shows the
-    shift.
+    ``theta_labels`` is ``model.theta_labels()``, one label per entry of ``theta``, with
+    vector parameters named ``logsfr_ratios_1`` and so on. ``MapFitResult`` checks it
+    against ``theta_dict``.
     """
     try:
         spec, ivar, redshift, tid = load_by_index(gidx)
@@ -230,9 +230,12 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
     resid = (obs_full[0].flux[m] - sp[m]) / obs_full[0].uncertainty[m]
     chi2 = float(np.nansum(resid**2))
     ndof = int(m.sum()) - len(theta_map)
-    theta_dict = {
-        k: np.asarray(theta_map[v], dtype=np.float32) for k, v in fmodel.theta_index.items()
-    }  # keyed by name (multi-elem safe)
+    res = MapFitResult(
+        int(tid),
+        float(redshift),
+        {k: np.asarray(theta_map[v], dtype=np.float32) for k, v in fmodel.theta_index.items()},
+        tuple(fmodel.theta_labels()),
+    )
     return dict(
         gidx=gidx,
         id=tid,
@@ -242,9 +245,9 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
         ndof=ndof,
         chi2_red=chi2 / ndof,
         npix=int(m.sum()),
-        theta=np.asarray(theta_map, dtype=np.float32),  # flat vector
-        theta_labels=list(fmodel.free_params),
-        theta_dict=theta_dict,  # {param_name: value(s)}
+        theta=res.vector().astype(np.float32),
+        theta_labels=list(res.labels),
+        theta_dict=res.theta,
         model=np.asarray(sp, dtype=np.float32),  # MAP model spectrum (full grid)
         flux=np.asarray(obs_full[0].flux, dtype=np.float32),
         unc=np.asarray(obs_full[0].uncertainty, dtype=np.float32),
