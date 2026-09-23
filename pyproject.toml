@@ -72,7 +72,7 @@ known_first_party = ["hubersed"]
 [tool.deptry.package_module_name_map]
 astro-prospector = ["prospect"]
 astro-sedpy = ["sedpy"]
-astro-cue = ["cue"]
+astro-cue = ["cuejax"]
 umap-learn = ["umap"]
 
 [tool.ruff]
