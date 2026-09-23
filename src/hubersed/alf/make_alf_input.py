@@ -52,11 +52,6 @@ def main(argv=None):
     p.add_argument("--tid", type=int, default=39633140817331167)
     p.add_argument("-o", "--out", required=True)
     p.add_argument(
-        "--observed",
-        action="store_true",
-        help="write observed-frame lambda instead of de-redshifting",
-    )
-    p.add_argument(
         "--intervals",
         default=DEFAULT_INTERVALS,
         help="interval edges in microns, as l1,l2,l1,l2. The default covers "
@@ -66,8 +61,8 @@ def main(argv=None):
     p.add_argument(
         "--mask",
         default="5876,5913",
-        help="rest-frame Angstrom edges to set to wgt=0, as l1,l2,l1,l2, even with "
-        "--observed. The default is Na D, alf's NaD index band 5876.875-5909.375 A "
+        help="rest-frame Angstrom edges to set to wgt=0, as l1,l2,l1,l2. "
+        "The default is Na D, alf's NaD index band 5876.875-5909.375 A "
         "(air) padded about 2 A for vacuum. Na D picks up interstellar absorption "
         "(Conroy, Graves and van Dokkum 2014) and Beverage et al. 2025 mask it. "
         "Pass '' to disable.",
@@ -88,8 +83,10 @@ def main(argv=None):
     # DESI LSF as a velocity sigma in km/s, as in run_map_fits_outliers
     ires = (C_KMS / (2.355 * desi_resolution(WAVE_OBS))).astype(float)
 
-    lam = WAVE_OBS if a.observed else WAVE_OBS / (1.0 + z)
-    frame = "observed" if a.observed else f"rest (de-redshifted by z={z:.7f})"
+    # alf reads the interval edges as rest frame and shifts them by its fitted velz
+    # (func.f90:96-97), so the spectrum is written de-redshifted.
+    lam = WAVE_OBS / (1.0 + z)
+    frame = f"rest (de-redshifted by z={z:.7f})"
 
     ed = [float(v) for v in a.intervals.split(",")]
     assert len(ed) % 2 == 0, "--intervals needs an even number of edges"
@@ -108,8 +105,7 @@ def main(argv=None):
     # Bad pixels get wgt=0 instead of being dropped, so the wavelength grid stays contiguous.
     wgt = good[keep].astype(float)
 
-    # Masks are in the rest frame, even with --observed.
-    rest = WAVE_OBS[keep] / (1.0 + z)
+    rest = lam[keep]
     med = [float(v) for v in a.mask.split(",") if v.strip()]
     assert len(med) % 2 == 0, "--mask needs an even number of edges"
     masked = []
