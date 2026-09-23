@@ -1,3 +1,9 @@
+"""Flag DESI galaxies that an IsolationForest trained on mock latents scores as outliers.
+
+A DESI galaxy is an outlier when its score is at or below a low quantile of the mock scores.
+Run it as ``python -m hubersed.detect.get_outliers``.
+"""
+
 import argparse
 
 import h5py
@@ -15,6 +21,27 @@ torch.set_default_dtype(torch.float32)
 
 
 def load_latents(path):
+    """Read latents, their TARGETIDs and the S/N cut from a latent h5 file.
+
+    Parameters
+    ----------
+    path : str or Path
+        Path to the h5 file.
+
+    Returns
+    -------
+    lat : numpy.ndarray
+        Latents as float32.
+    tid : numpy.ndarray
+        TARGETID of each latent row as int64.
+    snr_min : object or None
+        The file's ``snr_min`` attribute, or None if it is missing.
+
+    Raises
+    ------
+    KeyError
+        If the file has no ``target_ids`` dataset.
+    """
     with h5py.File(path, "r") as f:
         lat = np.asarray(f["latents"], dtype=np.float32)
         if "target_ids" not in f:
@@ -28,6 +55,11 @@ def load_latents(path):
 
 
 def main():
+    """Fit the IsolationForest on mock latents, score DESI and save the outlier TARGETIDs.
+
+    Options are read from the command line. Input names are resolved in the data directory
+    and the output name in the results directory.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "--desi",
@@ -59,7 +91,7 @@ def main():
     )
     assert desi_latents.shape[1] == p_l.shape[1], "latent dim mismatch between DESI and mock files!"
 
-    # IsolationForest: fit on mocks (normal), score DESI
+    # Fit on the mocks, which stand for normal galaxies, then score DESI.
     scaler = StandardScaler()
     p_l_scaled = scaler.fit_transform(p_l)
     s_l_scaled = scaler.transform(desi_latents)
