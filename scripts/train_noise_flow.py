@@ -121,7 +121,7 @@ for epoch in trange(n_epoch, desc="Training NDE", unit="epochs"):
     # ----------------- valid -----------------
     valid_loss = []
     with torch.no_grad():
-        for k, batch in enumerate(valid_data_loader):
+        for batch in valid_data_loader:
             latent_batch, A_batch = [b.to(device) for b in batch]
             loss = -NDE_theta.log_prob(latent_batch, context=A_batch).mean()
             valid_loss.append(loss.item())

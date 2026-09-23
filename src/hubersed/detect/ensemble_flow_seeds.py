@@ -109,7 +109,7 @@ def train_one(seed, mock_s, dev, a):
     )
 
     tr_last = vl = np.nan
-    for ep in range(a.epochs):
+    for _ in range(a.epochs):
         nde.train()
         tl = []
         for b in torch.split(torch.from_numpy(rng.permutation(Xtr.shape[0])), a.batch):
