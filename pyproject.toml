@@ -55,7 +55,11 @@ astro-cue = { git = "https://github.com/galactic-ai/cue", rev = "cuejax" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-W error::DeprecationWarning"
+filterwarnings = [
+    "error::DeprecationWarning",
+    # jaxopt warns on import; prospect's nebssp_basis swallows the error and then lacks cuejax
+    "ignore:JAXopt is no longer maintained:DeprecationWarning",
+]
 markers = [
     "fsps: needs python-fsps and SPS_HOME (builds prospect models or SPS)",
     "data: reads files under data/",
