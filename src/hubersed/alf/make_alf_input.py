@@ -31,6 +31,9 @@ from hubersed.prospector.lsf import C_KMS, desi_resolution
 
 # alf's model wavelength range (alf_vars.f90:127-128)
 ALF_LAM_MIN, ALF_LAM_MAX = 3600.0, 11000.0
+# Fitted intervals in microns. 0.64-0.80 is left out because the continuum polynomial
+# over-fits TiO there (Beverage et al. 2025, arXiv:2407.02556).
+DEFAULT_INTERVALS = "0.40,0.47,0.47,0.55,0.55,0.64,0.80,0.88"
 
 
 def main(argv=None):
@@ -56,11 +59,10 @@ def main(argv=None):
     )
     p.add_argument(
         "--intervals",
-        default="0.40,0.47,0.47,0.55,0.55,0.70,0.70,0.88",
+        default=DEFAULT_INTERVALS,
         help="interval edges in microns, as l1,l2,l1,l2. The default covers "
-        "4000-8800 A, close to the 3700-8850 A that Choi et al. 2019 fit with alf. "
-        "Beverage et al. 2025 leave out 6400-8000 A because the continuum "
-        "polynomial over-fits TiO there. At most 10 intervals.",
+        "4000-6400 and 8000-8800 A. It leaves out 6400-8000 A, where the continuum "
+        "polynomial over-fits TiO, as Beverage et al. 2025 do. At most 10 intervals.",
     )
     p.add_argument(
         "--mask",
