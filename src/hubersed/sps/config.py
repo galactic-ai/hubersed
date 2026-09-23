@@ -188,8 +188,7 @@ def build_full_model(continuum_template, theta_best_cont, cont_model):
     clamps values outside it, so a wider prior would have flat ends.
     ``tests/test_fsps_nebular_grid.py`` checks this against the grid files.
 
-    ``eline_sigma`` starts at 200 km/s here and at 100 km/s in the Cue model. This was not
-    intended, and we plan to start both at 100 km/s.
+    ``eline_sigma`` starts at 100 km/s, as in the Cue model and the prospect template.
     """
     nebular_template = copy.deepcopy(TemplateLibrary["nebular"])
     full_template = copy.deepcopy(continuum_template)
@@ -242,7 +241,7 @@ def build_full_model(continuum_template, theta_best_cont, cont_model):
     full_template["eline_sigma"] = {
         "N": 1,
         "isfree": True,
-        "init": 200.0,
+        "init": 100.0,
         "units": "km/s",
         "prior": TopHat(mini=10.0, maxi=250.0),
     }
