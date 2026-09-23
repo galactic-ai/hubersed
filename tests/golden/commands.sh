@@ -27,7 +27,6 @@ ln -sf "$ROOT/data/desi_spectra/DESIchunk1024_10.pkl" "$OUT/_chunks/"
 uv run python -m hubersed.detect.get_latent_space "$OUT/_chunks" \
     data/checkpoints/spender_asc_run_10latent_zmax.pt "$OUT/latents.h5" --snr_min 3
 
-# Left out, already broken at 32ced0e: plot_sample_cutouts (missing module).
 for script in \
     "-m hubersed.alf.make_alf_input" "-m hubersed.alf.read_alf_sample" \
     experiments/2026-08-25_compare_alf_solar_scaled.py \
@@ -39,7 +38,7 @@ for script in \
     "-m hubersed.detect.flow_null_and_reverse" "-m hubersed.detect.get_latent_space" \
     "-m hubersed.detect.get_outliers" "-m hubersed.detect.get_outliers_flow" \
     "-m hubersed.detect.train_DESI_noise" \
-    bin/spender/noise/plot_latent_umap_score.py; do
+    "-m hubersed.plotting.plot_latent_umap_score"; do
     uv run python $script --help > /dev/null || { echo "smoke failed: $script"; exit 1; }
 done
 echo "golden outputs written to $OUT"

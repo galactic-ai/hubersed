@@ -180,7 +180,7 @@ def desi_resolution(wave):
 
     Notes
     -----
-    The calibration file is written by ``bin/model_seds/build_desi_resolution.py`` from the
+    The calibration file is written by ``scripts/build_desi_resolution.py`` from the
     resolution matrices of sampled targets. ``results/`` is not tracked by git, so the file
     must be rebuilt on a new machine. The function prints a line on every call.
     """
