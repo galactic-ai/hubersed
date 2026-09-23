@@ -1,31 +1,19 @@
-"""Read a directory of alf runs, check convergence, and compare to the Prospector fits.
+"""Read alf runs, check them, and compare their metallicity with Prospector MAP fits.
 
-    uv run python bin/prospector/read_alf_sample.py \
-        --alf-results ~/Astronomy_Research/alf/results \
-        --prospector results/cont_map_fits20
+Run ``uv run python -m hubersed.alf.read_alf_sample --alf-results $ALF_HOME/results``.
+Line numbers refer to alf commit 4ef7bb8.
 
-Why this exists rather than a notebook cell
--------------------------------------------
-Reading ``.mcmc`` by guessing the column offset produced a sign-flipped abundance pattern
-once already (``[Mg/Fe] = -0.21`` instead of ``+0.135``). The layout is fixed by
-``alf.f90:655``::
+Notes
+-----
+Each ``.mcmc`` row holds -2 ln P, the 46 parameters in str2arr.f90 order, and 6
+mass-to-light ratios (alf.f90:655-656). ``load_run`` checks this layout against the
+``.sum`` file, so a column offset fails loudly.
 
-    WRITE(12,...) -2.0*lp_emcee_in(j), pos_emcee_in(:,j), m2l, m2lmw
+[X/Fe] is taken per chain sample, as in alf's scripts/read_alf.py. Mg and Fe are
+correlated, so adding their marginal errors in quadrature would overstate the error.
 
-i.e. column 0 is -2 ln P, then the 46 free parameters in ``STR2ARR`` order, then
-``m2l`` (3) and ``m2lmw`` (3) = 53 columns. This module ASSERTS that alignment against
-values the ``.sum`` file reports independently before computing anything. Do not remove
-that assertion.
-
-Two further traps, both hit on the first run:
-
-* ``[X/Fe]`` must come from the CHAIN, not from the marginal errors. ``corr(Mg, FeH)``
-  is +0.62, so quadrature on the marginals gives 0.072 where the chain gives 0.044 --
-  1.9 sigma instead of 3.1 sigma. The difference is better constrained than either term.
-* Gelman-Rubin across emcee walkers is MISLEADING here. With ``facc ~ 0.1`` a walker
-  moves ~10 times in 100 production steps, so within-walker variance collapses and
-  R-hat blows up whether or not the ensemble is right. The valid check is whether the
-  ENSEMBLE is stationary: width ratio between chain halves near 1, and flat ln P.
+Convergence is judged on the whole ensemble by comparing the two halves of the chain.
+Per-walker Gelman-Rubin is not useful because walkers accept only a few percent of moves.
 """
 
 import argparse
@@ -35,7 +23,7 @@ from pathlib import Path
 
 import numpy as np
 
-# alf.f90:655 column order. First entry is -2 ln P, not a parameter.
+# .mcmc columns (alf.f90:655-656, str2arr.f90:25-75). Column 0 is -2 ln P.
 LABELS = [
     "m2lnP",
     "velz",
@@ -91,7 +79,7 @@ LABELS = [
     "MW_i",
     "MW_k",
 ]
-# .sum row order, from its own header comment
+# .sum rows (alf.f90:745-746). cl98 is the 97.5 percent row.
 SUM_ROWS = [
     "mean",
     "chi2min",
@@ -106,18 +94,35 @@ SUM_ROWS = [
 ]
 ELEMENTS = ["a", "C", "N", "Na", "Mg", "Si", "Ca", "Ti"]
 
-# Conroy+2018 Sec 2.1.2 library correction, replicated from
-# alf/scripts/read_alf.py:251-320 (m11 default tables). Applies to a (O proxy),
-# Mg, and the Ca~Ti~Si group; C, N, Na are "group2" — correction is ZERO by design.
+# Library correction tables from alf's scripts/read_alf.py:254-277 (m11). They apply to
+# a (the O proxy), Mg, and Ca, Ti, Si. C, N and Na get none (read_alf.py:304).
 _LIB_FEH = [-1.6, -1.4, -1.2, -1.0, -0.8, -0.6, -0.4, -0.2, 0.0, 0.2]
 _LIB_OFE = [0.6, 0.5, 0.5, 0.4, 0.3, 0.2, 0.2, 0.1, 0.0, 0.0]
 _LIB_MGFE = [0.4, 0.4, 0.4, 0.4, 0.34, 0.22, 0.14, 0.11, 0.05, 0.04]
 _LIB_CAFE = [0.32, 0.3, 0.28, 0.26, 0.26, 0.17, 0.12, 0.06, 0.0, 0.0]
-ERR_FLOOR = 0.1  # dex, Beverage-style abundance uncertainty floor
+ERR_FLOOR = 0.1  # dex, smallest half-width allowed for an [X/Fe] interval
 
 
 def _lib_corr(elem, zh_chain):
-    """Per-sample correction added to [X/Fe], interpolated in zH (extrapolated flat-ish)."""
+    """Return the library correction added to [X/Fe] for each chain sample.
+
+    Parameters
+    ----------
+    elem : str
+        Element label from LABELS.
+    zh_chain : ndarray
+        zH samples.
+
+    Returns
+    -------
+    ndarray or float
+        Correction in dex, or 0 for elements without one.
+
+    Notes
+    -----
+    ``np.interp`` holds the end values outside the table, while alf's read_alf.py
+    extrapolates linearly.
+    """
     if elem == "a":
         tab = _LIB_OFE
     elif elem == "Mg":
@@ -130,7 +135,25 @@ def _lib_corr(elem, zh_chain):
 
 
 def load_run(stem):
-    """Return (chain dict, sum dict) with the column alignment ASSERTED, not assumed."""
+    """Read one alf run and check its column layout.
+
+    Parameters
+    ----------
+    stem : str
+        Path to the run without the ``.mcmc`` or ``.sum`` suffix.
+
+    Returns
+    -------
+    chain : dict of str to ndarray
+        Chain samples keyed by LABELS.
+    summary : dict of str to dict
+        ``.sum`` rows keyed by SUM_ROWS, each keyed by LABELS.
+
+    Raises
+    ------
+    SystemExit
+        If the column count or the chain medians disagree with the ``.sum`` file.
+    """
     M = np.loadtxt(f"{stem}.mcmc")
     A = np.loadtxt(f"{stem}.sum")
     if M.shape[1] != len(LABELS):
@@ -141,9 +164,8 @@ def load_run(stem):
     C = {k: M[:, i] for i, k in enumerate(LABELS)}
     S = {r: dict(zip(LABELS, A[i])) for i, r in enumerate(SUM_ROWS)}
 
-    # The assertion. Compare the chain median to the .sum 50th percentile for five
-    # parameters the .sum reports independently. NB: do NOT include column 0 -- the
-    # .sum's CL rows carry chi2 = 0.0, which is what defeated the first attempt.
+    # Compare chain medians with the .sum 50th percentile. Column 0 is left out because
+    # the .sum percentile rows store 0.0 there.
     for k in ("sigma", "logage", "zH", "FeH", "Mg"):
         got, want = float(np.median(C[k])), float(S["cl50"][k])
         if not np.isclose(got, want, rtol=2e-3, atol=1e-3):
@@ -155,7 +177,20 @@ def load_run(stem):
 
 
 def convergence(C, nwalkers=256):
-    """Ensemble stationarity, which is the meaningful test for an emcee ensemble."""
+    """Check that the walker ensemble is stationary.
+
+    Parameters
+    ----------
+    C : dict of str to ndarray
+        Chain from ``load_run``.
+    nwalkers : int
+        Walkers in the run.
+
+    Returns
+    -------
+    dict
+        Width ratio of the two chain halves, lnP drift, fraction of moved steps, and ``ok``.
+    """
     n = len(C["m2lnP"])
     nc = n // nwalkers
     out = {"nsteps": nc, "nwalkers": nwalkers}
@@ -180,6 +215,18 @@ def convergence(C, nwalkers=256):
 
 
 def main(argv=None):
+    """Print the alf results table and optionally write npz files.
+
+    Parameters
+    ----------
+    argv : list of str, optional
+        Command-line arguments. By default they come from sys.argv.
+
+    Returns
+    -------
+    int
+        Exit status.
+    """
     p = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
     p.add_argument("--alf-results", required=True)
     p.add_argument("--tag", default="", help="only read runs whose stem ends with this")
@@ -209,7 +256,7 @@ def main(argv=None):
     if not stems:
         raise SystemExit(f"no .sum files under {a.alf_results}")
 
-    # Prospector logzsol, matched BY TARGETID parsed out of the alf filename.
+    # Prospector logzsol keyed by TARGETID
     pros = {}
     for f in glob.glob(str(Path(a.prospector) / "3*.pkl")):
         r = pickle.load(open(f, "rb"))
@@ -224,9 +271,8 @@ def main(argv=None):
         + f"{'pros_lgZ':>10}{'dZ':>8}"
     )
     for s in stems:
-        # Match by TARGETID, never by nickname or position (CLAUDE.md). DESI TARGETIDs
-        # are 17-18 digits; anything shorter in the filename is a log shorthand like
-        # "42580" and must NOT be matched against the catalogue.
+        # TARGETIDs have 16 or more digits. Shorter numbers in a file name are
+        # nicknames and are never matched.
         tid = next(
             (
                 int(t)
@@ -309,7 +355,7 @@ def main(argv=None):
     if a.sample_out:
         S = np.load(a.sample_in, allow_pickle=True)
         have = {r["tid"]: r["zH"] for r in rows if r["tid"] is not None}
-        # Subset and reorder the ORIGINAL sample BY TARGETID, never by row position.
+        # Subset the sample by TARGETID, not by row position.
         src = np.asarray(S["target_ids"], np.int64)
         idx = [i for i, t in enumerate(src) if int(t) in have]
         missing = sorted(have.keys() - {int(t) for t in src})

@@ -1,55 +1,22 @@
-"""Write one DESI spectrum in the input format alf expects.
+"""Write one DESI spectrum as an alf input file.
 
-    uv run python bin/prospector/make_alf_input.py --tid 39633140817331167 \
-        -o ~/alf/indata/desi_42580.dat
+Run ``uv run python -m hubersed.alf.make_alf_input --tid TARGETID -o $ALF_HOME/indata/NAME.dat``
+and then ``mpirun -np 8 $ALF_HOME/bin/alf.exe NAME``. Line numbers refer to alf commit 4ef7bb8.
 
-Then, on a machine with a Fortran compiler:
-
-    brew install gcc open-mpi                 # gfortran + mpifort
-    git clone https://github.com/cconroy20/alf ~/alf
-    export ALF_HOME=~/alf/                    # trailing slash matters
-    cd $ALF_HOME/src && make                  # Makefile defaults to F90=mpifort
-    mpirun -np 8 $ALF_HOME/bin/alf.exe desi_42580
-
-The 225 MB of SSPs and response functions are already in the repo's ``infiles/``;
-there is no separate model download.
-
-Format, verified from src/read_data.f90
----------------------------------------
-Header: any number of lines ``# l1 l2`` giving the wavelength intervals to fit,
-**in microns** (``read_data.f90:83-84`` multiplies by 1e4). At most ``nlint_max=10``.
-Body: ``lam flx err wgt ires`` (``read_data.f90:92-93``), with
-
-  lam   Angstroms, must satisfy 1e3 < lam < 5e4      (read_data.f90:96)
-  flx   arbitrary units -- alf divides out a polynomial, so absolute
-        flux calibration is irrelevant to it
-  err   same units as flx
-  wgt   0..1, hard-checked (read_data.f90:103). 0 = ignore this pixel.
-  ires  instrumental resolution, 0..1e4 (read_data.f90:109). km/s sigma;
-        setup.f90:489-497 interpolates it onto the SSP grid as a smoothing kernel.
-
-Frame
+Notes
 -----
-alf fits ``velz`` itself (``getvelz.f90``), and the prior is wide
-(``set_pinit_priors.f90:143,207`` give -1e3 to 1e5 km/s), so either frame works.
-This script de-redshifts by default, which is the usual convention and leaves velz
-to absorb only the small residual. The interval header is written in the same frame
-as the data.
+The file starts with one ``# l1 l2`` line per fitted interval, in microns, at most 10
+(read_data.f90:54-84). Each data row is ``lam flx err wgt ires``. The wavelength is vacuum
+Angstrom, the weight is between 0 and 1, and ires is the instrumental sigma in km/s
+(read_data.f90:93-107).
 
-What alf will and will not tell you
------------------------------------
-alf divides the data by a polynomial of order n = (lam_max - lam_min)/100 A before
-computing chi2 (Conroy+2018, ms.tex:854, verified) precisely so that dust and flux
-calibration do not enter -- they state fluxing is "rarely better than 5-10%"
-(ms.tex:1568-1570). So alf reports the ABUNDANCE PATTERN and is deliberately blind to
-the continuum. It cannot, by construction, speak to the 6500-9824 A continuum excess
-that carries ~51% of this galaxy's chi2 in the Prospector fits.
+alf fits the continuum shape away with a polynomial per interval, so it only sees the
+absorption features (alf manual section 1.1).
 
-The useful experiment is therefore two-step: get the abundance pattern from alf, then
-put that pattern into a model WITH the continuum restored and ask whether the residual
-shrinks. That is Choi+2019's "fit one thing, predict another" logic (they fit
-continuum-normalised stacks and predicted ugriz colours, galaxy_sed.tex:129-131)
-pointed at the continuum instead of the photometry.
+Pixels with wgt=0 still add a log jitter term to the fit_type=0 likelihood
+(func.f90:118-124), so heavy masking pulls the fitted jitter down.
+
+alf needs the VCJ SSP files from vcj_ssp.tar.gz
 """
 
 import argparse
@@ -62,12 +29,23 @@ from hubersed.conversion import flambda_to_maggies, ivar_flambda_to_ivar_maggies
 from hubersed.fitting.chi2 import WAVE_OBS, load_by_index, tids_to_indices
 from hubersed.prospector.lsf import C_KMS, desi_resolution
 
-# alf's model grid runs nstart=100..nend=5830 on its own lambda array, which
-# alf_vars.f90:127-128 annotates as 0.36 um .. 1.10 um.
+# alf's model wavelength range (alf_vars.f90:127-128)
 ALF_LAM_MIN, ALF_LAM_MAX = 3600.0, 11000.0
 
 
 def main(argv=None):
+    """Write the alf input file for one TARGETID.
+
+    Parameters
+    ----------
+    argv : list of str, optional
+        Command-line arguments. By default they come from sys.argv.
+
+    Returns
+    -------
+    int
+        Exit status.
+    """
     p = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
     p.add_argument("--tid", type=int, default=39633140817331167)
     p.add_argument("-o", "--out", required=True)
@@ -79,22 +57,19 @@ def main(argv=None):
     p.add_argument(
         "--intervals",
         default="0.40,0.47,0.47,0.55,0.55,0.70,0.70,0.88",
-        help="flat list of interval edges in MICRONS, l1,l2,l1,l2,... "
-        "Default is four intervals over 4000-8800 A, in the spirit of "
-        "the 3700-8850 A range Choi+2019 used (galaxy_sed.tex:131). "
-        "alf caps this at nlint_max=10 intervals.",
+        help="interval edges in microns, as l1,l2,l1,l2. The default covers "
+        "4000-8800 A, close to the 3700-8850 A that Choi et al. 2019 fit with alf. "
+        "Beverage et al. 2025 leave out 6400-8000 A because the continuum "
+        "polynomial over-fits TiO there. At most 10 intervals.",
     )
     p.add_argument(
         "--mask",
         default="5876,5913",
-        help="flat list of REST-FRAME Angstrom edges l1,l2,l1,l2,... set to "
-        "wgt=0. Applied in the rest frame even under --observed. Default "
-        "is Na D: the allindices.dat NaD feature band 5876.875-5909.375 "
-        "(air), padded ~2 A to cover the air-to-vacuum offset. Masked "
-        "because Na I 5895 is 'well-known to be affected by' the ISM "
-        "(CvD14 ms.tex:879-882) and Beverage+2025 masks it "
-        "(suspense_abundances.tex:214) -- alf would read it as a stellar "
-        "Na abundance. Pass '' to disable.",
+        help="rest-frame Angstrom edges to set to wgt=0, as l1,l2,l1,l2, even with "
+        "--observed. The default is Na D, alf's NaD index band 5876.875-5909.375 A "
+        "(air) padded about 2 A for vacuum. Na D picks up interstellar absorption "
+        "(Conroy, Graves and van Dokkum 2014) and Beverage et al. 2025 mask it. "
+        "Pass '' to disable.",
     )
     a = p.parse_args(argv)
 
@@ -108,8 +83,7 @@ def main(argv=None):
     good = (iv > 0) & np.isfinite(flux)
     err = np.where(good, 1.0 / np.sqrt(np.where(iv > 0, iv, np.inf)), 1.0)
 
-    # DESI LSF as a velocity sigma, the same quantity run_map_fits_outliers feeds
-    # prospect as Spectrum(resolution=...): C_KMS / (2.355 * R).
+    # DESI LSF as a velocity sigma in km/s, as in run_map_fits_outliers
     ires = (C_KMS / (2.355 * desi_resolution(WAVE_OBS))).astype(float)
 
     lam = WAVE_OBS if a.observed else WAVE_OBS / (1.0 + z)
@@ -129,40 +103,30 @@ def main(argv=None):
     if not keep.any():
         raise SystemExit("no pixels survive the interval + model-range cut")
 
-    # wgt is a hard 0..1 mask (read_data.f90:103). Bad pixels go to 0 rather than
-    # being dropped, so the wavelength grid stays contiguous.
+    # Bad pixels get wgt=0 instead of being dropped, so the wavelength grid stays contiguous.
     wgt = good[keep].astype(float)
 
-    # Do NOT write flx=0 at bad pixels. alf's own rms diagnostic (func.f90:150) is
-    # SQRT(SUM((flx/mflx-1)**2)/(i2-i1+1)) with NO weight term, so every zero-flux pixel
-    # contributes exactly 1 and the printed rms becomes sqrt(masked fraction). Measured
-    # on the first run: reported 24.9 / 32.0 / 62.2 % against sqrt(frac) of
-    # 24.8 / 31.7 / 62.2 %, i.e. the diagnostic was reporting the mask, not the fit.
-    # The chi2 is unaffected -- wgt=0 sends err to huge_number (alf.f90:315-317) -- so
-    # this only repairs the diagnostic. Fill with a local median instead.
-
-    # line masks, always in the rest frame: --observed changes the output column, not
-    # where a stellar feature physically sits.
+    # Masks are in the rest frame, even with --observed.
     rest = WAVE_OBS[keep] / (1.0 + z)
     med = [float(v) for v in a.mask.split(",") if v.strip()]
     assert len(med) % 2 == 0, "--mask needs an even number of edges"
     masked = []
     for m1, m2 in zip(med[::2], med[1::2]):
         sel = (rest >= m1) & (rest <= m2)
-        # 0 here means the window fell outside the fitted intervals or the frame is
-        # wrong -- alf would then happily fit a contaminated line as an abundance.
+        # A count of 0 means the window missed the fitted intervals.
         masked.append((m1, m2, int(sel.sum())))
         wgt[sel] = 0.0
 
+    # Bad pixels get interpolated flux, not 0. alf's printed rms has no weight term
+    # (func.f90:152-153), so zeros would make it report the masked fraction.
     fill = np.copy(flux)
     if (~good).any() and good.any():
         fill[~good] = np.interp(np.flatnonzero(~good), np.flatnonzero(good), flux[good])
     flx = fill[keep]
     er = np.where(good, err, np.nanmax(err[good]) * 1e3)[keep]
 
-    # alf ships bin/ doc/ infiles/ scripts/ src/ subjobs/ and NOT indata/, results/ or
-    # models/, but read_data.f90:41 reads indata/ and alf.f90:600 writes OUTDIR='results/'
-    # (alf_vars.f90:12). Create them, or the run dies after the MCMC rather than before it.
+    # alf's repo has no indata/ or results/, but alf.exe reads indata/ and writes results/
+    # (read_data.f90:42, alf.f90:600). models/ is used by alf's helper programs.
     out_path = Path(a.out).expanduser()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if out_path.parent.name == "indata":
@@ -194,7 +158,7 @@ def main(argv=None):
     print(f"  ires {ires[keep].min():.1f} - {ires[keep].max():.1f} km/s")
     print(f"  median S/N: {np.median(snr):.1f} /pixel, {np.median(snr) / np.sqrt(dl):.1f} /A")
     print("\n  alf's published mock tests span S/N = 20, 30, 50, 100 per A")
-    print("  (Conroy+2018 sec 3.2, ms.tex:995-1053).")
+    print("  (Conroy et al. 2018, section 3.2.2).")
     print("\n  next:")
     print(f"    cd $ALF_HOME/src && make")
     print(f"    mpirun -np 8 $ALF_HOME/bin/alf.exe {out_path.stem} <tag>")

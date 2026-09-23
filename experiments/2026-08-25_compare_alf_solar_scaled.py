@@ -1,35 +1,25 @@
-"""Beverage+2025 discriminator: does alf's metallicity move toward Prospector's when
-alf is forced solar-scaled?
+"""Does alf's metallicity move toward Prospector's when alf is forced solar-scaled?
 
-    uv run python bin/prospector/compare_alf_solar_scaled.py
+Run ``uv run python experiments/2026-08-25_compare_alf_solar_scaled.py``. It needs alf runs
+tagged ``quiescent`` (free abundances) and ``solarscaled`` (fit_type=2). Line numbers refer to
+alf commit 4ef7bb8.
 
-The question
-------------
-alf (free abundances) and Prospector disagree on metallicity. Two competing causes:
+Prospector is scaled-solar. If the gap closes when alf is too, the abundance pattern drives
+the disagreement. If it stays, other differences do.
 
-  (a) the ABUNDANCE PATTERN. Prospector is scaled-solar and cannot represent
-      [Mg/Fe] > 0, so its single logzsol is forced to some compromise. Take alf's
-      abundance freedom away and its [Z/H] should collapse toward Prospector's.
-  (b) the NUMERICS. ztinterp kinks, the optimizer, the library resolution. Removing
-      alf's abundance freedom should then do nothing to the gap.
+This repeats a test from Beverage et al. 2025 (arXiv:2407.02556, section 5.4). For z = 1-3
+quiescent galaxies, Prospector metallicities scattered by 0.32 dex around those from alfα
+(their code based on alf) and sat 0.41 dex lower. Fitting Prospector without photometry, or
+with a single-burst SFH, did not remove the gap. Also forcing alfα solar-scaled improved the
+agreement but left large scatter. They found Prospector tracks alfα's [Fe/H] better than its
+total metallicity. Unlike their last test, Prospector here keeps a free SFH.
 
-Beverage et al. 2025 report that forcing alfalpha solar-scaled was the ONLY control that
-improved their 0.32 dex Prospector-vs-alf scatter, out of removing photometry, removing
-SFH freedom, and matching the SSP assumption. So (a) has a published precedent and this
-is a direct replication on our sample.
+With fit_type=2 alf fits only velz, sigma, logage and zH (alf_vars.f90:24,147) and skips
+every element response (getmodel.f90:278), so zH is a scaled-solar total metallicity. This
+needs the fork commit 4ef7bb8, otherwise every step fails the prior check.
 
-What "solar-scaled" means here
-------------------------------
-alf ``fit_type=2`` keeps only npowell=4 parameters -- velz, sigma, logage, zH
-(alf.f90:645-650, alf_vars.f90:147, str2arr.f90:25-28). feh and every [X/Fe] are pinned
-to zero, so zH is a single total metallicity with scaled-solar composition, which is
-exactly what Prospector's logzsol is.
-
-Read the chi2 with care
------------------------
-func.f90:117 applies the jitter and log(2 pi sigma^2) terms ONLY for fit_type=0. So the
-solar-scaled runs report a REAL chi2 while the free-abundance runs report -2lnL. The two
-are not comparable to each other; the solar-scaled one IS comparable to Prospector's.
+fit_type=2 reports a plain chi2, and fit_type=0 reports -2 ln L with jitter terms
+(func.f90:118-127). Only the solar-scaled chi2 is comparable to Prospector's.
 """
 
 import argparse
