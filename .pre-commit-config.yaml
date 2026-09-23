@@ -1,0 +1,22 @@
+# Ruff runs through uv so it is the version pinned in uv.lock.
+# Both ruff hooks only report. Fix with `uv run ruff check --fix` or `uv run ruff format`.
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run --frozen ruff check --force-exclude
+        language: system
+        types_or: [python, pyi]
+      - id: ruff-format
+        name: ruff format
+        entry: uv run --frozen ruff format --force-exclude --diff
+        language: system
+        types_or: [python, pyi]
+
+  # nb/ keeps its committed outputs. Every other notebook is stripped.
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.9.1
+    hooks:
+      - id: nbstripout
+        exclude: ^nb/
