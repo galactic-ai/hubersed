@@ -23,7 +23,8 @@ from pathlib import Path
 
 import numpy as np
 
-# .mcmc columns (alf.f90:655-656, str2arr.f90:25-75). Column 0 is -2 ln P.
+# .mcmc columns (alf.f90:655-656, str2arr.f90:25-75). Column 0 is -2 ln P. The
+# mass-to-light ratios are in r, I and K (alf_vars.f90:183-184).
 LABELS = [
     "m2lnP",
     "velz",
@@ -72,10 +73,10 @@ LABELS = [
     "IMF4",
     "h3",
     "h4",
-    "ML_v",
+    "ML_r",
     "ML_i",
     "ML_k",
-    "MW_v",
+    "MW_r",
     "MW_i",
     "MW_k",
 ]
@@ -176,7 +177,29 @@ def load_run(stem):
     return C, S
 
 
-def convergence(C, nwalkers=256):
+def read_header(stem):
+    """Read the run settings from the header of an alf ``.sum`` file.
+
+    Parameters
+    ----------
+    stem : str
+        Path to the run without the ``.sum`` suffix.
+
+    Returns
+    -------
+    dict of str to str
+        Values of the ``key = value`` header lines, such as ``Nwalkers`` and ``fit_type``.
+    """
+    out = {}
+    with open(f"{stem}.sum") as f:
+        for line in f:
+            if line.startswith("#") and "=" in line:
+                key, value = line[1:].split("=", 1)
+                out[key.strip()] = value.strip()
+    return out
+
+
+def convergence(C, *, nwalkers):
     """Check that the walker ensemble is stationary.
 
     Parameters
@@ -184,7 +207,7 @@ def convergence(C, nwalkers=256):
     C : dict of str to ndarray
         Chain from ``load_run``.
     nwalkers : int
-        Walkers in the run.
+        Walkers in the run, from ``read_header``. alf writes one row per walker per step.
 
     Returns
     -------
@@ -266,7 +289,7 @@ def main(argv=None):
 
     rows = []
     print(
-        f"{'TARGETID':>19}{'conv':>6}{'Wratio':>8}{'moved':>7}{'[Z/H]':>8}{'[Fe/H]':>8}"
+        f"{'TARGETID':>19}{'conv':>6}{'Wratio':>8}{'moved':>7}{'zH':>8}{'FeH':>8}"
         + "".join(f"{'[' + e + '/Fe]':>13}" for e in ELEMENTS)
         + f"{'pros_lgZ':>10}{'dZ':>8}"
     )
@@ -282,7 +305,7 @@ def main(argv=None):
             None,
         )
         C, S = load_run(s)
-        cv = convergence(C)
+        cv = convergence(C, nwalkers=int(read_header(s)["Nwalkers"]))
         xfe = {
             e: np.percentile(C[e] - C["FeH"] + _lib_corr(e, C["zH"]), [16, 50, 84])
             for e in ELEMENTS
