@@ -43,12 +43,43 @@ def test_one_run_per_start_same_options(powell_starts, n_seeds):
         assert options == {"maxiter": MAXFEV // 10, "maxfev": MAXFEV, "ftol": 1e-6}
 
 
-def test_invalid_jitter_reruns_init(powell_starts):
-    """Pin how the code works today, which we plan to change.
+def valid_if_first_positive(theta):
+    """Objective that is invalid, 1e18, wherever theta[0] is negative."""
+    return quadratic(theta) if theta[0] >= 0 else 1e18
 
-    If a jittered start is invalid, Powell runs again from the initial point.
-    """
-    chi2._map_optimize(valid_only_at_init, INIT, n_seeds=3, maxfev=MAXFEV)
-    assert len(powell_starts) == 4
-    for start, _ in powell_starts:
-        np.testing.assert_array_equal(start, INIT)
+
+def test_invalid_jitter_is_redrawn(powell_starts):
+    """An invalid jittered start is drawn again, so every run starts from a new valid point."""
+    chi2._map_optimize(valid_if_first_positive, INIT, n_seeds=5, maxfev=MAXFEV)
+    starts = [s for s, _ in powell_starts]
+    assert len(starts) == 6
+    assert all(s[0] >= 0 for s in starts)
+    assert len({tuple(s) for s in starts}) == 6
+
+
+def test_start_without_valid_draw_is_dropped(powell_starts):
+    """If no jittered draw is valid, only the initial point is run."""
+    chi2._map_optimize(valid_only_at_init, INIT, n_seeds=3, maxfev=MAXFEV, max_tries=20)
+    assert len(powell_starts) == 1
+    np.testing.assert_array_equal(powell_starts[0][0], INIT)
+
+
+class StartsChosen(Exception):
+    """Raised in place of the first Powell run, to stop once the starts are chosen."""
+
+
+def test_each_start_is_evaluated_once(monkeypatch):
+    """Choosing the starts costs one objective call per candidate when all are valid."""
+    calls = []
+
+    def counted(theta):
+        calls.append(1)
+        return quadratic(theta)
+
+    def stop(*args, **kwargs):
+        raise StartsChosen
+
+    monkeypatch.setattr(chi2, "minimize", stop)
+    with pytest.raises(StartsChosen):
+        chi2._map_optimize(counted, INIT, n_seeds=3, maxfev=MAXFEV)
+    assert len(calls) == 4

@@ -41,7 +41,7 @@ WAVE_C = (0.5 * (EDGES[1:] + EDGES[:-1])).astype(np.float32)  # coarse centers, 
 from scipy.optimize import minimize
 
 
-def _map_optimize(neg, theta_init, n_seeds=3, jitter=0.03, maxfev=20_000):
+def _map_optimize(neg, theta_init, n_seeds=3, jitter=0.03, maxfev=20_000, max_tries=100):
     """Minimize an objective with Powell from several starting points and keep the best.
 
     Parameters
@@ -57,6 +57,8 @@ def _map_optimize(neg, theta_init, n_seeds=3, jitter=0.03, maxfev=20_000):
         Standard deviation of the jitter, in the units of each parameter.
     maxfev : int
         Maximum number of objective calls for each Powell run.
+    max_tries : int
+        Most jitter draws for one extra start before that start is dropped.
 
     Returns
     -------
@@ -69,21 +71,26 @@ def _map_optimize(neg, theta_init, n_seeds=3, jitter=0.03, maxfev=20_000):
     gets the same offsets. The value 1e18 is finite, so a plain ``np.isfinite`` check would
     not catch it, which is why starts at or above 1e17 are treated as invalid.
 
-    If a jittered start is invalid, Powell runs again from ``theta_init`` instead. The
-    number of runs stays at ``n_seeds + 1``, but the number of distinct starting points
-    then varies from galaxy to galaxy. We plan to change this to redraw until the start is
-    valid. ``tests/test_equal_budget.py`` pins the current behaviour.
+    An invalid jittered start is drawn again from the same generator, up to ``max_tries``
+    times, so every run starts from a different valid point. Each candidate is evaluated
+    once. A start with no valid draw is dropped, and an invalid ``theta_init`` is not run.
+    ``tests/test_equal_budget.py`` checks this.
     """
-    starts = [theta_init] + [
-        theta_init + np.random.default_rng(s).normal(0, jitter, theta_init.shape)
-        for s in range(n_seeds)
-    ]
+
+    def valid(theta):
+        v = neg(theta)
+        return np.isfinite(v) and v < 1e17
+
+    starts = [theta_init] if valid(theta_init) else []
+    for s in range(n_seeds):
+        rng = np.random.default_rng(s)
+        for _ in range(max_tries):
+            st = theta_init + rng.normal(0, jitter, theta_init.shape)
+            if valid(st):
+                starts.append(st)
+                break
     best = None
     for st in starts:
-        if not np.isfinite(neg(st)) or neg(st) >= 1e17:
-            st = theta_init  # fall back to the known-valid init
-            if neg(st) >= 1e17:
-                continue  # init itself bad -> skip seed
         r = minimize(
             neg,
             st,
