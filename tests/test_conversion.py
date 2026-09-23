@@ -1,5 +1,4 @@
-"""Check hubersed.conversion against f_nu = f_lambda * lambda**2 / c written out by hand.
-"""
+"""Check hubersed.conversion against f_nu = f_lambda * lambda**2 / c written out by hand."""
 
 import astropy.units as u
 import numpy as np
