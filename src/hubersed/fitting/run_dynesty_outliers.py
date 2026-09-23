@@ -1,3 +1,9 @@
+"""Sample the posterior of DESI galaxies with dynesty and the full Cue model.
+
+Run as ``python -m hubersed.fitting.run_dynesty_outliers -t TARGETID``. Each galaxy gets a
+pickle with equal weight samples, the evidence and the best fit spectrum.
+"""
+
 import argparse
 import os
 import pickle
@@ -45,6 +51,7 @@ def _quiet_process():
 
 
 def git_sha():
+    """Return the git commit of the current directory, or "unknown"."""
     try:
         return subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     except Exception:
@@ -52,6 +59,23 @@ def git_sha():
 
 
 def run_one(tid, args, out):
+    """Sample one galaxy, save ``out/<tid>.pkl`` and return the record.
+
+    Parameters
+    ----------
+    tid : int
+        DESI TARGETID.
+    args : argparse.Namespace
+        Options from ``main``.
+    out : pathlib.Path
+        Output directory, also used for the dynesty checkpoint.
+
+    Returns
+    -------
+    dict
+        Labels, equal weight samples, log evidence and its error, the highest likelihood
+        theta with its model spectrum and chi2, and the run settings with the git commit.
+    """
     s = load_spectrum(tid)
     spec, ivar, z = s.flux.value, s.uncertainty.array, float(s.redshift.value)
 
@@ -108,10 +132,8 @@ def run_one(tid, args, out):
         flush=True,
     )
 
-    # dynesty checkpoints by pickling the whole sampler, which closes over loglike ->
-    # model, obs and the FSPS/Cue SPS objects. Stdlib pickle cannot do local functions
-    # at all, and the Fortran-backed SPS may defeat dill too. checkpoint_every defaults
-    # to 60 s, so a failure here would kill the run a minute in. Decide up front.
+    # Checkpoints pickle the whole sampler, local functions included. Test dill on them
+    # first so the run does not fail at its first checkpoint.
     use_ckpt = False
     if not args.no_checkpoint:
         try:
@@ -212,6 +234,7 @@ def run_one(tid, args, out):
 
 
 def main(argv=None):
+    """Sample each TARGETID given with ``-t``."""
     _quiet_process()
     p = argparse.ArgumentParser(description="dynesty posteriors for the emission-line outliers.")
     p.add_argument("-t", "--tid", type=int, action="append", required=True, help="repeatable")
@@ -224,7 +247,7 @@ def main(argv=None):
         "--maxcall",
         type=int,
         default=5_000_000,
-        help="~17 h at 12.5 ms/call; dlogz should stop the run well before this",
+        help="most likelihood calls; normally dlogz stops the run first",
     )
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--no-checkpoint", action="store_true")
