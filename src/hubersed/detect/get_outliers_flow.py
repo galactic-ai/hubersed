@@ -1,3 +1,9 @@
+"""Train a normalizing flow on mock latents and flag DESI galaxies it finds unlikely.
+
+A DESI galaxy is an outlier when its log probability is at or below the 0.1% quantile of the
+mock scores. Run it as ``python -m hubersed.detect.get_outliers_flow --desi D.h5 --mock M.h5``.
+"""
+
 import argparse
 from pathlib import Path
 
@@ -27,8 +33,32 @@ DATA, RES = PATHS["DATA"], PATHS["RESULTS"]
 
 
 def build_flow(method, dim, hidden, n_transforms, num_bins=8, tail_bound=10.0):
-    """Autoregressive flow over standardized latents. method='maf' (affine) or
-    'nsf' (rational-quadratic spline; more flexible for non-Gaussian/multimodal)."""
+    """Build a masked autoregressive flow with a standard normal base.
+
+    Each block is one autoregressive transform followed by a random permutation of the
+    features.
+
+    Parameters
+    ----------
+    method : str
+        ``"nsf"`` for rational quadratic spline transforms. Any other value gives affine
+        transforms.
+    dim : int
+        Number of features.
+    hidden : int
+        Hidden layer width of each autoregressive network.
+    n_transforms : int
+        Number of blocks.
+    num_bins : int
+        Spline bins per transform, used only for ``"nsf"``.
+    tail_bound : float
+        Bound of the spline interval with linear tails, used only for ``"nsf"``.
+
+    Returns
+    -------
+    nflows.flows.Flow
+        The untrained flow.
+    """
     ts = []
     for _ in range(n_transforms):
         if method == "nsf":
@@ -48,11 +78,31 @@ def build_flow(method, dim, hidden, n_transforms, num_bins=8, tail_bound=10.0):
 
 
 def load_h5(path):
-    """Return (latents, target_ids). Catalogue key is TARGETID, never a position.
+    """Read latents, their TARGETIDs and the encoder checkpoint name from a latent h5 file.
 
-    Takes a full path: two different mock sets (noised_cue_meanzero vs
-    ..._wide) use the SAME filename in different directories, so resolving a
-    bare name against a single root silently picks the wrong one.
+    Rows are matched to galaxies by TARGETID, never by position. The caller passes a full
+    path rather than a name resolved against one data directory.
+
+    Parameters
+    ----------
+    path : str or Path
+        Full path to the h5 file.
+
+    Returns
+    -------
+    lat : numpy.ndarray
+        Latents as float32.
+    tid : numpy.ndarray
+        TARGETID of each latent row as int64.
+    ckpt : str
+        The file's ``checkpoint`` attribute, or ``"unknown"`` if it is missing.
+
+    Raises
+    ------
+    SystemExit
+        If the file does not exist.
+    KeyError
+        If the file has no ``target_ids`` dataset.
     """
     path = Path(path)
     if not path.exists():
@@ -69,6 +119,17 @@ def load_h5(path):
 
 
 def main():
+    """Train the flow, score DESI, and save the outliers, the flow and a validation plot.
+
+    Options are read from the command line. Outputs go to ``--outdir``, or results/ by
+    default.
+
+    Raises
+    ------
+    SystemExit
+        If the mock and DESI latents come from different encoders, or if an output file
+        already exists and ``--force`` is not given.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", default="10latent", help="6latent/10latent/15latent/cont10latent")
     ap.add_argument("--method", default="maf", choices=["maf", "nsf"])
@@ -106,8 +167,7 @@ def main():
             "Latents from different encoders are not comparable."
         )
 
-    # NB not RES = RES / ... -- assigning a module global inside a function makes
-    # it local for the whole function, so the RHS raises UnboundLocalError.
+    # A new name, because assigning to RES here would make it local to the whole function.
     out_dir = args.outdir or RES
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -131,7 +191,7 @@ def main():
     opt = torch.optim.Adam(nde.parameters(), lr=args.lr)
     steps = max(
         1, (Xtr.shape[0] + args.batch - 1) // args.batch
-    )  # ceil: torch.split yields a partial last batch
+    )  # round up because torch.split yields a partial last batch
     sched = torch.optim.lr_scheduler.OneCycleLR(
         opt, max_lr=args.lr, steps_per_epoch=steps, epochs=args.epochs
     )
@@ -155,13 +215,14 @@ def main():
         if ep % 10 == 0 or ep == args.epochs - 1:
             print(f"  epoch {ep:3d}  train NLL {hist['train'][-1]:.3f}  valid NLL {vl:.3f}")
 
-    # ---- VALIDATION: did it train correctly? ----
+    # Check that the trained flow reproduces the held-out mocks.
     nde.eval()
     with torch.no_grad():
         samp = nde.sample(min(20000, Xval.shape[0])).cpu().numpy()
     real = mock_s[val_idx][: samp.shape[0]]
     ks = [ks_2samp(samp[:, j], real[:, j]).statistic for j in range(D)]
-    # C-2ST: flow samples vs real mock (held-out). ~0.5 => flow matches the data.
+    # Classifier two sample test of flow samples against held-out mocks. Accuracy near 0.5
+    # means the classifier cannot tell them apart.
     Xc = np.vstack([samp, real])
     yc = np.r_[np.zeros(len(samp)), np.ones(len(real))]
     c2st = cross_val_score(
@@ -179,27 +240,22 @@ def main():
     print(f"  sample-vs-mock per-dim KS: max {max(ks):.3f} median {np.median(ks):.3f}")
     print(f"  sample-vs-mock C-2ST accuracy = {c2st:.3f}  (0.5 = flow reproduces mocks)")
 
-    # ---- SCORE DESI ----
+    # Score DESI.
     with torch.no_grad():
         lp_mock = nde.log_prob(torch.from_numpy(mock_s).to(dev)).cpu().numpy()
         lp_desi = nde.log_prob(torch.from_numpy(desi_s).to(dev)).cpu().numpy()
-    # Threshold = 0.1% quantile over ALL mocks (original behaviour). A held-out-only
-    # variant was tried 2026-07-21 and reverted: the train/valid NLL gaps are ~0
-    # (+0.006/+0.000/+0.073 for 6/10/15D), so there is no overfitting bias to
-    # correct, and the 0.1% quantile of the 10% held-out set is the ~15th order
-    # statistic vs the ~154th here -- much noisier. It moved the 6D count 805->675.
-    # Reported alongside so the difference stays visible.
+    # The threshold uses all mocks. The held-out one is reported alongside for comparison.
     thr = float(np.quantile(lp_mock, 0.001))
     thr_heldout = float(np.quantile(lp_mock[val_idx], 0.001))
     out_mask = lp_desi <= thr
-    out_tid = desi_tid[out_mask]  # -> TARGETIDs
+    out_tid = desi_tid[out_mask]
     print(f"\nSCORE  threshold (0.1% mock log p) = {thr:.2f}")
     print(f"  (held-out mocks only = {thr_heldout:.2f}, noisier -- see comment)")
     print(f"  DESI outliers: {out_mask.sum()}  ({100 * out_mask.mean():.3f}%)")
     print(f"  using the held-out threshold would give: {int((lp_desi <= thr_heldout).sum())}")
 
-    # overlap vs IsoForest for this tag (by TARGETID). Stays at the results/ root --
-    # IsoForest outputs are not written per-outdir.
+    # Overlap with the IsolationForest outliers for this tag, by TARGETID. That file is read
+    # from results/ because get_outliers.py always writes there.
     iso_file = RES / (
         "desi_outliers_cue_snr3.pt"
         if args.tag == "6latent"
@@ -237,8 +293,7 @@ def main():
             "tag": args.tag,
             "method": args.method,
             "c2st": float(c2st),
-            # which inputs produced this. Two mock sets share a filename
-            # (noised_cue_meanzero vs ..._wide), so the paths are the only record.
+            # Full input paths, since a file name alone may not identify the mock set.
             "mock_file": str(args.mock),
             "desi_file": str(args.desi),
             "encoder": mock_ckpt,
@@ -264,7 +319,7 @@ def main():
         out_dir / f"flow_{mtag}.pt",
     )
 
-    # ---- plots ----
+    # Plots.
     fig, ax = plt.subplots(1, 3, figsize=(16, 4))
     ax[0].plot(hist["train"], label="train")
     ax[0].plot(hist["valid"], label="valid")
