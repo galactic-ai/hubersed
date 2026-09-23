@@ -153,13 +153,13 @@ def main(argv=None):
             + ("   <-- ZERO, check frame/interval coverage" if n == 0 else "")
         )
     print(f"  lambda {lam[keep].min():.1f} - {lam[keep].max():.1f} A, median spacing {dl:.3f} A")
-    print(f"  intervals (um): " + ", ".join(f"{l1}-{l2}" for l1, l2 in iv_pairs))
+    print("  intervals (um): " + ", ".join(f"{l1}-{l2}" for l1, l2 in iv_pairs))
     print(f"  ires {ires[keep].min():.1f} - {ires[keep].max():.1f} km/s")
     print(f"  median S/N: {np.median(snr):.1f} /pixel, {np.median(snr) / np.sqrt(dl):.1f} /A")
     print("\n  alf's published mock tests span S/N = 20, 30, 50, 100 per A")
     print("  (Conroy et al. 2018, section 3.2.2).")
     print("\n  next:")
-    print(f"    cd $ALF_HOME/src && make")
+    print("    cd $ALF_HOME/src && make")
     print(f"    mpirun -np 8 $ALF_HOME/bin/alf.exe {out_path.stem} <tag>")
     return 0
 

@@ -114,7 +114,7 @@ def sec2_sets(d, tid):
     js = np.array([jac(a, b) for a, b in combinations(sets, 2)])
     inter = set.intersection(*sets)
     union = set.union(*sets)
-    print(f"\n[2] outlier-set reproducibility across seeds")
+    print("\n[2] outlier-set reproducibility across seeds")
     print(f"    pairwise Jaccard: mean {js.mean():.3f}  min {js.min():.3f}  max {js.max():.3f}")
     print(
         f"    seed0 vs seed1 specifically: J = {jac(sets[0], sets[1]):.3f}  "
