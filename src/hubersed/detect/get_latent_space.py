@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+"""Encode DESI spectra with a trained spender autoencoder and stream the latents to HDF5.
+
+Run it as ``python -m hubersed.detect.get_latent_space DATADIR CHECKPOINT OUTFILE.h5``.
+"""
+
 import argparse
 from pathlib import Path
 
@@ -18,18 +23,37 @@ def process_loader_h5(
     snr_min=0.0,
     meta=None,
 ):
-    """Encode a spectrum set to latents, streaming to HDF5.
+    """Encode every batch from a loader and append the results to an HDF5 file.
 
-    encode_snr : feed the S/N array to the encoder INSTEAD of the spectrum
-        (mode=noise, for training the noise model). False for OOD work.
-    store_snr : also save the per-pixel S/N arrays. Independent of encode_snr, so
-        `--mode spec --compute_snr` stores S/N while still encoding the spectrum.
-        These were one flag until 2026-07-21, and that combination silently
-        encoded S/N instead.
+    The per-pixel S/N is spec times sqrt(w). Its median over pixels with w > 0 is
+    stored as ``snr_med`` whenever S/N is computed. Every kept spectrum is saved with
+    its TARGETID in ``target_ids``. Match rows to a catalogue by TARGETID, never by
+    row position, because the loader order is not the numeric chunk and row order.
 
-    Every kept spectrum carries its TARGETID. Catalogue matching is by TARGETID
-    only: the loader is sorted(glob) = lexicographic, which is NOT the numeric
-    chunk*1024+row order, and conflating the two was the 2026-06-10 bug.
+    Parameters
+    ----------
+    model : torch.nn.Module
+        Spender model with an ``encode`` method.
+    loader : iterable
+        Yields batches of (spec, w, z, target_id, norm, zerr) CPU tensors.
+    device : torch.device
+        Device the encoder runs on.
+    outfile : str or pathlib.Path
+        HDF5 file to create. An existing file is overwritten.
+    encode_snr : bool, optional
+        If True, feed the S/N array to the encoder instead of the spectrum.
+    store_snr : bool, optional
+        If True, also save the per-pixel S/N arrays as ``snrs``. This is
+        independent of ``encode_snr``.
+    snr_min : float, optional
+        Keep only spectra whose median S/N is above this value. 0 keeps all.
+    meta : dict or None, optional
+        Written as file attributes. None values are stored as the string "None".
+
+    Returns
+    -------
+    int
+        Number of spectra written.
     """
     f = h5py.File(outfile, "w")
     d = {}
@@ -37,6 +61,7 @@ def process_loader_h5(
     kept = 0
 
     def append(name, arr):
+        """Grow dataset ``name`` along axis 0 and write ``arr`` at the end."""
         ds = d[name]
         n = ds.shape[0]
         ds.resize(n + arr.shape[0], axis=0)
@@ -50,8 +75,7 @@ def process_loader_h5(
 
             need_snr = encode_snr or store_snr or snr_min > 0
             snr_cpu = spec * torch.sqrt(w) if need_snr else None
-            # median per-pixel S/N over good pixels. Robust to emission lines
-            # (line-masked vs all-pixel agree to ~2%), so effectively continuum S/N.
+            # Median per-pixel S/N over good pixels.
             med = (
                 torch.nanmedian(torch.where(w > 0, snr_cpu, torch.nan), dim=1).values
                 if snr_cpu is not None
@@ -115,6 +139,18 @@ def process_loader_h5(
 
 
 def main(args: argparse.Namespace) -> None:
+    """Load the model and DESI data, then write latents to ``args.outfile``.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed command line arguments.
+
+    Raises
+    ------
+    RuntimeError
+        If ``args.outfile`` does not end with ".h5".
+    """
     device = torch.device(
         "mps"
         if torch.backends.mps.is_available()
@@ -143,10 +179,9 @@ def main(args: argparse.Namespace) -> None:
         shuffle_instance=False,
     )
 
-    # Two independent things, deliberately not one flag:
-    #   encode_snr -- feed the S/N array to the encoder instead of the spectrum.
-    #                 Only for mode=noise (training the noise model).
-    #   store_snr  -- also save the per-pixel S/N arrays alongside the latents.
+    # Two independent settings, deliberately not one flag. encode_snr feeds the S/N
+    # array to the encoder instead of the spectrum and is only for mode noise.
+    # store_snr also saves the per-pixel S/N arrays alongside the latents.
     encode_snr = args.mode == "noise"
     store_snr = args.compute_snr or encode_snr
 
@@ -159,8 +194,8 @@ def main(args: argparse.Namespace) -> None:
         "zmax": args.zmax,
         "tag": tag,
         "snr_min": args.snr_min,
-        # which encoder produced these latents. Without this the h5 only knows via
-        # its filename, and 6/10/15/cont latents are not interchangeable.
+        # Records which encoder produced these latents, since latents from
+        # different encoders are not interchangeable.
         "checkpoint": Path(args.checkpoint).name,
     }
     n = process_loader_h5(
