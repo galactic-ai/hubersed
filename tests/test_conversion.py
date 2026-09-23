@@ -1,6 +1,4 @@
 """Check hubersed.conversion against f_nu = f_lambda * lambda**2 / c written out by hand.
-
-One maggie is 3631 Jy. astropy's u.ABflux is 3630.78 Jy and differs by 6e-5, so it is not used.
 """
 
 import astropy.units as u

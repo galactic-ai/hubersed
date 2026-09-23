@@ -35,7 +35,7 @@ from scipy.signal import medfilt
 
 from hubersed.conversion import DESI_FLAM, ivar_to_maggies, to_maggies
 from hubersed.fitting.chi2 import WAVE_OBS
-from hubersed.io.desi import load_by_index, tids_to_indices
+from hubersed.io.desi import load_spectrum
 from hubersed.paths import PATHS
 from hubersed.plotting.sfh import sfh_figure
 from hubersed.plotting.spectra import plot_residual, residual_chi, spectrum_figure
@@ -409,7 +409,7 @@ def fit_one(
     """
     if spectra_npz:
         # Spectrum supplied from outside the chunk store -- same WAVE_OBS grid, same
-        # flambda units (1e-17 erg/s/cm^2/A) that load_by_index returns. Used to fit a
+        # flambda units (1e-17 erg/s/cm^2/A) that load_spectrum returns. Used to fit a
         # DIFFERENT observation of a target the store already holds, e.g. the main-survey
         # coadd of an SV3 object (2026-08-31g).
         ov = np.load(spectra_npz)
@@ -420,9 +420,8 @@ def fit_one(
         spec, ivar, z = ov["spec"][k], ov["ivar"][k], float(ov["z"][k])
         assert len(spec) == len(WAVE_OBS), "override spectrum is off the WAVE_OBS grid"
     else:
-        idx = int(tids_to_indices(np.array([tid], np.int64))[0])
-        spec, ivar, z, tid_chk = load_by_index(idx)
-        assert int(tid_chk) == tid, f"TARGETID mismatch: asked {tid}, got {tid_chk}"
+        s = load_spectrum(tid)
+        spec, ivar, z = s.flux.value, s.uncertainty.array, float(s.redshift.value)
 
     flux = to_maggies(WAVE_OBS * u.AA, spec * DESI_FLAM).value
     iv = ivar_to_maggies(WAVE_OBS * u.AA, ivar * DESI_FLAM**-2).value
