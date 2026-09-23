@@ -1,3 +1,10 @@
+"""Print seed-stability statistics for the flow ensembles written by ensemble_flow_seeds.
+
+For each latent tag it reads ``ens_<method>_<tag>.npz`` and reports per-member numbers, outlier-set
+overlap, vote counts, rank agreement and ensemble outlier sets. Run it with
+``python -m hubersed.detect.ensemble_flow_stats``.
+"""
+
 import argparse
 import json
 from itertools import combinations
@@ -15,24 +22,52 @@ Q = 0.001  # same 0.1% mock quantile rule as the single-seed script
 
 
 def jac(a, b):
+    """Return the Jaccard index of two sets, or NaN when both are empty."""
     u = len(a | b)
     return len(a & b) / u if u else np.nan
 
 
 def combiners(lp):
-    """Three ways to turn S log-densities into one, all applied identically to mock and DESI.
+    """Combine S per-member log-densities into one score per object in three ways.
 
-    mix  = log of the MIXTURE (1/S) sum_s p_s. The only one that is itself a normalised
-           density, but it is dominated by the single most optimistic member, so one
-           member calling an object normal rescues it.
-    mean = geometric mean of the densities (unnormalised). Compromise.
-    med  = median log p. Robust to a single member that blows up on a point.
+    The same combiners are applied to mocks and to DESI. ``mix`` is the log of the equal-weight
+    mixture (1/S) sum_s p_s. It is the only one that is a normalised density, and it is
+    dominated by the member giving the highest density. ``mean`` is the mean log p, which is the
+    log of the unnormalised geometric mean. ``med`` is the median log p, which one extreme member
+    cannot move far.
+
+    Parameters
+    ----------
+    lp : ndarray, shape (S, N)
+        Log-density of N objects under each of S members.
+
+    Returns
+    -------
+    dict of str to ndarray
+        Keys ``mix``, ``mean`` and ``med``, each an array of shape (N,).
     """
     S = lp.shape[0]
     return {"mix": logsumexp(lp, axis=0) - np.log(S), "mean": lp.mean(0), "med": np.median(lp, 0)}
 
 
 def sec1_members(d, tid):
+    """Print a table of per-member training and validation numbers and outlier counts.
+
+    A DESI object is an outlier for a member when its log p is at or below that member's
+    threshold.
+
+    Parameters
+    ----------
+    d : dict
+        Contents of one ensemble npz file.
+    tid : ndarray of int64
+        DESI TARGETIDs, aligned with the columns of ``d["lp_desi"]``.
+
+    Returns
+    -------
+    ndarray of int
+        Number of DESI outliers for each member.
+    """
     S = len(d["seeds"])
     n = np.array([(d["lp_desi"][i] <= d["thr"][i]).sum() for i in range(S)])
     print(f"\n[1] {S} members  (DESI N={len(tid)})")
@@ -56,7 +91,24 @@ def sec1_members(d, tid):
 
 
 def sec2_sets(d, tid):
-    """How much of a single-seed outlier list is seed noise."""
+    """Print how much the DESI outlier sets of different members overlap.
+
+    Parameters
+    ----------
+    d : dict
+        Contents of one ensemble npz file.
+    tid : ndarray of int64
+        DESI TARGETIDs, aligned with the columns of ``d["lp_desi"]``.
+
+    Returns
+    -------
+    sets : list of set of int
+        Outlier TARGETIDs for each member.
+    union : set of int
+        TARGETIDs flagged by at least one member.
+    inter : set of int
+        TARGETIDs flagged by every member.
+    """
     S = len(d["seeds"])
     sets = [set(tid[d["lp_desi"][i] <= d["thr"][i]].tolist()) for i in range(S)]
     js = np.array([jac(a, b) for a, b in combinations(sets, 2)])
@@ -78,6 +130,22 @@ def sec2_sets(d, tid):
 
 
 def sec3_votes(sets, union, S):
+    """Count how many members flag each object and print the vote distribution.
+
+    Parameters
+    ----------
+    sets : list of set of int
+        Outlier TARGETIDs for each member.
+    union : set of int
+        TARGETIDs flagged by at least one member.
+    S : int
+        Number of members.
+
+    Returns
+    -------
+    dict of int to int
+        Number of members that flag each TARGETID in ``union``.
+    """
     votes = {}
     for s in sets:
         for t in s:
@@ -92,9 +160,21 @@ def sec3_votes(sets, union, S):
 
 
 def sec4_ranks(d):
-    """Rank agreement is a stronger test than set overlap: it does not depend on where
-    the threshold lands, so it separates 'the ranking is unstable' from 'the ranking is
-    fine but the cut sits in a dense region'."""
+    """Print the Spearman correlation of DESI log p between members and return rank percentiles.
+
+    Unlike set overlap this does not depend on where the threshold falls, so it tells an
+    unstable ranking apart from a stable ranking whose cut sits in a dense region.
+
+    Parameters
+    ----------
+    d : dict
+        Contents of one ensemble npz file.
+
+    Returns
+    -------
+    ndarray, shape (S, N)
+        Rank of each DESI object's log p within each member, divided by N.
+    """
     S = d["lp_desi"].shape[0]
     R = np.vstack([rankdata(d["lp_desi"][i]) for i in range(S)])
     C = np.corrcoef(R)
@@ -108,6 +188,28 @@ def sec4_ranks(d):
 
 
 def sec5_ensemble(d, tid, sets, union, inter):
+    """Build the outlier set of each combiner and compare it with the single-member sets.
+
+    Each combiner's threshold is the ``Q`` quantile of the same combiner applied to the mocks.
+
+    Parameters
+    ----------
+    d : dict
+        Contents of one ensemble npz file.
+    tid : ndarray of int64
+        DESI TARGETIDs, aligned with the columns of ``d["lp_desi"]``.
+    sets : list of set of int
+        Outlier TARGETIDs for each member.
+    union : set of int
+        TARGETIDs flagged by at least one member.
+    inter : set of int
+        TARGETIDs flagged by every member.
+
+    Returns
+    -------
+    dict of str to set of int
+        Outlier TARGETIDs for the ``mix``, ``mean`` and ``med`` combiners.
+    """
     cm, cd = combiners(d["lp_mock"]), combiners(d["lp_desi"])
     print(
         f"\n[5] ensemble scores (threshold = {100 * Q:.1f}% quantile of the same combiner "
@@ -127,9 +229,26 @@ def sec5_ensemble(d, tid, sets, union, inter):
 
 
 def sec6_splithalf(d, tid, js_single, rng, n_rep=20):
-    """Does ensembling actually buy reproducibility? Build two ensembles from disjoint
-    halves of the seeds and compare their sets. If split-half J is no better than
-    single-seed pairwise J, the ensemble is not more stable, only differently unstable."""
+    """Print how well ensembles built from two disjoint halves of the members agree.
+
+    Each repeat splits the members at random into two halves, builds the outlier set of every
+    combiner on each half and takes the Jaccard index of the two sets. The mean is printed next
+    to the single-member pairwise Jaccard, so one can see whether ensembling makes the set more
+    reproducible. Nothing is printed when there are fewer than four members.
+
+    Parameters
+    ----------
+    d : dict
+        Contents of one ensemble npz file.
+    tid : ndarray of int64
+        DESI TARGETIDs, aligned with the columns of ``d["lp_desi"]``.
+    js_single : float
+        Mean pairwise Jaccard index of the single-member outlier sets.
+    rng : numpy.random.Generator
+        Source of the random splits.
+    n_rep : int, optional
+        Number of random splits.
+    """
     S = d["lp_desi"].shape[0]
     if S < 4:
         return
@@ -155,6 +274,25 @@ def sec6_splithalf(d, tid, js_single, rng, n_rep=20):
 
 
 def sec7_sample20(d, tid, votes, ens, pct, sample):
+    """Print votes, rank percentiles and ensemble membership for each target in ``sample``.
+
+    Does nothing when ``sample`` is None.
+
+    Parameters
+    ----------
+    d : dict
+        Contents of one ensemble npz file.
+    tid : ndarray of int64
+        DESI TARGETIDs, aligned with the columns of ``pct``.
+    votes : dict of int to int
+        Number of members that flag each TARGETID.
+    ens : dict of str to set of int
+        Outlier TARGETIDs for each combiner.
+    pct : ndarray, shape (S, N)
+        Rank percentiles from ``sec4_ranks``.
+    sample : ndarray of int64 or None
+        TARGETIDs to report.
+    """
     if sample is None:
         return
     S = d["lp_desi"].shape[0]
@@ -179,9 +317,20 @@ def sec7_sample20(d, tid, votes, ens, pct, sample):
 
 
 def sec8_vs_stored(d, tid, tag):
-    """Seed 0 here (GPU) vs the stored seed-0 run (CPU). Same seed, same code, different
-    hardware -- so any disagreement is pure float noise and is a floor on how much
-    instability is NOT attributable to the seed."""
+    """Compare the first member's outlier set with the stored single-flow run for this tag.
+
+    Reads ``desi_outliers_flow_nsf_<tag>_snr3.pt`` from ``RES / "wide_flow_corrected"`` and
+    does nothing if that file is missing.
+
+    Parameters
+    ----------
+    d : dict
+        Contents of one ensemble npz file.
+    tid : ndarray of int64
+        DESI TARGETIDs, aligned with the columns of ``d["lp_desi"]``.
+    tag : str
+        Latent tag, used to name the stored file.
+    """
     f = RES / "wide_flow_corrected" / f"desi_outliers_flow_nsf_{tag}_snr3.pt"
     if not f.exists():
         return
@@ -200,6 +349,7 @@ def sec8_vs_stored(d, tid, tag):
 
 
 def main():
+    """Parse arguments and print the statistics for every requested tag."""
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
