@@ -1,3 +1,10 @@
+"""Make mock DESI spectra from the prior sample written by get_stochastic_priors.
+
+Run as ``python -m hubersed.mocks.make_model_seds``. Writes one h5 file with the fluxes in
+maggies on the DESI grid, the drawn logsfr_ratios, the nebular line luminosities and a
+copy of every prior array.
+"""
+
 import argparse
 import copy
 import glob
@@ -42,11 +49,13 @@ _S = {}
 
 
 def priors_path(nebular, sample_size):
+    """Return the prior npz path for this nebular model and sample size."""
     stem = "stochastic_priors_sample_cue" if nebular == "cue" else "stochastic_priors_sample"
     return DATA_PATH / f"{stem}_{sample_size}.npz"
 
 
 def out_path(nebular, sample_size):
+    """Return the default output h5 path for this nebular model and sample size."""
     stem = (
         "prospector_stochastic_model_seds_cue"
         if nebular == "cue"
@@ -56,8 +65,12 @@ def out_path(nebular, sample_size):
 
 
 def resolve_sample_size(nebular):
-    """
-    Largest N with a priors npz on disk. NUMERIC max, not sorted()[-1].
+    """Return the largest sample size with a prior npz on disk, compared as numbers.
+
+    Raises
+    ------
+    SystemExit
+        If there is no prior npz for this nebular model.
     """
     pat = str(priors_path(nebular, "*"))
     sizes = []
@@ -71,6 +84,18 @@ def resolve_sample_size(nebular):
 
 
 def build_base_template(nebular):
+    """Return the prospector template shared by every mock, before the per-mock values.
+
+    Parameters
+    ----------
+    nebular : {"cue", "fsps"}
+        Nebular emission model.
+
+    Returns
+    -------
+    dict
+        Stochastic SFH, dust emission and nebular template with fixed smoothing.
+    """
     t = copy.deepcopy(TemplateLibrary["stochastic_sfh"])
     t.update(copy.deepcopy(TemplateLibrary["dust_emission"]))
 
@@ -116,6 +141,13 @@ def build_base_template(nebular):
 
 
 def load_priors(nebular, sample_size):
+    """Load the prior arrays as a dict.
+
+    Raises
+    ------
+    SystemExit
+        If the npz is missing, or a Cue sample lacks the Cue gas parameters.
+    """
     path = priors_path(nebular, sample_size)
     if not path.exists():
         raise SystemExit(
@@ -135,8 +167,10 @@ def load_priors(nebular, sample_size):
 
 
 def sample_logsfr_ratios(parset, index, seed):
-    """
-    Draw logsfr_ratios ~ MVN(mean, Sigma) reproducibly.
+    """Draw logsfr_ratios from the template's multivariate normal prior.
+
+    The generator is seeded with ``[seed, index]``, so each mock gets the same draw
+    whatever the number of workers or the order they finish in.
     """
     p = parset["logsfr_ratios"]["prior"]
     rng = np.random.default_rng([seed, index])
@@ -145,6 +179,15 @@ def sample_logsfr_ratios(parset, index, seed):
 
 
 def build_parset_for_index(i):
+    """Fill the base template with prior sample ``i`` and draw its logsfr_ratios.
+
+    Returns
+    -------
+    t : dict
+        Template for mock ``i``.
+    ratios : np.ndarray
+        The drawn logsfr_ratios, also set as ``t["logsfr_ratios"]["init"]``.
+    """
     nebular = _S["nebular"]
     priors_dict = _S["priors"]
     t = copy.deepcopy(_S["base_template"])
@@ -195,6 +238,7 @@ def build_parset_for_index(i):
 
 @cache
 def _get_sps(nebular):
+    """Build the stellar source once per process, NebStepBasis for Cue."""
     if nebular == "cue":
         from prospect.sources import NebStepBasis
 
@@ -206,10 +250,12 @@ def _get_sps(nebular):
 
 @cache
 def _get_resolution_matrix():
+    """Build the DESI resolution matrix once per process."""
     return build_desi_resolution_matrix(DESI_WAV)
 
 
 def make_obs(n_wave):
+    """Return a placeholder prospector Spectrum on the DESI grid with unit flux and errors."""
     obs = Spectrum(
         wavelength=np.asarray(DESI_WAV, dtype=np.float64),
         flux=np.ones(n_wave, dtype=np.float64),
@@ -221,7 +267,7 @@ def make_obs(n_wave):
 
 
 def _init_worker(nebular, sample_size, seed):
-    """Runs once per worker process. Replaces the old module-level globals."""
+    """Load the priors and base template into this process's ``_S``."""
     _S["nebular"] = nebular
     _S["seed"] = seed
     _S["priors"] = load_priors(nebular, sample_size)
@@ -229,7 +275,19 @@ def _init_worker(nebular, sample_size, seed):
 
 
 def worker_block(start, stop):
-    """Compute spectra[start:stop] in this process and return a 2D block."""
+    """Compute mocks ``start`` to ``stop`` in this process.
+
+    Returns
+    -------
+    start, stop : int
+        The block's rows.
+    block : np.ndarray
+        Fluxes in maggies on the DESI grid, float32.
+    ratios_block : np.ndarray
+        The drawn logsfr_ratios.
+    lum_block : np.ndarray
+        Dust attenuated nebular line luminosities in erg/s.
+    """
     nebular = _S["nebular"]
     n_wave = DESI_WAV.size
 
@@ -247,12 +305,11 @@ def worker_block(start, stop):
         model = HyperSpecModel(configuration=parset)
         # sigma_smooth applied by Prospector; lines injected because obs carries flux
         preds, _ = model.predict(model.theta, [obs], sps=sps)
-        # DESI instrumental LSF applied externally: MILES (sigma ~35-64 km/s) is
-        # coarser than DESI (17-57), so obs.resolution trips prospect's
-        # sqrt(sigma_inst^2 - sigma_lib^2) assert.
+        # The DESI LSF is applied here because MILES is coarser than DESI, which
+        # prospect's own obs.resolution path refuses.
         spec = R_mat.dot(preds[0])
         block[j, :] = spec.astype(np.float32)
-        # dust-ATTENUATED nebular line luminosities, erg/s (corr with dust2 ~0.83)
+        # Dust attenuated nebular line luminosities in erg/s.
         lum = np.asarray(model._eline_lum, dtype=np.float32)
         if lum_block is None:
             lum_block = np.empty((stop - start, lum.size), dtype=np.float32)
@@ -262,6 +319,7 @@ def worker_block(start, stop):
 
 
 def parse_args(argv=None):
+    """Parse the command line options."""
     p = argparse.ArgumentParser(
         description="Generate mock DESI spectra from the stochastic-SFH prior sample.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -291,6 +349,18 @@ def parse_args(argv=None):
 
 
 def main(argv=None):
+    """Compute every mock in worker processes and write the h5 file.
+
+    Returns
+    -------
+    int
+        Exit status.
+
+    Raises
+    ------
+    SystemExit
+        If the output file exists and ``--force`` is not given.
+    """
     args = parse_args(argv)
     nebular = args.nebular
     n = args.sample_size if args.sample_size is not None else resolve_sample_size(nebular)
@@ -337,9 +407,8 @@ def main(argv=None):
         print(f"{nebular} line list: {n_lines} lines")
 
         for key, arr in priors_dict.items():
-            # get_stochastic_priors.py writes provenance as 0-d scalars (_seed,
-            # _sample_size, _cue, _git_sha). h5py rejects chunk/filter options on
-            # scalar datasets, and they are metadata anyway -> carry them as attrs.
+            # get_stochastic_priors writes _seed, _sample_size and _cue as 0-d arrays.
+            # h5py refuses compression on scalars, so they go in as attributes.
             if np.ndim(arr) == 0:
                 hf.attrs[f"priors{key}" if key.startswith("_") else f"priors_{key}"] = arr.item()
             else:
@@ -348,14 +417,14 @@ def main(argv=None):
         hf.attrs["nebular"] = nebular
         hf.attrs["sample_size"] = n_spectra
         hf.attrs["seed"] = args.seed
-        hf.attrs["sfh_mean"] = "zero"  # no alpha tilt; see wip/alpha-tilt
+        hf.attrs["sfh_mean"] = "zero"  # the logsfr_ratios prior has zero mean
         hf.attrs["priors_file"] = priors_path(nebular, n).name
 
         blocks = [
             (s, min(s + args.chunk_size, n_spectra)) for s in range(0, n_spectra, args.chunk_size)
         ]
 
-        # spawn: fork deadlocks with JAX/cuejax
+        # spawn, not fork. A forked child can deadlock in JAX, which Cue uses.
         ctx = mp.get_context("spawn")
         with (
             ProcessPoolExecutor(
@@ -379,7 +448,7 @@ def main(argv=None):
 
 
 def _get_line_wave(nebular, n_wave):
-    """Rest-frame wavelengths (AA) of the nebular lines, for labelling line_lum."""
+    """Return the rest frame nebular line wavelengths in Angstrom that label line_lum."""
     parset, _ = build_parset_for_index(0)
     m = HyperSpecModel(configuration=parset)
     m.predict(m.theta, [make_obs(n_wave)], sps=_get_sps(nebular))
