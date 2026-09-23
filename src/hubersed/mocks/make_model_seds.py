@@ -29,23 +29,31 @@ from hubersed.paths import PATHS
 from hubersed.sps.lsf import DESI_WAV, build_desi_resolution_matrix
 from hubersed.sps.utils import make_stochastic_agebins
 
-# ignore warnings from zero ivar
-warnings.filterwarnings("ignore", category=RuntimeWarning)
-
-# single-thread the numerics (numpy, and JAX/cuejax on the Cue path) to avoid
-# oversubscription across workers. Inherited by spawn children via os.environ.
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["NUMEXPR_NUM_THREADS"] = "1"
-os.environ.setdefault("XLA_FLAGS", "--xla_force_host_platform_device_count=1")
-
 DATA_PATH = PATHS["DATA"] / "prospector_model"
 
 N_RATIOS = 9  # 9 logsfr_ratios for 10 age bins
 
 # per-worker state, populated by _init_worker(). Never touched at module level.
 _S = {}
+
+
+def _setup_process():
+    """Hide RuntimeWarnings from zero inverse variance and run numerics on one thread.
+
+    Called by ``main`` before the worker pool starts, so the spawned workers inherit the
+    thread settings, and by each worker. Importing this module changes nothing process wide.
+    """
+    warnings.filterwarnings("ignore", category=RuntimeWarning)
+    # One thread per process for numpy and for JAX on the Cue path, to avoid
+    # oversubscription across workers.
+    for name in (
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+    ):
+        os.environ[name] = "1"
+    os.environ.setdefault("XLA_FLAGS", "--xla_force_host_platform_device_count=1")
 
 
 def priors_path(nebular, sample_size):
@@ -270,7 +278,8 @@ def make_obs(n_wave):
 
 
 def _init_worker(nebular, sample_size, seed):
-    """Load the priors and base template into this process's ``_S``."""
+    """Set up this process and load the priors and base template into its ``_S``."""
+    _setup_process()
     _S["nebular"] = nebular
     _S["seed"] = seed
     _S["priors"] = load_priors(nebular, sample_size)
@@ -364,6 +373,7 @@ def main(argv=None):
     SystemExit
         If the output file exists and ``--force`` is not given.
     """
+    _setup_process()
     args = parse_args(argv)
     nebular = args.nebular
     n = args.sample_size if args.sample_size is not None else resolve_sample_size(nebular)

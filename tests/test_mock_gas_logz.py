@@ -16,6 +16,7 @@ def test_model_gas_logz_is_the_drawn_value(tmp_path, monkeypatch, nebular):
     from hubersed.mocks.get_stochastic_priors import main as draw_priors
 
     monkeypatch.setattr(mms, "DATA_PATH", tmp_path)
+    monkeypatch.setattr(mms, "_setup_process", lambda: None)  # keep this process untouched
     cue = ["--cue"] if nebular == "cue" else ["--no-cue"]
     draw_priors([*cue, "-n", "3", "-s", "0", "-o", str(mms.priors_path(nebular, 3))])
     mms._init_worker(nebular, 3, seed=0)
