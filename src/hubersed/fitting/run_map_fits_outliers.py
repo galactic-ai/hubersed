@@ -454,29 +454,6 @@ def freeze_hypers(template, z):
     return template
 
 
-def warm_theta(model, path, z, th0):
-    """Start theta from a saved fit, by parameter name.
-
-    Parameters the saved fit lacks take the hyperparameter defaults or ``th0``.
-
-    Raises
-    ------
-    ValueError
-        If the saved record's labels and theta disagree, see ``MapFitResult``.
-    AssertionError
-        If the start is outside the prior.
-    """
-    with open(path, "rb") as f:
-        res = MapFitResult.from_record(pickle.load(f))
-    src = dict(zip(res.labels, res.vector(), strict=True))
-    src.setdefault("tau_in", universe_age_gyr(z) * (1 - 1e-6))
-    for k, v in FROZEN_HYPERS.items():
-        src.setdefault(k, v)
-    th = np.array([src.get(k, d) for k, d in zip(model.theta_labels(), th0)])
-    assert np.isfinite(safe_lnprior(model, th)), f"warm start outside prior: {path}"
-    return th
-
-
 def fit_one(
     tid,
     sps,
@@ -489,10 +466,8 @@ def fit_one(
     seeds=None,
     frozen=False,
     fixed=None,
-    warm_from=None,
     flat_sfh=False,
     cont_only=False,
-    error_floor=0.0,
     method="Powell",
     zcontinuous=1,
     spectra_npz=None,
@@ -520,15 +495,11 @@ def fit_one(
         Fix the SFH hyperparameters, see ``freeze_hypers``.
     fixed : dict of str to float, optional
         Parameters fixed at the given values.
-    warm_from : str, optional
-        Directory with a saved ``<tid>.pkl`` to start from, see ``warm_theta``.
     flat_sfh : bool, optional
         Use a flat SFH prior, see ``_build_model``.
     cont_only : bool, optional
         Fit ``build_continuum_model`` with FSPS on line-masked pixels only. Its SFH
         hyperparameters are fixed.
-    error_floor : float, optional
-        Fractional error floor added in quadrature.
     method : {"Powell", "Nelder-Mead"}, optional
         Passed to ``map_fit``.
     zcontinuous : int, optional
@@ -570,11 +541,6 @@ def fit_one(
         WAVE_OBS, mask, z, halfwidth_kms=300.0, line_waves=line_waves
     )
 
-    # A floor proportional to flux lowers the weight of high S/N pixels, unlike a plain
-    # rescale of the errors. It is added to the data errors so it does not depend on theta.
-    if error_floor and error_floor > 0:
-        unc = np.sqrt(unc**2 + (float(error_floor) * np.abs(flux)) ** 2)
-
     # cont_only fits the line-masked pixels only; the Cue arm fits everything and
     # accounts for the lines with free nebular parameters.
     fit_mask = m_cont if cont_only else mask
@@ -605,10 +571,6 @@ def fit_one(
                 v, float(np.atleast_1d(lo)[0]), float(np.atleast_1d(hi)[0])
             )
 
-    warm = Path(warm_from) / f"{tid}.pkl" if warm_from else None
-    if warm and warm.exists():
-        th0 = warm_theta(model, warm, z, th0)
-
     t0 = time.time()
     best, info = map_fit(
         model,
@@ -624,7 +586,6 @@ def fit_one(
         return {"target_id": tid, "z": float(z), "status": "map_failed", "optim": info}
     info["seconds"] = time.time() - t0
     info["theta0_seeds"] = dict(seeds or {})
-    info["warm_from"] = str(warm) if warm and warm.exists() else None
 
     sp, stats = chi2_parts(model, best.x, obs, sps_use, line_pix)
     _, stats_tight = chi2_parts(model, best.x, obs, sps_use, tight)
@@ -660,8 +621,6 @@ def fit_one(
         "nebular": "none (continuum only)" if cont_only else "cue_stellar_nebular",
         "cont_only": bool(cont_only),
         "fit_mask_npix": int(fit_mask.sum()),
-        # unc and every chi2 in this record include the error floor.
-        "error_floor": float(error_floor or 0.0),
         "optimizer": str(method),
         "zcontinuous": int(zcontinuous),
         # build_continuum_model and --freeze-hypers fix different values, so store them.
@@ -695,10 +654,8 @@ def _worker(
     seeds,
     frozen,
     fixed,
-    warm_from,
     flat_sfh=False,
     cont_only=False,
-    error_floor=0.0,
     method="Powell",
     zcontinuous=1,
     spectra_npz=None,
@@ -719,10 +676,8 @@ def _worker(
         seeds=seeds,
         frozen=frozen,
         fixed=fixed,
-        warm_from=warm_from,
         flat_sfh=flat_sfh,
         cont_only=cont_only,
-        error_floor=error_floor,
         method=method,
         zcontinuous=zcontinuous,
         spectra_npz=spectra_npz,
@@ -758,23 +713,10 @@ def main(argv=None):
         help="fix a parameter at one value for every galaxy, e.g. --fix logzsol=-2.5",
     )
     p.add_argument(
-        "--fix-from-sample",
-        default="",
-        metavar="NAME[,NAME...]",
-        help="fix parameters at each galaxy's value in the sample npz column of the "
-        "same name, matched by TARGETID",
-    )
-    p.add_argument(
         "--flat-sfh-prior",
         action="store_true",
         help=f"use SpecModel with TopHat(+/-{FLAT_SFH_RANGE} dex) on logsfr_ratios "
         f"instead of the stochastic SFH prior",
-    )
-    p.add_argument(
-        "--warm-from",
-        default=None,
-        metavar="DIR",
-        help="seed start 0 from the MAP in DIR/<tid>.pkl instead of the prior init",
     )
     p.add_argument(
         "--zcontinuous",
@@ -788,13 +730,6 @@ def main(argv=None):
         default="Powell",
         choices=["Powell", "Nelder-Mead"],
         help="scipy minimize method",
-    )
-    p.add_argument(
-        "--error-floor",
-        type=float,
-        default=0.0,
-        metavar="FRAC",
-        help="fractional error floor added in quadrature, sigma_eff^2 = sigma^2 + (FRAC*flux)^2",
     )
     p.add_argument(
         "--spectra-npz",
@@ -835,29 +770,8 @@ def main(argv=None):
     fixed = dict(kv.split("=") for kv in args.fix)
     fixed = {k: float(v) for k, v in fixed.items()}
 
-    # Per galaxy fixed values from sample npz columns, matched by TARGETID.
-    persist = {}
-    for k in (s.strip() for s in args.fix_from_sample.split(",") if s.strip()):
-        if k not in d.files:
-            raise SystemExit(
-                f"--fix-from-sample {k}: no column '{k}' in {args.sample}. has: {sorted(d.files)}"
-            )
-        persist[k] = {int(t): float(v) for t, v in zip(d["target_ids"], d[k])}
-        print(f"fixing {k} per galaxy from {args.sample}", flush=True)
-
-    def fixed_for(tid):
-        f = dict(fixed)
-        for k, m in persist.items():
-            if tid not in m or not np.isfinite(m[tid]):
-                raise SystemExit(f"--fix-from-sample {k}: no finite value for {tid}")
-            f[k] = m[tid]
-        return f
-
-    if args.freeze_hypers or fixed or persist:
-        print(
-            f"frozen hypers: {args.freeze_hypers}   fixed: {fixed}   per-galaxy: {sorted(persist)}",
-            flush=True,
-        )
+    if args.freeze_hypers or fixed:
+        print(f"frozen hypers: {args.freeze_hypers}   fixed: {fixed}", flush=True)
 
     todo = [int(t) for t in tids if not (args.skip_existing and (out / f"{t}.pkl").exists())]
     print(f"{len(todo)}/{len(tids)} to fit, {args.workers} worker(s)", flush=True)
@@ -877,11 +791,9 @@ def main(argv=None):
                     str(out),
                     seeds.get(t),
                     args.freeze_hypers,
-                    fixed_for(t),
-                    args.warm_from,
+                    fixed,
                     flat_sfh=args.flat_sfh_prior,
                     cont_only=args.continuum_only,
-                    error_floor=args.error_floor,
                     method=args.optimizer,
                     zcontinuous=args.zcontinuous,
                     spectra_npz=args.spectra_npz,
@@ -915,11 +827,9 @@ def main(argv=None):
                         out,
                         seeds=seeds.get(tid),
                         frozen=args.freeze_hypers,
-                        fixed=fixed_for(tid),
-                        warm_from=args.warm_from,
+                        fixed=fixed,
                         flat_sfh=args.flat_sfh_prior,
                         cont_only=args.continuum_only,
-                        error_floor=args.error_floor,
                         method=args.optimizer,
                         zcontinuous=args.zcontinuous,
                         spectra_npz=args.spectra_npz,

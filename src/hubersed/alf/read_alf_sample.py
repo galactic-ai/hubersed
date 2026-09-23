@@ -269,8 +269,8 @@ def main(argv=None):
         "--sample-out",
         default=None,
         help="write a sample npz holding ONLY the galaxies with an alf run, "
-        "with the logzsol column replaced by alf's [Z/H]. Feed it to "
-        "run_map_fits_outliers.py --fix-from-sample logzsol.",
+        "with the logzsol column replaced by alf's [Z/H]. run_map_fits_outliers "
+        "starts logzsol at that value.",
     )
     a = p.parse_args(argv)
     if bool(a.sample_in) != bool(a.sample_out):
@@ -393,8 +393,8 @@ def main(argv=None):
         assert np.array_equal(out["target_ids"], src[idx]), "TARGETID order lost"
         out["provenance"] = np.array(
             f"{len(idx)} galaxies with an alf run, subset of {a.sample_in} by TARGETID. "
-            f"The logzsol column is alf's [Z/H] per galaxy (median of the chain), NOT a "
-            f"seed -- intended for run_map_fits_outliers.py --fix-from-sample logzsol. "
+            f"The logzsol column is alf's [Z/H] per galaxy (median of the chain). "
+            f"run_map_fits_outliers starts logzsol there. "
             f"alf runs read from {a.alf_results} with tag '{a.tag}'. "
             f"Every other column is copied unchanged from the source sample."
         )
