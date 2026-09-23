@@ -42,7 +42,6 @@ def main(n_sample=10):
     output_dir = str(RESULTS_PATH)
 
     # Step 1: Sample target_ids
-    # print(f"Step 1: Sampling {n_sample} target_ids from {pkl_file}")
     samples_tids = []
 
     for pkl_file in sample_files:

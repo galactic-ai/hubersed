@@ -93,7 +93,7 @@ for i in range(0, total_samples, batch_size):
     )
 
     with torch.no_grad():
-        # (n_sims, n_samples, n_latent)
+        # shape is n_sims, n_samples, n_latent
         samples = NDE_theta.sample(1, context=norms.unsqueeze(1).float())
 
         # make it (n_samples, n_sims, n_latent)
