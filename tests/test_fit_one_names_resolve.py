@@ -79,6 +79,7 @@ def local_scope(fn):
 
 @pytest.mark.parametrize("func", FUNCS)
 def test_no_undefined_names(func):
+    """Every name the function reads is a module name, an argument or a local."""
     tree = ast.parse(SRC.read_text())
     fn = next(
         (n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == func), None

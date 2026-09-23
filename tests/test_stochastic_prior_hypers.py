@@ -41,6 +41,7 @@ HYPERS = np.array([0.17, 2.5, 13.0, 0.005, 0.025])  # DEFAULT_SET_VALS ordering
 
 
 def ratio_covar(psd):
+    """Return the logsfr_ratios covariance for the SFH hyperparameters ``psd``."""
     return transforms.sfr_covar_to_sfr_ratio_covar(transforms.get_sfr_covar(psd, agebins=AGEBINS))
 
 
@@ -93,6 +94,7 @@ def test_map_objective_is_unbounded_in_the_sigma_funnel():
 
 
 def test_continuum_model_is_15_free_with_hypers_frozen():
+    """The continuum model fits 15 values and keeps the five SFH hyperparameters fixed."""
     pytest.importorskip("fsps")
     from hubersed.sps.config import build_continuum_model
 
