@@ -43,6 +43,7 @@ dev = [
     "huggingface-hub>=1.8.0",
     "ipykernel>=7.1.0",
     "jupyter>=1.1.1",
+    "pre-commit>=4.6.2",
     "pytest>=9.1.1",
     "ruff>=0.15.21",
     "vulture>=2.16",
