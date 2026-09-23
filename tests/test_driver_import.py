@@ -5,25 +5,30 @@ import sys
 
 import pytest
 
-pytestmark = pytest.mark.fsps
+pytestmark = [pytest.mark.fsps, pytest.mark.slow]
+
+DRIVERS = ["run_map_fits_outliers", "run_dynesty_outliers"]
 
 # astropy, scipy and pkg_resources add their own warning filters on import, so the
-# drivers' dependencies are imported before the snapshot.
+# drivers' dependencies are imported before the first snapshot. One process checks
+# every driver, because each start of Python with FSPS takes several seconds.
 CHECK = """
-import warnings, numpy as np, matplotlib
+import importlib, warnings, numpy as np, matplotlib
 import hubersed.fitting.chi2, prospect.fitting, prospect.models.sedmodel, scipy.signal
 import dynesty, dynesty.utils
-before = (np.geterr(), list(warnings.filters), matplotlib.get_backend())
-import hubersed.fitting.{}
-after = (np.geterr(), list(warnings.filters), matplotlib.get_backend())
-print("same" if before == after else f"changed {{before}} {{after}}")
+state = lambda: (np.geterr(), list(warnings.filters), matplotlib.get_backend())
+for name in {drivers!r}:
+    before = state()
+    importlib.import_module("hubersed.fitting." + name)
+    print(name, "same" if state() == before else "changed")
 """
 
 
-@pytest.mark.parametrize("driver", ["run_map_fits_outliers", "run_dynesty_outliers"])
-def test_import_changes_nothing_process_wide(driver):
+def test_import_changes_nothing_process_wide():
     """A driver only quiets warnings, and the MAP driver only switches to Agg, when main runs."""
     pytest.importorskip("fsps")
-    code = CHECK.format(driver)
+    code = CHECK.format(drivers=DRIVERS)
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
-    assert out.stdout.strip().splitlines()[-1] == "same"
+    # The drivers print progress while they load, so keep only the result lines.
+    lines = [ln for ln in out.stdout.splitlines() if ln.split(" ")[0] in DRIVERS]
+    assert lines == [f"{d} same" for d in DRIVERS]
