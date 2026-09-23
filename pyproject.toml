@@ -83,5 +83,4 @@ convention = "numpy"
 
 [tool.ruff.lint.per-file-ignores]
 "bin/**" = ["D"]  # docstrings land after the Phase 1b move to src/
-"src/hubersed/alf/*" = ["D"]  # moved from bin/, docstring pass pending
 "experiments/*" = ["D"]  # header format comes in Phase 4
