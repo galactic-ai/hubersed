@@ -1,3 +1,10 @@
+"""Screen continuum-flow outlier candidates for Gaia stars and nearby SGA-2020 galaxies.
+
+The candidates are the TARGETIDs flagged by both continuum flows, and the Gaia and SGA results
+go to two CSV files. Run it with ``python -m hubersed.detect.contam_screens``, or add
+``--self-test`` for the offline geometry check.
+"""
+
 import argparse
 import csv
 import time
@@ -11,10 +18,10 @@ from hubersed.detect.build_cont_outlier_sample import DEFAULT_FLOW_DIR, TAGS, fl
 from hubersed.paths import PATHS
 
 GAIA_RADIUS = 2.0  # arcsec, cone radius
-GAIA_G_MAX = 16.0  # mag -- applies ONLY to the bright-neighbour (PSF-wing) test
+GAIA_G_MAX = 16.0  # mag, used only by the bright-neighbour (PSF-wing) test
 GAIA_PLX_SNR = 5.0  # parallax / parallax_error
 GAIA_PM = 3.0  # mas/yr, bare total PM, used only by the wing test
-GAIA_ONSRC = 1.0  # arcsec: inside this the Gaia source IS the target
+GAIA_ONSRC = 1.0  # arcsec, inside this the Gaia source is taken to be the target
 GAIA_PM_SNR = 5.0  # total proper motion / its error, for the on-source test
 GAIA_RUWE_MAX = 1.4  # above this the astrometric solution is blended/untrustworthy
 SGA_BOX = 0.25  # deg, half-height of the Dec box (RA half-width is this / cos dec)
@@ -22,18 +29,35 @@ DL_TAP = "https://datalab.noirlab.edu/tap"
 
 
 def _col(table, name):
-    """First row of `name` as a float, with masked/absent entries becoming NaN."""
+    """Return the first row of column ``name`` as a float, with masked or absent entries as NaN."""
     if len(table) == 0 or name not in table.colnames:
         return np.nan
     return float(np.ma.filled(np.ma.asarray(table[name], dtype=float), np.nan)[0])
 
 
 def query(fn, tries=4):
-    """Run a TAP query, retrying transient failures, then raise.
+    """Run a TAP query, retrying on any exception, and raise if every try fails.
 
-    Never returns a sentinel: a screen that cannot answer must stop the run, not report
-    "not flagged".  astroquery raises on VOTable error documents (which TAP serves with
-    HTTP 200), so an error body cannot be mistaken for an empty result set.
+    It never returns a sentinel, because a screen that cannot answer must stop the run rather
+    than report "not flagged". It relies on astroquery raising on VOTable error documents,
+    which TAP serves with HTTP 200, so an error body is not mistaken for an empty result.
+
+    Parameters
+    ----------
+    fn : callable
+        Zero-argument function that runs the query and returns its result table.
+    tries : int, optional
+        Number of attempts. After the k-th failure it sleeps 2k seconds.
+
+    Returns
+    -------
+    object
+        Whatever ``fn`` returns on its first successful call.
+
+    Raises
+    ------
+    RuntimeError
+        If every attempt raises.
     """
     for k in range(tries):
         try:
@@ -46,10 +70,28 @@ def query(fn, tries=4):
 
 
 def gaia_screen(ra, dec):
-    """Nearest Gaia DR3 source within GAIA_RADIUS, and whether it flags the target."""
+    """Query the nearest Gaia DR3 source within GAIA_RADIUS and decide whether it flags the target.
+
+    The source flags the target as an on-source star when it lies within GAIA_ONSRC, has RUWE
+    below GAIA_RUWE_MAX and has a significant parallax or proper motion. It flags it as a
+    bright wing star when it is brighter than GAIA_G_MAX and has a significant parallax or a
+    total proper motion above GAIA_PM. Missing values never flag.
+
+    Parameters
+    ----------
+    ra, dec : float
+        Target position in degrees.
+
+    Returns
+    -------
+    dict
+        Gaia columns of the nearest source (NaN when there is none), the derived parallax and
+        proper-motion signal-to-noise, and the booleans ``onsource_star``, ``wing_star`` and
+        ``flagged``.
+    """
     from astroquery.gaia import Gaia
 
-    # The `AS sep` alias is load-bearing: ORDER BY on the bare expression is rejected.
+    # The AS sep alias is needed because ORDER BY on the bare expression is rejected.
     q = (
         f"SELECT TOP 1 parallax,parallax_error,pm,pmra,pmra_error,pmdec,pmdec_error,"
         f"ruwe,phot_g_mean_mag,"
@@ -64,7 +106,7 @@ def gaia_screen(ra, dec):
     pm, g = _col(t, "pm"), _col(t, "phot_g_mean_mag")
     sep, ruwe = _col(t, "sep"), _col(t, "ruwe")
 
-    # Error on the TOTAL pm, propagated from the components: pm = hypot(pmra, pmdec).
+    # Error on the total pm, propagated from the components since pm = hypot(pmra, pmdec).
     pmra, pmdec = _col(t, "pmra"), _col(t, "pmdec")
     pmra_e, pmdec_e = _col(t, "pmra_error"), _col(t, "pmdec_error")
     pm_err = np.hypot(pmra * pmra_e, pmdec * pmdec_e) / pm if pm > 0 else np.nan
@@ -90,21 +132,61 @@ def gaia_screen(ra, dec):
 
 
 def ellipse_radius(ra, dec, g_ra, g_dec, g_d26, g_pa, g_ba):
-    """Normalised elliptical radius of (ra, dec) in each SGA galaxy's own frame.
+    """Return the normalised elliptical radius of (ra, dec) in each SGA galaxy's own frame.
 
-    r_ell <= 1 means inside the mu = 26 isophote.  Returns (r_ell, sep_arcsec), both arrays.
+    The position angle is measured from north through east. An r_ell at or below 1 means the
+    point is inside the ellipse of diameter ``g_d26`` and axis ratio ``g_ba``, which is the
+    mu = 26 isophote for SGA.
+
+    Parameters
+    ----------
+    ra, dec : float or ndarray
+        Point position in degrees.
+    g_ra, g_dec : ndarray
+        Galaxy centres in degrees.
+    g_d26 : ndarray
+        Major-axis diameter in arcmin.
+    g_pa : ndarray
+        Position angle in degrees.
+    g_ba : ndarray
+        Minor to major axis ratio.
+
+    Returns
+    -------
+    r_ell : ndarray
+        Elliptical radius in units of the semi-major axis.
+    sep_arcsec : ndarray
+        Flat-sky separation from each centre in arcsec.
     """
     da = (ra - g_ra) * np.cos(np.radians(g_dec)) * 3600.0  # arcsec, east positive
     dd = (dec - g_dec) * 3600.0
     p = np.radians(g_pa)
     xp = da * np.sin(p) + dd * np.cos(p)  # along major axis
     yp = -da * np.cos(p) + dd * np.sin(p)  # along minor axis
-    a = g_d26 / 2.0 * 60.0  # arcmin -> arcsec semi-major
+    a = g_d26 / 2.0 * 60.0  # semi-major axis in arcsec, d26 is in arcmin
     return np.hypot(xp / a, yp / (a * g_ba)), np.hypot(da, dd)
 
 
 def sga_screen(ra, dec, tap):
-    """Closest-in-r_ell SGA-2020 galaxy to the target, and whether it flags it."""
+    """Find the SGA-2020 galaxy with the smallest r_ell for the target and whether it flags it.
+
+    The query takes a box of half-height SGA_BOX around the target, and the exact ellipse test
+    is done in python. The target is flagged when it lies inside that galaxy's ellipse.
+
+    Parameters
+    ----------
+    ra, dec : float
+        Target position in degrees.
+    tap : astroquery.utils.tap.core.TapPlus
+        Client for the Data Lab TAP service.
+
+    Returns
+    -------
+    dict
+        ``r_ell``, ``sep_arcsec``, ``sga_galaxy``, ``d26_arcmin``, ``z_leda`` and ``flagged``.
+        When no galaxy with a valid d26 and b/a is in the box, the values are NaN or empty and
+        ``flagged`` is False.
+    """
     # Data Lab's ADQL rejects CIRCLE with numeric literals
     # ("function circle(numeric,numeric,numeric) does not exist"), so use a box and do the
     # exact ellipse test below in python.
@@ -153,7 +235,26 @@ def sga_screen(ra, dec, tap):
 
 
 def candidate_pool(flow_dir, vac):
-    """(sorted TARGETIDs, ra, dec) for the same `sel` build_cont_outlier_sample.py uses."""
+    """Return the candidate TARGETIDs and their positions.
+
+    The candidates are the outliers of both continuum flows that are also in the FastSpecFit
+    VAC, which is the same selection build_cont_outlier_sample makes. Positions come from the
+    VAC, matched by TARGETID.
+
+    Parameters
+    ----------
+    flow_dir : str or Path
+        Directory holding the stored flow outlier files.
+    vac : str or Path
+        FastSpecFit VAC FITS file with a METADATA extension.
+
+    Returns
+    -------
+    sel : list of int
+        Sorted TARGETIDs.
+    ra, dec : ndarray
+        Positions in degrees, aligned with ``sel``.
+    """
     out = {t: flow_scores(t, flow_dir)[2] for t in TAGS}
     common = out[TAGS[0]] & out[TAGS[1]]
     M = fits.open(vac)["METADATA"].data
@@ -164,7 +265,7 @@ def candidate_pool(flow_dir, vac):
 
 
 def self_test():
-    """Offline check of the ellipse geometry; no network."""
+    """Check the ellipse geometry offline on points on the major axis, minor axis and centre."""
     a_arcmin, ba, pa = 2.0, 0.5, 30.0  # d26 = 2', b/a = 0.5, PA = 30 deg
     g_ra, g_dec = 180.0, 40.0
     a_deg = (a_arcmin / 2.0) / 60.0  # semi-major in degrees
@@ -201,6 +302,13 @@ def self_test():
 
 
 def main(argv=None):
+    """Run the Gaia and SGA screens on every candidate and write the two CSV files.
+
+    Parameters
+    ----------
+    argv : list of str, optional
+        Command-line arguments. None reads ``sys.argv``.
+    """
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
