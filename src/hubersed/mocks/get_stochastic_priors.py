@@ -1,3 +1,9 @@
+"""Draw the prior sample that make_model_seds turns into mock spectra.
+
+Run as ``python -m hubersed.mocks.get_stochastic_priors``. Writes one npz of parameter
+arrays to ``data/prospector_model/`` unless ``--out`` is given.
+"""
+
 import argparse
 import sys
 from pathlib import Path
@@ -14,6 +20,7 @@ from hubersed.sps.utils import universe_age_gyr
 
 
 def parse_args(argv=None):
+    """Parse the command line options."""
     p = argparse.ArgumentParser(
         description="Draw the stochastic-SFH prior sample used for generating mock SEDs.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -43,6 +50,18 @@ def parse_args(argv=None):
 
 
 def main(argv=None):
+    """Draw every prior parameter with one seeded generator and save them.
+
+    Returns
+    -------
+    int
+        Exit status.
+
+    Raises
+    ------
+    SystemExit
+        If the output file exists and ``--force`` is not given.
+    """
     args = parse_args(argv)
     n = args.sample_size
     rng = np.random.default_rng(args.seed)
