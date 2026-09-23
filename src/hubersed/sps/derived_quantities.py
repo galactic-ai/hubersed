@@ -44,7 +44,6 @@ def compute_logssfr(model, theta, to=1e8):
 
     # in years
     agebins = 10 ** model.params["agebins"]
-    dt = np.diff(agebins, axis=1)[:, 0]
 
     if "mass" in model.params:
         mass_per_bin = np.array(model.params["mass"])
