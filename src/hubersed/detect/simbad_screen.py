@@ -1,15 +1,7 @@
-"""SIMBAD identification screen over the top of the ranked candidate list.
+"""Query SIMBAD around the top-ranked surviving candidates and flag AGN and stars.
 
-Fourth screen. Covers the one contaminant class the other three cannot reach: an AGN that
-is morphologically RESOLVED and has too few forbidden lines to classify on the BPT.
-2026-08-27g found three of these in the old top-20 (a gamma-ray BL Lac fit as SER, a QSO
-and an AGN both fit as REX); agn_star_screen.py still misses the BL Lac by construction.
-
-Queried on the ranked survivors rather than the whole pool because it costs one network
-round-trip each and only the head of the ranking can reach the sample.
-
-MANUAL_EXCLUDE carries findings that are not reducible to a screen -- an individual
-redshift refutation. Each entry cites the log entry that established it.
+Candidates flagged by earlier screen CSVs are dropped before ranking, and targets in
+MANUAL_EXCLUDE are flagged too. Run it as ``python -m hubersed.detect.simbad_screen``.
 """
 
 import argparse
@@ -33,7 +25,7 @@ SEP_MAX = 2.0
 AGN_TYPES = {"BLL", "QSO", "AGN", "Sy1", "Sy2", "SyG", "QSO_Candidate", "Bla", "LIN", "rG"}
 STAR_TYPES = {"Star", "Pe*", "WD*", "HB*", "RGB*", "*", "PM*", "HV*"}
 
-# TARGETID -> (reason, log entry). Not screenable; each was an individual investigation.
+# Maps TARGETID to (reason, log entry). These cannot be screened automatically.
 MANUAL_EXCLUDE = {
     39633322460057381: (
         "redshift refuted -- the single feature carrying z=0.5526 cannot be [OIII]",
@@ -43,6 +35,19 @@ MANUAL_EXCLUDE = {
 
 
 def main(argv=None):
+    """Rank the surviving candidates, query SIMBAD for the top ones and write the CSV.
+
+    Survivors are outliers of both continuum flows that are in the VAC, are not flagged
+    by any file in ``--screens`` and have 0.01 <= Z <= 0.6. They are sorted by the mean of
+    their two DESI rank percentiles, lowest first. A target is flagged if the first
+    SIMBAD match within SEP_MAX arcsec has an AGN or star type, or if it is in
+    MANUAL_EXCLUDE. Failed queries are printed and the row is kept unflagged by SIMBAD.
+
+    Parameters
+    ----------
+    argv : list of str or None, optional
+        Command line arguments. None reads ``sys.argv``.
+    """
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
