@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from hubersed.alf.read_alf_sample import LABELS, convergence, read_header
+from hubersed.alf.read_alf_sample import LABELS, _lib_corr, convergence, read_header
 
 HEADER = """#   Elapsed Time:   1.27 hr
 #    fit_type  = 0
@@ -37,3 +37,11 @@ def test_frozen_walkers_do_not_move():
 def test_wrong_walker_count_mixes_walkers():
     """Reading 8 walkers as 4 compares different walkers and reports moves."""
     assert convergence(frozen_chain(8), nwalkers=4)["moved"] > 0.0
+
+
+def test_library_correction_extrapolates_like_read_alf():
+    """Outside the table the correction continues the end slope, as alf's read_alf.py does."""
+    zh = np.array([0.4, -2.0])
+    np.testing.assert_allclose(_lib_corr("Mg", zh)[0], 0.03)  # 0.04 - 0.2 * 0.05
+    np.testing.assert_allclose(_lib_corr("a", zh)[1], 0.8)  # 0.6 + 0.4 * 0.5
+    assert _lib_corr("C", zh) == 0.0

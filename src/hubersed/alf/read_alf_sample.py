@@ -22,6 +22,7 @@ import pickle
 from pathlib import Path
 
 import numpy as np
+from scipy.interpolate import interp1d
 
 # .mcmc columns (alf.f90:655-656, str2arr.f90:25-75). Column 0 is -2 ln P. The
 # mass-to-light ratios are in r, I and K (alf_vars.f90:183-184).
@@ -121,8 +122,8 @@ def _lib_corr(elem, zh_chain):
 
     Notes
     -----
-    ``np.interp`` holds the end values outside the table, while alf's read_alf.py
-    extrapolates linearly.
+    Outside the table the correction is extrapolated linearly, as in alf's
+    scripts/read_alf.py:281-292.
     """
     if elem == "a":
         tab = _LIB_OFE
@@ -132,7 +133,7 @@ def _lib_corr(elem, zh_chain):
         tab = _LIB_CAFE
     else:
         return 0.0
-    return np.interp(zh_chain, _LIB_FEH, tab)
+    return interp1d(_LIB_FEH, tab, kind="linear", fill_value="extrapolate")(zh_chain)
 
 
 def load_run(stem):
