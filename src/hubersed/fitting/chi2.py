@@ -19,6 +19,7 @@ from functools import cache
 import astropy.units as u
 import numpy as np
 from prospect.fitting import lnprobfn
+from scipy.optimize import minimize
 
 from hubersed.conversion import DESI_FLAM, ivar_to_maggies, to_maggies
 from hubersed.fitting.result import MapFitResult
@@ -36,9 +37,6 @@ Z_FLOOR = 0.01
 
 EDGES = common_obs_edges()
 WAVE_C = (0.5 * (EDGES[1:] + EDGES[:-1])).astype(np.float32)  # coarse centers, for the checkpoint
-
-
-from scipy.optimize import minimize
 
 
 def _map_optimize(neg, theta_init, n_seeds=3, jitter=0.03, maxfev=20_000, max_tries=100):
