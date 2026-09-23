@@ -7,8 +7,8 @@ Notes
 -----
 The file starts with one ``# l1 l2`` line per fitted interval, in microns, at most 10
 (read_data.f90:54-84). Each data row is ``lam flx err wgt ires``. The wavelength is vacuum
-Angstrom, the weight is between 0 and 1, and ires is the instrumental sigma in km/s
-(read_data.f90:93-107).
+Angstrom, flux and error are DESI f_lambda in 1e-17 erg/s/cm^2/A, the weight is between 0
+and 1, and ires is the instrumental sigma in km/s (read_data.f90:93-107).
 
 alf fits the continuum shape away with a polynomial per interval, so it only sees the
 absorption features (alf manual section 1.1).
@@ -25,7 +25,6 @@ from pathlib import Path
 
 import numpy as np
 
-from hubersed.conversion import flambda_to_maggies, ivar_flambda_to_ivar_maggies
 from hubersed.fitting.chi2 import WAVE_OBS, load_by_index, tids_to_indices
 from hubersed.prospector.lsf import C_KMS, desi_resolution
 
@@ -80,8 +79,9 @@ def main(argv=None):
     assert int(tid_chk) == a.tid, f"TARGETID mismatch: asked {a.tid}, got {tid_chk}"
     z = float(z)
 
-    flux = flambda_to_maggies(WAVE_OBS, spec)
-    iv = ivar_flambda_to_ivar_maggies(WAVE_OBS, ivar)
+    # alf's spectra are L_lambda (alf manual section 1.4.1), so DESI f_lambda goes in as is
+    flux = np.asarray(spec, float)
+    iv = np.asarray(ivar, float)
     good = (iv > 0) & np.isfinite(flux)
     err = np.where(good, 1.0 / np.sqrt(np.where(iv > 0, iv, np.inf)), 1.0)
 
