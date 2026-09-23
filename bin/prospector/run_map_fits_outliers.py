@@ -33,8 +33,9 @@ from scipy.optimize import minimize
 from scipy.signal import medfilt
 
 from hubersed.conversion import flambda_to_maggies, ivar_flambda_to_ivar_maggies
-from hubersed.fitting.chi2 import WAVE_OBS, load_by_index, tids_to_indices
+from hubersed.fitting.chi2 import WAVE_OBS
 from hubersed.fitting.config import build_continuum_model, build_full_cue_model
+from hubersed.io.desi import load_by_index, tids_to_indices
 from hubersed.paths import PATHS
 from hubersed.plotting.sfh import sfh_figure
 from hubersed.plotting.spectra import plot_residual, residual_chi, spectrum_figure

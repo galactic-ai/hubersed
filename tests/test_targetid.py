@@ -5,7 +5,7 @@ import pytest
 import torch
 from spender.data.desi import DESI
 
-from hubersed.fitting import chi2
+from hubersed.io import desi
 
 ROWS = 1024
 N_CHUNKS = 11  # the fewest chunks for which "10" sorts before "2"
@@ -15,7 +15,7 @@ TIDS = np.random.default_rng(0).permutation(N_CHUNKS * ROWS) + 39_627_000_000_00
 
 @pytest.fixture
 def chunk_dir(tmp_path, monkeypatch):
-    """Write fake chunk pickles and all_target_ids.npy, and point chi2 at them."""
+    """Write fake chunk pickles and all_target_ids.npy, and point the loader at them."""
     chunk_dir = tmp_path / "desi_spectra"
     chunk_dir.mkdir()
     for k in range(N_CHUNKS):
@@ -26,7 +26,7 @@ def chunk_dir(tmp_path, monkeypatch):
         batch = [spec, spec, one, tid, one, one]
         DESI.save_batch(str(chunk_dir), batch, tag="chunk1024", counter=k)
     np.save(tmp_path / "all_target_ids.npy", TIDS)
-    monkeypatch.setattr(chi2, "DATA_PATH", tmp_path)
+    monkeypatch.setattr(desi, "DATA_PATH", tmp_path)
     return chunk_dir
 
 
@@ -35,8 +35,8 @@ def chunk_dir(tmp_path, monkeypatch):
 def test_tid_round_trip(gidx):
     """A TARGETID sent through tids_to_indices and load_by_index comes back unchanged."""
     tid = TIDS[gidx]
-    idx = int(chi2.tids_to_indices(np.array([tid], np.int64))[0])
-    _, _, _, loaded_tid = chi2.load_by_index(idx)
+    idx = int(desi.tids_to_indices(np.array([tid], np.int64))[0])
+    _, _, _, loaded_tid = desi.load_by_index(idx)
     assert idx == gidx
     assert loaded_tid == tid
 
@@ -47,7 +47,7 @@ def test_unknown_tid_raises():
     # A TARGETID above every stored one is the case the searchsorted clip is there for
     unknown = TIDS.max() + 1
     with pytest.raises(ValueError, match="1/2 TARGETIDs not found"):
-        chi2.tids_to_indices(np.array([TIDS[0], unknown], np.int64))
+        desi.tids_to_indices(np.array([TIDS[0], unknown], np.int64))
 
 
 def test_encoder_row_is_not_global_index(chunk_dir):

@@ -25,7 +25,8 @@ from pathlib import Path
 
 import numpy as np
 
-from hubersed.fitting.chi2 import WAVE_OBS, load_by_index, tids_to_indices
+from hubersed.fitting.chi2 import WAVE_OBS
+from hubersed.io.desi import load_by_index, tids_to_indices
 from hubersed.prospector.lsf import C_KMS, desi_resolution
 
 # alf's model wavelength range (alf_vars.f90:127-128)

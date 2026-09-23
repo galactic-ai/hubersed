@@ -23,8 +23,9 @@ from prospect.models.sedmodel import HyperSpecModel
 from prospect.sources import SSPBasis
 
 from hubersed.conversion import flambda_to_maggies, ivar_flambda_to_ivar_maggies
-from hubersed.fitting.chi2 import WAVE_OBS, load_by_index, tids_to_indices
+from hubersed.fitting.chi2 import WAVE_OBS
 from hubersed.fitting.config import build_continuum_model, build_full_cue_model
+from hubersed.io.desi import load_by_index, tids_to_indices
 from hubersed.paths import PATHS
 from hubersed.prospector.lsf import C_KMS, desi_resolution
 from hubersed.prospector.parameter_file import (
