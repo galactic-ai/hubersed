@@ -105,6 +105,9 @@ def build_base_template(nebular):
     else:
         # FSPS / Byler+2017 CLOUDY grids; free gas_logz/u only
         t.update(copy.deepcopy(TemplateLibrary["nebular"]))
+        # prospect's nebular template ties gas_logz to logzsol. Untie it so each mock uses
+        # its drawn gas_logz, as the Cue mocks and both fit models do.
+        del t["gas_logz"]["depends_on"]
 
     t["nebemlineinspec"] = {"N": 1, "isfree": False, "init": False}
 
