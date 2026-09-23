@@ -184,9 +184,9 @@ def build_full_model(continuum_template, theta_best_cont, cont_model):
     free, shrinking ``sigma_reg`` and ``sigma_dyn`` keeps raising the prior term, so a fit can
     drift toward their prior floors. ``tests/test_stochastic_prior_hypers.py`` shows this.
 
-    The ``gas_logz`` prior is TopHat(-2.0, 0.5), but the FSPS nebular grid only covers
-    -1.3 to 0.3 and FSPS clamps values outside it. Values past either end give the same
-    spectrum. We plan to change the prior to TopHat(-1.3, 0.3).
+    The ``gas_logz`` prior is TopHat(-1.3, 0.3), the range of the FSPS nebular grid. FSPS
+    clamps values outside it, so a wider prior would have flat ends.
+    ``tests/test_fsps_nebular_grid.py`` checks this against the grid files.
 
     ``eline_sigma`` starts at 200 km/s here and at 100 km/s in the Cue model. This was not
     intended, and we plan to start both at 100 km/s.
@@ -223,11 +223,13 @@ def build_full_model(continuum_template, theta_best_cont, cont_model):
         full_template[key]["isfree"] = True
         full_template[key]["init"] = float(theta_best_cont[cont_model.theta_index[key]][0])
 
+    # The FSPS nebular grid ($SPS_HOME/nebular/ZAU_*_mist.lines) covers log Z -1.3 to 0.3,
+    # and FSPS clamps values outside it (add_nebular.f90:27-29).
     full_template["gas_logz"] = {
         "N": 1,
         "isfree": True,
         "init": 0.0,
-        "prior": TopHat(mini=-2.0, maxi=0.5),
+        "prior": TopHat(mini=-1.3, maxi=0.3),
     }
     full_template["gas_logu"] = {
         "N": 1,
