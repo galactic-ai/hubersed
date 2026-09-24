@@ -1,6 +1,6 @@
 """Fit DESI spectra by MAP, one TARGETID at a time, with prospector and Cue nebular emission.
 
-Run as ``python -m hubersed.fitting.run_map_fits_outliers``. Each galaxy gets a pickle with
+Run as ``python -m hubersed.fitting.map_fits``. Each galaxy gets a pickle with
 the best fit and its chi2 split into line and continuum pixels, plus spectrum and SFH figures.
 """
 

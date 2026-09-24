@@ -1,4 +1,4 @@
-"""Static check that run_map_fits_outliers has no undefined names in the hot functions.
+"""Static check that map_fits has no undefined names in the hot functions.
 
 Three separate runs have now been thrown away by a NameError/KeyError raised AFTER the
 expensive fitting was done:
@@ -22,13 +22,7 @@ from pathlib import Path
 
 import pytest
 
-SRC = (
-    Path(__file__).resolve().parents[1]
-    / "src"
-    / "hubersed"
-    / "fitting"
-    / "run_map_fits_outliers.py"
-)
+SRC = Path(__file__).resolve().parents[1] / "src" / "hubersed" / "fitting" / "map_fits.py"
 # checked for undefined names; these are the ones that do real work before writing output
 FUNCS = ["fit_one", "_worker", "map_fit", "main"]
 

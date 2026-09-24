@@ -9,7 +9,7 @@ import pytest
 pytestmark = [pytest.mark.fsps, pytest.mark.slow]
 
 MODULES = [
-    "hubersed.fitting.run_map_fits_outliers",
+    "hubersed.fitting.map_fits",
     "hubersed.mocks.seds",
 ]
 THREAD_VARS = (

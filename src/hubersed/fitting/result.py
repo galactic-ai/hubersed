@@ -62,7 +62,7 @@ class MapFitResult:
         Parameters
         ----------
         rec : dict
-            Record written by ``run_map_fits_outliers.fit_one``.
+            Record written by ``map_fits.fit_one``.
 
         Returns
         -------
