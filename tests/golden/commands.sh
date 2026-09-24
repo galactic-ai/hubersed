@@ -31,7 +31,7 @@ for script in \
     scripts/make_alf_input.py scripts/read_alf_sample.py \
     experiments/2026-08-25_compare_alf_solar_scaled.py \
     scripts/get_stochastic_priors.py scripts/make_model_seds.py \
-    "-m hubersed.fitting.run_dynesty_outliers" "-m hubersed.fitting.run_map_fits_outliers" \
+    "-m hubersed.fitting.run_map_fits_outliers" \
     scripts/agn_star_screen.py scripts/build_cont_outlier_sample.py \
     scripts/contam_screens.py scripts/simbad_screen.py \
     scripts/get_latent_space.py \

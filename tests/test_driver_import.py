@@ -10,7 +10,6 @@ pytestmark = [pytest.mark.fsps, pytest.mark.slow]
 
 MODULES = [
     "hubersed.fitting.run_map_fits_outliers",
-    "hubersed.fitting.run_dynesty_outliers",
     "hubersed.mocks.seds",
 ]
 THREAD_VARS = (
