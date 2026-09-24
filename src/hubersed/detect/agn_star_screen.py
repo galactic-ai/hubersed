@@ -101,6 +101,39 @@ def bpt(d, i):
     return "star-forming", n2, o3r, s2
 
 
+def read_gaia_screen(path):
+    """Read a Gaia screen CSV into rows keyed by target id.
+
+    The on-source star rule needs the onsource_star and sep_arcsec columns that
+    contam_screens writes. A file without them would make every target look off-source,
+    so it is refused.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        Gaia screen CSV with a target_id column.
+
+    Returns
+    -------
+    dict
+        One CSV row, as a dict of strings, per integer target id.
+
+    Raises
+    ------
+    ValueError
+        If the file lacks onsource_star or sep_arcsec.
+    """
+    with open(path, newline="") as fh:
+        reader = csv.DictReader(fh)
+        missing = [c for c in ("onsource_star", "sep_arcsec") if c not in (reader.fieldnames or [])]
+        if missing:
+            raise ValueError(
+                f"{path} has no {', '.join(missing)} column. "
+                "Write it with hubersed.detect.contam_screens first."
+            )
+        return {int(r["target_id"]): r for r in reader}
+
+
 def main(argv=None):
     """Build the candidate pool, screen each target and write the CSV.
 
@@ -139,7 +172,7 @@ def main(argv=None):
     print(f"common to both continuum flows: {len(common)}  in VAC: {len(pool)}")
 
     morph = {int(r["target_id"]): r["type"].strip() for r in csv.DictReader(open(args.morph))}
-    gaia = {int(r["target_id"]): r for r in csv.DictReader(open(args.gaia_list))}
+    gaia = read_gaia_screen(args.gaia_list)
 
     rows = []
     for t in pool:
