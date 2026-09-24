@@ -34,8 +34,7 @@ for script in \
     "-m hubersed.fitting.run_dynesty_outliers" "-m hubersed.fitting.run_map_fits_outliers" \
     scripts/agn_star_screen.py scripts/build_cont_outlier_sample.py \
     scripts/contam_screens.py scripts/simbad_screen.py \
-    "-m hubersed.detect.ensemble_flow_seeds" scripts/ensemble_flow_stats.py \
-    scripts/flow_null_and_reverse.py scripts/get_latent_space.py \
+    scripts/get_latent_space.py \
     scripts/get_outliers.py scripts/get_outliers_flow.py \
     "-m hubersed.detect.train_DESI_noise" \
     "-m hubersed.plotting.plot_latent_umap_score"; do
