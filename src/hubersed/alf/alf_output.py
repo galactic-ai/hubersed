@@ -1,6 +1,6 @@
 """Read alf runs, check them, and compare their metallicity with Prospector MAP fits.
 
-Run ``uv run python -m hubersed.alf.read_alf_sample --alf-results $ALF_HOME/results``.
+Run ``uv run python -m hubersed.alf.alf_output --alf-results $ALF_HOME/results``.
 Line numbers refer to alf commit 4ef7bb8.
 
 Notes

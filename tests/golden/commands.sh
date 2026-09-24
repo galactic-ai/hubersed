@@ -28,7 +28,7 @@ uv run python scripts/get_latent_space.py "$OUT/_chunks" \
     data/checkpoints/spender_asc_run_10latent_zmax.pt "$OUT/latents.h5" --snr_min 3
 
 for script in \
-    scripts/make_alf_input.py "-m hubersed.alf.read_alf_sample" \
+    scripts/make_alf_input.py "-m hubersed.alf.alf_output" \
     experiments/2026-08-25_compare_alf_solar_scaled.py \
     scripts/get_stochastic_priors.py scripts/make_model_seds.py \
     "-m hubersed.fitting.run_dynesty_outliers" "-m hubersed.fitting.run_map_fits_outliers" \

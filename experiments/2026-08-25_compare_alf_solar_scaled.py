@@ -30,7 +30,7 @@ from pathlib import Path
 
 import numpy as np
 
-from hubersed.alf.read_alf_sample import load_run
+from hubersed.alf.alf_output import load_run
 
 
 def alf_set(results_dir, tag):

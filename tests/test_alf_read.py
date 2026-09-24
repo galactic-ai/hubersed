@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from hubersed.alf.read_alf_sample import LABELS, _lib_corr, convergence, read_header
+from hubersed.alf.alf_output import LABELS, _lib_corr, convergence, read_header
 
 HEADER = """#   Elapsed Time:   1.27 hr
 #    fit_type  = 0
