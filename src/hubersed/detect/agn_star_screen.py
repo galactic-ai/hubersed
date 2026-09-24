@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 from astropy.io import fits
 
-from hubersed.detect.cont_flow import DEFAULT_FLOW_DIR, TAGS, flow_scores
+from hubersed.detect.cont_flow import TAGS, flow_scores
 from hubersed.paths import PATHS
 
 SNMIN_BPT = 5.0  # sigma, per line, to attempt a BPT classification
@@ -146,7 +146,11 @@ def main(argv=None):
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     p.add_argument("-o", "--out", default=str(PATHS["RESULTS"] / "agn_star_screen.csv"))
-    p.add_argument("--flow-dir", default=str(DEFAULT_FLOW_DIR))
+    p.add_argument(
+        "--flow-dir",
+        required=True,
+        help="dir holding desi_outliers_flow_nsf_<tag>_snr3.pt for each tag",
+    )
     p.add_argument("--vac", default=str(PATHS["DATA"] / "fastspec-iron-sv3-bright.fits"))
     p.add_argument(
         "--morph",

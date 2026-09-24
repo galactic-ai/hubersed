@@ -19,8 +19,6 @@ from scipy.stats import rankdata
 
 from hubersed.paths import PATHS
 
-# Default location of the flow outputs this sample is built from.
-DEFAULT_FLOW_DIR = PATHS["RESULTS"] / "wide_flow_corrected"
 TAGS = ("cont10latent", "cont15latent")
 
 
@@ -151,7 +149,7 @@ def main(argv=None):
     p.add_argument("-n", "--n-targets", type=int, default=20)
     p.add_argument(
         "--flow-dir",
-        default=str(DEFAULT_FLOW_DIR),
+        required=True,
         help="dir holding desi_outliers_flow_nsf_<tag>_snr3.pt for each tag",
     )
     p.add_argument("--vac", default=str(PATHS["DATA"] / "fastspec-iron-sv3-bright.fits"))

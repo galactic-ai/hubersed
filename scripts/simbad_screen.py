@@ -13,12 +13,7 @@ import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
 
-from hubersed.detect.cont_flow import (
-    DEFAULT_FLOW_DIR,
-    TAGS,
-    flow_scores,
-    read_screen,
-)
+from hubersed.detect.cont_flow import TAGS, flow_scores, read_screen
 from hubersed.paths import PATHS
 
 SEP_MAX = 2.0
@@ -59,7 +54,11 @@ def main(argv=None):
         default=45,
         help="how far down the ranked survivor list to query",
     )
-    p.add_argument("--flow-dir", default=str(DEFAULT_FLOW_DIR))
+    p.add_argument(
+        "--flow-dir",
+        required=True,
+        help="dir holding desi_outliers_flow_nsf_<tag>_snr3.pt for each tag",
+    )
     p.add_argument("--vac", default=str(PATHS["DATA"] / "fastspec-iron-sv3-bright.fits"))
     p.add_argument(
         "--screens",

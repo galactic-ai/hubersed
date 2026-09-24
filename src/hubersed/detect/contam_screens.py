@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 from astropy.io import fits
 
-from hubersed.detect.cont_flow import DEFAULT_FLOW_DIR, TAGS, flow_scores
+from hubersed.detect.cont_flow import TAGS, flow_scores
 from hubersed.paths import PATHS
 
 GAIA_RADIUS = 2.0  # arcsec, cone radius
@@ -312,7 +312,11 @@ def main(argv=None):
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    p.add_argument("--flow-dir", default=str(DEFAULT_FLOW_DIR))
+    p.add_argument(
+        "--flow-dir",
+        required=True,
+        help="dir holding desi_outliers_flow_nsf_<tag>_snr3.pt for each tag",
+    )
     p.add_argument("--vac", default=str(PATHS["DATA"] / "fastspec-iron-sv3-bright.fits"))
     p.add_argument("--gaia-out", default=str(PATHS["RESULTS"] / "gaia_star_screen.csv"))
     p.add_argument("--sga-out", default=str(PATHS["RESULTS"] / "sga_proximity.csv"))
