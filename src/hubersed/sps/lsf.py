@@ -1,15 +1,16 @@
 """DESI line spread function, measured from the per-target resolution matrices."""
 
 import pickle
+from pathlib import Path
 
 import astropy.io.fits as fits
 import astropy.table as aTable
 import numpy as np
 from scipy.sparse import csr_matrix, lil_matrix
 
-from hubersed.paths import PATHS
-
-RESULTS_PATH = PATHS["RESULTS"]
+# Median DESI resolving power, written by scripts/build_desi_resolution.py and tracked with
+# the package.
+LSF_CALIBRATION = Path(__file__).with_name("desi_lsf_calibration.npz")
 
 C_KMS = 299792.458
 DESI_BASE_URL = "https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/"
@@ -176,16 +177,16 @@ def desi_resolution(wave):
     Returns
     -------
     np.ndarray
-        Resolving power R, interpolated from ``results/desi_lsf_calibration.npz``.
+        Resolving power R, interpolated from ``LSF_CALIBRATION``.
 
     Notes
     -----
     The calibration file is written by ``scripts/build_desi_resolution.py`` from the
-    resolution matrices of sampled targets. ``results/`` is not tracked by git, so the file
-    must be rebuilt on a new machine. The function prints a line on every call.
+    resolution matrices of sampled targets and is tracked in git next to this module.
+    The function prints a line on every call.
     """
     print("Loading calibrated DESI resolution from resolution matrices...")
-    cal = np.load(RESULTS_PATH / "desi_lsf_calibration.npz")
+    cal = np.load(LSF_CALIBRATION)
     R_median = cal["R_median"]
     wave_cal = cal["wave"]
     return np.interp(wave, wave_cal, R_median)

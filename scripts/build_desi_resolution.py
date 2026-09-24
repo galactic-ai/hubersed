@@ -11,6 +11,7 @@ from hubersed.paths import PATHS
 from hubersed.sps.lsf import (
     C_KMS,
     DESI_WAV,
+    LSF_CALIBRATION,
     coadd_url,
     lookup_healpix,
     resolution_to_sigma_kms,
@@ -124,10 +125,10 @@ def main(n_sample=10):
     R_design = desi_resolution_design(DESI_WAV)
 
     # Step 7: Save results
-    print(f"Step 7: Saving results to {output_dir}")
+    print(f"Step 7: Saving the calibration to {LSF_CALIBRATION}")
 
     np.savez(
-        os.path.join(output_dir, "desi_lsf_calibration.npz"),
+        LSF_CALIBRATION,
         wave=DESI_WAV,
         sigma_median_kms=sigma_median,
         sigma_16_kms=sigma_16,
