@@ -7,7 +7,6 @@ Flow outliers are circled in red and the figure is saved as a PNG. Run it as
 import argparse
 from pathlib import Path
 
-import h5py
 import matplotlib
 import numpy as np
 import torch
@@ -17,32 +16,10 @@ from sklearn.decomposition import PCA
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from hubersed.io.latents import load_latents
 from hubersed.paths import PATHS
 
 DATA, RES = PATHS["DATA"], PATHS["RESULTS"]
-
-
-def load_latents(path):
-    """Read latents and TARGETIDs from an HDF5 latent file.
-
-    Match rows to a catalogue by TARGETID, never by row position.
-
-    Parameters
-    ----------
-    path : str or pathlib.Path
-        HDF5 file with ``latents`` and ``target_ids`` datasets.
-
-    Returns
-    -------
-    lat : numpy.ndarray
-        Latents as float32, one row per spectrum.
-    tid : numpy.ndarray
-        TARGETIDs as int64, aligned with ``lat``.
-    """
-    with h5py.File(path, "r") as f:
-        lat = np.asarray(f["latents"], np.float32)
-        tid = np.asarray(f["target_ids"], np.int64)
-    return lat, tid
 
 
 def main():
@@ -71,7 +48,7 @@ def main():
     if args.out.exists() and not args.force:
         raise SystemExit(f"{args.out} exists, pass --force to overwrite")
 
-    lat, tid = load_latents(args.latents)
+    lat, tid, _ = load_latents(args.latents)
     scores = torch.load(args.scores, weights_only=False)
     lp, score_tid, thr = scores["log_p_desi"], scores["desi_target_ids"], scores["threshold"]
 

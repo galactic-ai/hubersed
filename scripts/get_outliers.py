@@ -6,52 +6,17 @@ Run it as ``uv run python scripts/get_outliers.py``.
 
 import argparse
 
-import h5py
-import numpy as np
 import torch
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 
+from hubersed.io.latents import load_latents
 from hubersed.paths import PATHS
 
 DATA_PATH = PATHS["DATA"]
 RESULTS_PATH = PATHS["RESULTS"]
 
 torch.set_default_dtype(torch.float32)
-
-
-def load_latents(path):
-    """Read latents, their TARGETIDs and the S/N cut from a latent h5 file.
-
-    Parameters
-    ----------
-    path : str or Path
-        Path to the h5 file.
-
-    Returns
-    -------
-    lat : numpy.ndarray
-        Latents as float32.
-    tid : numpy.ndarray
-        TARGETID of each latent row as int64.
-    snr_min : object or None
-        The file's ``snr_min`` attribute, or None if it is missing.
-
-    Raises
-    ------
-    KeyError
-        If the file has no ``target_ids`` dataset.
-    """
-    with h5py.File(path, "r") as f:
-        lat = np.asarray(f["latents"], dtype=np.float32)
-        if "target_ids" not in f:
-            raise KeyError(
-                f"{path} has no 'target_ids' -- re-encode with the fixed "
-                "get_latent_space.py (this file predates the TARGETID fix)."
-            )
-        tid = np.asarray(f["target_ids"], dtype=np.int64)
-        snr_min = f.attrs.get("snr_min", None)
-    return lat, tid, snr_min
 
 
 def main():
@@ -85,7 +50,8 @@ def main():
     args = ap.parse_args()
 
     desi_latents, desi_tid, _ = load_latents(DATA_PATH / args.desi)
-    p_l, _, mock_snr_min = load_latents(DATA_PATH / args.mock)
+    p_l, _, mock_attrs = load_latents(DATA_PATH / args.mock)
+    mock_snr_min = mock_attrs.get("snr_min")
     print(
         f"DESI {tuple(desi_latents.shape)} from {args.desi}  |  mock {tuple(p_l.shape)} from {args.mock}"
     )

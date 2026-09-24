@@ -18,7 +18,8 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import StandardScaler
 
-from hubersed.detect.flow_model import build_flow, load_h5
+from hubersed.detect.flow_model import build_flow
+from hubersed.io.latents import load_latents
 from hubersed.paths import PATHS
 
 RES = PATHS["RESULTS"]
@@ -61,8 +62,10 @@ def main():
     rng = np.random.default_rng(args.seed)
     dev = torch.device(args.device)
 
-    mock, _, mock_ckpt = load_h5(args.mock)
-    desi, desi_tid, desi_ckpt = load_h5(args.desi)
+    mock, _, mock_attrs = load_latents(args.mock)
+    desi, desi_tid, desi_attrs = load_latents(args.desi)
+    mock_ckpt = str(mock_attrs.get("checkpoint", "unknown"))
+    desi_ckpt = str(desi_attrs.get("checkpoint", "unknown"))
     D = mock.shape[1]
     print(f"tag={args.tag}  dim={D}  mock {mock.shape}  DESI {desi.shape}")
     print(f"  mock {args.mock}  (encoder {mock_ckpt})")
