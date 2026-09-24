@@ -1,7 +1,7 @@
 """Train a normalizing flow on mock latents and flag DESI galaxies it finds unlikely.
 
 A DESI galaxy is an outlier when its log probability is at or below the 0.1% quantile of the
-mock scores. Run it as ``python -m hubersed.detect.get_outliers_flow --desi D.h5 --mock M.h5``.
+mock scores. Run it as ``python -m hubersed.detect.flow_model --desi D.h5 --mock M.h5``.
 """
 
 import argparse

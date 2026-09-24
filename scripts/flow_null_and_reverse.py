@@ -16,7 +16,7 @@ import torch
 from sklearn.preprocessing import StandardScaler
 
 from hubersed.detect.ensemble_flow_seeds import paths_for, score, train_one, validate
-from hubersed.detect.get_outliers_flow import load_h5
+from hubersed.detect.flow_model import load_h5
 from hubersed.paths import PATHS
 
 RES = PATHS["RESULTS"]

@@ -18,7 +18,7 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import StandardScaler
 
-from hubersed.detect.get_outliers_flow import build_flow, load_h5
+from hubersed.detect.flow_model import build_flow, load_h5
 from hubersed.paths import PATHS
 
 DATA, RES = PATHS["DATA"], PATHS["RESULTS"]
