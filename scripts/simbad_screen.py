@@ -1,7 +1,7 @@
 """Query SIMBAD around the top-ranked surviving candidates and flag AGN and stars.
 
 Candidates flagged by earlier screen CSVs are dropped before ranking, and targets in
-MANUAL_EXCLUDE are flagged too. Run it as ``python -m hubersed.detect.simbad_screen``.
+MANUAL_EXCLUDE are flagged too. Run it as ``uv run python scripts/simbad_screen.py``.
 """
 
 import argparse
