@@ -1,4 +1,4 @@
-"""Static check that map_fits has no undefined names in the hot functions.
+"""Static check that map_fits and its script have no undefined names in the hot functions.
 
 Three separate runs have now been thrown away by a NameError/KeyError raised AFTER the
 expensive fitting was done:
@@ -22,9 +22,11 @@ from pathlib import Path
 
 import pytest
 
-SRC = Path(__file__).resolve().parents[1] / "src" / "hubersed" / "fitting" / "map_fits.py"
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src" / "hubersed" / "fitting" / "map_fits.py"
+SCRIPT = ROOT / "scripts" / "run_map_fits_outliers.py"
 # checked for undefined names; these are the ones that do real work before writing output
-FUNCS = ["fit_one", "_worker", "map_fit", "main"]
+FUNCS = [(SRC, "fit_one"), (SRC, "_worker"), (SRC, "map_fit"), (SCRIPT, "main")]
 
 
 def module_scope(tree):
@@ -71,14 +73,14 @@ def local_scope(fn):
     return names
 
 
-@pytest.mark.parametrize("func", FUNCS)
-def test_no_undefined_names(func):
+@pytest.mark.parametrize(("path", "func"), FUNCS)
+def test_no_undefined_names(path, func):
     """Every name the function reads is a module name, an argument or a local."""
-    tree = ast.parse(SRC.read_text())
+    tree = ast.parse(path.read_text())
     fn = next(
         (n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == func), None
     )
-    assert fn is not None, f"{func} not found in {SRC.name}"
+    assert fn is not None, f"{func} not found in {path.name}"
     known = module_scope(tree) | local_scope(fn)
     used = {n.id for n in ast.walk(fn) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
     missing = sorted(used - known)

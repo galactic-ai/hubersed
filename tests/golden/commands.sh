@@ -17,7 +17,7 @@ cp data/prospector_model/stochastic_priors_sample_8.npz "$OUT/priors_fsps_8.npz"
 uv run python scripts/make_model_seds.py --nebular fsps -n 8 --seed 0 --workers 1 \
     -f -o "$OUT/mocks_fsps_8.h5"
 
-uv run python -m hubersed.fitting.map_fits \
+uv run python scripts/run_map_fits_outliers.py \
     -s results/emline_outlier_sample20.npz --limit 1 -n 1 -m 2000 -w 1 -o "$OUT/map"
 
 # chunk 10 sorts before chunk 2 as text
@@ -31,7 +31,7 @@ for script in \
     scripts/make_alf_input.py scripts/read_alf_sample.py \
     experiments/2026-08-25_compare_alf_solar_scaled.py \
     scripts/get_stochastic_priors.py scripts/make_model_seds.py \
-    "-m hubersed.fitting.map_fits" \
+    scripts/run_map_fits_outliers.py \
     scripts/agn_star_screen.py scripts/build_cont_outlier_sample.py \
     scripts/contam_screens.py scripts/simbad_screen.py \
     scripts/get_latent_space.py \
