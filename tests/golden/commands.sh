@@ -32,7 +32,7 @@ for script in \
     experiments/2026-08-25_compare_alf_solar_scaled.py \
     "-m hubersed.mocks.get_stochastic_priors" "-m hubersed.mocks.make_model_seds" \
     "-m hubersed.fitting.run_dynesty_outliers" "-m hubersed.fitting.run_map_fits_outliers" \
-    "-m hubersed.detect.agn_star_screen" "-m hubersed.detect.build_cont_outlier_sample" \
+    "-m hubersed.detect.agn_star_screen" "-m hubersed.detect.cont_flow" \
     "-m hubersed.detect.contam_screens" scripts/simbad_screen.py \
     "-m hubersed.detect.ensemble_flow_seeds" "-m hubersed.detect.ensemble_flow_stats" \
     "-m hubersed.detect.flow_null_and_reverse" "-m hubersed.detect.get_latent_space" \

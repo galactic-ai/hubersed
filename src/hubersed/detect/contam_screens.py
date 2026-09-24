@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 from astropy.io import fits
 
-from hubersed.detect.build_cont_outlier_sample import DEFAULT_FLOW_DIR, TAGS, flow_scores
+from hubersed.detect.cont_flow import DEFAULT_FLOW_DIR, TAGS, flow_scores
 from hubersed.paths import PATHS
 
 GAIA_RADIUS = 2.0  # arcsec, cone radius

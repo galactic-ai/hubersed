@@ -2,7 +2,7 @@
 
 Candidates are matched to the FastSpecFit catalogue, cleaned of contaminants and ranked by
 the mean of their two DESI log p percentiles. Run it as
-``python -m hubersed.detect.build_cont_outlier_sample``.
+``python -m hubersed.detect.cont_flow``.
 """
 
 import argparse
