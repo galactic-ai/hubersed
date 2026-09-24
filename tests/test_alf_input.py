@@ -1,17 +1,21 @@
-"""Check what make_alf_input writes into alf input files."""
+"""Check what write_alf_input writes into alf input files."""
+
+import importlib.util
+from pathlib import Path
 
 import numpy as np
 import pytest
 
-pytestmark = pytest.mark.fsps  # make_alf_input imports chi2, which loads FSPS
+pytestmark = pytest.mark.fsps  # alf_input imports chi2, which loads FSPS
 
 TID = 39633140817331167
 Z = 0.05
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "make_alf_input.py"
 
 
 def test_default_intervals_skip_tio():
     """No default interval overlaps 6400-8000 A, where the polynomial over-fits TiO."""
-    from hubersed.alf.make_alf_input import DEFAULT_INTERVALS
+    from hubersed.alf.alf_input import DEFAULT_INTERVALS
 
     edges = [float(v) * 1e4 for v in DEFAULT_INTERVALS.split(",")]
     for lo, hi in zip(edges[::2], edges[1::2], strict=True):
@@ -20,17 +24,17 @@ def test_default_intervals_skip_tio():
 
 @pytest.fixture
 def written(tmp_path, monkeypatch):
-    """Run make_alf_input on a fake DESI spectrum and return the file and the spectrum."""
-    from hubersed.alf import make_alf_input as mai
+    """Run write_alf_input on a fake DESI spectrum and return the file and the spectrum."""
+    from hubersed.alf import alf_input
 
-    spec = 2.0 + 1e-4 * np.arange(mai.WAVE_OBS.size)
-    ivar = np.full(mai.WAVE_OBS.size, 4.0)
-    monkeypatch.setattr(mai, "tids_to_indices", lambda tids: np.array([0]))
-    monkeypatch.setattr(mai, "load_by_index", lambda idx: (spec, ivar, Z, TID))
+    spec = 2.0 + 1e-4 * np.arange(alf_input.WAVE_OBS.size)
+    ivar = np.full(alf_input.WAVE_OBS.size, 4.0)
+    monkeypatch.setattr(alf_input, "tids_to_indices", lambda tids: np.array([0]))
+    monkeypatch.setattr(alf_input, "load_by_index", lambda idx: (spec, ivar, Z, TID))
 
     out = tmp_path / "desi.dat"
-    mai.main(["--tid", str(TID), "-o", str(out), "--mask", ""])
-    return out, spec, mai.WAVE_OBS
+    alf_input.write_alf_input(TID, out, mask="")
+    return out, spec, alf_input.WAVE_OBS
 
 
 def test_flux_is_written_as_f_lambda(written):
@@ -56,7 +60,9 @@ def test_wavelengths_are_rest_frame(written):
 
 def test_observed_flag_is_gone():
     """--observed wrote observed-frame edges that alf then shifted again, so it was removed."""
-    from hubersed.alf import make_alf_input as mai
+    spec = importlib.util.spec_from_file_location("make_alf_input", SCRIPT)
+    script = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(script)
 
     with pytest.raises(SystemExit):
-        mai.main(["-o", "unused.dat", "--observed"])
+        script.main(["-o", "unused.dat", "--observed"])
