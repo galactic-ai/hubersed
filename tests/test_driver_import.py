@@ -9,6 +9,7 @@ import pytest
 pytestmark = [pytest.mark.fsps, pytest.mark.slow]
 
 MODULES = [
+    "hubersed.fitting.chi2",
     "hubersed.fitting.map_fits",
     "hubersed.mocks.seds",
 ]
@@ -20,13 +21,12 @@ THREAD_VARS = (
     "XLA_FLAGS",
 )
 
-# astropy, scipy and pkg_resources add their own warning filters on import, and chi2 sets
-# the BLAS thread variables before numpy loads, so these are imported before the first
-# snapshot. One process checks every module, because each start of Python with FSPS
+# astropy, scipy and pkg_resources add their own warning filters on import, so these are
+# imported before the first snapshot. One process checks every module, because each start of Python with FSPS
 # takes several seconds.
 CHECK = """
 import importlib, os, warnings, numpy as np, matplotlib
-import hubersed.fitting.chi2, prospect.fitting, prospect.models.sedmodel, scipy.signal
+import prospect.fitting, prospect.models.sedmodel, scipy.signal
 import dynesty, dynesty.utils
 state = lambda: (np.geterr(), list(warnings.filters), matplotlib.get_backend(), dict(os.environ))
 for name in {modules!r}:
