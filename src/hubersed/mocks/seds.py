@@ -1,16 +1,13 @@
-"""Make mock DESI spectra from the prior sample written by get_stochastic_priors.
+"""Make mock DESI spectra from a prior sample and write them to one h5 file.
 
-Run as ``python -m hubersed.mocks.make_model_seds``. Writes one h5 file with the fluxes in
-maggies on the DESI grid, the drawn logsfr_ratios, the nebular line luminosities and a
-copy of every prior array.
+The h5 holds the fluxes in maggies on the DESI grid, the drawn logsfr_ratios, the nebular
+line luminosities and a copy of every prior array. The command line entry point is
+``scripts/make_model_seds.py``.
 """
 
-import argparse
 import copy
-import glob
 import multiprocessing as mp
 import os
-import sys
 import warnings
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import cache
@@ -25,11 +22,8 @@ from prospect.models.templates import TemplateLibrary, adjust_stochastic_params
 from prospect.observation import Spectrum
 from tqdm.auto import tqdm
 
-from hubersed.paths import PATHS
 from hubersed.sps.lsf import DESI_WAV, build_desi_resolution_matrix
 from hubersed.sps.utils import make_stochastic_agebins
-
-DATA_PATH = PATHS["DATA"] / "prospector_model"
 
 N_RATIOS = 9  # 9 logsfr_ratios for 10 age bins
 
@@ -40,7 +34,7 @@ _S = {}
 def _setup_process():
     """Hide RuntimeWarnings from zero inverse variance and run numerics on one thread.
 
-    Called by ``main`` before the worker pool starts, so the spawned workers inherit the
+    Called by ``write_mock_seds`` before the worker pool starts, so the spawned workers inherit the
     thread settings, and by each worker. Importing this module changes nothing process wide.
     """
     warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -54,41 +48,6 @@ def _setup_process():
     ):
         os.environ[name] = "1"
     os.environ.setdefault("XLA_FLAGS", "--xla_force_host_platform_device_count=1")
-
-
-def priors_path(nebular, sample_size):
-    """Return the prior npz path for this nebular model and sample size."""
-    stem = "stochastic_priors_sample_cue" if nebular == "cue" else "stochastic_priors_sample"
-    return DATA_PATH / f"{stem}_{sample_size}.npz"
-
-
-def out_path(nebular, sample_size):
-    """Return the default output h5 path for this nebular model and sample size."""
-    stem = (
-        "prospector_stochastic_model_seds_cue"
-        if nebular == "cue"
-        else "prospector_stochastic_model_seds"
-    )
-    return DATA_PATH / f"{stem}_{sample_size}.h5"
-
-
-def resolve_sample_size(nebular):
-    """Return the largest sample size with a prior npz on disk, compared as numbers.
-
-    Raises
-    ------
-    SystemExit
-        If there is no prior npz for this nebular model.
-    """
-    pat = str(priors_path(nebular, "*"))
-    sizes = []
-    for f in glob.glob(pat):
-        tail = Path(f).name.removesuffix(".npz").split("_")[-1]
-        if tail.isdigit():
-            sizes.append(int(tail))
-    if not sizes:
-        raise SystemExit(f"no priors npz matching {pat}; pass -n explicitly")
-    return max(sizes)
 
 
 def build_base_template(nebular):
@@ -151,7 +110,7 @@ def build_base_template(nebular):
     return t
 
 
-def load_priors(nebular, sample_size):
+def load_priors(path, nebular):
     """Load the prior arrays as a dict.
 
     Raises
@@ -159,7 +118,7 @@ def load_priors(nebular, sample_size):
     SystemExit
         If the npz is missing, or a Cue sample lacks the Cue gas parameters.
     """
-    path = priors_path(nebular, sample_size)
+    path = Path(path)
     if not path.exists():
         raise SystemExit(f"no priors at {path}; run scripts/get_stochastic_priors.py first")
     npz = np.load(path, allow_pickle=True)
@@ -170,7 +129,7 @@ def load_priors(nebular, sample_size):
             if need not in d:
                 raise SystemExit(
                     f"missing Cue prior {need} in {path.name}; regenerate with: "
-                    f"uv run python scripts/get_stochastic_priors.py --cue -n {sample_size}"
+                    f"uv run python scripts/get_stochastic_priors.py --cue"
                 )
     return d
 
@@ -275,12 +234,12 @@ def make_obs(n_wave):
     return obs
 
 
-def _init_worker(nebular, sample_size, seed):
+def _init_worker(priors_file, nebular, seed):
     """Set up this process and load the priors and base template into its ``_S``."""
     _setup_process()
     _S["nebular"] = nebular
     _S["seed"] = seed
-    _S["priors"] = load_priors(nebular, sample_size)
+    _S["priors"] = load_priors(priors_file, nebular)
     _S["base_template"] = build_base_template(nebular)
 
 
@@ -328,73 +287,40 @@ def worker_block(start, stop):
     return start, stop, block, ratios_block, lum_block
 
 
-def parse_args(argv=None):
-    """Parse the command line options."""
-    p = argparse.ArgumentParser(
-        description="Generate mock DESI spectra from the stochastic-SFH prior sample.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    p.add_argument("--nebular", choices=["cue", "fsps"], default="cue")
-    p.add_argument(
-        "-n",
-        "--sample-size",
-        type=int,
-        default=None,
-        help="number of spectra; default = largest N with a priors npz on disk",
-    )
-    p.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        help="seed for the logsfr_ratios draw. Keyed per-index, so it is "
-        "independent of --workers and completion order. Recorded in h5 attrs.",
-    )
-    p.add_argument("-o", "--out", type=Path, default=None)
-    p.add_argument(
-        "-f", "--force", action="store_true", help="overwrite the output h5 if it exists"
-    )
-    p.add_argument("--workers", type=int, default=8)
-    p.add_argument("--chunk-size", type=int, default=500)
-    return p.parse_args(argv)
-
-
-def main(argv=None):
+def write_mock_seds(priors_file, out_file, nebular, seed, workers=8, chunk_size=500):
     """Compute every mock in worker processes and write the h5 file.
+
+    Parameters
+    ----------
+    priors_file : str or pathlib.Path
+        Prior npz written by scripts/get_stochastic_priors.py.
+    out_file : str or pathlib.Path
+        Output h5. It is overwritten.
+    nebular : {"cue", "fsps"}
+        Nebular emission model.
+    seed : int
+        Seed for the logsfr_ratios draw. It is keyed per index, so the result does not
+        depend on the number of workers or the completion order.
+    workers : int, optional
+        Number of worker processes.
+    chunk_size : int, optional
+        Mocks per task.
 
     Returns
     -------
-    int
-        Exit status.
-
-    Raises
-    ------
-    SystemExit
-        If the output file exists and ``--force`` is not given.
+    pathlib.Path
+        The file written.
     """
     _setup_process()
-    args = parse_args(argv)
-    nebular = args.nebular
-    n = args.sample_size if args.sample_size is not None else resolve_sample_size(nebular)
-
-    output_file = args.out or out_path(nebular, n)
-    if output_file.exists() and not args.force:
-        raise SystemExit(
-            f"refusing to overwrite {output_file}\n"
-            f"  {output_file.stat().st_size / 1e9:.1f} GB\n"
-            f"  pass --force if you mean it"
-        )
-
     # parent needs the priors too: to size the datasets and to copy them into the h5
-    _init_worker(nebular, n, args.seed)
+    _init_worker(priors_file, nebular, seed)
     priors_dict = _S["priors"]
     n_spectra = len(priors_dict["redshifts"])
     n_wave = DESI_WAV.size
 
-    print(
-        f"nebular={nebular}  n={n_spectra}  seed={args.seed}  priors={priors_path(nebular, n).name}"
-    )
+    print(f"nebular={nebular}  n={n_spectra}  seed={seed}  priors={Path(priors_file).name}")
 
-    with h5py.File(output_file, "w") as hf:
+    with h5py.File(out_file, "w") as hf:
         hf.create_dataset("wavelength", data=DESI_WAV, compression="gzip")
         flux_dset = hf.create_dataset(
             "fluxes", shape=(n_spectra, n_wave), dtype=np.float32, compression="gzip"
@@ -427,22 +353,20 @@ def main(argv=None):
 
         hf.attrs["nebular"] = nebular
         hf.attrs["sample_size"] = n_spectra
-        hf.attrs["seed"] = args.seed
+        hf.attrs["seed"] = seed
         hf.attrs["sfh_mean"] = "zero"  # the logsfr_ratios prior has zero mean
-        hf.attrs["priors_file"] = priors_path(nebular, n).name
+        hf.attrs["priors_file"] = Path(priors_file).name
 
-        blocks = [
-            (s, min(s + args.chunk_size, n_spectra)) for s in range(0, n_spectra, args.chunk_size)
-        ]
+        blocks = [(s, min(s + chunk_size, n_spectra)) for s in range(0, n_spectra, chunk_size)]
 
         # spawn, not fork. A forked child can deadlock in JAX, which Cue uses.
         ctx = mp.get_context("spawn")
         with (
             ProcessPoolExecutor(
-                max_workers=args.workers,
+                max_workers=workers,
                 mp_context=ctx,
                 initializer=_init_worker,
-                initargs=(nebular, n, args.seed),
+                initargs=(priors_file, nebular, seed),
             ) as ex,
             tqdm(total=n_spectra, desc=f"{nebular} spectra") as pbar,
         ):
@@ -454,8 +378,8 @@ def main(argv=None):
                 lum_dset[start:stop, :] = lum_block
                 pbar.update(stop - start)
 
-    print(f"Saved {nebular} model SEDs to {output_file}")
-    return 0
+    print(f"Saved {nebular} model SEDs to {out_file}")
+    return Path(out_file)
 
 
 def _get_line_wave(nebular, n_wave):
@@ -464,7 +388,3 @@ def _get_line_wave(nebular, n_wave):
     m = HyperSpecModel(configuration=parset)
     m.predict(m.theta, [make_obs(n_wave)], sps=_get_sps(nebular))
     return np.asarray(m._eline_wave, dtype=np.float64)
-
-
-if __name__ == "__main__":
-    sys.exit(main())

@@ -12,13 +12,13 @@ def test_model_gas_logz_is_the_drawn_value(tmp_path, monkeypatch, nebular):
     pytest.importorskip("fsps")
     from prospect.models.sedmodel import HyperSpecModel
 
-    from hubersed.mocks import make_model_seds as mms
+    from hubersed.mocks import seds as mms
     from hubersed.mocks.priors import draw_priors
 
-    monkeypatch.setattr(mms, "DATA_PATH", tmp_path)
     monkeypatch.setattr(mms, "_setup_process", lambda: None)  # keep this process untouched
-    np.savez(mms.priors_path(nebular, 3), **draw_priors(3, seed=0, cue=nebular == "cue"))
-    mms._init_worker(nebular, 3, seed=0)
+    priors_file = tmp_path / "priors.npz"
+    np.savez(priors_file, **draw_priors(3, seed=0, cue=nebular == "cue"))
+    mms._init_worker(priors_file, nebular, seed=0)
 
     for i in range(3):
         parset, _ = mms.build_parset_for_index(i)
