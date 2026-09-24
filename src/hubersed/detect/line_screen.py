@@ -1,7 +1,7 @@
 """Flag BPT AGN and PSF-type sources with few forbidden lines among continuum-flow outliers.
 
 The pool is the DESI outliers shared by both continuum flows that are also in the fastspec VAC,
-and one row per target goes to a CSV. Run it as ``python -m hubersed.detect.agn_star_screen``.
+and one row per target goes to a CSV. Run it as ``python -m hubersed.detect.line_screen``.
 """
 
 import argparse

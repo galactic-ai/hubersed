@@ -2,7 +2,7 @@
 
 import pytest
 
-from hubersed.detect.agn_star_screen import read_gaia_screen
+from hubersed.detect.line_screen import read_gaia_screen
 
 
 def test_full_screen_is_keyed_by_target_id(tmp_path):
