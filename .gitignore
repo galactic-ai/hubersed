@@ -10,6 +10,21 @@ wheels/
 .venv
 
 # ignore
-results/
-data/
-tmp/
+/results/*
+!/results/.gitkeep
+!/results/desi_lsf_calibration.npz
+/data/
+/tmp/seedscan/
+/tmp/**/*.pt
+/tmp/**/*.pkl
+/tmp/figs/post_SFbaseline_full.png
+/tests/golden/out*/
+
+.ruff_cache/
+.ipynb_checkpoints/
+.DS_Store
+!src/hubersed/**/data/
+!src/hubersed/**/data/**
+
+# personal Claude instructions, see .claude/CLAUDE.md
+CLAUDE.local.md

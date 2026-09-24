@@ -1,2 +1,1 @@
-def hello() -> str:
-    return "Hello from hubersed!"
+"""Amortized SED fitting and outlier detection for DESI spectra."""

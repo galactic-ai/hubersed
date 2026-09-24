@@ -1,0 +1,58 @@
+"""Load a trained spender autoencoder and its normalizing flow."""
+
+import torch
+from spender import load_model
+from spender.flow import NeuralDensityEstimator
+
+
+def _load_flow_model(filename, n_latent, **kwargs):
+    """Load a flow saved as a state dict into a fixed NeuralDensityEstimator architecture.
+
+    The architecture must match the saved weights. It is hard-coded here as 64 hidden
+    features, 5 transforms and one context feature. ``kwargs`` go to ``torch.load``.
+    """
+    NDE_theta = NeuralDensityEstimator(
+        dim=n_latent,
+        initial_pos={"bounds": [[0, 0]] * n_latent, "std": [0.5] * n_latent},
+        hidden_features=64,
+        num_transforms=5,
+        context_features=1,
+    )
+
+    state_dict = torch.load(filename, **kwargs)
+    NDE_theta.load_state_dict(state_dict)
+
+    return NDE_theta
+
+
+def _load_spender_model(filename, instrument, **kwargs):
+    """Load a spender autoencoder for ``instrument``. ``kwargs`` go to ``spender.load_model``."""
+    return load_model(filename, instrument, **kwargs)
+
+
+def load_models(flow_file, spender_file, flow_latent, instrument, **kwargs):
+    """Load a normalizing flow and a spender autoencoder.
+
+    Parameters
+    ----------
+    flow_file : str or Path
+        Saved state dict of the flow.
+    spender_file : str or Path
+        Saved spender model.
+    flow_latent : int
+        Number of latent dimensions the flow models.
+    instrument : spender.Instrument
+        Instrument the autoencoder was trained for, for example ``spender.data.desi.DESI()``.
+    **kwargs
+        Passed to both loaders, for example ``map_location``.
+
+    Returns
+    -------
+    flow : spender.flow.NeuralDensityEstimator
+        The flow with its weights loaded.
+    spender_model : torch.nn.Module
+        The autoencoder.
+    """
+    NDE_theta = _load_flow_model(flow_file, n_latent=flow_latent, **kwargs)
+    spender_model = _load_spender_model(spender_file, instrument, **kwargs)
+    return NDE_theta, spender_model

@@ -1,0 +1,295 @@
+"""Gaia star and SGA-2020 galaxy screens for continuum-flow outlier candidates.
+
+The screen itself is run by ``scripts/contam_screens.py``. ``self_test`` is its offline
+geometry check.
+"""
+
+import time
+
+import numpy as np
+from astropy.io import fits
+
+from hubersed.detect.cont_flow import TAGS, flow_scores
+
+GAIA_RADIUS = 2.0  # arcsec, cone radius
+GAIA_G_MAX = 16.0  # mag, used only by the bright-neighbour (PSF-wing) test
+GAIA_PLX_SNR = 5.0  # parallax / parallax_error
+GAIA_PM = 3.0  # mas/yr, bare total PM, used only by the wing test
+GAIA_ONSRC = 1.0  # arcsec, inside this the Gaia source is taken to be the target
+GAIA_PM_SNR = 5.0  # total proper motion / its error, for the on-source test
+GAIA_RUWE_MAX = 1.4  # above this the astrometric solution is blended/untrustworthy
+SGA_BOX = 0.25  # deg, half-height of the Dec box (RA half-width is this / cos dec)
+DL_TAP = "https://datalab.noirlab.edu/tap"
+
+
+def _col(table, name):
+    """Return the first row of column ``name`` as a float, with masked or absent entries as NaN."""
+    if len(table) == 0 or name not in table.colnames:
+        return np.nan
+    return float(np.ma.filled(np.ma.asarray(table[name], dtype=float), np.nan)[0])
+
+
+def query(fn, tries=4):
+    """Run a TAP query, retrying on any exception, and raise if every try fails.
+
+    It never returns a sentinel, because a screen that cannot answer must stop the run rather
+    than report "not flagged". It relies on astroquery raising on VOTable error documents,
+    which TAP serves with HTTP 200, so an error body is not mistaken for an empty result.
+
+    Parameters
+    ----------
+    fn : callable
+        Zero-argument function that runs the query and returns its result table.
+    tries : int, optional
+        Number of attempts. After the k-th failure it sleeps 2k seconds.
+
+    Returns
+    -------
+    object
+        Whatever ``fn`` returns on its first successful call.
+
+    Raises
+    ------
+    RuntimeError
+        If every attempt raises.
+    """
+    for k in range(tries):
+        try:
+            return fn()
+        except Exception as exc:  # noqa: BLE001 - any TAP failure is retried, then re-raised
+            last = exc
+            print(f"    TAP attempt {k + 1}/{tries} failed: {type(exc).__name__}: {exc}")
+            time.sleep(2 * (k + 1))
+    raise RuntimeError(f"TAP query failed {tries}x: {type(last).__name__}: {last}") from last
+
+
+def gaia_screen(ra, dec):
+    """Query the nearest Gaia DR3 source within GAIA_RADIUS and decide whether it flags the target.
+
+    The source flags the target as an on-source star when it lies within GAIA_ONSRC, has RUWE
+    below GAIA_RUWE_MAX and has a significant parallax or proper motion. It flags it as a
+    bright wing star when it is brighter than GAIA_G_MAX and has a significant parallax or a
+    total proper motion above GAIA_PM. Missing values never flag.
+
+    Parameters
+    ----------
+    ra, dec : float
+        Target position in degrees.
+
+    Returns
+    -------
+    dict
+        Gaia columns of the nearest source (NaN when there is none), the derived parallax and
+        proper-motion signal-to-noise, and the booleans ``onsource_star``, ``wing_star`` and
+        ``flagged``.
+    """
+    from astroquery.gaia import Gaia
+
+    # The AS sep alias is needed because ORDER BY on the bare expression is rejected.
+    q = (
+        f"SELECT TOP 1 parallax,parallax_error,pm,pmra,pmra_error,pmdec,pmdec_error,"
+        f"ruwe,phot_g_mean_mag,"
+        f"DISTANCE(POINT(ra,dec),POINT({ra},{dec}))*3600 AS sep FROM gaiadr3.gaia_source "
+        f"WHERE 1=CONTAINS(POINT(ra,dec),CIRCLE({ra},{dec},{GAIA_RADIUS / 3600})) "
+        f"ORDER BY sep ASC"
+    )
+    t = query(lambda: Gaia.launch_job(q).get_results())
+
+    plx, plx_err = _col(t, "parallax"), _col(t, "parallax_error")
+    snr = plx / plx_err if np.isfinite(plx) and np.isfinite(plx_err) and plx_err > 0 else np.nan
+    pm, g = _col(t, "pm"), _col(t, "phot_g_mean_mag")
+    sep, ruwe = _col(t, "sep"), _col(t, "ruwe")
+
+    # Error on the total pm, propagated from the components since pm = hypot(pmra, pmdec).
+    pmra, pmdec = _col(t, "pmra"), _col(t, "pmdec")
+    pmra_e, pmdec_e = _col(t, "pmra_error"), _col(t, "pmdec_error")
+    pm_err = np.hypot(pmra * pmra_e, pmdec * pmdec_e) / pm if pm > 0 else np.nan
+    pm_snr = pm / pm_err if np.isfinite(pm_err) and pm_err > 0 else np.nan
+
+    onsource = bool(
+        sep < GAIA_ONSRC and ruwe < GAIA_RUWE_MAX and (snr > GAIA_PLX_SNR or pm_snr > GAIA_PM_SNR)
+    )
+    # NaN comparisons are False, so a 2-parameter solution simply does not flag.
+    wing = bool(g < GAIA_G_MAX and (snr > GAIA_PLX_SNR or pm > GAIA_PM))
+    return {
+        "sep_arcsec": sep,
+        "parallax": plx,
+        "parallax_over_error": snr,
+        "pm": pm,
+        "pm_over_error": pm_snr,
+        "ruwe": ruwe,
+        "phot_g_mean_mag": g,
+        "onsource_star": onsource,
+        "wing_star": wing,
+        "flagged": bool(onsource or wing),
+    }
+
+
+def ellipse_radius(ra, dec, g_ra, g_dec, g_d26, g_pa, g_ba):
+    """Return the normalised elliptical radius of (ra, dec) in each SGA galaxy's own frame.
+
+    The position angle is measured from north through east. An r_ell at or below 1 means the
+    point is inside the ellipse of diameter ``g_d26`` and axis ratio ``g_ba``, which is the
+    mu = 26 isophote for SGA.
+
+    Parameters
+    ----------
+    ra, dec : float or ndarray
+        Point position in degrees.
+    g_ra, g_dec : ndarray
+        Galaxy centres in degrees.
+    g_d26 : ndarray
+        Major-axis diameter in arcmin.
+    g_pa : ndarray
+        Position angle in degrees.
+    g_ba : ndarray
+        Minor to major axis ratio.
+
+    Returns
+    -------
+    r_ell : ndarray
+        Elliptical radius in units of the semi-major axis.
+    sep_arcsec : ndarray
+        Flat-sky separation from each centre in arcsec.
+    """
+    da = (ra - g_ra) * np.cos(np.radians(g_dec)) * 3600.0  # arcsec, east positive
+    dd = (dec - g_dec) * 3600.0
+    p = np.radians(g_pa)
+    xp = da * np.sin(p) + dd * np.cos(p)  # along major axis
+    yp = -da * np.cos(p) + dd * np.sin(p)  # along minor axis
+    a = g_d26 / 2.0 * 60.0  # semi-major axis in arcsec, d26 is in arcmin
+    return np.hypot(xp / a, yp / (a * g_ba)), np.hypot(da, dd)
+
+
+def sga_screen(ra, dec, tap):
+    """Find the SGA-2020 galaxy with the smallest r_ell for the target and whether it flags it.
+
+    The query takes a box of half-height SGA_BOX around the target, and the exact ellipse test
+    is done in python. The target is flagged when it lies inside that galaxy's ellipse.
+
+    Parameters
+    ----------
+    ra, dec : float
+        Target position in degrees.
+    tap : astroquery.utils.tap.core.TapPlus
+        Client for the Data Lab TAP service.
+
+    Returns
+    -------
+    dict
+        ``r_ell``, ``sep_arcsec``, ``sga_galaxy``, ``d26_arcmin``, ``z_leda`` and ``flagged``.
+        When no galaxy with a valid d26 and b/a is in the box, the values are NaN or empty and
+        ``flagged`` is False.
+    """
+    # Data Lab's ADQL rejects CIRCLE with numeric literals
+    # ("function circle(numeric,numeric,numeric) does not exist"), so use a box and do the
+    # exact ellipse test below in python.
+    dra = SGA_BOX / max(np.cos(np.radians(dec)), 1e-3)
+    r0, r1 = ra - dra, ra + dra
+    if r0 < 0.0 or r1 >= 360.0:
+        rac = f"(ra > {r0 % 360.0} OR ra < {r1 % 360.0})"  # RA wrap at 0/360
+    else:
+        rac = f"ra BETWEEN {r0} AND {r1}"
+    q = (
+        f"SELECT ra,dec,d26,pa,ba,z_leda,galaxy FROM sga2020.ellipse "
+        f"WHERE {rac} AND dec BETWEEN {dec - SGA_BOX} AND {dec + SGA_BOX}"
+    )
+    t = query(lambda: tap.launch_job(q).get_results())
+
+    none = {
+        "r_ell": np.nan,
+        "sep_arcsec": np.nan,
+        "sga_galaxy": "",
+        "d26_arcmin": np.nan,
+        "z_leda": np.nan,
+        "flagged": False,
+    }
+    if len(t) == 0:
+        return none
+    d26 = np.ma.filled(np.ma.asarray(t["d26"], dtype=float), np.nan)
+    ba = np.ma.filled(np.ma.asarray(t["ba"], dtype=float), np.nan)
+    pa = np.nan_to_num(np.ma.filled(np.ma.asarray(t["pa"], dtype=float), np.nan))
+    ok = np.isfinite(d26) & (d26 > 0) & np.isfinite(ba) & (ba > 0)
+    if not ok.any():
+        return none
+
+    g_ra = np.ma.filled(np.ma.asarray(t["ra"], dtype=float), np.nan)
+    g_dec = np.ma.filled(np.ma.asarray(t["dec"], dtype=float), np.nan)
+    r_ell, sep = ellipse_radius(ra, dec, g_ra[ok], g_dec[ok], d26[ok], pa[ok], ba[ok])
+    j = int(np.nanargmin(r_ell))
+    idx = np.flatnonzero(ok)[j]
+    return {
+        "r_ell": float(r_ell[j]),
+        "sep_arcsec": float(sep[j]),
+        "sga_galaxy": str(t["galaxy"][idx]),
+        "d26_arcmin": float(d26[idx]),
+        "z_leda": float(np.ma.filled(np.ma.asarray(t["z_leda"], dtype=float), np.nan)[idx]),
+        "flagged": bool(r_ell[j] <= 1.0),
+    }
+
+
+def candidate_pool(flow_dir, vac):
+    """Return the candidate TARGETIDs and their positions.
+
+    The candidates are the outliers of both continuum flows that are also in the FastSpecFit
+    VAC, which is the same selection build_cont_outlier_sample makes. Positions come from the
+    VAC, matched by TARGETID.
+
+    Parameters
+    ----------
+    flow_dir : str or Path
+        Directory holding the stored flow outlier files.
+    vac : str or Path
+        FastSpecFit VAC FITS file with a METADATA extension.
+
+    Returns
+    -------
+    sel : list of int
+        Sorted TARGETIDs.
+    ra, dec : ndarray
+        Positions in degrees, aligned with ``sel``.
+    """
+    out = {t: flow_scores(t, flow_dir)[2] for t in TAGS}
+    common = out[TAGS[0]] & out[TAGS[1]]
+    M = fits.open(vac)["METADATA"].data
+    iv = {int(t): i for i, t in enumerate(M["TARGETID"])}
+    sel = sorted(t for t in common if t in iv)
+    rows = np.array([iv[t] for t in sel])
+    return sel, M["RA"][rows].astype(float), M["DEC"][rows].astype(float)
+
+
+def self_test():
+    """Check the ellipse geometry offline on points on the major axis, minor axis and centre."""
+    a_arcmin, ba, pa = 2.0, 0.5, 30.0  # d26 = 2', b/a = 0.5, PA = 30 deg
+    g_ra, g_dec = 180.0, 40.0
+    a_deg = (a_arcmin / 2.0) / 60.0  # semi-major in degrees
+    cd = np.cos(np.radians(g_dec))
+    p = np.radians(pa)
+    # A point one semi-major axis along the major axis must land at r_ell = 1.
+    ra_maj = g_ra + (a_deg * np.sin(p)) / cd
+    dec_maj = g_dec + a_deg * np.cos(p)
+    # ... and one semi-minor axis along the minor axis must too.
+    ra_min = g_ra - (a_deg * ba * np.cos(p)) / cd
+    dec_min = g_dec + a_deg * ba * np.sin(p)
+    for name, (ra, dec) in {"major": (ra_maj, dec_maj), "minor": (ra_min, dec_min)}.items():
+        r, _ = ellipse_radius(
+            ra,
+            dec,
+            np.array([g_ra]),
+            np.array([g_dec]),
+            np.array([a_arcmin]),
+            np.array([pa]),
+            np.array([ba]),
+        )
+        assert abs(r[0] - 1.0) < 1e-3, f"{name} axis: r_ell = {r[0]}, expected 1"
+    r, sep = ellipse_radius(
+        g_ra,
+        g_dec,
+        np.array([g_ra]),
+        np.array([g_dec]),
+        np.array([a_arcmin]),
+        np.array([pa]),
+        np.array([ba]),
+    )
+    assert r[0] == 0.0 and sep[0] == 0.0, f"centre: r_ell = {r[0]}, sep = {sep[0]}"
+    print("self-test ok: major axis, minor axis and centre all give the expected r_ell")

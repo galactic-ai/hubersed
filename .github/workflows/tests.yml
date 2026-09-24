@@ -1,0 +1,23 @@
+# Fast tests on every push and pull request.
+# fsps is built from source (it needs gfortran), but there is no FSPS data here,
+# so tests marked fsps or data are deselected and modules that need prospect sources skip.
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Install gfortran for the fsps build
+        run: sudo apt-get update && sudo apt-get install -y gfortran
+      - uses: astral-sh/setup-uv@v10.2.0
+      - name: Install locked dependencies
+        run: uv sync --locked
+      - name: Lint
+        run: uv run ruff check && uv run ruff format --check
+      - name: Test
+        run: uv run pytest -m "not fsps and not data and not slow"
