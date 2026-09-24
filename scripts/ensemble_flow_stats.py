@@ -2,7 +2,7 @@
 
 For each latent tag it reads ``ens_<method>_<tag>.npz`` and reports per-member numbers, outlier-set
 overlap, vote counts, rank agreement and ensemble outlier sets. Run it with
-``python -m hubersed.detect.ensemble_flow_stats``.
+``uv run python scripts/ensemble_flow_stats.py``.
 """
 
 import argparse

@@ -24,7 +24,7 @@ uv run python -m hubersed.fitting.run_map_fits_outliers \
 mkdir -p "$OUT/_chunks"
 ln -sf "$ROOT/data/desi_spectra/DESIchunk1024_2.pkl" "$OUT/_chunks/"
 ln -sf "$ROOT/data/desi_spectra/DESIchunk1024_10.pkl" "$OUT/_chunks/"
-uv run python -m hubersed.detect.get_latent_space "$OUT/_chunks" \
+uv run python scripts/get_latent_space.py "$OUT/_chunks" \
     data/checkpoints/spender_asc_run_10latent_zmax.pt "$OUT/latents.h5" --snr_min 3
 
 for script in \
@@ -34,9 +34,9 @@ for script in \
     "-m hubersed.fitting.run_dynesty_outliers" "-m hubersed.fitting.run_map_fits_outliers" \
     scripts/agn_star_screen.py scripts/build_cont_outlier_sample.py \
     scripts/contam_screens.py scripts/simbad_screen.py \
-    "-m hubersed.detect.ensemble_flow_seeds" "-m hubersed.detect.ensemble_flow_stats" \
-    "-m hubersed.detect.flow_null_and_reverse" "-m hubersed.detect.get_latent_space" \
-    "-m hubersed.detect.get_outliers" "-m hubersed.detect.get_outliers_flow" \
+    "-m hubersed.detect.ensemble_flow_seeds" scripts/ensemble_flow_stats.py \
+    scripts/flow_null_and_reverse.py scripts/get_latent_space.py \
+    scripts/get_outliers.py "-m hubersed.detect.get_outliers_flow" \
     "-m hubersed.detect.train_DESI_noise" \
     "-m hubersed.plotting.plot_latent_umap_score"; do
     uv run python $script --help > /dev/null || { echo "smoke failed: $script"; exit 1; }

@@ -3,7 +3,7 @@
 
 With ``--mode selfdist`` the flows train on half the mocks and score the other half and DESI.
 With ``--mode reverse`` they train on half of DESI and score the other half and the mocks.
-Run it as ``python -m hubersed.detect.flow_null_and_reverse --mode selfdist --tag cont10latent``.
+Run it as ``uv run python scripts/flow_null_and_reverse.py --mode selfdist --tag cont10latent``.
 """
 
 import argparse

@@ -1,7 +1,7 @@
 """Flag DESI galaxies that an IsolationForest trained on mock latents scores as outliers.
 
 A DESI galaxy is an outlier when its score is at or below a low quantile of the mock scores.
-Run it as ``python -m hubersed.detect.get_outliers``.
+Run it as ``uv run python scripts/get_outliers.py``.
 """
 
 import argparse

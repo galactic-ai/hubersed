@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Encode DESI spectra with a trained spender autoencoder and stream the latents to HDF5.
 
-Run it as ``python -m hubersed.detect.get_latent_space DATADIR CHECKPOINT OUTFILE.h5``.
+Run it as ``uv run python scripts/get_latent_space.py DATADIR CHECKPOINT OUTFILE.h5``.
 """
 
 import argparse
