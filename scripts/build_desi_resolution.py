@@ -37,7 +37,7 @@ def desi_resolution_design(wave):
 
 # Main pipeline
 def main(n_sample=10):
-    files = sorted(glob.glob(str(DATA_PATH / "DESIchunk1024_*.pkl")))
+    files = sorted(glob.glob(str(DATA_PATH / "desi_spectra" / "DESIchunk1024_*.pkl")))
     sample_files = files[::25]  # every 25th file, ~10 files
     print(f"Sampling from {len(sample_files)} files: {sample_files}")
     output_dir = str(RESULTS_PATH)
