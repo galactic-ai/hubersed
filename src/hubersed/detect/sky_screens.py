@@ -1,7 +1,7 @@
 """Screen continuum-flow outlier candidates for Gaia stars and nearby SGA-2020 galaxies.
 
 The candidates are the TARGETIDs flagged by both continuum flows, and the Gaia and SGA results
-go to two CSV files. Run it with ``python -m hubersed.detect.contam_screens``, or add
+go to two CSV files. Run it with ``python -m hubersed.detect.sky_screens``, or add
 ``--self-test`` for the offline geometry check.
 """
 

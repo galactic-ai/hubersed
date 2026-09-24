@@ -33,7 +33,7 @@ for script in \
     "-m hubersed.mocks.get_stochastic_priors" "-m hubersed.mocks.make_model_seds" \
     "-m hubersed.fitting.run_dynesty_outliers" "-m hubersed.fitting.run_map_fits_outliers" \
     scripts/agn_star_screen.py scripts/build_cont_outlier_sample.py \
-    "-m hubersed.detect.contam_screens" scripts/simbad_screen.py \
+    "-m hubersed.detect.sky_screens" scripts/simbad_screen.py \
     "-m hubersed.detect.ensemble_flow_seeds" "-m hubersed.detect.ensemble_flow_stats" \
     "-m hubersed.detect.flow_null_and_reverse" "-m hubersed.detect.get_latent_space" \
     "-m hubersed.detect.get_outliers" "-m hubersed.detect.get_outliers_flow" \
