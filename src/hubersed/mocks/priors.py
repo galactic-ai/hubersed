@@ -1,12 +1,7 @@
-"""Draw the prior sample that make_model_seds turns into mock spectra.
+"""Draw the stochastic-SFH prior sample that make_model_seds turns into mock spectra.
 
-Run as ``python -m hubersed.mocks.get_stochastic_priors``. Writes one npz of parameter
-arrays to ``data/prospector_model/`` unless ``--out`` is given.
+The npz is written by ``scripts/get_stochastic_priors.py``.
 """
-
-import argparse
-import sys
-from pathlib import Path
 
 import numpy as np
 
@@ -15,65 +10,28 @@ from hubersed.mocks.distributions import (
     sample_truncated_normal,
     sample_uniform,
 )
-from hubersed.paths import PATHS
 from hubersed.sps.utils import universe_age_gyr
 
 
-def parse_args(argv=None):
-    """Parse the command line options."""
-    p = argparse.ArgumentParser(
-        description="Draw the stochastic-SFH prior sample used for generating mock SEDs.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    p.add_argument(
-        "-n", "--sample-size", type=int, default=500_000, help="Number of samples to draw"
-    )
-    p.add_argument("-s", "--seed", type=int, default=42, help="Random seed for reproducibility")
-    p.add_argument(
-        "--cue",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-        help="Cue (Li+24) nebular model with free N/O, C/O, nH",
-    )
-    p.add_argument(
-        "-o",
-        "--out",
-        type=Path,
-        default=None,
-        help="Output file path (default: DATA_PATH/prospector_model/stochastic_priors_sample[_cue]_{n}.npz)",
-    )
-    p.add_argument(
-        "-f", "--force", action="store_true", help="Overwrite existing output file if it exists"
-    )
+def draw_priors(n, seed, cue):
+    """Draw every prior parameter with one seeded generator.
 
-    return p.parse_args(argv)
-
-
-def main(argv=None):
-    """Draw every prior parameter with one seeded generator and save them.
+    Parameters
+    ----------
+    n : int
+        Number of samples.
+    seed : int
+        Seed of the numpy generator. The same seed gives the same draws.
+    cue : bool
+        Draw the gas metallicity over the Cue range and add the Cue (Li+24) nebular
+        parameters. Otherwise use the FSPS nebular grid range.
 
     Returns
     -------
-    int
-        Exit status.
-
-    Raises
-    ------
-    SystemExit
-        If the output file exists and ``--force`` is not given.
+    dict
+        Parameter arrays of length n, plus ``_seed``, ``_sample_size`` and ``_cue``.
     """
-    args = parse_args(argv)
-    n = args.sample_size
-    rng = np.random.default_rng(args.seed)
-
-    data_path = PATHS["DATA"] / "prospector_model"
-    data_path.mkdir(parents=True, exist_ok=True)
-
-    out = args.out or data_path / (
-        f"stochastic_priors_sample_cue_{n}.npz" if args.cue else f"stochastic_priors_sample_{n}.npz"
-    )
-    if out.exists() and not args.force:
-        raise SystemExit(f"refusing to overwrite existing file {out}. Use --force to overwrite.")
+    rng = np.random.default_rng(seed)
 
     # from Wan+24 Stochastic prior model
 
@@ -123,7 +81,7 @@ def main(argv=None):
 
     # gas phase metallicity. Cue allows -2.2 to 0.5. The FSPS nebular grid covers -1.3 to
     # 0.3 and FSPS clamps outside it (add_nebular.f90:27-29).
-    gas_lo, gas_hi = (-2.2, 0.5) if args.cue else (-1.3, 0.3)
+    gas_lo, gas_hi = (-2.2, 0.5) if cue else (-1.3, 0.3)
     gas_metallicities = sample_uniform(gas_lo, gas_hi, size=n, rng=rng)
 
     # gas ionization parameter -4 to -1
@@ -156,19 +114,13 @@ def main(argv=None):
 
     # --- Cue (Li+24) free nebular params (arXiv:2405.04598 Table 1) ---
     # gas_logno/gas_logco are LOG10 of (N/O)/(N-O)_sun ; grid is linear [0.1, 5.4] -> log [-1, log10(5.4)]
-    if args.cue:
+    if cue:
         arrays["gas_lognHs"] = sample_uniform(1.0, 4.0, size=n, rng=rng)  # log nH [cm^-3]
         arrays["gas_lognos"] = sample_uniform(-1.0, np.log10(5.4), size=n, rng=rng)  # log [N/O]
         arrays["gas_logcos"] = sample_uniform(-1.0, np.log10(5.4), size=n, rng=rng)  # log [C/O]
 
-    arrays["_seed"] = args.seed
+    arrays["_seed"] = seed
     arrays["_sample_size"] = n
-    arrays["_cue"] = args.cue
+    arrays["_cue"] = cue
 
-    np.savez(out, **arrays)
-    print(f"saved {out}  (n={n}, cue={args.cue}, seed={args.seed}, keys={len(arrays)})")
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+    return arrays

@@ -13,12 +13,11 @@ def test_model_gas_logz_is_the_drawn_value(tmp_path, monkeypatch, nebular):
     from prospect.models.sedmodel import HyperSpecModel
 
     from hubersed.mocks import make_model_seds as mms
-    from hubersed.mocks.get_stochastic_priors import main as draw_priors
+    from hubersed.mocks.priors import draw_priors
 
     monkeypatch.setattr(mms, "DATA_PATH", tmp_path)
     monkeypatch.setattr(mms, "_setup_process", lambda: None)  # keep this process untouched
-    cue = ["--cue"] if nebular == "cue" else ["--no-cue"]
-    draw_priors([*cue, "-n", "3", "-s", "0", "-o", str(mms.priors_path(nebular, 3))])
+    np.savez(mms.priors_path(nebular, 3), **draw_priors(3, seed=0, cue=nebular == "cue"))
     mms._init_worker(nebular, 3, seed=0)
 
     for i in range(3):

@@ -10,7 +10,7 @@ from hubersed.mocks.distributions import (
     sample_uniform,
 )
 
-# sampler and positional args, as get_stochastic_priors.py calls them
+# sampler and positional args, as mocks/priors.py calls them
 SAMPLERS = [
     (sample_uniform, (0.01, 0.6)),
     (sample_log_uniform, (0.1, 5.0)),

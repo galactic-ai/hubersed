@@ -42,12 +42,10 @@ def test_fit_priors_span_the_grid(axes):
 
 
 def test_fsps_mock_draws_stay_on_the_grid(axes, tmp_path):
-    """get_stochastic_priors draws FSPS gas_logz inside the grid, filling most of it."""
-    from hubersed.mocks.get_stochastic_priors import main
+    """draw_priors draws FSPS gas_logz inside the grid, filling most of it."""
+    from hubersed.mocks.priors import draw_priors
 
     logz, _ = axes
-    out = tmp_path / "priors.npz"
-    main(["--no-cue", "-n", "2000", "-s", "0", "-o", str(out)])
-    z = np.load(out)["gas_metallicities"]
+    z = draw_priors(2000, seed=0, cue=False)["gas_metallicities"]
     assert logz.min() <= z.min() and z.max() <= logz.max()
     assert z.max() - z.min() > 0.95 * (logz.max() - logz.min())

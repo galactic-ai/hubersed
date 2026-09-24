@@ -161,9 +161,7 @@ def load_priors(nebular, sample_size):
     """
     path = priors_path(nebular, sample_size)
     if not path.exists():
-        raise SystemExit(
-            f"no priors at {path}; run python -m hubersed.mocks.get_stochastic_priors first"
-        )
+        raise SystemExit(f"no priors at {path}; run scripts/get_stochastic_priors.py first")
     npz = np.load(path, allow_pickle=True)
     d = {k: npz[k] for k in npz.files}
 
@@ -172,7 +170,7 @@ def load_priors(nebular, sample_size):
             if need not in d:
                 raise SystemExit(
                     f"missing Cue prior {need} in {path.name}; regenerate with: "
-                    f"python -m hubersed.mocks.get_stochastic_priors --cue -n {sample_size}"
+                    f"uv run python scripts/get_stochastic_priors.py --cue -n {sample_size}"
                 )
     return d
 
