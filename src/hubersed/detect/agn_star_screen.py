@@ -155,8 +155,8 @@ def main(argv=None):
     )
     p.add_argument(
         "--gaia-list",
-        default=str(PATHS["RESULTS"] / "gaia_star_screen_v2.csv"),
-        help="Gaia screen CSV with onsource_star and sep_arcsec columns",
+        default=str(PATHS["RESULTS"] / "gaia_star_screen.csv"),
+        help="Gaia screen CSV written by contam_screens, with onsource_star and sep_arcsec",
     )
     args = p.parse_args(argv)
 
