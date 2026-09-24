@@ -36,7 +36,7 @@ for script in \
     scripts/contam_screens.py scripts/simbad_screen.py \
     "-m hubersed.detect.ensemble_flow_seeds" scripts/ensemble_flow_stats.py \
     scripts/flow_null_and_reverse.py scripts/get_latent_space.py \
-    scripts/get_outliers.py "-m hubersed.detect.flow_model" \
+    scripts/get_outliers.py scripts/get_outliers_flow.py \
     "-m hubersed.detect.train_DESI_noise" \
     "-m hubersed.plotting.plot_latent_umap_score"; do
     uv run python $script --help > /dev/null || { echo "smoke failed: $script"; exit 1; }
