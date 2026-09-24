@@ -1,7 +1,7 @@
 """Plot a 2D UMAP or PCA projection of DESI latents coloured by flow log p.
 
 Flow outliers are circled in red and the figure is saved as a PNG. Run it as
-``python -m hubersed.plotting.plot_latent_umap_score``.
+``uv run python scripts/plot_latent_umap_score.py``.
 """
 
 import argparse
