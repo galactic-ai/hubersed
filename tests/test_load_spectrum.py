@@ -53,6 +53,15 @@ def test_flux_converts_to_cgs():
     np.testing.assert_allclose(cgs.value, 2e-17, rtol=1e-7)
 
 
+def test_nan_ivar_is_masked():
+    """A NaN inverse variance is masked, as the fitting drivers' own mask always did."""
+    flux = np.full(NPIX, 2.0, np.float32)
+    ivar = np.full(NPIX, 4.0, np.float32)
+    ivar[3] = np.nan
+    spec = desi.desi_spectrum(flux, ivar, Z, int(TIDS[0]))
+    assert np.flatnonzero(spec.mask).tolist() == [3]
+
+
 @pytest.mark.usefixtures("one_chunk")
 def test_wrong_row_raises(monkeypatch):
     """If all_target_ids.npy points at a row holding another TARGETID, loading fails."""

@@ -121,11 +121,34 @@ def load_spectrum(targetid):
     flux, ivar, z, tid = load_by_index(gidx)
     if tid != targetid:
         raise TargetIDMismatchError(f"asked for TARGETID {targetid}, row {gidx} holds {tid}")
+    return desi_spectrum(flux, ivar, z, tid)
+
+
+def desi_spectrum(flux, ivar, z, targetid):
+    """Wrap one DESI spectrum on the ``DESI_WAV`` grid as a specutils Spectrum.
+
+    Parameters
+    ----------
+    flux : np.ndarray
+        Flux in ``DESI_FLAM`` units, one value per ``DESI_WAV`` pixel.
+    ivar : np.ndarray
+        Inverse variance of ``flux`` in ``DESI_FLAM**-2``.
+    z : float
+        Redshift.
+    targetid : int
+        DESI TARGETID, stored in ``meta["targetid"]``.
+
+    Returns
+    -------
+    specutils.Spectrum
+        A pixel is masked when its inverse variance is not positive or not finite, or its
+        flux is not finite.
+    """
     return Spectrum(
         flux=flux * DESI_FLAM,
         spectral_axis=DESI_WAV * u.AA,
         uncertainty=InverseVariance(ivar * DESI_FLAM**-2),
-        mask=(ivar <= 0) | ~np.isfinite(flux),
+        mask=(ivar <= 0) | ~np.isfinite(ivar) | ~np.isfinite(flux),
         redshift=z,
-        meta={"targetid": tid},
+        meta={"targetid": targetid},
     )
