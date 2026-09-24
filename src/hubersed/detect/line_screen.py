@@ -122,6 +122,6 @@ def read_gaia_screen(path):
         if missing:
             raise ValueError(
                 f"{path} has no {', '.join(missing)} column. "
-                "Write it with hubersed.detect.sky_screens first."
+                "Write it with scripts/contam_screens.py first."
             )
         return {int(r["target_id"]): r for r in reader}
