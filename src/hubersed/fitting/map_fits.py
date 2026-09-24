@@ -22,10 +22,10 @@ from prospect.models.transforms import logsfr_ratios_to_masses
 from scipy.optimize import minimize
 from scipy.signal import medfilt
 
-from hubersed.conversion import DESI_FLAM, ivar_to_maggies, to_maggies
+from hubersed.conversion import ivar_to_maggies, to_maggies
 from hubersed.fitting.chi2 import WAVE_OBS
 from hubersed.fitting.result import MapFitResult
-from hubersed.io.desi import load_spectrum
+from hubersed.io.desi import desi_spectrum, load_spectrum
 from hubersed.plotting.sfh import sfh_figure
 from hubersed.plotting.spectra import plot_residual, residual_chi, spectrum_figure
 from hubersed.sps.config import build_continuum_model, build_full_cue_model
@@ -516,15 +516,16 @@ def fit_one(
         if not len(hit):
             raise SystemExit(f"--spectra-npz {spectra_npz}: no row for TARGETID {tid}")
         k = int(hit[0])
-        spec, ivar, z = ov["spec"][k], ov["ivar"][k], float(ov["z"][k])
-        assert len(spec) == len(WAVE_OBS), "override spectrum is off the WAVE_OBS grid"
+        assert len(ov["spec"][k]) == len(WAVE_OBS), "override spectrum is off the WAVE_OBS grid"
+        s = desi_spectrum(ov["spec"][k], ov["ivar"][k], float(ov["z"][k]), tid)
     else:
         s = load_spectrum(tid)
-        spec, ivar, z = s.flux.value, s.uncertainty.array, float(s.redshift.value)
+    z = float(s.redshift.value)
 
-    flux = to_maggies(WAVE_OBS * u.AA, spec * DESI_FLAM).value
-    iv = ivar_to_maggies(WAVE_OBS * u.AA, ivar * DESI_FLAM**-2).value
-    mask = (iv > 0) & np.isfinite(flux)
+    # Converted on the float32 WAVE_OBS grid the fit uses, not s.spectral_axis (float64).
+    flux = to_maggies(WAVE_OBS * u.AA, s.flux).value
+    iv = ivar_to_maggies(WAVE_OBS * u.AA, s.uncertainty.quantity).value
+    mask = ~s.mask
     iv = np.where(mask, iv, 0.0)
     unc = 1.0 / np.sqrt(np.where(iv > 0, iv, np.inf))
 
