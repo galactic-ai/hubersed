@@ -16,7 +16,7 @@ dependencies = [
     "corner>=2.2.3",
     "dynesty==2.1.5",
     "emcee>=3.1.6",
-    "fsps>=0.4.7",
+    "fsps>=0.5.0",
     "h5py>=3.15.1",
     "ipykernel>=7.1.0",
     "matplotlib>=3.10.7",
@@ -51,13 +51,14 @@ dev = [
 ]
 
 [tool.uv]
-# fsps 0.4.7 uses cmake.minimum-version, which scikit-build-core 0.8+ rejects
-build-constraint-dependencies = ["scikit-build-core<0.8"]
+# FSPS picks its stellar library at compile time.
+extra-build-variables = { fsps = { FFLAGS = "-DC3K_HR=1 -DC3K_LR=0 -DMILES=0 -DMIST=1", SETUPTOOLS_SCM_PRETEND_VERSION = "0.5.0" } }
 
 [tool.uv.sources]
 spender = { git = "https://github.com/galactic-ai/spender" }
 astro-prospector = { git = "https://github.com/galactic-ai/prospector", rev = "feature/cue-on-v2" }
 astro-cue = { git = "https://github.com/galactic-ai/cue", rev = "cuejax" }
+fsps = { git = "https://github.com/galactic-ai/python-fsps", branch = "c3k-nzinit" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
