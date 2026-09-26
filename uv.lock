@@ -6,9 +6,6 @@ resolution-markers = [
     "python_full_version < '3.14'",
 ]
 
-[manifest]
-build-constraints = [{ name = "scikit-build-core", specifier = "<0.8" }]
-
 [[package]]
 name = "absl-py"
 version = "2.3.1"
@@ -792,12 +789,11 @@ wheels = [
 
 [[package]]
 name = "fsps"
-version = "0.4.7"
-source = { registry = "https://pypi.org/simple" }
+version = "0.5.0"
+source = { git = "https://github.com/galactic-ai/python-fsps?branch=c3k-nzinit#8b142057c9120fd11fa93dce645d17290919b073" }
 dependencies = [
     { name = "numpy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/da/26/799ad46fa607494b17f50e73c33d3e3889c1fd9e1117b7672b203c7b551d/fsps-0.4.7.tar.gz", hash = "sha256:e8df7ce97dcf9641c56bc3342320a559d8dc9afce30ba62ff976a6f938f6b008", size = 119824, upload-time = "2024-06-23T01:25:11.452Z" }
 
 [[package]]
 name = "fsspec"
@@ -1024,7 +1020,7 @@ requires-dist = [
     { name = "corner", specifier = ">=2.2.3" },
     { name = "dynesty", specifier = "==2.1.5" },
     { name = "emcee", specifier = ">=3.1.6" },
-    { name = "fsps", specifier = ">=0.4.7" },
+    { name = "fsps", git = "https://github.com/galactic-ai/python-fsps?branch=c3k-nzinit" },
     { name = "h5py", specifier = ">=3.15.1" },
     { name = "ipykernel", specifier = ">=7.1.0" },
     { name = "matplotlib", specifier = ">=3.10.7" },
