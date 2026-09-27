@@ -60,31 +60,69 @@ class TwoCompLineModel(HyperSpecModel):
             self._is_balmer = is_balmer
         return self._is_balmer
 
+    def _profile_widths(self):
+        """Return per-line total widths of the main component and the widest component.
+
+        Returns
+        -------
+        prof : np.ndarray
+            Total width in km/s of the narrow (Balmer) or forbidden (other lines) component,
+            including the instrumental and library part cached by prospect.
+        wide : np.ndarray
+            Total width in km/s of the widest component of each line.
+        shift : np.ndarray
+            Absolute velocity offset in km/s of the broad component (zero for other lines).
+        inst2 : np.ndarray
+            Squared instrumental (and library) width in km/s.
+        """
+        sig0 = np.atleast_1d(self._eline_sigma_kms) * np.ones_like(self._ewave_obs, dtype=float)
+        bal = self._balmer_mask()
+        # the cached width is hypot(eline_sigma, instrument); keep the instrumental part
+        inst2 = np.clip(sig0**2 - self._p("eline_sigma", 0) ** 2, 0, None)
+        s_forb = self._p("eline_sigma_forb", self._p("eline_sigma", 0))
+        prof = np.where(bal, sig0, np.sqrt(s_forb**2 + inst2))
+        wide, shift = prof.copy(), np.zeros_like(prof)
+        if self._p("eline_fbroad", 0.0) > 0:
+            broad = np.sqrt(self._p("eline_sigma_broad", 150.0) ** 2 + inst2)
+            wide = np.where(bal, np.maximum(prof, broad), prof)
+            shift = np.where(bal, abs(self._p("eline_vbroad", 0.0)), 0.0)
+        return prof, wide, shift, inst2
+
     def cache_eline_parameters(self, obs, nsigma=5, forcelines=False):
-        """Cache the line parameters with a pixel window wide enough for the widest component.
+        """Cache the line parameters, with line windows set by each line's own profile.
+
+        A line is kept if a fitted pixel lies within ``nsigma`` widths of its main component
+        (narrow for Balmer lines, forbidden width otherwise), as in prospect. The pixels where
+        lines are added extend to ``nsigma`` widths of the widest component, so broad wings are
+        not cut. Widening the validity window itself would keep lines whose main component is
+        zero on every pixel, and prospect's unit-flux renormalization then divides by zero.
 
         Parameters
         ----------
         obs : prospect.observation.Spectrum
             The observation.
         nsigma : float
-            Half-width of each line's pixel window in units of the narrow line width. It is
-            scaled up by the ratio of the widest intrinsic width to the narrow one, which is
-            always at least as wide as needed.
+            Half-width of the line windows in units of the component width.
         forcelines : bool
             Passed to ``HyperSpecModel.cache_eline_parameters``.
-
-        Returns
-        -------
-        object
-            Whatever ``HyperSpecModel.cache_eline_parameters`` returns.
         """
-        sn = max(self._p("eline_sigma", 1), 1)
-        sb = self._p("eline_sigma_broad", sn) if self._p("eline_fbroad", 0) > 0 else sn
-        widest = max(self._p("eline_sigma_forb", sn), sb)
-        return super().cache_eline_parameters(
-            obs, nsigma=nsigma * max(1.0, widest / sn), forcelines=forcelines
-        )
+        super().cache_eline_parameters(obs, nsigma=nsigma, forcelines=forcelines)
+        hasspec = obs.get("spectrum", None) is not None
+        if not (self._want_lines & self._need_lines & hasspec):
+            return
+        prof, wide, shift, _ = self._profile_widths()
+        dist = np.abs(self._outwave - self._ewave_obs[:, None])
+        omask = obs.get("mask", None)
+
+        def window(half_kms):
+            pm = dist < (self._ewave_obs / C_KMS * half_kms)[:, None]
+            return pm if omask is None else pm & omask
+
+        self._valid_eline = window(nsigma * prof).any(axis=1) & self._use_eline
+        pm = window(nsigma * wide + shift)
+        self._fit_eline_pixelmask = pm[self._valid_eline & self._fit_eline, :].any(axis=0)
+        self._fix_eline_pixelmask = pm[self._valid_eline & self._fix_eline, :].any(axis=0)
+        self._elines_to_fit = self._fit_eline & self._valid_eline
 
     def get_eline_gaussians(self, lineidx=slice(None), wave=None):  # noqa: B008, same as parent
         """Return unit-flux line profiles, two-component for the Balmer lines.
@@ -102,16 +140,11 @@ class TwoCompLineModel(HyperSpecModel):
             Profiles of shape (n_wave, n_line), each normalized to unit flux.
         """
         sig0, mu0 = self._eline_sigma_kms, self._ewave_obs
-        ones = np.ones_like(mu0, dtype=float)
         bal = self._balmer_mask()
-        # the cached width is hypot(eline_sigma, instrument); keep the instrumental part
-        inst2 = np.clip(np.atleast_1d(sig0) ** 2 - self._p("eline_sigma", 0) ** 2, 0, None) * ones
-        s_forb = self._p("eline_sigma_forb", self._p("eline_sigma", 0))
+        prof, _, _, inst2 = self._profile_widths()
         fb = self._p("eline_fbroad", 0.0)
         try:
-            self._eline_sigma_kms = np.where(
-                bal, np.atleast_1d(sig0) * ones, np.sqrt(s_forb**2 + inst2)
-            )
+            self._eline_sigma_kms = prof
             g = super().get_eline_gaussians(lineidx=lineidx, wave=wave)
             if fb > 0:
                 self._eline_sigma_kms = np.sqrt(self._p("eline_sigma_broad", 150.0) ** 2 + inst2)
@@ -153,7 +186,7 @@ def _trapezoid(y, x):
     return np.sum(0.5 * (y[1:] + y[:-1]) * np.diff(x))
 
 
-def self_check(model_params, obs, sps, theta):
+def self_check(model_params, obs, sps, theta, n_prior=100, seed=0):
     """Check TwoCompLineModel against HyperSpecModel before sampling.
 
     With ``eline_fbroad = 0`` and ``eline_sigma_forb = eline_sigma`` the two-component model
@@ -170,11 +203,16 @@ def self_check(model_params, obs, sps, theta):
         The stellar population source.
     theta : np.ndarray
         Any valid parameter vector of the two-component model.
+    n_prior : int
+        Number of prior draws whose predicted spectrum must be finite.
+    seed : int
+        Seed for the prior draws.
 
     Raises
     ------
     AssertionError
-        If ``eline_fbroad = 0`` does not reproduce the one-component model.
+        If ``eline_fbroad = 0`` does not reproduce the one-component model, or a prior draw gives
+        a non-finite spectrum.
     """
     if isinstance(obs, list | tuple):
         (obs,) = obs
@@ -200,7 +238,15 @@ def self_check(model_params, obs, sps, theta):
     cr = np.median(s0[(wr > 6630) & (wr < 6650)])
     cont = np.interp(wr[sel], [6490, 6640], [cb, cr])
     frac = _trapezoid(s1[sel] - s0[sel], wr[sel]) / _trapezoid(s0[sel] - cont, wr[sel])
+    rng = np.random.default_rng(seed)
+    bad = 0
+    with np.errstate(all="ignore"):
+        for _ in range(n_prior):
+            t = m.prior_transform(rng.uniform(size=m.ndim))
+            bad += not np.all(np.isfinite(m.predict(t, observations=[obs], sps=sps)[0][0]))
+    assert bad == 0, f"{bad} of {n_prior} prior draws give a non-finite spectrum"
     print(
         f"OK: f_b=0 reproduces the one-component model. Halpha+[NII] flux change at f_b=0.5: "
-        f"{frac:+.2%} (should be ~0: broad flux is redistributed, not added)"
+        f"{frac:+.2%} (should be ~0: broad flux is redistributed, not added). "
+        f"{n_prior} prior draws give finite spectra."
     )
