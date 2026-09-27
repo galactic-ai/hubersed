@@ -208,7 +208,7 @@ wheels = [
 [[package]]
 name = "astro-cue"
 version = "0.0.0"
-source = { git = "https://github.com/galactic-ai/cue?rev=cuejax#d6068d29a234ba1891ac34dd3c510d06eedd0938" }
+source = { git = "https://github.com/galactic-ai/cue?rev=cuejax#5a81ad2d3145e5d2b33222e8c4a6cbd638f98923" }
 dependencies = [
     { name = "dill" },
     { name = "jax" },
