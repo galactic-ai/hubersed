@@ -43,9 +43,8 @@ for run in ["MILES", "C3K"]:
     print(f"{run}: {len(d['w'])} points, N_eff {d['n_eff']:.0f}, max lnL {d['max_lnl']:.1f}")
 
 # %% C3K broad: the same quantities from its checkpoint
-# Only reads the checkpoint. The likelihood is never called.
 s = Sampler(
-    model.prior_transform,
+    lambda x: x,
     lambda x: 0.0,
     n_dim=model.ndim,
     n_live=1000,
@@ -53,8 +52,13 @@ s = Sampler(
     resume=True,
 )
 # an unfinished run gives all points so far, with a small N_eff
-points, log_w, log_l = s.posterior()  # about 2 min
-w = np.exp(log_w)
+cube, log_w, log_l = s.posterior()
+# keep the highest-weight points holding 99.99% of the posterior mass
+o = np.argsort(log_w)[::-1]
+keep = o[: np.searchsorted(np.cumsum(np.exp(log_w[o])), 0.9999) + 1]
+points = np.array([model.prior_transform(x) for x in cube[keep]])
+w = np.exp(log_w[keep]) / np.exp(log_w[keep]).sum()
+print(f"C3K broad: kept {len(keep)} of {len(cube)} points")
 gen = np.random.default_rng(0)
 draws = [sfh_from_theta(model, points[i]) for i in gen.choice(len(w), size=2000, p=w)]
 labels = model.theta_labels()
@@ -62,7 +66,7 @@ post["C3K broad"] = dict(
     points=points,
     w=w,
     labels=labels,
-    best=points[np.argmax(log_l)],
+    best=model.prior_transform(cube[np.argmax(log_l)]),
     max_lnl=log_l.max(),
     prior={
         lab: model.config_dict[lab]["prior"].range
@@ -74,7 +78,7 @@ post["C3K broad"] = dict(
     sfh_cmf=np.array([d["cmf"] for d in draws]),
 )
 print(
-    f"C3K broad: {len(points)} points, explored {s.explored}, N_eff {s.n_eff:.0f}, "
+    f"C3K broad: {len(cube)} points, explored {s.explored}, N_eff {s.n_eff:.0f}, "
     f"calls {s.n_like}, max lnL {log_l.max():.1f}"
 )
 
@@ -111,7 +115,8 @@ for lab in labels:
     print(row)
 
 # %% corner plots: posteriors overlaid, dashed lines at prior edges inside an axis
-# The broad-line parameters exist only in that run, so they get their own corner plot.
+# In the C3K broad run eline_sigma is the narrow Balmer width, in the others the width of every
+# line. The broad-line parameters exist only in that run, so they get their own corner plot.
 common = [lab for lab in post["C3K"]["labels"] if lab in labels]
 panels = [
     ("phys", [lab for lab in common if not lab.startswith("logsfr_ratios")], list(post)),
