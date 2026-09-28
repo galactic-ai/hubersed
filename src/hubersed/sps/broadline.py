@@ -29,12 +29,6 @@ FORB_PARAM = {
 }
 # Balmer lines are named "Ba-..." in the FSPS and Cue line lists.
 BALMER_PREFIX = "Ba-"
-# Cue's cue_emlines_info.dat lists "He I 3888.63A" twice at 3889.7419 A and has no H8. FSPS's
-# emlines_info.dat has He I 3888.63A followed by "Ba-6 3889" (H8) at the same place in the list,
-# so the second duplicate is taken to be H8. This is inferred from the ordering, not documented.
-CUE_H8_DUPLICATE = "He I 3888.63A"
-# The narrow width must stay below the broad minimum so the components cannot swap.
-NARROW_PRIOR = priors.TopHat(mini=10.0, maxi=100.0)
 
 
 class TwoCompLineModel(HyperSpecModel):
@@ -53,12 +47,18 @@ class TwoCompLineModel(HyperSpecModel):
         """Return a boolean mask of the Balmer lines in ``emline_info``, cached on first use."""
         if not hasattr(self, "_is_balmer"):
             names = np.char.strip(np.asarray(self.emline_info["name"]).astype(str))
-            is_balmer = np.char.startswith(names, BALMER_PREFIX)
-            dup = np.flatnonzero(names == CUE_H8_DUPLICATE)
-            if len(dup) == 2:  # Cue list: the second copy is H8, see CUE_H8_DUPLICATE
-                is_balmer[dup[1]] = True
-            self._is_balmer = is_balmer
+            self._is_balmer = np.char.startswith(names, BALMER_PREFIX)
         return self._is_balmer
+
+    def _broad_fraction(self):
+        """Return the per-line broad fraction of flux in the broad component.
+
+        Balmer lines use ``eline_fbroad``; all other lines use ``eline_fbroad_forb``, which is
+        absent (zero) unless ``add_broad_params`` was called with ``forbidden_broad``.
+        """
+        return np.where(
+            self._balmer_mask(), self._p("eline_fbroad", 0.0), self._p("eline_fbroad_forb", 0.0)
+        )
 
     def _profile_widths(self):
         """Return per-line total widths of the main component and the widest component.
@@ -71,21 +71,23 @@ class TwoCompLineModel(HyperSpecModel):
         wide : np.ndarray
             Total width in km/s of the widest component of each line.
         shift : np.ndarray
-            Absolute velocity offset in km/s of the broad component (zero for other lines).
+            Absolute velocity offset in km/s of the broad component (zero for lines without one).
         inst2 : np.ndarray
             Squared instrumental (and library) width in km/s.
         """
         sig0 = np.atleast_1d(self._eline_sigma_kms) * np.ones_like(self._ewave_obs, dtype=float)
         bal = self._balmer_mask()
+
         # the cached width is hypot(eline_sigma, instrument); keep the instrumental part
         inst2 = np.clip(sig0**2 - self._p("eline_sigma", 0) ** 2, 0, None)
         s_forb = self._p("eline_sigma_forb", self._p("eline_sigma", 0))
         prof = np.where(bal, sig0, np.sqrt(s_forb**2 + inst2))
-        wide, shift = prof.copy(), np.zeros_like(prof)
-        if self._p("eline_fbroad", 0.0) > 0:
-            broad = np.sqrt(self._p("eline_sigma_broad", 150.0) ** 2 + inst2)
-            wide = np.where(bal, np.maximum(prof, broad), prof)
-            shift = np.where(bal, abs(self._p("eline_vbroad", 0.0)), 0.0)
+
+        has = self._broad_fraction() > 0
+        broad = np.sqrt(self._p("eline_sigma_broad", 150.0) ** 2 + inst2)
+        wide = np.where(has, np.maximum(prof, broad), prof)
+        shift = np.where(has, abs(self._p("eline_vbroad", 0.0)), 0.0)
+
         return prof, wide, shift, inst2
 
     def cache_eline_parameters(self, obs, nsigma=5, forcelines=False):
@@ -125,7 +127,7 @@ class TwoCompLineModel(HyperSpecModel):
         self._elines_to_fit = self._fit_eline & self._valid_eline
 
     def get_eline_gaussians(self, lineidx=slice(None), wave=None):  # noqa: B008, same as parent
-        """Return unit-flux line profiles, two-component for the Balmer lines.
+        """Return unit-flux line profiles, two-component for lines with a broad component.
 
         Parameters
         ----------
@@ -140,24 +142,29 @@ class TwoCompLineModel(HyperSpecModel):
             Profiles of shape (n_wave, n_line), each normalized to unit flux.
         """
         sig0, mu0 = self._eline_sigma_kms, self._ewave_obs
-        bal = self._balmer_mask()
         prof, _, _, inst2 = self._profile_widths()
-        fb = self._p("eline_fbroad", 0.0)
+        fb = self._broad_fraction()[lineidx]
         try:
             self._eline_sigma_kms = prof
             g = super().get_eline_gaussians(lineidx=lineidx, wave=wave)
-            if fb > 0:
+            if np.any(fb > 0):
                 self._eline_sigma_kms = np.sqrt(self._p("eline_sigma_broad", 150.0) ** 2 + inst2)
                 self._ewave_obs = mu0 * (1 + self._p("eline_vbroad", 0.0) / C_KMS)
                 gb = super().get_eline_gaussians(lineidx=lineidx, wave=wave)
-                b = bal[lineidx]
-                g[:, b] = (1 - fb) * g[:, b] + fb * gb[:, b]
+                g = (1 - fb) * g + fb * gb
         finally:
             self._eline_sigma_kms, self._ewave_obs = sig0, mu0
         return g
 
 
-def add_broad_params(params, separate_forbidden_width=True):
+def same_fbroad(eline_fbroad=0.0, **extras):
+    """``depends_on`` function giving the forbidden lines the Balmer broad fraction."""
+    return eline_fbroad
+
+
+def add_broad_params(
+    params, separate_forbidden_width=True, forbidden_broad=None, sigma_split=100.0
+):
     """Add the broad-line parameters to a model parameter dict.
 
     Parameters
@@ -168,6 +175,13 @@ def add_broad_params(params, separate_forbidden_width=True):
         changed.
     separate_forbidden_width : bool
         Also add ``eline_sigma_forb``, a separate width for the non-Balmer lines.
+    forbidden_broad : {None, "shared", "free"}
+        Give the non-Balmer lines the broad component too, with same width and shift.
+        ``shared'' uses the Balmer fraction (``eline_fbroad_forb`` tied to ``eline_fbroad``).
+        ``free'' allows the forbidden broad fraction to vary independently.
+        None keeps it only on balmer lines.
+    sigma_split : float
+        Upper bound of the narrow and forbidden widths and lower bound of the broad width, in km/s.
 
     Returns
     -------
@@ -175,9 +189,24 @@ def add_broad_params(params, separate_forbidden_width=True):
         ``params``, with the new parameters.
     """
     params.update({k: dict(v) for k, v in BROAD_PARAMS.items()})
+
+    narrow = priors.TopHat(mini=10.0, maxi=sigma_split)
+    params["eline_sigma_broad"]["prior"] = priors.TopHat(mini=sigma_split, maxi=800.0)
+    params["eline_sigma_broad"]["init"] = max(params["eline_sigma_broad"]["init"], sigma_split)
+
     if separate_forbidden_width:
-        params.update({k: dict(v) for k, v in FORB_PARAM.items()})
-    params["eline_sigma"] = {**params["eline_sigma"], "prior": NARROW_PRIOR}
+        params.update({k: dict(v, prior=narrow) for k, v in FORB_PARAM.items()})
+    if forbidden_broad == "shared":
+        params["eline_fbroad_forb"] = dict(N=1, isfree=False, init=0.0, depends_on=same_fbroad)
+    elif forbidden_broad == "free":
+        params["eline_fbroad_forb"] = dict(
+            N=1, isfree=True, init=0.1, prior=priors.TopHat(mini=0.0, maxi=0.9)
+        )
+    elif forbidden_broad is not None:
+        raise ValueError(
+            f"forbidden_broad must be None, 'shared' or 'free', not {forbidden_broad!r}"
+        )
+    params["eline_sigma"] = {**params["eline_sigma"], "prior": narrow}
     return params
 
 
@@ -216,15 +245,21 @@ def self_check(model_params, obs, sps, theta, n_prior=100, seed=0):
     """
     if isinstance(obs, list | tuple):
         (obs,) = obs
+
     m = TwoCompLineModel(model_params)
     ib = m.theta_index["eline_fbroad"].start
-    new = [k for k in {**BROAD_PARAMS, **FORB_PARAM} if k in m.theta_index]
+    new = [k for k in [*BROAD_PARAMS, *FORB_PARAM, "eline_fbroad_forb"] if k in m.theta_index]
     drop = [m.theta_index[k].start for k in new]
-    base = HyperSpecModel({k: v for k, v in model_params.items() if k not in new})
+    base = HyperSpecModel(
+        {k: v for k, v in model_params.items() if k not in [*new, "eline_fbroad_forb"]}
+    )
     t0 = np.array(theta, dtype=float)
     t0[ib] = 0.0
+    if "eline_fbroad_forb" in m.theta_index:
+        t0[m.theta_index["eline_fbroad_forb"].start] = 0.0
     if "eline_sigma_forb" in m.theta_index:  # same width for all lines, so equal to the base
         t0[m.theta_index["eline_sigma_forb"].start] = t0[m.theta_index["eline_sigma"].start]
+
     s_base = base.predict(np.delete(t0, drop), observations=[obs], sps=sps)[0][0]
     s0 = m.predict(t0, observations=[obs], sps=sps)[0][0]
     assert np.allclose(s0, s_base, rtol=1e-6), "f_b = 0 must reproduce the one-component model"
