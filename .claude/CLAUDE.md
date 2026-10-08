@@ -9,8 +9,15 @@ and then checked with forward-model fits.
 - `src/hubersed/` is the package. Subpackages are `alf`, `detect`, `fitting`, `io`, `mocks`,
   `plotting` and `sps`.
 - `scripts/` holds thin command line entry points.
-- `experiments/` holds tracked one-off analyses, named `YYYY-MM-DD_name.py` with `# %%` cells.
-  Notebooks are not source.
+- `experiments/` holds tracked analyses, one folder per experiment named `YYYY-MM-DD_name/`.
+  - `fit.py` runs the fit. Its docstring says what changed from the previous experiment and gives
+    the run command.
+  - `analysis.py` makes the figures and tables in `# %%` cells. Its docstring holds QUESTION,
+    HYPOTHESIS, INPUTS, SEED, COMMAND, RESULT and FIGURES.
+  - Slurm scripts, comparison scripts and small inputs sit in the same folder.
+  - Outputs go to `results/YYYY-MM-DD_name/`, with the same name as the folder.
+  - A one-off with no fit can be a single `YYYY-MM-DD_name.py` file.
+  - Notebooks are not source.
 - `tests/` holds the tests. `tests/golden/` holds the golden output check for pure moves.
 - `tmp/` and `nb/` are legacy and not linted. Do not add new work there.
 - `data/` and `results/` are not tracked.
