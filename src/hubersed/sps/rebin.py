@@ -10,8 +10,8 @@ C_KMS = 299792.458
 # Rest-frame resolution and usable rest-frame window of each FSPS stellar library.
 # Give "fwhm_A" for a constant width in Angstrom, or "R" for a constant resolving power.
 LIBRARIES = {
-    # MILES; FSPS uses BaSeL (R~200) outside this window
-    "miles": dict(fwhm_A=2.5, window=(3750.0, 7200.0)),
+    # MILES (FSPS SPECTRA/MILES/miles.res): FWHM 2.54 A. FSPS uses BaSeL (R~200) outside the window
+    "miles": dict(fwhm_A=2.54, window=(3750.0, 7200.0)),
     # C3K_HR (FSPS v4.0, SPECTRA/C3K/c3k_hr/readme.md): R = lambda/FWHM = 3000 for 3001-10000 A
     "c3k_hr": dict(R=3000.0, window=(3001.0, 10000.0)),
 }
