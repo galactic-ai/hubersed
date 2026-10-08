@@ -6,8 +6,9 @@
 #       --export=ALL,FITS="miles:miles:on c3k_hr:miles:on c3k_hr:miles:off c3k_hr:full:on c3k_hr:full:off" \
 #       experiments/2026-10-08_continuum_outlier/chain.slurm
 #   done
-# FITS is a list of LIB:WINDOW:NEBULAR. Fits are dealt round-robin over the nodes, and each takes the
-# next core slot on its node. Fits that already converged skip themselves (run.sh checks the marker).
+# FITS is a list of LIB:WINDOW:NEBULAR[:DEGRADE], with DEGRADE on (default) or off. Fits are dealt
+# round-robin over the nodes, and each takes the next core slot on its node. Fits that already
+# converged skip themselves (run.sh checks the marker).
 # Limits per node, measured 2026-10-08 on c309-006 with pool 24: about 2100 threads for a nebular-off
 # fit and 2600 for a nebular-on fit, out of 16384 per user, and roughly 40 GB of memory each.
 # So 4 fits per node at pool 24 fit with room to spare.
@@ -30,8 +31,10 @@ echo "link $SLURM_JOB_ID on $SLURM_JOB_NODELIST, fits '$FITS', pool $POOL, start
 
 left=0
 for f in $FITS; do
-    IFS=: read lib window neb <<< "$f"
-    [ -e CONVERGED_co1008_${lib}_${window}_neb${neb} ] || left=$((left + 1))
+    IFS=: read lib window neb deg <<< "$f"
+    name=co1008_${lib}_${window}_neb${neb}
+    [ "${deg:-on}" = off ] && name=${name}_nodeg
+    [ -e CONVERGED_$name ] || left=$((left + 1))
 done
 if [ $left -eq 0 ]; then
     echo "all fits converged, cancelling pending links"
@@ -41,14 +44,14 @@ fi
 
 i=0
 for f in $FITS; do
-    IFS=: read lib window neb <<< "$f"
+    IFS=: read lib window neb deg <<< "$f"
     node=$((i % SLURM_NNODES))
     slot=$((i / SLURM_NNODES))
     if [ $slot -ge ${#SLOTS[@]} ]; then
         echo "no core slot left for $f, skipped"
         continue
     fi
-    srun --overlap -N1 -n1 --relative=$node bash $EXP/run.sh $lib $window $neb $POOL ${SLOTS[$slot]} $TIMEOUT &
+    srun --overlap -N1 -n1 --relative=$node bash $EXP/run.sh $lib $window $neb $POOL ${SLOTS[$slot]} $TIMEOUT ${deg:-on} &
     echo "$f on node $node, cores ${SLOTS[$slot]}"
     i=$((i + 1))
 done
