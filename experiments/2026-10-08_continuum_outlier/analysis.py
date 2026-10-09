@@ -35,7 +35,8 @@ index from 0.87 to 2.28 (model 2.20). That band holds sky lines at 6223.5 and 62
 has 12 unfitted pixels at the 6172.3 A sky line.
 FIGURES: results/2026-10-08_continuum_outlier/<tid>/. Per run spectrum_<run>.png,
 spectrum_zoom_<run>.png, corner_phys_<run>.png, corner_sfh_<run>.png and sfh_<run>.png. Across runs
-residuals.png, zoom.png, chi2_observed.png, corner_<pair>.png, cmf.png, dchi2_alpha_nebon.png and bands_mgb_fe.png.
+residuals.png, zoom.png, chi2_observed.png, corner_<pair>.png, cmf.png, dchi2_alpha_nebon.png, bands_mgb_fe.png, spectrum_alpha_nebon.png and
+sfh_alpha_nebon.png.
 """
 
 # %%
@@ -54,7 +55,7 @@ from matplotlib.lines import Line2D
 from hubersed.conversion import to_flambda
 from hubersed.fitting.map_fits import sfh_from_theta
 from hubersed.paths import PATHS
-from hubersed.plotting.sfh import sfh_figure
+from hubersed.plotting.sfh import plot_cumulative_mass, plot_ssfr, sfh_figure
 from hubersed.plotting.spectra import plot_residual, residual_chi, spectrum_figure
 
 # parse_known_args, so the cells also run in an interactive session
@@ -823,6 +824,90 @@ for key, d in run.items():
     ax[1].stairs(cmf_hi, edges, baseline=cmf_lo, fill=True, color="C3", alpha=0.25, lw=0)
     ax[0].legend(frameon=True, fontsize="small", loc="lower left")
     fig.savefig(FIG / f"sfh_{key}.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+# %% alpha pair, nebular on: spectrum with both models and residuals, and both SFHs
+# Top panel: the data, their running median over 15 pixels, and the max-L model of each run.
+# Below: chi per pixel (grey) and its 25-pixel running median for each run. Shaded spans are the
+# index feature bands, and for Dn4000 its two continuum bands. Colours match corner_alpha_nebon.
+PAIR = {"3n-zero": "tab:blue", "3n-free": "tab:orange"}
+if set(PAIR) <= run.keys():
+    a = run["3n-zero"]
+    rest = a["wave"] / (1 + z)
+    g = a["good"]
+
+    def flam(maggies, d=a):
+        """Convert maggies to DESI f_lambda units, NaN outside the fitted pixels."""
+        f = to_flambda(d["wave"] * u.AA, np.asarray(maggies, float) * u.mgy).value
+        return np.where(d["good"], f, np.nan)
+
+    fig, ax = plt.subplots(3, 1, figsize=(12, 8), sharex=True, height_ratios=[3, 1, 1])
+    f = flam(a["flux"])
+    med = np.full_like(f, np.nan)
+    med[g] = running_median(f[g], 15)
+    ax[0].plot(rest, f, color="0.75", lw=0.5, label="DESI spectrum")
+    ax[0].plot(rest, med, color="k", lw=0.8, label="running median, 15 pixels")
+    for key, col in PAIR.items():
+        ax[0].plot(rest, flam(run[key]["sp_best"]), color=col, lw=0.9, label=f"{key} max-L")
+    for x, (key, col) in zip(ax[1:], PAIR.items(), strict=True):
+        c = chi(run[key], run[key]["sp_best"])
+        cm = np.full_like(c, np.nan)
+        cm[g] = running_median(c[g], 25)
+        x.plot(rest, c, color="0.75", lw=0.4)
+        x.plot(rest, cm, color=col, lw=1)
+        x.axhline(0, color="0.4", lw=0.6)
+        for y in (-2, 2):
+            x.axhline(y, color="0.5", lw=0.5, ls="--")
+        x.set_ylim(-5, 5)
+        x.set_ylabel(rf"$\chi$ {key}")
+    for name, (f0, f1, b0, b1, r0, r1, kind) in INDEX.items():
+        spans = [(b0, b1), (r0, r1)] if kind == 3 else [(f0, f1)]
+        for s0, s1 in spans:
+            for x in ax:
+                x.axvspan(s0, s1, color="0.5", alpha=0.12, lw=0)
+        mid = 0.5 * (b0 + r1) if kind == 3 else 0.5 * (f0 + f1)
+        ax[0].text(
+            mid,
+            1.01,
+            name,
+            transform=ax[0].get_xaxis_transform(),
+            rotation=90,
+            fontsize=7,
+            ha="center",
+            va="bottom",
+        )
+    ax[0].set_ylim(0, 1.3 * np.nanpercentile(flam(a["sp_best"]), 99.5))
+    ax[0].set_ylabel(r"$f_\lambda$ [$10^{-17}$ erg s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]")
+    ax[0].legend(frameon=False, fontsize="small", loc="lower right")
+    ax[2].set_xlim(rest[g].min(), rest[g].max())
+    ax[2].set_xlabel(r"rest wavelength [$\AA$]")
+    fig.savefig(FIG / "spectrum_alpha_nebon.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+    # SFH: median and 16-84% per bin from 2000 weighted draws per run
+    fig = None
+    for key, col in PAIR.items():
+        d = run[key]
+        m = model[d["nebular"], d["afe"]]
+        sfhs = [sfh_from_theta(m, d["points"][i]) for i in GEN.choice(len(d["w"]), 2000, p=d["w"])]
+        edges = sfhs[0]["edges_gyr"]
+        s_lo, s_med, s_hi = np.percentile([s["ssfr"] for s in sfhs], [16, 50, 84], axis=0)
+        c_lo, c_med, c_hi = np.percentile([s["cmf"] for s in sfhs], [16, 50, 84], axis=0)
+        if fig is None:
+            fig, ax = sfh_figure(
+                edges,
+                s_med,
+                c_med,
+                ssfr_kwargs={"label": f"{key} median", "ssfr_kw": {"color": col}},
+                cmf_kwargs={"color": col},
+            )
+        else:
+            plot_ssfr(ax[0], edges, s_med, guides=(), label=f"{key} median", ssfr_kw={"color": col})
+            plot_cumulative_mass(ax[1], edges, c_med, guides=(), color=col)
+        ax[0].stairs(s_hi, edges, baseline=s_lo, fill=True, color=col, alpha=0.2, lw=0)
+        ax[1].stairs(c_hi, edges, baseline=c_lo, fill=True, color=col, alpha=0.2, lw=0)
+    ax[0].legend(frameon=True, fontsize="small", loc="lower left")
+    fig.savefig(FIG / "sfh_alpha_nebon.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
 
 # %%
