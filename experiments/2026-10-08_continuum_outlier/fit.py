@@ -21,7 +21,7 @@ import astropy.units as u
 import numpy as np
 from nautilus import Sampler
 from prospect.fitting import lnprobfn
-from prospect.models.priors import LogUniform
+from prospect.models.priors import LogUniform, TopHat
 from prospect.models.sedmodel import HyperSpecModel
 from prospect.sources.galaxy_basis import SSPBasis
 
@@ -100,12 +100,13 @@ def load_data(tid, lib, window, degrade):
     return z, flux, unc, good, sig_A / WAVE_OBS * C
 
 
-def make_model(z, nebular):
+def make_model(z, nebular, afe="none"):
     """Build the model with the star formation history priors of 2026-09-25.
 
     tau_in is fixed at the age of the universe at ``z``. The other four hyperparameters are free
     with log-uniform priors. With ``nebular`` False the Cue parameters are left out and FSPS
-    nebular emission is off.
+    nebular emission is off. With ``afe`` "free" [alpha/Fe] is free over the grid, -0.2 to 0.6,
+    and with "zero" it is fixed at 0. Then logzsol is [Fe/H], not [Z/H].
     """
     cont_model, tmpl = build_continuum_model(z)
     if nebular:
@@ -119,6 +120,13 @@ def make_model(z, nebular):
             tmpl[name]["init"] = init
     tmpl["tau_in"]["isfree"] = False
     tmpl["tau_in"]["init"] = universe_age_gyr(z)
+    if afe != "none":
+        tmpl["afe"] = {
+            "N": 1,
+            "isfree": afe == "free",
+            "init": 0.0,
+            "prior": TopHat(mini=-0.2, maxi=0.6),
+        }
     return HyperSpecModel(tmpl)
 
 
@@ -168,41 +176,51 @@ def make_obs(z, flux, unc, good, target_kms, sps):
 _STATE = {}
 
 
-def loglike(theta, tid, lib, window, nebular, degrade):
+def loglike(theta, tid, lib, window, nebular, degrade, afe="none"):
     """Return the log likelihood of ``theta``.
 
     Each process builds its model, data and source on the first call and keeps them in
     ``_STATE``. The Cue emulator cannot be pickled and JAX is not fork safe, so the pool uses
     spawn.
     """
-    key = (tid, lib, window, nebular, degrade)
+    key = (tid, lib, window, nebular, degrade, afe)
     if key not in _STATE:
         z, flux, unc, good, target_kms = load_data(tid, lib, window, degrade)
         sps = make_sps(nebular, degrade)
         obs = make_obs(z, flux, unc, good, target_kms, sps)
-        _STATE[key] = (make_model(z, nebular), obs, sps)
+        _STATE[key] = (make_model(z, nebular, afe), obs, sps)
     model, obs, sps = _STATE[key]
     return lnprobfn(theta, model=model, observations=obs, sps=sps, nested=True)
 
 
-def check_setup(tid, lib, window, nebular, degrade):
+def check_setup(tid, lib, window, nebular, degrade, afe="none"):
     """Check the library and resolution setup and return z, the model and the pixel count.
 
     Raises
     ------
     AssertionError
-        If FSPS was compiled with another library, if the library resolution is not what
+        If FSPS was compiled with another library or, for ``afe``, without AFE_FLAG, if the
+        library resolution is not what
         ``degrade`` asks for, if the data target is sharper than the library plus 10 km/s on a
         fitted pixel, or if the start is not finite.
     """
     z, flux, unc, good, target_kms = load_data(tid, lib, window, degrade)
-    model = make_model(z, nebular)
+    model = make_model(z, nebular, afe)
     sps = make_sps(nebular, degrade)
     assert sps.ssp.libraries[1] in (lib, lib.encode()), sps.ssp.libraries
+    if afe != "none":
+        # a build without AFE_FLAG ignores afe without an error
+        ssp = sps.ssp
+        _, s0 = ssp.get_spectrum(tage=10.0, peraa=False)
+        ssp.params["afe"] = 0.4
+        _, s4 = ssp.get_spectrum(tage=10.0, peraa=False)
+        ssp.params["afe"] = 0.0
+        assert not np.allclose(s0, s4), "afe changes nothing, FSPS lacks AFE_FLAG"
+        print(f"afe 0.4 vs 0 at 10 Gyr: median ratio {np.median(s4 / s0):.3f}")
     lib_kms = np.interp(WAVE_OBS, sps.wavelengths * (1 + z), sps.spectral_resolution)
     if not degrade:
         assert np.all(lib_kms == 0), "library resolution is not zeroed"
-        assert np.isfinite(loglike(model.theta, tid, lib, window, nebular, degrade))
+        assert np.isfinite(loglike(model.theta, tid, lib, window, nebular, degrade, afe))
         print("data not degraded, library resolution zeroed")
         return z, model, good.sum()
     # FSPS marks wavelengths outside the library window with a negative resolution
@@ -212,24 +230,26 @@ def check_setup(tid, lib, window, nebular, degrade):
     margin = np.sqrt(res[good] ** 2 - lib_kms[good] ** 2)
     print(f"smoothing on fitted pixels {margin.min():.2f}-{margin.max():.2f} km/s")
     assert margin.min() > 9.9, "data are sharper than the library plus 10 km/s"
-    assert np.isfinite(loglike(model.theta, tid, lib, window, nebular, degrade))
+    assert np.isfinite(loglike(model.theta, tid, lib, window, nebular, degrade, afe))
     return z, model, good.sum()
 
 
-def main(tid, lib, window, nebular, degrade, pool, n_batch, timeout, out):
+def main(tid, lib, window, nebular, degrade, afe, pool, n_batch, timeout, out):
     """Check the setup, then run or resume nautilus."""
     out.mkdir(parents=True, exist_ok=True)
-    z, model, npix = check_setup(tid, lib, window, nebular, degrade)
+    z, model, npix = check_setup(tid, lib, window, nebular, degrade, afe)
     neb = "on" if nebular else "off"
-    tag = "" if degrade else "_nodeg"
+    tag = ("" if degrade else "_nodeg") + ("" if afe == "none" else f"_afe{afe}")
     print(
-        f"z {z:.5f}, lib {lib}, window {window}, nebular {neb}, degrade {degrade}, "
+        f"z {z:.5f}, lib {lib}, window {window}, nebular {neb}, degrade {degrade}, afe {afe}, "
         f"{npix} pixels, ndim {model.ndim}"
     )
 
     sampler = Sampler(
         model.prior_transform,
-        partial(loglike, tid=tid, lib=lib, window=window, nebular=nebular, degrade=degrade),
+        partial(
+            loglike, tid=tid, lib=lib, window=window, nebular=nebular, degrade=degrade, afe=afe
+        ),
         n_dim=model.ndim,
         n_live=1000,
         pool=pool,
@@ -251,6 +271,7 @@ if __name__ == "__main__":
     parser.add_argument("--window", choices=["miles", "full"], required=True)
     parser.add_argument("--nebular", choices=["on", "off"], required=True)
     parser.add_argument("--degrade", choices=["on", "off"], default="on")
+    parser.add_argument("--afe", choices=["none", "free", "zero"], default="none")
     parser.add_argument("--pool", type=int, default=4)
     parser.add_argument("--n-batch", type=int, default=None)
     parser.add_argument("--timeout", type=float, default=np.inf)
@@ -261,11 +282,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.lib == "miles" and args.window == "full":
         parser.error("MILES only covers the MILES window")
+    if args.afe != "none" and (args.lib != "c3k_hr" or args.nebular == "on"):
+        parser.error("the alpha grid is C3K_HR, and these runs leave nebular emission off")
     mp.set_start_method("spawn", force=True)
     nebular = args.nebular == "on"
     degrade = args.degrade == "on"
     if args.check_only:
-        print(check_setup(args.tid, args.lib, args.window, nebular, degrade))
+        print(check_setup(args.tid, args.lib, args.window, nebular, degrade, args.afe))
     else:
         main(
             args.tid,
@@ -273,6 +296,7 @@ if __name__ == "__main__":
             args.window,
             nebular,
             degrade,
+            args.afe,
             args.pool,
             args.n_batch,
             args.timeout,

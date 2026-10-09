@@ -1,7 +1,7 @@
 """Save the posterior and model spectra of one converged fit for analysis.py.
 
-FSPS fixes its library at compile time, so each run needs its own process, and MILES runs need
-the MILES build first on PYTHONPATH, as in run.sh. The output is
+FSPS fixes its library at compile time, so each run needs its own process. MILES runs need the
+MILES build first on PYTHONPATH, and alpha runs the AFE_FLAG build and its SPS_HOME, as in run.sh. The output is
 results/2026-10-08_continuum_outlier/<run>_pred.npz with the data the fit used, the posterior
 points that carry weight, the maximum likelihood spectrum and 100 weighted draws.
 
@@ -24,16 +24,17 @@ OUT = PATHS["RESULTS"] / "2026-10-08_continuum_outlier"
 N_DRAW = 100
 
 
-def run_name(tid, lib, window, nebular, degrade):
+def run_name(tid, lib, window, nebular, degrade, afe="none"):
     """Return the checkpoint stem that fit.py uses for this run."""
     neb = "on" if nebular else "off"
-    return f"{tid}_{lib}_{window}_neb{neb}{'' if degrade else '_nodeg'}"
+    tag = ("" if degrade else "_nodeg") + ("" if afe == "none" else f"_afe{afe}")
+    return f"{tid}_{lib}_{window}_neb{neb}{tag}"
 
 
-def main(tid, lib, window, nebular, degrade):
-    name = run_name(tid, lib, window, nebular, degrade)
+def main(tid, lib, window, nebular, degrade, afe):
+    name = run_name(tid, lib, window, nebular, degrade, afe)
     z, flux, unc, good, _ = load_data(tid, lib, window, degrade)
-    model = make_model(z, nebular)
+    model = make_model(z, nebular, afe)
 
     # Only reads the checkpoint. The likelihood is never called.
     s = Sampler(
@@ -54,9 +55,9 @@ def main(tid, lib, window, nebular, degrade):
     print(f"{name}: {len(points)} points, {keep.sum()} kept, N_eff {s.n_eff:.0f}")
 
     # The likelihood of the fit, called once to check the setup matches. It caches the source.
-    lnl = loglike(best, tid, lib, window, nebular, degrade)
+    lnl = loglike(best, tid, lib, window, nebular, degrade, afe)
     assert np.isclose(lnl, log_l.max(), atol=0.1), (lnl, log_l.max())
-    _, obs, sps = _STATE[(tid, lib, window, nebular, degrade)]
+    _, obs, sps = _STATE[(tid, lib, window, nebular, degrade, afe)]
 
     def predict(theta):
         with warnings.catch_warnings():
@@ -93,5 +94,6 @@ if __name__ == "__main__":
     parser.add_argument("--window", choices=["miles", "full"], required=True)
     parser.add_argument("--nebular", choices=["on", "off"], required=True)
     parser.add_argument("--degrade", choices=["on", "off"], default="on")
+    parser.add_argument("--afe", choices=["none", "free", "zero"], default="none")
     args = parser.parse_args()
-    main(args.tid, args.lib, args.window, args.nebular == "on", args.degrade == "on")
+    main(args.tid, args.lib, args.window, args.nebular == "on", args.degrade == "on", args.afe)
