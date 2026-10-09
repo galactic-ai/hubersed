@@ -215,8 +215,10 @@ def check_setup(tid, lib, window, nebular, degrade, afe="none"):
         ssp.params["afe"] = 0.4
         _, s4 = ssp.get_spectrum(tage=10.0, peraa=False)
         ssp.params["afe"] = 0.0
-        assert not np.allclose(s0, s4), "afe changes nothing, FSPS lacks AFE_FLAG"
-        print(f"afe 0.4 vs 0 at 10 Gyr: median ratio {np.median(s4 / s0):.3f}")
+        # compare ratios: the spectra are about 1e-14 Lsun/Hz or less, below allclose's atol
+        ratio = np.median(s4[s0 > 0] / s0[s0 > 0])
+        print(f"afe 0.4 vs 0 at 10 Gyr: median ratio {ratio:.3f}")
+        assert abs(ratio - 1) > 0.01, "afe changes nothing, FSPS lacks AFE_FLAG"
     lib_kms = np.interp(WAVE_OBS, sps.wavelengths * (1 + z), sps.spectral_resolution)
     if not degrade:
         assert np.all(lib_kms == 0), "library resolution is not zeroed"
@@ -282,8 +284,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.lib == "miles" and args.window == "full":
         parser.error("MILES only covers the MILES window")
-    if args.afe != "none" and (args.lib != "c3k_hr" or args.nebular == "on"):
-        parser.error("the alpha grid is C3K_HR, and these runs leave nebular emission off")
+    if args.afe != "none" and args.lib != "c3k_hr":
+        parser.error("the alpha grid is C3K_HR")
     mp.set_start_method("spawn", force=True)
     nebular = args.nebular == "on"
     degrade = args.degrade == "on"
