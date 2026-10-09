@@ -61,15 +61,18 @@ RUNS = {
     "2a-off": "c3k_hr_miles_neboff",
     "2b-on": "c3k_hr_full_nebon",
     "2b-off": "c3k_hr_full_neboff",
+    "3-zero": "c3k_hr_full_neboff_afezero",
+    "3-free": "c3k_hr_full_neboff_afefree",
 }
 # Delta log Z is valid only within these pairs, because each pair fits identical data.
-PAIRS = [("1a", "1b"), ("1c", "1d"), ("2a-on", "2a-off"), ("2b-on", "2b-off")]
+PAIRS = [("1a", "1b"), ("1c", "1d"), ("2a-on", "2a-off"), ("2b-on", "2b-off"), ("3-free", "3-zero")]
 # Posterior overlays. Only the first is a same-data comparison.
 OVERLAYS = {
     "nebular": ["1a", "1b"],
     "degrade": ["1b", "1d"],
     "library": ["1b", "2a-off"],
     "window": ["2a-off", "2b-off"],
+    "alpha": ["3-zero", "3-free"],
 }
 COLOR = dict(zip(RUNS, [f"C{i}" for i in range(len(RUNS))], strict=True))
 GEN = np.random.default_rng(0)
@@ -86,9 +89,10 @@ for key, stem in RUNS.items():
     d["w"] = np.exp(d["log_w"] - d["log_w"].max())
     d["w"] /= d["w"].sum()
     d["nebular"] = "nebon" in stem
+    d["afe"] = stem.split("_afe")[1] if "_afe" in stem else "none"
     run[key] = d
 z = float(next(iter(run.values()))["z"])
-model = {neb: make_model(z, neb) for neb in (False, True)}
+model = {(d["nebular"], d["afe"]): make_model(z, d["nebular"], d["afe"]) for d in run.values()}
 
 
 def wquantile(x, w, q):
@@ -121,11 +125,30 @@ for a, b in PAIRS:
     if a in run and b in run:
         print(f"Delta log Z {a} - {b} = {float(run[a]['log_z']) - float(run[b]['log_z']):+.2f}")
 
+# %% alpha: the afe posterior, Savage-Dickey at afe = 0, and [Z/H]
+# 3-zero and 3-free share data and model and differ only in afe, so they are nested and
+# B(zero : free) = p(afe = 0 | data) / p(afe = 0), with the TopHat prior density 1 / 0.8 at 0.
+# The posterior density at 0 is a weighted histogram over the central bins. With alpha on,
+# logzsol is [Fe/H], and [Z/H] ~ [Fe/H] + 0.75 [alpha/Fe] (Vazdekis et al. 2015).
+if "3-free" in run:
+    d = run["3-free"]
+    afe = d["points"][:, d["labels"].index("afe")]
+    feh = d["points"][:, d["labels"].index("logzsol")]
+    print("afe 16/50/84:", np.round(wquantile(afe, d["w"], [0.16, 0.5, 0.84]), 3))
+    print("logzsol ([Fe/H]) 16/50/84:", np.round(wquantile(feh, d["w"], [0.16, 0.5, 0.84]), 3))
+    print("[Z/H] 16/50/84:", np.round(wquantile(feh + 0.75 * afe, d["w"], [0.16, 0.5, 0.84]), 3))
+    for h in [0.025, 0.05]:
+        dens = d["w"][np.abs(afe) < h].sum() / (2 * h)
+        print(
+            f"posterior density at afe 0 (+-{h}) {dens:.3f}, ln B(zero:free) {np.log(dens / 1.25):+.2f}"
+        )
+    print("afe weight within 0.02 of the 0.6 edge:", round(d["w"][afe > 0.58].sum(), 3))
+
 # %% derived quantities from 4000 weighted draws per run
 # Mass-weighted age uses the bin midpoints in linear time, the SFR being constant in each bin.
 # The oldest bin caps it (4.59-11.02 Gyr at this redshift, so about 7.8 Gyr).
 for d in run.values():
-    m = model[d["nebular"]]
+    m = model[d["nebular"], d["afe"]]
     idx = GEN.choice(len(d["w"]), size=4000, p=d["w"])
     mwa, old, young = [], [], []
     for theta in d["points"][idx]:
@@ -146,7 +169,8 @@ print(
 )
 
 # %% posterior table, with the weight within 2% of a prior edge
-phys = [lab for lab in model[True].theta_labels() if not lab.startswith("logsfr_ratios")]
+phys = list(dict.fromkeys(lab for d in run.values() for lab in d["labels"]))
+phys = [lab for lab in phys if not lab.startswith("logsfr_ratios")]
 print(f"{'parameter':14s}" + "".join(f"{k:>24s}" for k in run))
 for lab in phys:
     row = f"{lab:14s}"
@@ -156,7 +180,7 @@ for lab in phys:
             continue
         x = d["points"][:, d["labels"].index(lab)]
         lo, mid, hi = wquantile(x, d["w"], [0.16, 0.5, 0.84])
-        a, b = model[d["nebular"]].config_dict[lab]["prior"].range
+        a, b = model[d["nebular"], d["afe"]].config_dict[lab]["prior"].range
         edge = d["w"][(x < a + 0.02 * (b - a)) | (x > b - 0.02 * (b - a))].sum()
         flag = f"{edge:.0%}" if edge > 0.05 else ""
         row += f"{mid:9.3f} [{lo:7.3f},{hi:7.3f}]{flag:>3s}"[:24].rjust(24)
@@ -225,7 +249,7 @@ for key, d in run.items():
     for lab in [x for x in d["labels"] if x.startswith(("gas_", "eline_"))]:
         x = d["points"][:, d["labels"].index(lab)]
         lo, mid, hi = wquantile(x, d["w"], [0.16, 0.5, 0.84])
-        a, b = model[True].config_dict[lab]["prior"].range
+        a, b = model[True, d["afe"]].config_dict[lab]["prior"].range
         print(
             f"{key:6s} {lab:14s} median {mid:8.3f}  prior [{a}, {b}]  16-84 width / prior width {(hi - lo) / (b - a):.2f}"
         )
@@ -404,7 +428,7 @@ for tag, keys in OVERLAYS.items():
 # %% cumulative mass fraction, median and 16-84% per run
 fig, ax = plt.subplots(figsize=(6, 4))
 for key, d in run.items():
-    m = model[d["nebular"]]
+    m = model[d["nebular"], d["afe"]]
     idx = GEN.choice(len(d["w"]), size=1000, p=d["w"])
     cmf = np.array([sfh_from_theta(m, d["points"][i])["cmf"] for i in idx])
     lo, mid, hi = np.percentile(cmf, [16, 50, 84], axis=0)
@@ -550,7 +574,7 @@ def axis_range(x, w, q=(0.001, 0.999), pad=0.05):
 
 
 for key, d in run.items():
-    m = model[d["nebular"]]
+    m = model[d["nebular"], d["afe"]]
     labels, pts, w = d["labels"], d["points"], d["w"]
     groups = {
         "phys": [i for i, lab in enumerate(labels) if not lab.startswith("logsfr_ratios")],
