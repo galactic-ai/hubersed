@@ -14,7 +14,7 @@
 # one 250 GB node (about 270 GB in total) 13 workers of one fit died at once, most likely out of
 # memory, and its pool then hung.
 # So PER_NODE is 2. Threads are about 2100 per nebular-off fit and 2600 per nebular-on fit,
-# out of 16384 per user.
+# out of 16384 per user. With POOL=48 a nebular-on fit needs about 175 GB, so set PER_NODE=1.
 #SBATCH -p development
 #SBATCH -N 3
 #SBATCH -n 3
@@ -28,8 +28,14 @@ FITS=${FITS:?set FITS, e.g. "miles:miles:on c3k_hr:full:off"}
 POOL=${POOL:-24}
 PER_NODE=${PER_NODE:-2}
 TIMEOUT=${TIMEOUT:-6300}  # keep below the 2 h wall time so nautilus saves first
-# Core slots spread over both sockets (0-63 and 64-127). One-socket pinning made JAX thrash on 2026-10-01.
-SLOTS=(0-11,64-75 12-23,76-87 24-35,88-99 36-47,100-111)
+# Core slots of POOL cores, half on each socket (0-63 and 64-127). One-socket pinning made JAX
+# thrash on 2026-10-01.
+half=$((POOL / 2))
+SLOTS=()
+for k in $(seq 0 $((64 / half - 1))); do
+    a=$((k * half)) b=$(((k + 1) * half - 1))
+    SLOTS+=("$a-$b,$((a + 64))-$((b + 64))")
+done
 cd $REPO
 echo "link $SLURM_JOB_ID on $SLURM_JOB_NODELIST, fits '$FITS', pool $POOL, start $(date)"
 
