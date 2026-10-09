@@ -63,9 +63,20 @@ RUNS = {
     "2b-off": "c3k_hr_full_neboff",
     "3-zero": "c3k_hr_full_neboff_afezero",
     "3-free": "c3k_hr_full_neboff_afefree",
+    "3n-zero": "c3k_hr_full_nebon_afezero",
+    "3n-free": "c3k_hr_full_nebon_afefree",
 }
 # Delta log Z is valid only within these pairs, because each pair fits identical data.
-PAIRS = [("1a", "1b"), ("1c", "1d"), ("2a-on", "2a-off"), ("2b-on", "2b-off"), ("3-free", "3-zero")]
+PAIRS = [
+    ("1a", "1b"),
+    ("1c", "1d"),
+    ("2a-on", "2a-off"),
+    ("2b-on", "2b-off"),
+    ("3-free", "3-zero"),
+    ("3n-free", "3n-zero"),
+    ("3n-zero", "3-zero"),
+    ("3n-free", "3-free"),
+]
 # Posterior overlays. Only the first is a same-data comparison.
 OVERLAYS = {
     "nebular": ["1a", "1b"],
@@ -73,6 +84,7 @@ OVERLAYS = {
     "library": ["1b", "2a-off"],
     "window": ["2a-off", "2b-off"],
     "alpha": ["3-zero", "3-free"],
+    "alpha_nebon": ["3n-zero", "3n-free"],
 }
 COLOR = dict(zip(RUNS, [f"C{i}" for i in range(len(RUNS))], strict=True))
 GEN = np.random.default_rng(0)
@@ -128,10 +140,12 @@ for a, b in PAIRS:
 # %% alpha: the afe posterior, Savage-Dickey at afe = 0, and [Z/H]
 # 3-zero and 3-free share data and model and differ only in afe, so they are nested and
 # B(zero : free) = p(afe = 0 | data) / p(afe = 0), with the TopHat prior density 1 / 0.8 at 0.
+# The same holds for 3n-zero and 3n-free, with nebular emission on.
 # The posterior density at 0 is a weighted histogram over the central bins. With alpha on,
 # logzsol is [Fe/H], and [Z/H] ~ [Fe/H] + 0.75 [alpha/Fe] (Vazdekis et al. 2015).
-if "3-free" in run:
-    d = run["3-free"]
+for key in [k for k in ("3-free", "3n-free") if k in run]:
+    d = run[key]
+    print(key)
     afe = d["points"][:, d["labels"].index("afe")]
     feh = d["points"][:, d["labels"].index("logzsol")]
     print("afe 16/50/84:", np.round(wquantile(afe, d["w"], [0.16, 0.5, 0.84]), 3))
