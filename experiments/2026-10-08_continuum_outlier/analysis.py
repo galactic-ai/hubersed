@@ -21,9 +21,21 @@ emission pushes sigma_dyn to about 0.89 (prior LogU 0.01-1). In all eight runs t
 stronger Mgb (+2.5 to +3.0 sigma), weaker Fe5335 (-2.2 to -3.0), stronger HdeltaA (+2.1 to +3.0)
 and a weaker Dn4000 (-0.9 to -2.0) than the model. No switch removes that pattern. Fe5270 and
 NaD have masked pixels. The gas parameters stay at their priors, except eline_sigma (median 218-221).
+Alpha, nebular on (2026-10-09). 3n-zero is the same run as 2b-on, since the AFE build at afe 0 is
+bitwise identical and the sampler is seeded. 3n-free gives afe 0.119 (0.105-0.132) and
+Delta log Z +7.79 over 3n-zero, and the max-L Delta chi2 is +24.7. It loses 32 at rest 3000-6600 A
+and gains 57 in the z arm, 34 of it from 42 pixels at rest 7250-7320 A (observed 8488-8570 A).
+The index bands lose 7.7 in total, with Mgb +2.9 and Fe5335 +1.7.
+Mgb and Fe5335 in 3n-zero have no single bad stretch. The Mgb feature band is deeper than the model
+throughout (mean chi -0.41, 47 pixels, max |chi| 1.7) with no sky line or unfitted pixel, and
+putting the model there moves the data index from 4.65 to 3.65 (model 3.13). The Fe5335 feature
+band sits above the model (mean chi +0.44, 59 pixels), and putting the model there moves the data
+index from 0.87 to 2.28 (model 2.20). That band holds sky lines at 6223.5 and 6245.4 A observed
+(intensity 1.56 and 1.08). The Fe5270 feature band is deeper than the model (mean chi -0.22) and
+has 12 unfitted pixels at the 6172.3 A sky line.
 FIGURES: results/2026-10-08_continuum_outlier/<tid>/. Per run spectrum_<run>.png,
 spectrum_zoom_<run>.png, corner_phys_<run>.png, corner_sfh_<run>.png and sfh_<run>.png. Across runs
-residuals.png, zoom.png, chi2_observed.png, corner_<pair>.png and cmf.png.
+residuals.png, zoom.png, chi2_observed.png, corner_<pair>.png, cmf.png, dchi2_alpha_nebon.png and bands_mgb_fe.png.
 """
 
 # %%
@@ -521,6 +533,179 @@ secax = ax.secondary_xaxis("top", functions=(lambda x: x / (1 + z), lambda x: x 
 secax.set_xlabel(r"rest wavelength [$\AA$]")
 fig.savefig(FIG / "chi2_observed.png", dpi=150, bbox_inches="tight")
 plt.close(fig)
+
+# %% alpha: does free afe gain in the absorption features or in the continuum shape
+# Delta chi2 = chi2(3n-zero) - chi2(3n-free) per pixel at each run's max-L model, so a positive
+# value means afe free fits better. The model has no calibration polynomial, so the continuum
+# shape comes from the SSPs and dust alone. To split the gain, the 3n-zero model is multiplied by
+# a running median of the model ratio free / zero over W A rest. This hybrid takes the continuum
+# change and none of the line change. Zero to hybrid is the continuum share, hybrid to free the
+# line share. The split depends on W, so two windows are shown.
+if {"3n-zero", "3n-free"} <= run.keys():
+    a, b = run["3n-zero"], run["3n-free"]
+    assert np.array_equal(a["good"], b["good"])
+    g = a["good"]
+    rest = a["wave"] / (1 + z)
+    c2a, c2b = chi(a, a["sp_best"]) ** 2, chi(b, b["sp_best"]) ** 2
+    dchi2 = np.where(g, c2a - c2b, 0.0)
+    print(
+        f"\nalpha, nebular on: Delta chi2 zero - free at max-L {dchi2.sum():+.1f}, "
+        f"2 Delta max lnL {2 * (b['log_l'].max() - a['log_l'].max()):+.1f}"
+    )
+    ratio = b["sp_best"] / a["sp_best"]
+    smooth, part = {}, {}
+    for W in (100, 300):
+        n = int(W / np.median(np.diff(rest[g])))
+        s = np.full_like(ratio, np.nan)
+        s[g] = running_median(ratio[g], n)
+        smooth[W] = s
+        c2h = chi(a, a["sp_best"] * s) ** 2
+        part[W] = (np.where(g, c2a - c2h, 0.0), np.where(g, c2h - c2b, 0.0))
+        print(
+            f"  W {W} A: continuum share {part[W][0].sum():+.1f}, "
+            f"line share {part[W][1].sum():+.1f}"
+        )
+    feat = np.zeros_like(g)
+    print(f"  {'band':8s} {'n':>4s} {'chi2 zero':>10s} {'chi2 free':>10s} {'Delta':>7s}")
+    for name, (f0, f1, *_) in features.items():
+        k = g & (rest >= f0) & (rest <= f1)
+        feat |= k
+        if k.sum():
+            print(
+                f"  {name:8s} {k.sum():4d} {np.nansum(c2a[k]):10.1f} {np.nansum(c2b[k]):10.1f} "
+                f"{dchi2[k].sum():+7.1f}"
+            )
+    for label, k in [("in feature bands", feat), ("outside", g & ~feat)]:
+        print(f"  {label:17s} n {k.sum():5d}  Delta chi2 {dchi2[k].sum():+.1f}")
+
+    # model ratio, smoothed fractional residual of each run, and cumulative Delta chi2
+    fig, ax = plt.subplots(3, 1, figsize=(11, 8), sharex=True)
+    ax[0].plot(rest[g], ratio[g], color="0.7", lw=0.4, label="max-L free / zero")
+    for W, ls in [(100, "-"), (300, "--")]:
+        ax[0].plot(rest[g], smooth[W][g], color="k", ls=ls, lw=1, label=f"running median {W} A")
+    ax[0].set_ylabel("model ratio")
+    ax[0].legend(frameon=False, fontsize="small")
+    n100 = int(100 / np.median(np.diff(rest[g])))
+    for key, d in [("3n-zero", a), ("3n-free", b)]:
+        frac = (d["flux"][g] - d["sp_best"][g]) / d["sp_best"][g]
+        ax[1].plot(rest[g], running_median(frac, n100), color=COLOR[key], lw=1, label=key)
+    ax[1].axhline(0, color="0.5", lw=0.6, ls="--")
+    ax[1].set_ylabel("(data - model) / model\nrunning median 100 A")
+    ax[1].legend(frameon=False, fontsize="small")
+    ax[2].plot(rest[g], np.cumsum(dchi2[g]), color="k", lw=1.2, label="total")
+    ax[2].plot(rest[g], np.cumsum(part[100][0][g]), color="C0", lw=1, label="continuum share")
+    ax[2].plot(rest[g], np.cumsum(part[100][1][g]), color="C3", lw=1, label="line share")
+    ax[2].axhline(0, color="0.5", lw=0.6, ls="--")
+    ax[2].set_ylabel(r"cumulative $\Delta\chi^2$ (zero - free)")
+    ax[2].set_xlabel(r"rest wavelength [$\AA$]")
+    ax[2].legend(frameon=False, fontsize="small", title="W 100 A")
+    for name, (f0, f1, *_) in features.items():
+        for x in ax:
+            x.axvspan(f0, f1, color="0.5", alpha=0.12, lw=0)
+        ax[0].text(
+            0.5 * (f0 + f1),
+            1.0,
+            name,
+            transform=ax[0].get_xaxis_transform(),
+            rotation=90,
+            fontsize=7,
+            ha="center",
+            va="bottom",
+        )
+    fig.savefig(FIG / "dchi2_alpha_nebon.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+# %% Mgb, Fe5270 and Fe5335 pixel by pixel in 3n-zero, with the index bands and the sky lines
+# Each index has a feature band and a blue and a red pseudo-continuum band. To find the band that
+# drives the data - model offset, the data in one band at a time is replaced by the max-L model
+# and the index is measured again. Sky lines are those within 2 A of a band, in observed A.
+if "3n-zero" in run:
+    d = run["3n-zero"]
+    rest = d["wave"] / (1 + z)
+    g = d["good"]
+    c = chi(d, d["sp_best"])
+    names = ["Mgb", "Fe5270", "Fe5335"]
+    print("\n3n-zero index: data, max-L model, then data with the b, f or r band set to the model")
+    for name in names:
+        f0, f1, b0, b1, r0, r1, kind = INDEX[name]
+        bands = {"b": (b0, b1), "f": (f0, f1), "r": (r0, r1)}
+        data = index(rest, d["flux"], g, *INDEX[name])
+        swap = [
+            index(
+                rest,
+                np.where((rest >= lo) & (rest <= hi), d["sp_best"], d["flux"]),
+                g,
+                *INDEX[name],
+            )
+            for lo, hi in bands.values()
+        ]
+        mod = index(rest, d["sp_best"], g, *INDEX[name])
+        print(f"  {name:7s} {data:6.3f} {mod:6.3f}   " + "  ".join(f"{s:6.3f}" for s in swap))
+        for band, (lo, hi) in bands.items():
+            k = (rest >= lo) & (rest <= hi)
+            o0, o1 = lo * (1 + z), hi * (1 + z)
+            near = (sky["wavelength"] * 10 > o0 - 2) & (sky["wavelength"] * 10 < o1 + 2)
+            lines = ", ".join(
+                f"{s * 10:.1f} ({i:.2f})"
+                for s, i in zip(sky["wavelength"][near], sky["intensity"][near], strict=True)
+            )
+            print(
+                f"    {band} observed {o0:7.1f}-{o1:7.1f}  n {k.sum():3d} unfitted {(k & ~g).sum():2d}"
+                f"  mean chi {np.nanmean(c[k & g]):+5.2f}  max |chi| {np.nanmax(np.abs(c[k & g])):4.1f}"
+                f"  sky {lines or 'none'}"
+            )
+
+    def flam(maggies, d=d):
+        """Convert maggies to DESI f_lambda units, NaN outside the fitted pixels."""
+        f = to_flambda(d["wave"] * u.AA, np.asarray(maggies, float) * u.mgy).value
+        return np.where(d["good"], f, np.nan)
+
+    lo, hi = 5120, 5380
+    k = (rest > lo) & (rest < hi)
+    fig, ax = plt.subplots(2, 1, figsize=(11, 6), sharex=True, height_ratios=[3, 1])
+    f, e = flam(d["flux"]), flam(d["unc"])
+    ax[0].fill_between(rest[k], (f - e)[k], (f + e)[k], color="0.85", lw=0, step="mid")
+    ax[0].step(rest[k], f[k], where="mid", color="0.2", lw=0.7, label="DESI spectrum")
+    for key in ["3n-zero", "3n-free"]:
+        if key in run:
+            sp = flam(run[key]["sp_best"])
+            ax[0].plot(rest[k], sp[k], color=COLOR[key], lw=1, label=f"{key} max-L")
+    ax[1].step(rest[k], c[k], where="mid", color=COLOR["3n-zero"], lw=0.7)
+    ax[1].axhline(0, color="0.5", lw=0.6)
+    for y in (-2, 2):
+        ax[1].axhline(y, color="0.5", lw=0.5, ls="--")
+    for i, name in enumerate(names):
+        f0, f1, b0, b1, r0, r1, _ = INDEX[name]
+        for x in ax:
+            x.axvspan(f0, f1, color=f"C{i + 4}", alpha=0.25, lw=0)
+            for c0, c1 in [(b0, b1), (r0, r1)]:
+                x.axvspan(c0, c1, color=f"C{i + 4}", alpha=0.08, lw=0)
+        ax[0].text(
+            0.5 * (f0 + f1),
+            1.01,
+            name,
+            transform=ax[0].get_xaxis_transform(),
+            ha="center",
+            va="bottom",
+            fontsize=8,
+        )
+    sl = sky["wavelength"] * 10 / (1 + z)
+    for s, i in zip(sl, sky["intensity"], strict=True):
+        if lo < s < hi and i > 0.1:
+            for x in ax:
+                x.axvline(s, color="k", lw=0.4 + 0.4 * min(i, 4), ls=":")
+    bad = k & ~g
+    ax[1].plot(rest[bad], np.zeros(bad.sum()) - 3.5, "|", color="r", ms=8)
+    ax[0].set_ylabel(r"$f_\lambda$ [$10^{-17}$ erg s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]")
+    ax[0].legend(frameon=False, fontsize="small", loc="lower right")
+    ax[1].set_ylabel(r"$\chi$ 3n-zero")
+    ax[1].set_ylim(-4, 4)
+    ax[1].set_xlabel(r"rest wavelength [$\AA$]")
+    ax[1].set_xlim(lo, hi)
+    secax = ax[0].secondary_xaxis("top", functions=(lambda x: x * (1 + z), lambda x: x / (1 + z)))
+    secax.set_xlabel(r"observed wavelength [$\AA$]", labelpad=14)
+    fig.savefig(FIG / "bands_mgb_fe.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
 
 # %% spectrum per run: the data the run fitted, its max-L model and a 16-84% band, chi below
 # Chi uses the fit uncertainty, the original DESI ivar kept after degrading, so it understates
