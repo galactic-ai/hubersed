@@ -36,9 +36,10 @@ def main(tid, lib, window, nebular, degrade, afe):
     z, flux, unc, good, _ = load_data(tid, lib, window, degrade)
     model = make_model(z, nebular, afe)
 
-    # Only reads the checkpoint. The likelihood is never called.
+    # Only reads the checkpoint. The likelihood is never called. The identity prior returns unit
+    # cube points, so only the kept ones go through the prior transform, one call per point.
     s = Sampler(
-        model.prior_transform,
+        lambda u: u,
         lambda x: 0.0,
         n_dim=model.ndim,
         n_live=1000,
@@ -46,17 +47,19 @@ def main(tid, lib, window, nebular, degrade, afe):
         resume=True,
     )
     assert s.explored, name
-    points, log_w, log_l = s.posterior()
-    best = points[np.argmax(log_l)]
+    unit, log_w, log_l = s.posterior()
+    best, max_l = model.prior_transform(unit[np.argmax(log_l)]), log_l.max()
     # points more than e^-30 below the heaviest one add nothing to any statistic
     keep = log_w > log_w.max() - 30
+    print(f"{name}: {len(unit)} points, {keep.sum()} kept, N_eff {s.n_eff:.0f}")
+    points = np.array([model.prior_transform(u) for u in unit[keep]])
+    log_w, log_l = log_w[keep], log_l[keep]
     w = np.exp(log_w - log_w.max())
     w /= w.sum()
-    print(f"{name}: {len(points)} points, {keep.sum()} kept, N_eff {s.n_eff:.0f}")
 
     # The likelihood of the fit, called once to check the setup matches. It caches the source.
     lnl = loglike(best, tid, lib, window, nebular, degrade, afe)
-    assert np.isclose(lnl, log_l.max(), atol=0.1), (lnl, log_l.max())
+    assert np.isclose(lnl, max_l, atol=0.1), (lnl, max_l)
     _, obs, sps = _STATE[(tid, lib, window, nebular, degrade, afe)]
 
     def predict(theta):
@@ -74,9 +77,9 @@ def main(tid, lib, window, nebular, degrade, afe):
         unc=unc,
         good=good,
         labels=np.array(model.theta_labels()),
-        points=points[keep],
-        log_w=log_w[keep],
-        log_l=log_l[keep],
+        points=points,
+        log_w=log_w,
+        log_l=log_l,
         log_z=s.log_z,
         n_eff=s.n_eff,
         n_like=s.n_like,
