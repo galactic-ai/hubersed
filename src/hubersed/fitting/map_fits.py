@@ -387,7 +387,7 @@ def plot_sfh(tid, sfh, out):
 _SPS = {}
 
 
-def get_sps(zcontinuous=1):
+def get_sps(zcontinuous=1, zero_library_resolution=True):
     """Build the FSPS and Cue sources once per process and return them with the line lists.
 
     Raises
@@ -402,7 +402,9 @@ def get_sps(zcontinuous=1):
     )
     if not _SPS:
         _SPS["key"] = key
-        _SPS["sps"] = build_sps(zcontinuous=zcontinuous)
+        _SPS["sps"] = build_sps(
+            zcontinuous=zcontinuous, zero_library_resolution=zero_library_resolution
+        )
         _SPS["zcontinuous"] = zcontinuous
         _SPS["cue"] = build_cue_sps()
         fw = _SPS["sps"].ssp.emline_wavelengths
