@@ -6,16 +6,18 @@
 #     sbatch -J co1008 --dependency=singleton --export=ALL,TID=39627757533007793,FITS="$F" \
 #       experiments/2026-10-08_continuum_outlier/chain.slurm
 #   done
-# TID is the DESI TARGETID. FITS is a list of LIB:WINDOW:NEBULAR[:DEGRADE], with DEGRADE on
-# (default) or off. Fits that already converged are dropped first. The rest are dealt round-robin
-# over the nodes, and each takes the next core slot on its node. Ask for enough nodes (-N on the
-# sbatch line) to hold them all.
+# TID is the DESI TARGETID. FITS is a list of LIB:WINDOW:NEBULAR[:DEGRADE[:AFE]], with DEGRADE
+# on (default) or off and AFE none (default), free or zero. Fits that already converged are dropped
+# first. The rest are dealt round-robin over the nodes, and each takes the next core slot on its
+# node. Ask for enough nodes (-N on the sbatch line) to hold them all.
 # Memory sets the limit. Peaks measured 2026-10-08 at pool 24: about 51 GB for a nebular-off fit
 # (sacct MaxRSS) and about 90 GB for a nebular-on fit (3.6 GB per JAX worker). With four fits on
 # one 250 GB node (about 270 GB in total) 13 workers of one fit died at once, most likely out of
 # memory, and its pool then hung.
 # So PER_NODE is 2. Threads are about 2100 per nebular-off fit and 2600 per nebular-on fit,
 # out of 16384 per user. With POOL=48 a nebular-on fit needs about 175 GB, so set PER_NODE=1.
+# The alpha build peaked at 7 GB in a single process (2026-10-02), against 1.5 GB without alpha,
+# so alpha fits run one per node with a smaller pool.
 #SBATCH -p development
 #SBATCH -N 3
 #SBATCH -n 3
@@ -43,9 +45,10 @@ echo "link $SLURM_JOB_ID on $SLURM_JOB_NODELIST, TID $TID, fits '$FITS', pool $P
 
 todo=()
 for f in $FITS; do
-    IFS=: read lib window neb deg <<< "$f"
+    IFS=: read lib window neb deg afe <<< "$f"
     name=co1008_${TID}_${lib}_${window}_neb${neb}
     [ "${deg:-on}" = off ] && name=${name}_nodeg
+    [ "${afe:-none}" != none ] && name=${name}_afe$afe
     [ -e CONVERGED_$name ] || todo+=("$f")
 done
 if [ ${#todo[@]} -eq 0 ]; then
@@ -56,7 +59,7 @@ fi
 
 i=0
 for f in "${todo[@]}"; do
-    IFS=: read lib window neb deg <<< "$f"
+    IFS=: read lib window neb deg afe <<< "$f"
     node=$((i % SLURM_NNODES))
     slot=$((i / SLURM_NNODES))
     if [ $slot -ge $PER_NODE ]; then
@@ -64,7 +67,7 @@ for f in "${todo[@]}"; do
         continue
     fi
     srun --overlap -N1 -n1 --relative=$node \
-        bash $EXP/run.sh $TID $lib $window $neb $POOL ${SLOTS[$slot]} $TIMEOUT ${deg:-on} &
+        bash $EXP/run.sh $TID $lib $window $neb $POOL ${SLOTS[$slot]} $TIMEOUT ${deg:-on} ${afe:-none} &
     echo "$f on node $node, cores ${SLOTS[$slot]}"
     i=$((i + 1))
 done
