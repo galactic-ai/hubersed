@@ -58,7 +58,7 @@ extra-build-variables = { fsps = { FFLAGS = "-DC3K_HR=1 -DC3K_LR=0 -DMILES=0 -DM
 spender = { git = "https://github.com/galactic-ai/spender" }
 astro-prospector = { git = "https://github.com/galactic-ai/prospector", rev = "feature/cue-on-v2" }
 astro-cue = { git = "https://github.com/galactic-ai/cue", rev = "cuejax" }
-fsps = { git = "https://github.com/galactic-ai/python-fsps", branch = "c3k-nzinit" }
+fsps = { git = "https://github.com/galactic-ai/python-fsps", branch = "exp/c3k-er-init" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

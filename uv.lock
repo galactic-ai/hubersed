@@ -790,7 +790,7 @@ wheels = [
 [[package]]
 name = "fsps"
 version = "0.5.0"
-source = { git = "https://github.com/galactic-ai/python-fsps?branch=c3k-nzinit#8b142057c9120fd11fa93dce645d17290919b073" }
+source = { git = "https://github.com/galactic-ai/python-fsps?branch=exp%2Fc3k-er-init#d2e87e280ea8b4cfe5740d3159d23ab461976b75" }
 dependencies = [
     { name = "numpy" },
 ]
@@ -1020,7 +1020,7 @@ requires-dist = [
     { name = "corner", specifier = ">=2.2.3" },
     { name = "dynesty", specifier = "==2.1.5" },
     { name = "emcee", specifier = ">=3.1.6" },
-    { name = "fsps", git = "https://github.com/galactic-ai/python-fsps?branch=c3k-nzinit" },
+    { name = "fsps", git = "https://github.com/galactic-ai/python-fsps?branch=exp%2Fc3k-er-init" },
     { name = "h5py", specifier = ">=3.15.1" },
     { name = "ipykernel", specifier = ">=7.1.0" },
     { name = "matplotlib", specifier = ">=3.10.7" },
