@@ -790,7 +790,7 @@ wheels = [
 [[package]]
 name = "fsps"
 version = "0.5.0"
-source = { git = "https://github.com/galactic-ai/python-fsps?branch=exp%2Fc3k-er-init#d2e87e280ea8b4cfe5740d3159d23ab461976b75" }
+source = { git = "https://github.com/galactic-ai/python-fsps?branch=exp%2Fc3k-er-init#dc3e41ee076977bf3d4e7879e9b7cd6a0010d996" }
 dependencies = [
     { name = "numpy" },
 ]
