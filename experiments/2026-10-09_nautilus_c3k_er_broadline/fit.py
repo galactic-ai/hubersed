@@ -187,22 +187,27 @@ def loglike(theta, tid, forbidden_broad, sigma_split, rest_max=9000.0):
     return lnprobfn(theta, model=model, observations=obs, sps=cue, nested=True)
 
 
-def main(args):
-    """Check the library and resolution setup, then run or resume nautilus.
+def check_setup(args, z, flux, unc, good, model, resuming):
+    """Check the library, the resolution margin and the likelihood, and print the setup.
+
+    The broadline self-check is skipped when ``resuming`` is true. It passed when that run started.
 
     Parameters
     ----------
     args : argparse.Namespace
         The command-line options, see the parser below.
+    z : float
+        Redshift.
+    flux, unc : np.ndarray
+        Observed flux and uncertainty, see ``load_data``.
+    good : np.ndarray
+        Mask of fitted pixels.
+    model : broadline.TwoCompLineModel
+        The model from ``make_model``.
+    resuming : bool
+        Whether a checkpoint for this run exists.
     """
     tid, fb, split, rest_max = args.tid, args.forbidden_broad, args.sigma_split, args.rest_max
-    z, flux, unc, good = load_data(tid, rest_max)
-    model = make_model(z, fb, split)
-    stem = f"{tid}_er_broad_{fb}_split{split:g}_rest{rest_max:g}_seed0"
-    # the self-check takes most of the setup (its prior draws build SSPs at every metallicity),
-    # so a run that resumes a checkpoint skips it; it passed when that run started
-    resuming = (args.out / f"{stem}.h5").exists()
-
     cue = get_sps(zero_library_resolution=False)["cue"]
     assert cue.ssp.libraries[1] in ("c3k_er", b"c3k_er"), cue.ssp.libraries
     spec = make_obs(flux, unc, good)[0]
@@ -228,6 +233,27 @@ def main(args):
         f"smoothing {margin.min():.1f}-{margin.max():.1f} km/s, lnL0 {lnl:.1f}"
     )
     print("free:", ", ".join(model.theta_labels()))
+
+
+def main(args):
+    """Check the library and resolution setup, then run or resume nautilus.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        The command-line options, see the parser below.
+    """
+    tid, fb, split, rest_max = args.tid, args.forbidden_broad, args.sigma_split, args.rest_max
+    z, flux, unc, good = load_data(tid, rest_max)
+    model = make_model(z, fb, split)
+    stem = f"{tid}_er_broad_{fb}_split{split:g}_rest{rest_max:g}_seed0"
+    # check_setup passed when the run started, and each pool worker builds its own Cue, so a run
+    # that resumes a checkpoint skips it and the main process's Cue build (10 min on ls6)
+    resuming = (args.out / f"{stem}.h5").exists()
+    if resuming and not args.check_only:
+        print("resuming a checkpoint, setup checks skipped")
+    else:
+        check_setup(args, z, flux, unc, good, model, resuming)
     if args.check_only:
         return
 
