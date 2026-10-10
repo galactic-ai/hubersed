@@ -7,9 +7,12 @@
 # SPS_HOME set to sps_home_er. Run on a compute node.
 # The check at the end prints the library, its resolution, and an SSP at afe 0 and 0.4.
 set -euo pipefail
-B=/work/11006/nikhilgaruda/ls6/research/fsps_builds/c3k_er_afe
+# B and SHA can be set to build another commit into its own folder, for example
+# B=.../fsps_builds/c3k_er_afe_slots SHA=2c5168f586fb02ad758a3da7829da2ab799c5e6a, which adds
+# get_ssp_slot and set_ssp_slot for building SSPs in parallel processes
+B=${B:-/work/11006/nikhilgaruda/ls6/research/fsps_builds/c3k_er_afe}
 REPO=/work/11006/nikhilgaruda/ls6/research/hubersed
-SHA=d2e87e280ea8b4cfe5740d3159d23ab461976b75
+SHA=${SHA:-d2e87e280ea8b4cfe5740d3159d23ab461976b75}
 mkdir -p $B
 cd $B
 [ -d src ] || { curl -sL https://github.com/galactic-ai/python-fsps/archive/$SHA.tar.gz | tar xz \
