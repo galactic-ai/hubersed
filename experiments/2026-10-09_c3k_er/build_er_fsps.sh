@@ -1,8 +1,10 @@
 #!/bin/bash
 # Build python-fsps with C3K_ER, MIST and AFE_FLAG for the ER runs, without touching the project
 # venv. The source is galactic-ai/python-fsps exp/c3k-er-init at d2e87e2, which adds C3K_ER and
-# allocates speclib at runtime, so -mcmodel=medium is not needed. The wheel goes into a site dir
-# that run.sh puts first on PYTHONPATH, with SPS_HOME set to sps_home_er. Run on a compute node.
+# allocates speclib at runtime. The other static arrays still pass 2 GB with ER and AFE_FLAG
+# (spec_ssp_zz alone is 2.07 GB), so the build also needs -mcmodel=medium, as the 2026-10-02 HR
+# alpha build did. The wheel goes into a site dir that run.sh puts first on PYTHONPATH, with
+# SPS_HOME set to sps_home_er. Run on a compute node.
 # The check at the end prints the library, its resolution, and an SSP at afe 0 and 0.4.
 set -euo pipefail
 B=/work/11006/nikhilgaruda/ls6/research/fsps_builds/c3k_er_afe
@@ -13,7 +15,7 @@ cd $B
 [ -d src ] || { curl -sL https://github.com/galactic-ai/python-fsps/archive/$SHA.tar.gz | tar xz \
     && mv python-fsps-$SHA src; }
 if ! ls wheel/fsps-*.whl >/dev/null 2>&1; then
-    FFLAGS="-DC3K_LR=0 -DC3K_HR=0 -DC3K_ER=1 -DMILES=0 -DMIST=1 -DAFE_FLAG=1" \
+    FFLAGS="-DC3K_LR=0 -DC3K_HR=0 -DC3K_ER=1 -DMILES=0 -DMIST=1 -DAFE_FLAG=1 -mcmodel=medium" \
         SETUPTOOLS_SCM_PRETEND_VERSION=0.5.0 \
         uv build --wheel -o $B/wheel $B/src > build.log 2>&1 || { tail -30 build.log; exit 1; }
 fi
