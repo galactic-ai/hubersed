@@ -2,9 +2,8 @@
 
 import numpy as np
 import pytest
-from prospect.models import priors
 
-from hubersed.sps import broadline
+pytestmark = pytest.mark.fsps  # broadline and prospect read SPS_HOME files on import
 
 # Cue line names at rest 3500-9000 A (cuejax/data/cue_emlines_info.dat)
 BALMER = ["Ba-8 3798", "Ba-7 3835", "Ba-6 3889", "Ba-5 3970", "Ba-delta 4101.76A",
@@ -22,6 +21,8 @@ NAMES = BALMER + HEI + HIGH + LOW
 
 def test_groups_with_he_balmer():
     """Balmer and He I lines get the Balmer profile; [O III], [Ne III], [Ar IV], [Ne IV], He II are high."""
+    from hubersed.sps import broadline
+
     balmer, high = broadline.line_groups(NAMES, he_balmer_profile=True)
     n_b, n_h = len(BALMER) + len(HEI), len(HIGH)
     assert balmer.tolist() == [True] * n_b + [False] * (n_h + len(LOW))
@@ -30,6 +31,8 @@ def test_groups_with_he_balmer():
 
 def test_groups_default_keeps_he_out_of_balmer():
     """Without the option the He I lines stay out of the Balmer group, as before."""
+    from hubersed.sps import broadline
+
     balmer, high = broadline.line_groups(NAMES)
     assert balmer.sum() == len(BALMER)
     # He I lines are in neither group, so they keep the low-ionization width
@@ -39,6 +42,10 @@ def test_groups_default_keeps_he_out_of_balmer():
 
 def test_add_broad_params_options():
     """The options add their parameters only when set, and the split needs the forbidden width."""
+    from prospect.models import priors
+
+    from hubersed.sps import broadline
+
     base = {
         "eline_sigma": dict(
             N=1, isfree=True, init=100.0, prior=priors.TopHat(mini=10.0, maxi=250.0)
