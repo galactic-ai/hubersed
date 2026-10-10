@@ -26,15 +26,17 @@ TIMEOUT=${TIMEOUT:-2400}  # sampler timeout in s; setup and warm-up need the res
 OUT=/work/11006/nikhilgaruda/ls6/research/forktest_$SLURM_JOB_ID
 mkdir -p "$OUT"
 cd $REPO
-export PYTHONPATH=/work/11006/nikhilgaruda/ls6/research/fsps_builds/c3k_er_afe/fsps_site
+# FSPS_SITE picks the fsps build; fit_fork.py needs one with get_ssp_slot (python-fsps 2c5168f)
+export PYTHONPATH=${FSPS_SITE:-/work/11006/nikhilgaruda/ls6/research/fsps_builds/c3k_er_afe/fsps_site}
 export SPS_HOME=/work/11006/nikhilgaruda/ls6/research/sps_home_er
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 export XLA_FLAGS="--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1"
 
+# the venv's python directly, not uv run: on 2026-10-10 uv run hung on a stale lock on ~/.cache/uv
 # the chain writes the live checkpoint after every batch, so copy until the copy opens cleanly
 for i in 1 2 3 4 5; do
     cp "$LIVE/$STEM.h5" "$LIVE/$STEM.json" "$OUT/"
-    if uv run --no-sync python -c "import h5py, sys; h5py.File(sys.argv[1], 'r')['sampler'].attrs['n_like']" \
+    if $REPO/.venv/bin/python -c "import h5py, sys; h5py.File(sys.argv[1], 'r')['sampler'].attrs['n_like']" \
         "$OUT/$STEM.h5"; then
         break
     fi
@@ -42,7 +44,7 @@ for i in 1 2 3 4 5; do
 done
 echo "test $SLURM_JOB_ID on $(hostname), pool $POOL, n_batch $NBATCH, timeout $TIMEOUT, start $(date)"
 
-uv run --no-sync python $EXP/fit_fork.py --tid $TID --forbidden-broad shared --pool $POOL \
+$REPO/.venv/bin/python $EXP/fit_fork.py --tid $TID --forbidden-broad shared --pool $POOL \
     --n-batch $NBATCH --timeout $TIMEOUT --out "$OUT" > "$OUT/fit.log" 2>&1 &
 RUN=$!
 while kill -0 $RUN 2>/dev/null; do
