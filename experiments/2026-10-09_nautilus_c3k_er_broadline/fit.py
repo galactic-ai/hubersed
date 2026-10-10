@@ -195,7 +195,7 @@ def check_setup(args, z, flux, unc, good, model, resuming):
     Parameters
     ----------
     args : argparse.Namespace
-        The command-line options, see the parser below.
+        The command-line options, see ``parse_args``.
     z : float
         Redshift.
     flux, unc : np.ndarray
@@ -235,13 +235,16 @@ def check_setup(args, z, flux, unc, good, model, resuming):
     print("free:", ", ".join(model.theta_labels()))
 
 
-def main(args):
+def main(args, pool=None):
     """Check the library and resolution setup, then run or resume nautilus.
 
     Parameters
     ----------
     args : argparse.Namespace
-        The command-line options, see the parser below.
+        The command-line options, see ``parse_args``.
+    pool : multiprocessing.pool.Pool or None
+        Pool for nautilus. None makes a pool of ``args.pool`` workers with the global start
+        method, which ``__main__`` sets to spawn. ``fit_fork.py`` passes a forked one.
     """
     tid, fb, split, rest_max = args.tid, args.forbidden_broad, args.sigma_split, args.rest_max
     z, flux, unc, good = load_data(tid, rest_max)
@@ -278,7 +281,7 @@ def main(args):
         partial(loglike, tid=tid, forbidden_broad=fb, sigma_split=split, rest_max=rest_max),
         n_dim=model.ndim,
         n_live=N_LIVE,
-        pool=args.pool,
+        pool=args.pool if pool is None else pool,
         n_batch=args.n_batch,
         seed=0,
         filepath=str(args.out / f"{stem}.h5"),
@@ -290,7 +293,14 @@ def main(args):
         print("Stopped before convergence. Rerun the same command to resume.")
 
 
-if __name__ == "__main__":
+def parse_args():
+    """Parse the command-line options.
+
+    Returns
+    -------
+    argparse.Namespace
+        The options. ``fit_fork.py`` takes the same ones.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tid", type=int, default=39627770174637084)
     parser.add_argument("--forbidden-broad", choices=["free", "shared"], required=True)
@@ -303,6 +313,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--out", type=Path, default=PATHS["RESULTS"] / "2026-10-09_nautilus_c3k_er_broadline"
     )
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_args()
     mp.set_start_method("spawn", force=True)
     main(args)
