@@ -7,11 +7,13 @@
 #   done
 # The first link that converges writes a marker and cancels the pending links of its name.
 # Same as the 2026-10-09_nautilus_c3k_er_broadline chain except for EXP and the defaults below,
-# which are the settings the converged ER link used (fit_fork.py, c3k_er_afe_v3, pool 96, n_batch
-# 960, timeout 6000 s). That chain in turn is the 2026-09-30_nautilus_c3k_broadline_split45 chain
-# with a different FSPS build, SPS_HOME, account and pool. With fit_fork.py the workers share the
-# FSPS setup copy on write; at pool 96 the converged ER link (3501933) grew to 215-218 GiB of the
-# 250 GiB node after exploration, so watch the first link's memory.
+# which are the settings the converged ER link used (fit_fork.py, c3k_er_afe_v3, n_batch 960,
+# timeout 6000 s) except for the pool. That chain in turn is the
+# 2026-09-30_nautilus_c3k_broadline_split45 chain with a different FSPS build, SPS_HOME, account
+# and pool. With fit_fork.py the workers share about 15 GB of FSPS setup copy on write, and each
+# worker adds about 2.7 GB of its own. At pool 96 this fit reached 228 of the 250 GiB node in
+# exploration, JAX compiles in 7 workers failed with "LLVM ERROR: Unable to allocate section
+# memory!" and the pool hung (job 3502602), so the pool is 64.
 #SBATCH -p development
 #SBATCH -N 1
 #SBATCH -n 1
@@ -24,7 +26,7 @@ EXP=experiments/2026-10-10_nautilus_c3k_er_cotie_split
 TID=${TID:-39627770174637084}
 FB=${FB:?set FB=free or FB=shared}
 SPLIT=${SPLIT:-45}
-POOL=${POOL:-96}
+POOL=${POOL:-64}
 TIMEOUT=${TIMEOUT:-6000}  # sampler timeout in s; keep it below the -t wall time
 NBATCH=${NBATCH:-960}
 # SCRIPT=fit_fork.py forks the pool after one FSPS setup and SSP build; it needs an fsps build
