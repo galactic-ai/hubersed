@@ -208,7 +208,7 @@ wheels = [
 [[package]]
 name = "astro-cue"
 version = "0.0.0"
-source = { git = "https://github.com/galactic-ai/cue?rev=cuejax#5a81ad2d3145e5d2b33222e8c4a6cbd638f98923" }
+source = { git = "https://github.com/galactic-ai/cue?rev=cuejax#82ed9dc22ce7c58218635e982d8db5e2ee584f33" }
 dependencies = [
     { name = "dill" },
     { name = "jax" },
@@ -223,8 +223,8 @@ dependencies = [
 
 [[package]]
 name = "astro-prospector"
-version = "2.0a2.dev130+g9aced930e"
-source = { git = "https://github.com/galactic-ai/prospector?rev=feature%2Fcue-on-v2#9aced930e92d4cf5d5b1d8b1a4942d4e897fc252" }
+version = "2.0a2.dev137+gb5046ecfb"
+source = { git = "https://github.com/galactic-ai/prospector?rev=feature%2Fcue-on-v2#b5046ecfb9ed1066cbddfbb1f073cb68b9b6005a" }
 dependencies = [
     { name = "astro-sedpy" },
     { name = "astropy" },
