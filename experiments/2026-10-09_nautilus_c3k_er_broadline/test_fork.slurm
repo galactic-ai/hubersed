@@ -5,7 +5,7 @@
 # node's used memory and the latest sampler row. It writes no CONVERGED marker and never writes
 # the live checkpoint. Submit with, for example,
 #   sbatch -J forktest --export=ALL,POOL=48 experiments/2026-10-09_nautilus_c3k_er_broadline/test_fork.slurm
-# Output goes to $SCRATCH/forktest_<job id>/ (fit.log and mem.log).
+# Output goes to /work/11006/nikhilgaruda/ls6/research/forktest_<job id>/ (fit.log and mem.log).
 #SBATCH -p development
 #SBATCH -N 1
 #SBATCH -n 1
@@ -22,7 +22,8 @@ LIVE=$REPO/results/2026-10-09_nautilus_c3k_er_broadline
 POOL=${POOL:-48}
 NBATCH=${NBATCH:-480}
 TIMEOUT=${TIMEOUT:-2400}  # sampler timeout in s; setup and warm-up need the rest of the hour
-OUT=$SCRATCH/forktest_$SLURM_JOB_ID
+# /work, as the chain uses: on 2026-10-10 a compute node wrote to /scratch at about 0.1 MB/s
+OUT=/work/11006/nikhilgaruda/ls6/research/forktest_$SLURM_JOB_ID
 mkdir -p "$OUT"
 cd $REPO
 export PYTHONPATH=/work/11006/nikhilgaruda/ls6/research/fsps_builds/c3k_er_afe/fsps_site
