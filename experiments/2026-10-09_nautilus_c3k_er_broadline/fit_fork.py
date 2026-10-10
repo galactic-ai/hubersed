@@ -1,39 +1,18 @@
 """Run fit.py with forked pool workers that share one FSPS setup and one set of SSPs.
 
-With spawn, every pool worker runs the FSPS setup itself. With C3K_ER and AFE_FLAG a process
-holds about 20 GiB at the setup peak and 15 GiB after it, which limits the pool to 8 on a
-250 GiB ls6 node. Here the main process runs the FSPS setup once and then forks the pool, so the
-workers inherit the setup arrays (speclib among them) copy on write. FSPS only reads them after
-setup, so one physical copy serves every worker.
+The main process runs the FSPS setup once and builds every SSP slot the fit can reach
+with StellarPopulation.build_ssps (python-fsps dc3e41e), then forks the pool. Workers inherit both
+copy on write, so each needs about 1 GiB instead of 15 GiB and none waits on SSP builds (job
+3500970). python-fsps keeps the inherited SSP cache because the fit's SSP inputs equal the defaults
+the main process built with. A worker whose inputs differ warns and rebuilds.
 
-The main process also builds, before the fork, every SSP the fit can reach: all 13 metallicities
-at afe 0 and +0.2, the two afe slots FSPS interpolates between at afe 0. It builds them in
-parallel helper processes and stores them with get_ssp_slot and set_ssp_slot, which our
-python-fsps fork adds at 2c5168f, so the fsps build must include that commit. Without this each worker
-builds the SSPs of each new metallicity it meets, about 40 s per metallicity and afe slot on ls6.
-A batch ends only when its slowest worker does, so with 48 workers nearly every batch waited on
-one of these builds, and the pool ran at 96 calls per minute (test job 3500970). A new
-StellarPopulation marks its SSPs out of date on its first spectrum, so each worker sets its
-dirtiness to 1 after building its sources. That is valid because the fit sets no SSP parameter
-to a value other than the FSPS default the main process built with (only imf_type = 2, which is
-the default).
+The fork must come before the JAX backend starts (JAX is not fork safe), so workers import
+prospect in their initializer. Each worker is pinned to one core first, so XLA makes ~15 threads
+instead of ~300 and the pool stays under the 16384-thread user limit on ls6 (job 3500937).
 
-The fork must come before anything imports prospect. Importing prospect starts the JAX backend
-(cuejax.utils makes jax arrays as default arguments), and JAX is not fork safe. So this script
-imports only fsps before the fork, and each worker imports prospect in its initializer.
-
-Each worker is pinned to one core before it imports JAX. XLA sizes its thread pools to the cores
-a process may use, about 300 threads per process on a 128-core ls6 node. With 48 unpinned workers
-that passed the 16384 threads a user may run there, and every worker died in pthread_create
-(test job 3500937). The workers alternate between the node's two sockets, so their memory spreads
-over both NUMA nodes.
-
-A worker that dies is replaced by a fork of the main process, which by then has JAX loaded.
-
-Takes the same options as fit.py. Run from the repository root with the same PYTHONPATH and
-SPS_HOME as fit.py, for example ``.venv/bin/python
-experiments/2026-10-09_nautilus_c3k_er_broadline/fit_fork.py --forbidden-broad shared --pool 48
---n-batch 480``.
+Takes the same options as fit.py, with the same PYTHONPATH and SPS_HOME, for example
+``.venv/bin/python experiments/2026-10-09_nautilus_c3k_er_broadline/fit_fork.py
+--forbidden-broad shared --pool 120 --n-batch 1200``.
 """
 
 import argparse
@@ -41,14 +20,9 @@ import multiprocessing as mp
 import os
 import sys
 import time
+import warnings
 
 import fsps
-
-
-def build_slot(args):
-    """Build one SSP slot in a helper process and return it with its indices."""
-    ns, nt, zi, ai = args
-    return (zi, ai, *fsps.fsps.driver.get_ssp_slot(ns, nt, zi, ai))
 
 
 def prebuild_ssps(sp):
@@ -56,28 +30,25 @@ def prebuild_ssps(sp):
 
     FSPS builds the two grid metallicities around ``logzsol`` and the two afe slots around
     ``afe`` (``compute_zdep`` in fsps.f90). At afe 0 these are afe slots 2 and 3 (afe 0 and +0.2)
-    with AFE_FLAG, and slot 1 without it. So every metallicity in those afe slots covers the fit.
-    This process first builds the slots around solar itself. That sets the SSP parameters and the
-    IMF variables ssp_gen keeps in sps_vars, which the helpers then inherit. Each forked helper
-    builds one slot with get_ssp_slot, and this process stores it with set_ssp_slot. The copy is
-    exact, so the stored slots equal the ones this process would build.
+    with AFE_FLAG, and slot 1 without it, so every metallicity in those afe slots covers the fit.
 
     Parameters
     ----------
     sp : fsps.StellarPopulation
         A population with ``zcontinuous=1`` and default SSP parameters.
     """
-    drv = fsps.fsps.driver
     assert sp.params["afe"] == 0.0
-    sp.params["logzsol"] = 0.0
-    sp.get_spectrum(tage=1.0)
-    afe_slots = {1: [1], 5: [2, 3]}[drv.get_nafe()]
-    ns, nt = drv.get_nspec(), drv.get_ntfull()
-    jobs = [(ns, nt, zi, ai) for zi in range(1, len(sp.zlegend) + 1) for ai in afe_slots]
-    n = min(len(jobs), len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else 4)
-    with mp.get_context("fork").Pool(n) as helpers:
-        for zi, ai, spec, mass, lbol in helpers.imap_unordered(build_slot, jobs):
-            drv.set_ssp_slot(zi, ai, spec, mass, lbol)
+    afe_slots = {1: [1], 5: [2, 3]}[fsps.fsps.driver.get_nafe()]
+    sp.build_ssps(afeindx=afe_slots)
+
+
+def jax_backend_started():
+    """Return True if this process has started a JAX backend, which makes forking unsafe."""
+    if "jax" not in sys.modules:
+        return False
+    from jax._src import xla_bridge
+
+    return xla_bridge.backends_are_initialized()
 
 
 def pin_worker():
@@ -94,14 +65,17 @@ def pin_worker():
 
 
 def init_worker():
-    """Pin the worker, build its sources, and keep the SSPs it inherited from the main process."""
+    """Pin the worker, build its sources, and warn if they would not keep the inherited SSPs."""
     pin_worker()
     from hubersed.fitting.map_fits import get_sps
 
     # the same call as fit.loglike, so loglike finds these sources in the get_sps cache
     sources = get_sps(zero_library_resolution=False)
-    for src in (sources["sps"], sources["cue"]):
-        src.ssp.params.dirtiness = 1
+    for name in ("sps", "cue"):
+        params = sources[name].ssp.params
+        if fsps.fsps._ssp_cache_inputs(params) != fsps.fsps._ssp_cache_key:
+            msg = f"worker {name} SSP inputs differ from the inherited SSPs; rebuilding"
+            warnings.warn(msg, stacklevel=2)
 
 
 def main():
@@ -118,7 +92,7 @@ def main():
     t = time.time()
     prebuild_ssps(sp)
     print(f"SSPs for {len(sp.zlegend)} metallicities built in {time.time() - t:.0f} s", flush=True)
-    assert "jax" not in sys.modules, "jax was imported before the fork"
+    assert not jax_backend_started(), "the JAX backend started before the fork"
     with mp.get_context("fork").Pool(n, initializer=init_worker) as pool:
         import fit
 
