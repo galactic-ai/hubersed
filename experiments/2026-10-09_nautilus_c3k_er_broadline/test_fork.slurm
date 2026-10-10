@@ -49,9 +49,12 @@ while kill -0 $RUN 2>/dev/null; do
     {
         echo "== $(date +%T)"
         for p in $(pgrep -u "$USER" -f "$EXP/fit_fork.py"); do
-            awk -v p="$p" '/^(Rss|Pss|Private_Clean|Private_Dirty):/ {s[$1] += $2}
-                END {printf "%s rss %.2f pss %.2f private %.2f GiB\n", p, s["Rss:"] / 1048576,
-                     s["Pss:"] / 1048576, (s["Private_Clean:"] + s["Private_Dirty:"]) / 1048576}' \
+            awk -v p="$p" -v t="$(ls /proc/"$p"/task 2>/dev/null | wc -l)" \
+                -v c="$(taskset -pc "$p" 2>/dev/null | cut -d: -f2)" \
+                '/^(Rss|Pss|Private_Clean|Private_Dirty):/ {s[$1] += $2}
+                END {printf "%s rss %.2f pss %.2f private %.2f GiB threads %s cores%s\n", p,
+                     s["Rss:"] / 1048576, s["Pss:"] / 1048576,
+                     (s["Private_Clean:"] + s["Private_Dirty:"]) / 1048576, t, c}' \
                 /proc/"$p"/smaps_rollup 2>/dev/null || true
         done
         free -g | sed -n 2p
