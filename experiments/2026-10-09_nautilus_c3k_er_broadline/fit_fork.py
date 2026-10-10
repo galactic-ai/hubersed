@@ -12,6 +12,12 @@ imports only fsps before the fork and imports fit.py after it. Each worker impor
 builds its own Cue and model on its first likelihood call, as with spawn. Its StellarPopulation
 skips the setup, but it still builds the SSPs it needs.
 
+Each worker is pinned to one core before it imports JAX. XLA sizes its thread pools to the cores
+a process may use, about 300 threads per process on a 128-core ls6 node. With 48 unpinned workers
+that passed the 16384 threads a user may run there, and every worker died in pthread_create
+(test job 3500937). The workers alternate between the node's two sockets, so their memory spreads
+over both NUMA nodes.
+
 A worker that dies is replaced by a fork of the main process, which by then has JAX loaded.
 
 Takes the same options as fit.py. Run from the repository root with the same PYTHONPATH and
@@ -22,9 +28,23 @@ experiments/2026-10-09_nautilus_c3k_er_broadline/fit_fork.py --forbidden-broad s
 
 import argparse
 import multiprocessing as mp
+import os
 import sys
 
 import fsps
+
+
+def pin_worker():
+    """Pin this pool worker to one core, alternating between the two halves of the core list."""
+    if not hasattr(os, "sched_setaffinity"):  # macOS
+        return
+    cores = sorted(os.sched_getaffinity(0))
+    half = len(cores) // 2
+    order = [c for pair in zip(cores[:half], cores[half:], strict=True) for c in pair]
+    order += cores[2 * half :]
+    # _identity is the worker's 1-based number in its pool; replacement workers count on
+    i = mp.current_process()._identity[0] - 1
+    os.sched_setaffinity(0, {order[i % len(order)]})
 
 
 def main():
@@ -37,7 +57,7 @@ def main():
     fsps.StellarPopulation(zcontinuous=1)
     assert fsps.fsps.driver.is_setup
     assert "jax" not in sys.modules, "jax was imported before the fork"
-    with mp.get_context("fork").Pool(n) as pool:
+    with mp.get_context("fork").Pool(n, initializer=pin_worker) as pool:
         import fit
 
         fit.main(fit.parse_args(), pool=pool)
