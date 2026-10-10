@@ -178,13 +178,58 @@ def loglike(theta, tid, forbidden_broad, sigma_split, rest_max=9000.0):
     float
         The log likelihood, with the prior left to the sampler.
     """
+    model, obs, cue = process_state(tid, forbidden_broad, sigma_split, rest_max)
+    return lnprobfn(theta, model=model, observations=obs, sps=cue, nested=True)
+
+
+def process_state(tid, forbidden_broad, sigma_split, rest_max):
+    """Return this process's model, observation and Cue source, building them on the first call.
+
+    Parameters
+    ----------
+    tid, forbidden_broad, sigma_split, rest_max
+        See ``loglike``.
+
+    Returns
+    -------
+    tuple
+        The model, the observation list and the Cue source.
+    """
     key = (tid, forbidden_broad, sigma_split, rest_max)
     if key not in _STATE:
         z, flux, unc, good = load_data(tid, rest_max)
         cue = get_sps(zero_library_resolution=False)["cue"]
         _STATE[key] = (make_model(z, forbidden_broad, sigma_split), make_obs(flux, unc, good), cue)
-    model, obs, cue = _STATE[key]
-    return lnprobfn(theta, model=model, observations=obs, sps=cue, nested=True)
+    return _STATE[key]
+
+
+def loglike_unit(u, tid, forbidden_broad, sigma_split, rest_max=9000.0):
+    """Return the log likelihood of the unit-cube point ``u``, with the prior transform done here.
+
+    nautilus would otherwise run ``model.prior_transform`` on every point of a batch in the main
+    process, about 8 ms a point for the stochastic SFH prior, before it sends the batch to the
+    pool. Doing it in the worker spreads that over the pool. nautilus keeps its points in the unit
+    cube, so the checkpoint is the same either way.
+
+    Parameters
+    ----------
+    u : np.ndarray
+        Point in the unit cube.
+    tid, forbidden_broad, sigma_split, rest_max
+        See ``loglike``.
+
+    Returns
+    -------
+    float
+        The log likelihood of ``model.prior_transform(u)``.
+    """
+    model = process_state(tid, forbidden_broad, sigma_split, rest_max)[0]
+    return loglike(model.prior_transform(u), tid, forbidden_broad, sigma_split, rest_max)
+
+
+def unit_cube(u):
+    """Return ``u``. nautilus's prior when the prior transform runs in ``loglike_unit``."""
+    return u
 
 
 def check_setup(args, z, flux, unc, good, model, resuming):
@@ -276,9 +321,11 @@ def main(args, pool=None):
     )
     (args.out / f"{stem}.json").write_text(json.dumps(config, indent=1))
 
+    # the prior transform runs in the workers, so nautilus's posterior() returns unit-cube points;
+    # to read the posterior, make a Sampler with model.prior_transform from the checkpoint instead
     sampler = Sampler(
-        model.prior_transform,
-        partial(loglike, tid=tid, forbidden_broad=fb, sigma_split=split, rest_max=rest_max),
+        unit_cube,
+        partial(loglike_unit, tid=tid, forbidden_broad=fb, sigma_split=split, rest_max=rest_max),
         n_dim=model.ndim,
         n_live=N_LIVE,
         pool=args.pool if pool is None else pool,
