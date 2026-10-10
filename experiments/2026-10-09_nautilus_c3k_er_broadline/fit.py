@@ -31,6 +31,7 @@ import astropy.units as u
 import numpy as np
 from nautilus import Sampler
 from prospect.fitting import lnprobfn
+from prospect.fitting.nested import lnlike_of_unit_cube, unit_cube_identity
 from prospect.models.priors import LogUniform
 
 from hubersed.conversion import ivar_to_maggies, to_maggies
@@ -203,35 +204,6 @@ def process_state(tid, forbidden_broad, sigma_split, rest_max):
     return _STATE[key]
 
 
-def loglike_unit(u, tid, forbidden_broad, sigma_split, rest_max=9000.0):
-    """Return the log likelihood of the unit-cube point ``u``, with the prior transform done here.
-
-    nautilus would otherwise run ``model.prior_transform`` on every point of a batch in the main
-    process, about 8 ms a point for the stochastic SFH prior, before it sends the batch to the
-    pool. Doing it in the worker spreads that over the pool. nautilus keeps its points in the unit
-    cube, so the checkpoint is the same either way.
-
-    Parameters
-    ----------
-    u : np.ndarray
-        Point in the unit cube.
-    tid, forbidden_broad, sigma_split, rest_max
-        See ``loglike``.
-
-    Returns
-    -------
-    float
-        The log likelihood of ``model.prior_transform(u)``.
-    """
-    model = process_state(tid, forbidden_broad, sigma_split, rest_max)[0]
-    return loglike(model.prior_transform(u), tid, forbidden_broad, sigma_split, rest_max)
-
-
-def unit_cube(u):
-    """Return ``u``. nautilus's prior when the prior transform runs in ``loglike_unit``."""
-    return u
-
-
 def check_setup(args, z, flux, unc, good, model, resuming):
     """Check the library, the resolution margin and the likelihood, and print the setup.
 
@@ -321,11 +293,15 @@ def main(args, pool=None):
     )
     (args.out / f"{stem}.json").write_text(json.dumps(config, indent=1))
 
-    # the prior transform runs in the workers, so nautilus's posterior() returns unit-cube points;
-    # to read the posterior, make a Sampler with model.prior_transform from the checkpoint instead
+    # The prior transform runs in the workers, not serially in this process, so nautilus gets the
+    # identity as its prior and its posterior() returns unit-cube points. To read the posterior,
+    # make a Sampler with model.prior_transform from the checkpoint instead.
+    lnl = partial(loglike, tid=tid, forbidden_broad=fb, sigma_split=split, rest_max=rest_max)
     sampler = Sampler(
-        unit_cube,
-        partial(loglike_unit, tid=tid, forbidden_broad=fb, sigma_split=split, rest_max=rest_max),
+        unit_cube_identity,
+        partial(
+            lnlike_of_unit_cube, prior_transform=model.prior_transform, likelihood_function=lnl
+        ),
         n_dim=model.ndim,
         n_live=N_LIVE,
         pool=args.pool if pool is None else pool,
