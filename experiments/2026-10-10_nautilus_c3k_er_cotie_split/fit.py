@@ -18,6 +18,14 @@ The reasons and sources are in the UberSED notes, knowledge/notes_2026-10-10_er3
 (Steps 1, 2d, 3a, 3b) and knowledge/line_groups_ionization_zones_2026-10-10.md. No extra dust on
 the broad component (knowledge/litdive_broad_component_dust_synthesis_2026-10-10.md, option a).
 
+Exploration ends when f_live, the share of the evidence still in the live set, drops to
+``--f-live``. The default 0.01 is the nautilus default and the setting of the ER run. On 2026-10-11
+the run had 3.0 million calls and 183 bounds, with f_live between 0.2 and 0.8 over six links, so it
+was resumed with ``--f-live 0.3`` to end the exploration phase. Ending exploration early does not
+bias the importance-sampled posterior and evidence, it lowers the sampling efficiency (Lange 2023,
+arXiv:2306.16923). The nautilus maintainer suggests about 0.5 for an exploration phase that does
+not end (nautilus issue 50). Notes are in knowledge/lange2023_nautilus_2306.16923.md (UberSED notes).
+
 FSPS comes from the C3K_ER build with AFE_FLAG, put first on PYTHONPATH, with SPS_HOME holding the
 ER spectra. [alpha/Fe] stays at 0. Run from the repository root on an ls6 compute node through
 chain.slurm, with fit_fork.py and the c3k_er_afe_v3 build, or directly with
@@ -312,6 +320,7 @@ def main(args, pool=None):
         n_pix=int(good.sum()),
         n_live=N_LIVE,
         n_eff=N_EFF,
+        f_live=args.f_live,
         labels=list(model.theta_labels()),
     )
     (args.out / f"{stem}.json").write_text(json.dumps(config, indent=1))
@@ -333,7 +342,13 @@ def main(args, pool=None):
         filepath=str(args.out / f"{stem}.h5"),
         resume=True,
     )
-    done = sampler.run(n_eff=N_EFF, discard_exploration=True, timeout=args.timeout, verbose=True)
+    done = sampler.run(
+        f_live=args.f_live,
+        n_eff=N_EFF,
+        discard_exploration=True,
+        timeout=args.timeout,
+        verbose=True,
+    )
     print("log Z", sampler.log_z, "N_eff", sampler.n_eff, "calls", sampler.n_like)
     if not done:
         print("Stopped before convergence. Rerun the same command to resume.")
@@ -355,6 +370,7 @@ def parse_args():
     parser.add_argument("--pool", type=int, default=4)
     parser.add_argument("--n-batch", type=int, default=None)
     parser.add_argument("--timeout", type=float, default=np.inf)
+    parser.add_argument("--f-live", type=float, default=0.01)
     parser.add_argument("--check-only", action="store_true")
     parser.add_argument(
         "--out", type=Path, default=PATHS["RESULTS"] / "2026-10-10_nautilus_c3k_er_cotie_split"

@@ -29,6 +29,9 @@ SPLIT=${SPLIT:-45}
 POOL=${POOL:-64}
 TIMEOUT=${TIMEOUT:-6000}  # sampler timeout in s; keep it below the -t wall time
 NBATCH=${NBATCH:-960}
+# FLIVE ends the exploration phase when f_live drops to it; 0.01 is the nautilus default, and the
+# links from 2026-10-11 use 0.3 (see the fit.py docstring)
+FLIVE=${FLIVE:-0.01}
 # SCRIPT=fit_fork.py forks the pool after one FSPS setup and SSP build; it needs an fsps build
 # with get_ssp_slot (python-fsps 2c5168f), set with FSPS_SITE
 SCRIPT=${SCRIPT:-fit_fork.py}
@@ -44,7 +47,8 @@ cd $REPO
 MARKER=$REPO/CONVERGED_${SLURM_JOB_NAME}_$TID
 LOG=$REPO/${SLURM_JOB_NAME}_${TID}_${SLURM_JOB_ID}.log
 echo "link $SLURM_JOB_ID on $(hostname), TID $TID, FB $FB, split $SPLIT," \
-    "pool $POOL, n_batch $NBATCH, timeout $TIMEOUT, script $SCRIPT, cores '${CORES:-all}'," \
+    "pool $POOL, n_batch $NBATCH, timeout $TIMEOUT, f_live $FLIVE, script $SCRIPT," \
+    "cores '${CORES:-all}'," \
     "start $(date)"
 if [ -e "$MARKER" ]; then
     echo "$MARKER exists, cancelling pending links"
@@ -57,7 +61,7 @@ export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 export XLA_FLAGS="--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1"
 # the venv's python directly, not uv run: on 2026-10-10 uv run hung on a stale lock on ~/.cache/uv
 $PIN $REPO/.venv/bin/python $EXP/$SCRIPT --tid $TID --forbidden-broad $FB --sigma-split $SPLIT \
-    --pool $POOL --n-batch $NBATCH --timeout $TIMEOUT > "$LOG" 2>&1
+    --pool $POOL --n-batch $NBATCH --timeout $TIMEOUT --f-live $FLIVE > "$LOG" 2>&1
 if grep -q "Stopped before convergence" "$LOG"; then
     echo "not converged, end $(date)"
     if [ "${RESUBMIT:-0}" = 1 ]; then
