@@ -141,8 +141,10 @@ def spectrum_plot(rest, flam, flux, spec, chi, good, keys, path):
     print(f"wrote {path.name}")
 
 
-def windows_plot(rest, flam, flux, unc, spec, chi, keys, path):
+def windows_plot(rest, flam, flux, unc, spec, chi, keys, path, chi_lim=None):
     """Plot the five slide line windows with LaTeX text and large fonts, one chi row per point.
+
+    ``chi_lim`` fixes the y range of every chi row. By default the rows autoscale.
 
     The ApJ style must be active. It applies to the whole process, so the caller sets it after
     the spectrum plots.
@@ -170,6 +172,8 @@ def windows_plot(rest, flam, flux, unc, spec, chi, keys, path):
             ar.axhline(0, color="0.3", lw=0.8)
             for h in (-3, 3):
                 ar.axhline(h, color="0.6", lw=0.8, ls=":")
+            if chi_lim is not None:
+                ar.set_ylim(*chi_lim)
             if j == 0:
                 ar.set_ylabel(rf"$\chi$, {POINTS[key][0]}", fontsize=16)
         for a in axes[:, j]:
@@ -284,7 +288,8 @@ def main():
         spectrum_plot(rest, flam, flux, spec, chi, good, ks, FIG / f"{tag}_spectrum.png")
     use_apj_style()
     for tag, ks in sets.items():
-        windows_plot(rest, flam, flux, unc, spec, chi, ks, FIG / f"{tag}_line_windows.png")
+        lim = (-7, 7) if tag == "hr_dustratio" else None
+        windows_plot(rest, flam, flux, unc, spec, chi, ks, FIG / f"{tag}_line_windows.png", lim)
 
 
 if __name__ == "__main__":
