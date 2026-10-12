@@ -1,13 +1,15 @@
 """The ER model at the maximum likelihood point of the HR split 45 run, against the ER fit.
 
 QUESTION: how does the ER model fit the ER data at the parameters of the HR max-L point, next to
-the ER max-L point? And how much of the difference comes from the dust and gas parameters alone?
+the ER max-L point? How much of the difference comes from the dust and gas parameters alone, and
+what does dust_ratio alone do?
 The two runs have the same model and the same 29 parameters, and differ in the library
 resolution, the data degradation, the sky mask and the fitted pixels.
 
-Three points go through the ER model on the ER data: the ER max-L point, the HR max-L point, and
-the ER max-L point with only the dust parameters (dust2, dust_ratio, dust_index) and the gas
-parameters (gas_logz, gas_logu, gas_lognH, gas_logno, gas_logco) set to their HR max-L values.
+Four points go through the ER model on the ER data: the ER max-L point, the HR max-L point, the
+ER max-L point with only the dust parameters (dust2, dust_ratio, dust_index) and the gas
+parameters (gas_logz, gas_logu, gas_lognH, gas_logno, gas_logco) set to their HR max-L values, and
+the HR max-L point with only dust_ratio set to its ER max-L value.
 
 INPUTS: the ER ``_pred.npz`` of predict.py, and
 results/2026-09-30_nautilus_c3k_broadline_split45/39627770174637084_broad_shared_split45_unmask_rest9000_seed0.h5
@@ -21,7 +23,9 @@ experiments/2026-10-09_nautilus_c3k_er_broadline/hr_point.py``.
 
 OUTPUT: in results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/,
 hr_point_spectrum.png and hr_point_line_windows.png (ER and HR max-L points),
-hr_swap_spectrum.png and hr_swap_line_windows.png (all three points), and hr_point_windows.txt
+hr_swap_spectrum.png and hr_swap_line_windows.png (ER, HR and the dust and gas swap),
+hr_dustratio_spectrum.png and hr_dustratio_line_windows.png (ER, HR and HR with the ER
+dust_ratio), and hr_point_windows.txt
 (chi2 of each point in the line windows of jacobian.py). The line window figures are for slides.
 The log likelihood and chi2 of each point are printed.
 """
@@ -64,6 +68,7 @@ POINTS = {
     "ER max-L": ("ER", "#b2182b", "-"),
     "HR max-L": ("HR", "#2166ac", "--"),
     "ER + HR dust, gas": ("swap", "#1b7837", ":"),
+    "HR + ER dust ratio": ("dust ratio", "#762a83", "-."),
 }
 # rest-frame vacuum windows of the line_windows.png of analysis.py, with LaTeX titles
 SLIDE_WINDOWS = {
@@ -187,10 +192,12 @@ def windows_plot(rest, flam, flux, unc, spec, chi, keys, path):
         frameon=False,
         bbox_to_anchor=(0.5, 0.955),
     )
-    swap = (
-        " (swap: ER max-L with the HR dust and gas values)" if "ER + HR dust, gas" in keys else ""
-    )
-    fig.suptitle(rf"{TID}, C3K\_ER model on the ER data{swap}", fontsize=22, y=1.0)
+    extra = ""
+    if "ER + HR dust, gas" in keys:
+        extra = " (swap: ER max-L with the HR dust and gas values)"
+    if "HR + ER dust ratio" in keys:
+        extra = r" (dust ratio: HR max-L with the ER dust\_ratio)"
+    fig.suptitle(rf"{TID}, C3K\_ER model on the ER data{extra}", fontsize=22, y=1.0)
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"wrote {path.name}")
@@ -208,13 +215,20 @@ def main():
     swap = d["best"].copy()
     for lab in SWAP:
         swap[labels.index(lab)] = theta_hr[labels.index(lab)]
+    hr_dr = theta_hr.copy()
+    hr_dr[labels.index("dust_ratio")] = d["best"][labels.index("dust_ratio")]
 
     def predict(theta):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             return np.asarray(model.predict(theta, observations=obs, sps=sps)[0][0], float)
 
-    pts = {"ER max-L": d["best"], "HR max-L": theta_hr, "ER + HR dust, gas": swap}
+    pts = {
+        "ER max-L": d["best"],
+        "HR max-L": theta_hr,
+        "ER + HR dust, gas": swap,
+        "HR + ER dust ratio": hr_dr,
+    }
     spec, chi = {}, {}
     n_pix = int(good.sum())
     for key, theta in pts.items():
@@ -242,28 +256,35 @@ def main():
             + "".join(f" {c:9.1f} {c - c2[0]:+9.1f}" for c in c2[1:])
         )
     head = f"{'window':12s} {'n_pix':>5s} {'chi2 ER':>9s}" + "".join(
-        f" {'chi2 ' + tag:>9s} {tag + '-ER':>9s}" for tag in ("HR", "SW")
+        f" {'chi2 ' + tag:>9s} {tag + '-ER':>9s}" for tag in ("HR", "SW", "DR")
     )
-    note = "columns: ER max-L, HR max-L (HR), ER max-L with the HR dust and gas values (SW)"
+    note = (
+        "columns: ER max-L, HR max-L (HR), ER max-L with the HR dust and gas values (SW), "
+        "HR max-L with the ER dust_ratio (DR)"
+    )
     table = "\n".join([note, head, *rows])
     print(table)
     (FIG / "hr_point_windows.txt").write_text(table + "\n")
 
     width = max(len(lab) for lab in labels)
-    print(f"{'parameter':{width}s}  {'ER max-L':>10s}  {'HR max-L':>10s}  {'swap':>10s}")
-    for lab, a, b, c in zip(labels, d["best"], theta_hr, swap, strict=True):
-        print(f"{lab:{width}s}  {a:10.4f}  {b:10.4f}  {c:10.4f}")
+    print(f"{'parameter':{width}s}" + "".join(f"  {t:>10s}" for t in ("ER", "HR", "SW", "DR")))
+    for i, lab in enumerate(labels):
+        print(f"{lab:{width}s}" + "".join(f"  {pts[key][i]:10.4f}" for key in keys))
 
     def flam(maggies):
         f = to_flambda(d["wave"] * u.AA, np.asarray(maggies, float) * u.mgy).value
         return np.where(good, f, np.nan)
 
-    two = ["ER max-L", "HR max-L"]
-    spectrum_plot(rest, flam, flux, spec, chi, good, two, FIG / "hr_point_spectrum.png")
-    spectrum_plot(rest, flam, flux, spec, chi, good, keys, FIG / "hr_swap_spectrum.png")
+    sets = {
+        "hr_point": ["ER max-L", "HR max-L"],
+        "hr_swap": ["ER max-L", "HR max-L", "ER + HR dust, gas"],
+        "hr_dustratio": ["ER max-L", "HR max-L", "HR + ER dust ratio"],
+    }
+    for tag, ks in sets.items():
+        spectrum_plot(rest, flam, flux, spec, chi, good, ks, FIG / f"{tag}_spectrum.png")
     use_apj_style()
-    windows_plot(rest, flam, flux, unc, spec, chi, two, FIG / "hr_point_line_windows.png")
-    windows_plot(rest, flam, flux, unc, spec, chi, keys, FIG / "hr_swap_line_windows.png")
+    for tag, ks in sets.items():
+        windows_plot(rest, flam, flux, unc, spec, chi, ks, FIG / f"{tag}_line_windows.png")
 
 
 if __name__ == "__main__":
