@@ -18,6 +18,9 @@
 # chunk and stops adding if MemAvailable drops below FLOOR_GIB. Killed jobs keep their claim files
 # and are not redone; list them with ``fit.py status`` after the run.
 #
+# S2 is left out. The free per-group fractions were fitted on the data of this target
+# (2026-10-13_oiii_second_component) and moved the gas parameters by at most 0.03.
+#
 # Environment as the 2026-10-13_nautilus_resolution_matrix chain.slurm: c3k_er_afe_v3 build,
 # sps_home_er, one thread per process, the venv's python.
 #
@@ -64,7 +67,7 @@ start_chunk() {
     LAST_CHUNK=()
     for i in $(seq "$first" $((first + CHUNK - 1))); do
         "$REPO/.venv/bin/python" "$REPO/experiments/2026-10-13_broadline_injection/fit.py" run \
-            --seeds -1 0 1 2 3 4 > "$LOGS/worker$i.log" 2>&1 &
+            --scenarios S0 S1 S3 --seeds -1 0 1 2 3 4 > "$LOGS/worker$i.log" 2>&1 &
         PIDS+=($!)
         LAST_CHUNK+=($!)
     done
