@@ -1,4 +1,4 @@
-"""Two-component Balmer-line profiles, and an optional separate forbidden-line width.
+"""Line profiles with a second kinematic component and a separate forbidden-line width.
 
 Each line's total luminosity still comes from Cue and the star formation history, so the
 Balmer flux stays tied to the young stars. Only the line profile changes::
@@ -13,6 +13,10 @@ forbidden lines of ions made above the O+ to O++ edge (35.12 eV: [O III], [Ne II
 including [S III], [Ar III] and [Cl III], keeps ``eline_sigma_forb``. The groups and their sources
 are in knowledge/line_groups_ionization_zones_2026-10-10.md (UberSED notes); they cover the Cue
 lines at rest 3500-9000 A, and lines outside that range keep the low group.
+
+The second component is wider than the narrow one. It is a second kinematic component of the
+integrated spectrum, not necessarily an outflow or a broad-line region. Parameter and function
+names keep "broad" so that saved runs still load.
 """
 
 import numpy as np
@@ -74,9 +78,9 @@ def line_groups(names, he_balmer_profile=False):
 
 
 class TwoCompLineModel(HyperSpecModel):
-    """HyperSpecModel with a narrow plus broad profile for the Balmer lines.
+    """HyperSpecModel with a narrow plus second kinematic component for the Balmer lines.
 
-    The broad component takes a fraction ``eline_fbroad`` of each Balmer line's flux, so the
+    The second component takes a fraction ``eline_fbroad`` of each Balmer line's flux, so the
     line fluxes are unchanged. With ``eline_fbroad = 0`` and ``eline_sigma_forb`` equal to
     ``eline_sigma`` (or absent) the model is identical to HyperSpecModel.
     """
@@ -105,7 +109,7 @@ class TwoCompLineModel(HyperSpecModel):
         return self._groups()[1]
 
     def _broad_fraction(self):
-        """Return the per-line broad fraction of flux in the broad component.
+        """Return the per-line fraction of flux in the second component.
 
         Lines with the Balmer profile use ``eline_fbroad``; all other lines use
         ``eline_fbroad_forb``, which is absent (zero) unless ``add_broad_params`` was called with
@@ -127,7 +131,7 @@ class TwoCompLineModel(HyperSpecModel):
         wide : np.ndarray
             Total width in km/s of the widest component of each line.
         shift : np.ndarray
-            Absolute velocity offset in km/s of the broad component (zero for lines without one).
+            Absolute velocity offset in km/s of the second component (zero for lines without one).
         inst2 : np.ndarray
             Squared instrumental (and library) width in km/s.
         """
@@ -185,7 +189,7 @@ class TwoCompLineModel(HyperSpecModel):
         self._elines_to_fit = self._fit_eline & self._valid_eline
 
     def get_eline_gaussians(self, lineidx=slice(None), wave=None):  # noqa: B008, same as parent
-        """Return unit-flux line profiles, two-component for lines with a broad component.
+        """Return unit-flux line profiles, two-component for lines with a second component.
 
         Parameters
         ----------
@@ -216,7 +220,7 @@ class TwoCompLineModel(HyperSpecModel):
 
 
 def same_fbroad(eline_fbroad=0.0, **extras):
-    """``depends_on`` function giving the forbidden lines the Balmer broad fraction."""
+    """``depends_on`` function giving the forbidden lines the Balmer second-component fraction."""
     return eline_fbroad
 
 
@@ -228,7 +232,7 @@ def add_broad_params(
     split_forbidden=False,
     he_balmer_profile=False,
 ):
-    """Add the broad-line parameters to a model parameter dict.
+    """Add the second-component parameters to a model parameter dict.
 
     Parameters
     ----------
@@ -239,18 +243,19 @@ def add_broad_params(
     separate_forbidden_width : bool
         Also add ``eline_sigma_forb``, a separate width for the non-Balmer lines.
     forbidden_broad : {None, "shared", "free"}
-        Give the non-Balmer lines the broad component too, with same width and shift.
+        Give the non-Balmer lines the second component too, with the same width and shift.
         ``shared'' uses the Balmer fraction (``eline_fbroad_forb`` tied to ``eline_fbroad``).
-        ``free'' allows the forbidden broad fraction to vary independently.
-        None keeps it only on balmer lines.
+        ``free'' allows the non-Balmer fraction to vary independently.
+        None keeps it only on Balmer lines.
     sigma_split : float
-        Upper bound of the narrow and forbidden widths and lower bound of the broad width, in km/s.
+        Upper bound of the narrow and forbidden widths and lower bound of the second-component
+        width, in km/s.
     split_forbidden : bool
         Also add ``eline_sigma_forb_hi``, the width of the high-ionization forbidden lines
         (``HIGH_ION_PREFIXES``). ``eline_sigma_forb`` then covers the other non-Balmer lines.
         Needs ``separate_forbidden_width``.
     he_balmer_profile : bool
-        Give the He I lines the Balmer profile (narrow ``eline_sigma`` and the Balmer broad
+        Give the He I lines the Balmer profile (narrow ``eline_sigma`` and the Balmer second
         component), through the fixed parameter ``eline_he_balmer_profile``.
 
     Returns
@@ -297,7 +302,7 @@ def self_check(model_params, obs, sps, theta, n_prior=100, seed=0):
     With ``eline_fbroad = 0`` and every line width (``eline_sigma_forb`` and, if set,
     ``eline_sigma_forb_hi``) equal to ``eline_sigma`` the two-component model must reproduce the
     one-component model, whatever the line groups. With ``eline_fbroad = 0.5`` the Halpha + [NII] flux
-    should barely change, because the broad component redistributes flux instead of adding it.
+    should barely change, because the second component redistributes flux instead of adding it.
 
     Parameters
     ----------
