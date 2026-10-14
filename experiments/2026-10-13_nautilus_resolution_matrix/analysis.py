@@ -1,43 +1,24 @@
 """Compare the posteriors of three nautilus fits of 39627770174637084.
 
-QUESTION: how do the posteriors move from the HR split 45 fit to the ER fit to the fit with the
-target's own resolution matrix and the corrected ivar?
+QUESTION: how do the posteriors move from HR split 45 (09-30) to ER (10-09) to rmatrix (this
+folder: target R, corrected ivar, missing-line mask)? Same 29 parameters and priors. Pixels differ:
+5621, 5597, 5530.
 
-- HR: 2026-09-30_nautilus_c3k_broadline_split45, forbidden broad shared. C3K_HR, data degraded to
-  43.6 km/s, DR1 coadd and ivar, spender sky mask dropped in the [OI] and [SII] windows (SPARCL
-  ivar there).
-- ER: 2026-10-09_nautilus_c3k_er_broadline, forbidden broad shared. C3K_ER at the DESI resolution
-  through the median Gaussian LSF, DR1 coadd and ivar.
-- rmatrix: fit.py of this folder with its defaults. C3K_ER, the target's own resolution matrix
-  (ResolutionMatrixModel), the row-weighted recoadd with the corrected calibration ivar, and the
-  lines missing from Cue masked at rest +-4 A. The setup of the rmatrix mask MAP of map.py.
+HYPOTHESIS: from the MAP runs, rmatrix has wider lines than ER (eline_sigma_forb ~22 km/s,
+eline_sigma ~25 km/s), lower dust_ratio (~0.37 vs 0.46), sigma_smooth ~21 km/s. SFH barely moves.
 
-All three have the same model and the same 29 parameters and priors (Cue broadline, split
-45 km/s). The fitted pixels differ: 5621 (HR), 5597 (ER) and 5530 (rmatrix).
+INPUTS: the HR and ER _pred.npz, and the rmatrix _pred.npz of predict.py (or its .h5 if the npz is
+missing). Points more than e^-30 below the heaviest are dropped. SEED: none.
 
-HYPOTHESIS: from the MAP runs (map.txt, and map_resolution.py of the 10-09 folder), the rmatrix
-fit should have wider lines than ER (eline_sigma_forb off its 10 km/s floor near 22 km/s,
-eline_sigma near 25 km/s), a lower dust_ratio (about 0.37 against 0.46) and sigma_smooth near
-21 km/s with the mask. The SFH should barely move.
-
-INPUTS: the HR and ER ``_pred.npz`` (posterior points in parameter space and log weights, from the
-predict.py of each folder) and the rmatrix checkpoint ``<stem>.h5`` with its .json in
-results/2026-10-13_nautilus_resolution_matrix/. The rmatrix checkpoint holds unit-cube points, which
-go through the model's prior transform. Points more than e^-30 below the heaviest one are dropped in
-each run, as in corner_dust_gas.py of the 10-09 folder. SEED: none.
-
-COMMAND: from the repository root, with the C3K_ER build first on PYTHONPATH (the model is built
-only for its prior transform and prior edges), for example on the Mac
+COMMAND: from the repository root on the Mac
 ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-13_nautilus_resolution_matrix/analysis.py``. Without the rmatrix checkpoint it
-compares HR and ER only.
+experiments/2026-10-13_nautilus_resolution_matrix/analysis.py``.
 
-RESULT: not run yet; the rmatrix fit has not been run.
+RESULT: not run yet.
 
-FIGURES: compare_posteriors.txt (weighted median and 16-84% of every parameter per run, and the
-shift of each run from ER in units of the ER half width), corner_lines.png, corner_dust_gas.png and
-corner_stars.png in results/2026-10-13_nautilus_resolution_matrix/.
+FIGURES: compare_posteriors.txt (median, 16-84%, shift from ER in ER half widths) and
+corner_{lines,dust_gas,stars}.png in results/2026-10-13_nautilus_resolution_matrix/.
 """
 
 # %%
@@ -133,13 +114,17 @@ runs["ER"] = (pts, w)
 z = float(np.load(ER_PRED)["z"])
 model = make_model(make_params(z), "rmatrix")
 assert list(model.theta_labels()) == labels
-if (OUT / f"{RM_STEM}.h5").exists():
+if (OUT / f"{RM_STEM}_pred.npz").exists():
+    pts, w, labels_rm = from_pred(OUT / f"{RM_STEM}_pred.npz")
+    assert labels_rm == labels
+    runs["rmatrix"] = (pts, w)
+elif (OUT / f"{RM_STEM}.h5").exists():
     cfg = json.loads((OUT / f"{RM_STEM}.json").read_text())
     assert cfg["lsf"] == "rmatrix" and cfg["mask"] == "mask" and cfg["labels"] == labels
     pts, w, _ = from_checkpoint(model, RM_STEM)
     runs["rmatrix"] = (pts, w)
 else:
-    print(f"{RM_STEM}.h5 not found, comparing HR and ER only")
+    print(f"{RM_STEM}_pred.npz and .h5 not found, comparing HR and ER only")
 
 # %% table of every parameter
 lines = [f"{TID} posteriors: weighted median [16%, 84%]; shift from ER in ER half widths"]
