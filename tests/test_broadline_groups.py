@@ -61,3 +61,28 @@ def test_add_broad_params_options():
     assert p["eline_he_balmer_profile"] == dict(N=1, isfree=False, init=1.0)
     with pytest.raises(ValueError):
         broadline.add_broad_params(dict(base), separate_forbidden_width=False, split_forbidden=True)
+
+
+def test_add_broad_params_high_ion_fraction():
+    """The high-ionization fraction is free, fixed or absent, and needs split_forbidden."""
+    from prospect.models import priors
+
+    from hubersed.sps import broadline
+
+    base = {
+        "eline_sigma": dict(
+            N=1, isfree=True, init=100.0, prior=priors.TopHat(mini=10.0, maxi=250.0)
+        )
+    }
+    kw = dict(forbidden_broad="free", sigma_split=45.0, split_forbidden=True)
+    assert "eline_fbroad_forb_hi" not in broadline.add_broad_params(dict(base), **kw)
+    p = broadline.add_broad_params(dict(base), forbidden_hi_broad="free", **kw)[
+        "eline_fbroad_forb_hi"
+    ]
+    assert p["isfree"] and p["prior"].params == {"mini": 0.0, "maxi": 0.9}
+    p = broadline.add_broad_params(dict(base), forbidden_hi_broad=0.0, **kw)["eline_fbroad_forb_hi"]
+    assert p == dict(N=1, isfree=False, init=0.0)
+    with pytest.raises(ValueError, match="split_forbidden"):
+        broadline.add_broad_params(dict(base), forbidden_hi_broad="free", forbidden_broad="free")
+    with pytest.raises(ValueError, match="forbidden_hi_broad must be"):
+        broadline.add_broad_params(dict(base), forbidden_hi_broad="shared", **kw)

@@ -332,6 +332,143 @@ def model_line(model, name):
     return float(np.asarray(model.emline_info["wave"])[names == name][0])
 
 
+def hi_params(hi=None, fb=0.2, fb_forb=0.1):
+    """Return parameters with the split widths, a free non-Balmer fraction and ``hi``.
+
+    ``hi`` is passed to ``add_broad_params`` as ``forbidden_hi_broad``.
+    """
+    from hubersed.sps import broadline
+
+    base = {k: v for k, v in model_params().items() if not k.startswith("eline_")}
+    base["eline_sigma"] = model_params()["eline_sigma"]
+    p = broadline.add_broad_params(
+        base, forbidden_broad="free", sigma_split=45.0, split_forbidden=True, forbidden_hi_broad=hi
+    )
+    p["eline_fbroad"]["init"] = fb
+    p["eline_fbroad_forb"]["init"] = fb_forb
+    p["eline_sigma_forb"]["init"] = 30.0
+    p["eline_sigma_forb_hi"]["init"] = 18.0
+    p["eline_sigma_broad"]["init"] = 200.0
+    p["eline_vbroad"]["init"] = -40.0
+    return p
+
+
+def both_obs(wave, lsf):
+    """Return a Gaussian-LSF observation and a resolution-matrix observation of flat data."""
+    from hubersed.sps.parameter_file import build_obs
+    from hubersed.sps.resolution_model import build_resolution_obs
+
+    flux = np.ones(wave.size)
+    good = np.ones(wave.size, bool)
+    (obs_p,) = build_obs(flux, flux, good, resolution=lsf, wavelength=wave)
+    (obs_r,) = build_resolution_obs(flux, flux, good, gaussian_banded(wave.astype(float), lsf))
+    return obs_p, obs_r
+
+
+def both_spectra(params, src, obs_p, obs_r):
+    """Return the TwoCompLineModel and ResolutionMatrixModel spectra of ``params``."""
+    from hubersed.sps import broadline
+    from hubersed.sps.resolution_model import ResolutionMatrixModel
+
+    return (
+        predict(broadline.TwoCompLineModel(params), obs_p, src),
+        predict(ResolutionMatrixModel(params), obs_r, src),
+    )
+
+
+def test_absent_high_ion_fraction_changes_nothing(setup):
+    """Without eline_fbroad_forb_hi the high-ionization lines use eline_fbroad_forb, as before.
+
+    Setting eline_fbroad_forb_hi equal to eline_fbroad_forb gives the same spectra to the last bit,
+    in both models.
+    """
+    from hubersed.sps import broadline
+
+    _, src, wave, lsf = setup
+    absent, equal = hi_params(None), hi_params(0.1)
+    assert "eline_fbroad_forb_hi" not in absent and not equal["eline_fbroad_forb_hi"]["isfree"]
+    model = broadline.TwoCompLineModel(absent)
+    expected = np.where(model._balmer_mask(), 0.2, 0.1)
+    assert np.array_equal(model._broad_fraction(), expected)
+    obs_p, obs_r = both_obs(wave, lsf)
+    for a, b in zip(
+        both_spectra(absent, src, obs_p, obs_r), both_spectra(equal, src, obs_p, obs_r), strict=True
+    ):
+        assert np.array_equal(a, b)
+
+
+def test_high_ion_fraction_only_on_high_ion_lines(setup):
+    """eline_fbroad_forb_hi sets the high-ionization lines only, eline_fbroad_forb the others.
+
+    The stand-in source has one high-ionization line, [O III] 5007. Changing the high-ionization
+    fraction changes both models only near it, and changing the low-ionization fraction changes
+    them only away from it.
+    """
+    from hubersed.sps import broadline
+
+    _, src, wave, lsf = setup
+    model = broadline.TwoCompLineModel(hi_params(0.4))
+    names = np.char.strip(np.asarray(model.emline_info["name"]).astype(str))
+    balmer, high = broadline.line_groups(names)
+    fb = model._broad_fraction()
+    assert np.all(fb[balmer] == 0.2) and np.all(fb[high] == 0.4)
+    assert np.all(fb[~balmer & ~high] == 0.1)
+    assert high[names == "[O III] 5007"][0] and not high[names == "[N II] 6584"].any()
+
+    obs_p, obs_r = both_obs(wave, lsf)
+    ref = both_spectra(hi_params(0.0), src, obs_p, obs_r)
+    hi_on = both_spectra(hi_params(0.4), src, obs_p, obs_r)
+    lo_on = both_spectra(hi_params(0.0, fb_forb=0.4), src, obs_p, obs_r)
+    near = np.abs(wave / (1 + ZRED) - model_line(model, "[O III] 5007")) < 30.0
+    for r, h, lo in zip(ref, hi_on, lo_on, strict=True):
+        assert np.any(h[near] != r[near]) and np.array_equal(h[~near], r[~near])
+        assert np.any(lo[~near] != r[~near]) and np.array_equal(lo[near], r[near])
+
+
+def test_high_ion_fraction_conserves_line_flux(setup):
+    """The high-ionization second component moves [O III] flux without adding or losing any."""
+    from hubersed.sps.resolution_model import ResolutionMatrixModel
+
+    _, src, wave, lsf = setup
+    obs_p, obs_r = both_obs(wave, lsf)
+    w = wave.astype(float)
+    ref_model = ResolutionMatrixModel(hi_params(0.0))
+    predict(ref_model, obs_r, src)
+    near = np.abs(w / (1 + ZRED) - model_line(ref_model, "[O III] 5007")) < 30.0
+    to_flam = 2.998e18 / w**2  # maggies to flux per Angstrom, up to a constant
+    line = np.sum(ref_model._resolved_lines[near] * to_flam[near])
+    ref = both_spectra(hi_params(0.0), src, obs_p, obs_r)
+    for f in (0.3, 0.9):
+        spec = both_spectra(hi_params(f), src, obs_p, obs_r)
+        for s, r in zip(spec, ref, strict=True):
+            moved = np.sum((s - r)[near] * to_flam[near])
+            assert abs(moved) < 1e-3 * line
+        model = ResolutionMatrixModel(hi_params(f))
+        predict(model, obs_r, src)
+        fine = obs_r.resampled()[1]
+        lines, added = model.fine_lines(fine)
+        step = (fine[-1] - fine[0]) / (fine.size - 1)
+        total = np.sum(lines * 2.998e18 / fine**2) * step
+        elum = model._eline_lum * model.flux_norm() / (1 + model._zred)
+        assert np.isclose(total, elum[added].sum(), rtol=1e-9)
+
+
+@pytest.mark.parametrize("hi", ["free", 0.3])
+def test_self_check_with_high_ion_fraction(setup, hi):
+    """self_check's one-component comparison passes with a free or fixed high-ionization fraction.
+
+    The prior draws are skipped, since HyperSpecModel's prior transform needs the SFH
+    hyperparameters that the stand-in parameters do not have.
+    """
+    from hubersed.sps import broadline
+
+    _, src, wave, lsf = setup
+    obs_p, _ = both_obs(wave, lsf)
+    params = hi_params(hi)
+    theta = broadline.TwoCompLineModel(params).theta.copy()
+    broadline.self_check(params, obs_p, src, theta, n_prior=0)
+
+
 TID = 39627770174637084
 EXPERIMENT = Path(__file__).parents[1] / "experiments" / "2026-10-09_nautilus_c3k_er_broadline"
 HYPERS = ("sigma_reg", "tau_eq", "sigma_dyn", "tau_dyn")

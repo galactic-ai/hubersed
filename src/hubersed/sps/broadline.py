@@ -12,7 +12,9 @@ forbidden lines of ions made above the O+ to O++ edge (35.12 eV: [O III], [Ne II
 [Ne IV], He II) get their own width ``eline_sigma_forb_hi``. Every other non-Balmer line,
 including [S III], [Ar III] and [Cl III], keeps ``eline_sigma_forb``. The groups and their sources
 are in knowledge/line_groups_ionization_zones_2026-10-10.md (UberSED notes); they cover the Cue
-lines at rest 3500-9000 A, and lines outside that range keep the low group.
+lines at rest 3500-9000 A, and lines outside that range keep the low group. With
+``forbidden_hi_broad`` the high-ionization lines also get their own second-component fraction
+``eline_fbroad_forb_hi``.
 
 The second component is wider than the narrow one. It is a second kinematic component of the
 integrated spectrum, not necessarily an outflow or a broad-line region. Parameter and function
@@ -113,11 +115,15 @@ class TwoCompLineModel(HyperSpecModel):
 
         Lines with the Balmer profile use ``eline_fbroad``; all other lines use
         ``eline_fbroad_forb``, which is absent (zero) unless ``add_broad_params`` was called with
-        ``forbidden_broad``.
+        ``forbidden_broad``. If ``eline_fbroad_forb_hi`` is set, the high-ionization lines use it
+        instead of ``eline_fbroad_forb``.
         """
-        return np.where(
+        fb = np.where(
             self._balmer_mask(), self._p("eline_fbroad", 0.0), self._p("eline_fbroad_forb", 0.0)
         )
+        if "eline_fbroad_forb_hi" in self.params:
+            fb = np.where(self._high_ion_mask(), self._p("eline_fbroad_forb_hi", 0.0), fb)
+        return fb
 
     def _profile_widths(self):
         """Return per-line total widths of the main component and the widest component.
@@ -231,6 +237,7 @@ def add_broad_params(
     sigma_split=100.0,
     split_forbidden=False,
     he_balmer_profile=False,
+    forbidden_hi_broad=None,
 ):
     """Add the second-component parameters to a model parameter dict.
 
@@ -257,6 +264,12 @@ def add_broad_params(
     he_balmer_profile : bool
         Give the He I lines the Balmer profile (narrow ``eline_sigma`` and the Balmer second
         component), through the fixed parameter ``eline_he_balmer_profile``.
+    forbidden_hi_broad : {None, "free"} or float
+        Give the high-ionization lines their own second-component fraction
+        ``eline_fbroad_forb_hi``, with the same second-component width and shift as the other
+        lines. ``free'' makes it a free parameter with the TopHat(0, 0.9) prior of the free
+        non-Balmer fraction. A number fixes it at that value. None leaves it out, and the
+        high-ionization lines then use ``eline_fbroad_forb``. Needs ``split_forbidden``.
 
     Returns
     -------
@@ -287,6 +300,19 @@ def add_broad_params(
         raise ValueError(
             f"forbidden_broad must be None, 'shared' or 'free', not {forbidden_broad!r}"
         )
+    if forbidden_hi_broad is not None:
+        if not split_forbidden:
+            raise ValueError("forbidden_hi_broad needs split_forbidden")
+        if isinstance(forbidden_hi_broad, str):
+            if forbidden_hi_broad != "free":
+                raise ValueError(
+                    f"forbidden_hi_broad must be None, 'free' or a number, not {forbidden_hi_broad!r}"
+                )
+            params["eline_fbroad_forb_hi"] = dict(
+                N=1, isfree=True, init=0.1, prior=priors.TopHat(mini=0.0, maxi=0.9)
+            )
+        else:
+            params["eline_fbroad_forb_hi"] = dict(N=1, isfree=False, init=float(forbidden_hi_broad))
     params["eline_sigma"] = {**params["eline_sigma"], "prior": narrow}
     return params
 
@@ -299,9 +325,11 @@ def _trapezoid(y, x):
 def self_check(model_params, obs, sps, theta, n_prior=100, seed=0):
     """Check TwoCompLineModel against HyperSpecModel before sampling.
 
-    With ``eline_fbroad = 0`` and every line width (``eline_sigma_forb`` and, if set,
+    With ``eline_fbroad = 0``, every second-component fraction (``eline_fbroad_forb`` and, if set,
+    ``eline_fbroad_forb_hi``) zero, and every line width (``eline_sigma_forb`` and, if set,
     ``eline_sigma_forb_hi``) equal to ``eline_sigma`` the two-component model must reproduce the
-    one-component model, whatever the line groups. With ``eline_fbroad = 0.5`` the Halpha + [NII] flux
+    one-component model, whatever the line groups. The prior draws use ``model_params`` as given,
+    and the other checks use a fixed ``eline_fbroad_forb_hi`` set to zero. With ``eline_fbroad = 0.5`` the Halpha + [NII] flux
     should barely change, because the second component redistributes flux instead of adding it.
 
     Parameters
@@ -328,17 +356,25 @@ def self_check(model_params, obs, sps, theta, n_prior=100, seed=0):
     if isinstance(obs, list | tuple):
         (obs,) = obs
 
+    fractions = ["eline_fbroad_forb", "eline_fbroad_forb_hi"]
+    hi = model_params.get("eline_fbroad_forb_hi")
+    given = model_params
+    if hi is not None and not hi["isfree"]:
+        # a fixed high-ionization fraction is set to zero for the comparison
+        model_params = {**model_params, "eline_fbroad_forb_hi": dict(hi, init=0.0)}
     m = TwoCompLineModel(model_params)
+    m_draw = m if model_params is given else TwoCompLineModel(given)
     ib = m.theta_index["eline_fbroad"].start
     widths = [*FORB_PARAM, *FORB_HI_PARAM]
-    new = [k for k in [*BROAD_PARAMS, *widths, "eline_fbroad_forb"] if k in m.theta_index]
+    new = [k for k in [*BROAD_PARAMS, *widths, *fractions] if k in m.theta_index]
     drop = [m.theta_index[k].start for k in new]
-    fixed = [*new, "eline_fbroad_forb", "eline_he_balmer_profile"]
+    fixed = [*new, *fractions, "eline_he_balmer_profile"]
     base = HyperSpecModel({k: v for k, v in model_params.items() if k not in fixed})
     t0 = np.array(theta, dtype=float)
     t0[ib] = 0.0
-    if "eline_fbroad_forb" in m.theta_index:
-        t0[m.theta_index["eline_fbroad_forb"].start] = 0.0
+    for k in fractions:
+        if k in m.theta_index:
+            t0[m.theta_index[k].start] = 0.0
     # with one width for all lines the line groups do not matter, so the model equals the base
     for k in widths:
         if k in m.theta_index:
@@ -361,8 +397,8 @@ def self_check(model_params, obs, sps, theta, n_prior=100, seed=0):
     bad = 0
     with np.errstate(all="ignore"):
         for _ in range(n_prior):
-            t = m.prior_transform(rng.uniform(size=m.ndim))
-            bad += not np.all(np.isfinite(m.predict(t, observations=[obs], sps=sps)[0][0]))
+            t = m_draw.prior_transform(rng.uniform(size=m_draw.ndim))
+            bad += not np.all(np.isfinite(m_draw.predict(t, observations=[obs], sps=sps)[0][0]))
     assert bad == 0, f"{bad} of {n_prior} prior draws give a non-finite spectrum"
     print(
         f"OK: f_b=0 reproduces the one-component model. Halpha+[NII] flux change at f_b=0.5: "
