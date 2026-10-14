@@ -315,7 +315,8 @@ class ResolutionMatrixModel(TwoCompLineModel):
         # with no instrumental part in the cached widths, _profile_widths gives intrinsic widths
         self._eline_sigma_kms = np.full(nline, self._p("eline_sigma", 0.0))
         prof, _, _, inst2 = self._profile_widths()
-        assert np.all(inst2 == 0)
+        # zero up to rounding, since numpy and Python can square eline_sigma to different last bits
+        assert np.all(inst2 <= 1e-12 * self._p("eline_sigma", 0.0) ** 2)
         fb = self._broad_fraction()
         s_b = self._p("eline_sigma_broad", 150.0)
         v_b = self._p("eline_vbroad", 0.0)

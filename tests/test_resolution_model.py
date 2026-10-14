@@ -233,6 +233,23 @@ def test_intrinsic_widths_and_no_instrument_in_lines(setup):
     assert np.isclose(total, elum[added].sum(), rtol=1e-9)
 
 
+def test_line_widths_with_last_bit_rounding(setup):
+    """An eline_sigma whose square rounds differently in numpy and Python still builds lines.
+
+    fine_lines sets every width to eline_sigma, so the instrumental part sig0**2 - eline_sigma**2
+    is zero up to rounding. For this value it is 5.7e-14 on the Mac, which failed an exact check.
+    """
+    from hubersed.sps.resolution_model import ResolutionMatrixModel, build_resolution_obs
+
+    params, src, wave, lsf = setup
+    params = dict(params, eline_sigma=dict(params["eline_sigma"], init=21.06017450160843))
+    flux = np.ones(wave.size)
+    (obs,) = build_resolution_obs(flux, flux, np.ones(wave.size, bool), gaussian_banded(wave, lsf))
+    model = ResolutionMatrixModel(params)
+    assert np.all(np.isfinite(predict(model, obs, src)))
+    assert np.all(model._profile_widths()[3] < 1e-9)
+
+
 def test_quadrature_rule_for_the_continuum(setup):
     """Below the library resolution the continuum is not smoothed; above it the kernel adds."""
     from hubersed.sps.resolution_model import ResolutionMatrixModel, build_resolution_obs
