@@ -16,7 +16,9 @@ on the model. Summed lines ([OII]3727, [OII]7325) add the emulation errors of th
 quadrature. Lines with a NaN flux or a non-positive error are skipped.
 
 ``--lines strong`` fits HB, OIII5007, NII6584, HA, SII6716, SII6731, OII3727, NEIII3869, HG and
-OI6300. ``--lines all`` adds OIII4363, SIII6312 and OII7325. ``--fluxes fsf`` uses the FastSpecFit
+OI6300. ``--lines all`` adds OIII4363, SIII6312 and OII7325. ``--lines semi`` adds SIII9069 and
+HEI5876 to the strong lines (Korhonen Cuestas+26 arXiv:2609.22488 Table 2, line list 2; they also
+drop OI6300); only these fits save the two extra lines. ``--fluxes fsf`` uses the FastSpecFit
 Gaussian fluxes of the six EmFit lines instead of the EmFit totals. ``--drop`` leaves the named
 lines out of the fit; they are still predicted.
 
@@ -75,6 +77,11 @@ LINES = {
     "SIII6312": ("S 3 6312.06A",),
     "OII7325": ("O 2 7323.00A", "O 2 7332.00A"),
 }
+# semi-strong lines, fitted only with --lines semi
+SEMI = {
+    "SIII9069": ("S 3 9068.62A",),
+    "HEI5876": ("He 1 5875.66A",),
+}
 AURORAL = ("OIII4363", "SIII6312", "OII7325")
 EMFIT_LINES = ("HB", "OIII5007", "NII6584", "HA", "SII6716", "SII6731")
 GAS = (
@@ -111,7 +118,7 @@ class LineModel:
         wave = np.asarray(self.emul.line_wavelengths, float)
         frac = np.asarray(self.emul.line_frac_error, float)
         idx = {n: i for i, n in enumerate(names)}
-        self.members = {k: np.array([idx[n] for n in v]) for k, v in LINES.items()}
+        self.members = {k: np.array([idx[n] for n in v]) for k, v in (LINES | SEMI).items()}
         self.k = {k: wild_curve(wave[m], mu) for k, m in self.members.items()}
         self.frac = {k: frac[m] for k, m in self.members.items()}
         self.ion = np.asarray(ion, float)
@@ -144,26 +151,33 @@ class LineModel:
 
 
 def load_row(tid, fluxes, table=OUT / "lineflux_table.fits"):
-    """Return the observed fluxes and errors of one galaxy as dicts over LINES."""
+    """Return the observed fluxes and errors of one galaxy as dicts over LINES and SEMI.
+
+    A line whose columns the table lacks (older tables have no SEMI lines) gets NaN.
+    """
     t = Table.read(table)
     row = t[t["TARGETID"] == tid]
     assert len(row) == 1, f"{tid} not in {table}"
     row = row[0]
-    pre = {k: ("FSF_" if fluxes == "fsf" and k in EMFIT_LINES else "") for k in LINES}
-    obs = {k: float(row[f"{pre[k]}F_{k}"]) for k in LINES}
-    err = {k: float(row[f"{pre[k]}E_{k}"]) for k in LINES}
+    pre = {k: ("FSF_" if fluxes == "fsf" and k in EMFIT_LINES else "") for k in LINES | SEMI}
+
+    def get(col):
+        return float(row[col]) if col in t.colnames else np.nan
+
+    obs = {k: get(f"{pre[k]}F_{k}") for k in LINES | SEMI}
+    err = {k: get(f"{pre[k]}E_{k}") for k in LINES | SEMI}
     return obs, err
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("targetid", type=int)
-    ap.add_argument("--lines", choices=("strong", "all"), default="strong")
+    ap.add_argument("--lines", choices=("strong", "all", "semi"), default="strong")
     ap.add_argument("--fluxes", choices=("emfit", "fsf"), default="emfit")
     ap.add_argument("--mu", type=float, default=0.4)
     ap.add_argument("--zstar", type=float, default=-0.41)
     ap.add_argument("--n-live", type=int, default=2000)
-    ap.add_argument("--drop", nargs="+", choices=list(LINES), default=[])
+    ap.add_argument("--drop", nargs="+", choices=list(LINES | SEMI), default=[])
     ap.add_argument("--prior", choices=("flat", "nicholls"), default="flat")
     ap.add_argument("--table", default=str(OUT / "lineflux_table.fits"))
     ap.add_argument("--zmin", type=float)
@@ -174,7 +188,8 @@ def main():
     assert i.size == 1, f"zstar {a.zstar} not in ionspec.npz {grid['zstar']}"
     model = LineModel(grid["ionspec"][i[0]], a.mu)
     obs, err = load_row(a.targetid, a.fluxes, a.table)
-    want = [k for k in LINES if (a.lines == "all" or k not in AURORAL) and k not in a.drop]
+    lines = LINES | SEMI if a.lines == "semi" else LINES
+    want = [k for k in lines if (a.lines == "all" or k not in AURORAL) and k not in a.drop]
     used = [k for k in want if np.isfinite(obs[k]) and err[k] > 0]
     print(f"{a.targetid}: fitting {used}; skipped {sorted(set(want) - set(used))}")
     o = np.array([obs[k] for k in used])
@@ -232,7 +247,7 @@ def main():
         )
         print(f"{lab:>10} {q[1]:8.3f} [{q[0]:8.3f}, {q[2]:8.3f}]")
     print(f"{'line':>10} {'data':>9} {'model/data median [16, 84]':>30} fitted")
-    for k in LINES:
+    for k in lines:
         if np.isfinite(obs[k]) and obs[k] != 0:
             r = np.percentile(flux[k] / obs[k], [16, 50, 84])
             print(
@@ -259,10 +274,10 @@ def main():
         n_like=sampler.n_like,
         seconds=seconds,
         used=np.array(used),
-        lines=np.array(list(LINES)),
-        obs=np.array([obs[k] for k in LINES]),
-        err=np.array([err[k] for k in LINES]),
-        draw_flux=np.stack([flux[k] for k in LINES], axis=1),
+        lines=np.array(list(lines)),
+        obs=np.array([obs[k] for k in lines]),
+        err=np.array([err[k] for k in lines]),
+        draw_flux=np.stack([flux[k] for k in lines], axis=1),
         mu=a.mu,
         zstar=a.zstar,
         fluxes=a.fluxes,
