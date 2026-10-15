@@ -20,18 +20,29 @@ OI6300. ``--lines all`` adds OIII4363, SIII6312 and OII7325. ``--fluxes fsf`` us
 Gaussian fluxes of the six EmFit lines instead of the EmFit totals. ``--drop`` leaves the named
 lines out of the fit; they are still predicted.
 
+``--prior nicholls`` multiplies the flat priors by Gaussians in gas_logno and gas_logco around the
+Nicholls+17 relations (arXiv:1612.03546, abundances.tex:301-304, total abundances, so on Cue's
+total [O/H] scale): gas_logno = log10(10^-0.852 + 10^gas_logz), sigma NO_SIGMA 0.3 dex (typical for
+individual objects, Andrews & Martini 2013, arXiv:1211.3418, ms.tex:1550), and gas_logco =
+log10(10^-0.43 + 10^(gas_logz + 0.02)), sigma CO_SIGMA 0.17 dex (Berg+19, arXiv:1901.08160, below
+12+log(O/H) 8.0). It enters as an extra term of the sampled log density; log_l_data saves the data
+log likelihood alone at every posterior point. ``--zmin`` raises the lower bound of the
+gas_logz prior, for example to force the upper metallicity branch. ``--table`` reads another table in the
+lineflux_table.fits format, such as mocks/mock_table.fits, and writes to a fits/ folder beside it.
+
 COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/fit.py TARGETID
 --lines strong`` (defaults: --mu 0.4 --zstar -0.41 --fluxes emfit --n-live 2000). No FSPS needed.
 
-OUTPUT: fits/<TARGETID>_<lines>_<fluxes>_mu<mu>_zs<zstar>.npz in
-results/2026-10-14_cue_lineflux_calibration/: the posterior points, log weights, log likelihoods,
+OUTPUT: fits/<TARGETID>_<lines>_<fluxes>_mu<mu>_zs<zstar>[_pnicholls][_zmin<zmin>].npz in
+results/2026-10-14_cue_lineflux_calibration/ (or beside --table): the posterior points, log weights, log likelihoods,
 log evidence, N_eff, likelihood calls, run time, settings, and the model flux of every line at 200
 posterior draws.
 """
 
 import argparse
 import time
+from pathlib import Path
 
 import jax.numpy as jnp
 import numpy as np
@@ -43,6 +54,8 @@ from hubersed.paths import PATHS
 
 OUT = PATHS["RESULTS"] / "2026-10-14_cue_lineflux_calibration"
 LOG54 = float(np.log10(5.4))
+NO_SIGMA = 0.3
+CO_SIGMA = 0.17
 CHUNK = 1024
 N_DRAW = 200
 SEED = 0
@@ -71,6 +84,16 @@ GAS = (
     ("gas_logno", -1.0, LOG54),
     ("gas_logco", -1.0, LOG54),
 )
+
+
+def nicholls_no(z):
+    """Return gas_logno on the Nicholls+17 nitrogen relation at gas_logz z."""
+    return np.log10(10**-0.852 + 10.0**z)
+
+
+def nicholls_co(z):
+    """Return gas_logco on the Nicholls+17 carbon relation at gas_logz z."""
+    return np.log10(10**-0.43 + 10.0 ** (z + 0.02))
 
 
 def wild_curve(wave, mu):
@@ -120,11 +143,11 @@ class LineModel:
         return flux, err
 
 
-def load_row(tid, fluxes):
+def load_row(tid, fluxes, table=OUT / "lineflux_table.fits"):
     """Return the observed fluxes and errors of one galaxy as dicts over LINES."""
-    t = Table.read(OUT / "lineflux_table.fits")
+    t = Table.read(table)
     row = t[t["TARGETID"] == tid]
-    assert len(row) == 1, f"{tid} not in lineflux_table.fits"
+    assert len(row) == 1, f"{tid} not in {table}"
     row = row[0]
     pre = {k: ("FSF_" if fluxes == "fsf" and k in EMFIT_LINES else "") for k in LINES}
     obs = {k: float(row[f"{pre[k]}F_{k}"]) for k in LINES}
@@ -141,27 +164,45 @@ def main():
     ap.add_argument("--zstar", type=float, default=-0.41)
     ap.add_argument("--n-live", type=int, default=2000)
     ap.add_argument("--drop", nargs="+", choices=list(LINES), default=[])
+    ap.add_argument("--prior", choices=("flat", "nicholls"), default="flat")
+    ap.add_argument("--table", default=str(OUT / "lineflux_table.fits"))
+    ap.add_argument("--zmin", type=float)
     a = ap.parse_args()
 
     grid = np.load(OUT / "ionspec.npz")
     i = np.flatnonzero(np.isclose(grid["zstar"], a.zstar))
     assert i.size == 1, f"zstar {a.zstar} not in ionspec.npz {grid['zstar']}"
     model = LineModel(grid["ionspec"][i[0]], a.mu)
-    obs, err = load_row(a.targetid, a.fluxes)
+    obs, err = load_row(a.targetid, a.fluxes, a.table)
     want = [k for k in LINES if (a.lines == "all" or k not in AURORAL) and k not in a.drop]
     used = [k for k in want if np.isfinite(obs[k]) and err[k] > 0]
     print(f"{a.targetid}: fitting {used}; skipped {sorted(set(want) - set(used))}")
     o = np.array([obs[k] for k in used])
     e2 = np.array([err[k] for k in used]) ** 2
 
-    def loglike(x):
+    def loglike_data(x):
         flux, emu = model.fluxes(np.atleast_2d(x))
         m = np.stack([flux[k] for k in used], axis=1)
         var = e2[None, :] + np.stack([emu[k] for k in used], axis=1) ** 2
         return -0.5 * np.sum((o[None, :] - m) ** 2 / var + np.log(2 * np.pi * var), axis=1)
 
+    def log_prior_extra(x):
+        x = np.atleast_2d(x)
+        if a.prior == "flat":
+            return np.zeros(len(x))
+        z, no, co = x[:, 2], x[:, 3], x[:, 4]
+        return -0.5 * (
+            ((no - nicholls_no(z)) / NO_SIGMA) ** 2 + ((co - nicholls_co(z)) / CO_SIGMA) ** 2
+        )
+
+    def loglike(x):
+        return loglike_data(x) + log_prior_extra(x)
+
     prior = Prior()
     for name, lo, hi in GAS:
+        if name == "gas_logz" and a.zmin is not None:
+            assert lo < a.zmin < hi, f"zmin {a.zmin} outside the gas_logz range"
+            lo = a.zmin
         prior.add_parameter(name, dist=(lo, hi))
     prior.add_parameter("av", dist=(0.0, 3.0))
     lhb = np.log10(obs["HB"])
@@ -172,6 +213,9 @@ def main():
     sampler.run(verbose=False)
     seconds = time.time() - t0
     points, log_w, log_l = sampler.posterior()
+    log_l_data = np.concatenate(
+        [loglike_data(points[s : s + 20 * CHUNK]) for s in range(0, len(points), 20 * CHUNK)]
+    )
     w = np.exp(log_w - log_w.max())
     w /= w.sum()
     draws = points[np.random.default_rng(SEED).choice(len(w), size=N_DRAW, p=w)]
@@ -196,15 +240,20 @@ def main():
                 f"{'yes' if k in used else 'no'}"
             )
 
-    (OUT / "fits").mkdir(parents=True, exist_ok=True)
+    fits_dir = Path(a.table).parent / "fits"
+    fits_dir.mkdir(parents=True, exist_ok=True)
     drop = "".join(f"_no{k}" for k in a.drop)
-    name = f"{a.targetid}_{a.lines}{drop}_{a.fluxes}_mu{a.mu:.1f}_zs{a.zstar:+.2f}.npz"
+    pri = "" if a.prior == "flat" else f"_p{a.prior}"
+    pri += "" if a.zmin is None else f"_zmin{a.zmin:+.2f}"
+    name = f"{a.targetid}_{a.lines}{drop}_{a.fluxes}_mu{a.mu:.1f}_zs{a.zstar:+.2f}{pri}.npz"
     np.savez(
-        OUT / "fits" / name,
+        fits_dir / name,
         labels=np.array(labels),
         points=points,
         log_w=log_w,
         log_l=log_l,
+        log_l_data=log_l_data,
+        prior=a.prior,
         log_z=sampler.log_z,
         n_eff=sampler.n_eff,
         n_like=sampler.n_like,
