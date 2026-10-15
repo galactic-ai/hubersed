@@ -14,6 +14,12 @@ control within DM of it, else the nearest. ``compare`` reads the free and fit.py
 picks and of forced_ids.txt and writes control_compare.txt: O/H, A_V, the change of the best data
 log likelihood, model/data per line and of Halpha/Hbeta. SEED: SEED.
 
+RESULT: 2026-10-15, 989 in the pool, 10 picks (fits run on ls6 idev). 8 of 10 free fits sit at O/H
+7.86-8.20; 2 are already above 8.4 (8.44, 8.89, A_V ~0.7). Forced, the 8 lose dlnL 4.5 to 144 (median
+~16) with the same pattern as forced_ids: [OIII] 1.11-1.20x, [SII]6716 1.11-1.26x (7 of 8), [OII]3727
+0.56-0.82x (5 of 8), A_V drops and Halpha/Hbeta model/data falls to 0.81-0.96. The [OII]7325 cut does
+not cause the failure.
+
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/control.py pick``
 (queries Astro Data Lab); then for each TARGETID in control/control_ids.txt, ``fit.py TARGETID
 --lines strong --table results/2026-10-14_cue_lineflux_calibration/control/control_table.fits`` with
