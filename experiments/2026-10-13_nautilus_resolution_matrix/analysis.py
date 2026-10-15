@@ -15,10 +15,15 @@ COMMAND: from the repository root on the Mac
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
 experiments/2026-10-13_nautilus_resolution_matrix/analysis.py``.
 
-RESULT: not run yet.
+RESULT: preliminary, rmatrix snapshot after link 3509798 (N_eff 583, unsettled). Lines as
+expected (eline_sigma_forb 22.3, eline_sigma 24.9, dust_ratio 0.39). Not as expected: sigma_smooth
+31, and the SFH moves (logzsol -0.61 to -0.41, logmass 8.78 to 8.69). Gas logU -2.54 to -2.06.
+Link 3509799 ended unconverged too (N_eff 511 at 11.6M calls). The gas logU and n_H are not
+robust: Cue's single cloud is too hot here ([SIII]6312/9069 +45% at max-L, auroral_checks.py),
+and n_H is set by [OII]7320,7330, not by the [SII] density (map_unmask.py).
 
 FIGURES: compare_posteriors.txt (median, 16-84%, shift from ER in ER half widths) and
-corner_{lines,dust_gas,stars}.png in results/2026-10-13_nautilus_resolution_matrix/.
+corner_{lines,dust_gas,stars,phys,gas_lines}.png in results/2026-10-13_nautilus_resolution_matrix/.
 """
 
 # %%
@@ -61,6 +66,31 @@ GROUPS = {
     ],
     "dust_gas": ["dust2", "dust_ratio", "dust_index", "gas_logz", "gas_logu", "gas_logno"],
     "stars": ["logzsol", "logmass", "sigma_smooth", "logsfr_ratios_1", "logsfr_ratios_2"],
+    "phys": [
+        "logzsol",
+        "dust2",
+        "logmass",
+        "sigma_reg",
+        "tau_eq",
+        "sigma_dyn",
+        "tau_dyn",
+        *[f"logsfr_ratios_{i}" for i in range(1, 10)],
+        "dust_ratio",
+        "dust_index",
+        "sigma_smooth",
+    ],
+    "gas_lines": [
+        "gas_logz",
+        "gas_logu",
+        "gas_lognH",
+        "gas_logno",
+        "gas_logco",
+        "eline_sigma",
+        "eline_fbroad",
+        "eline_sigma_broad",
+        "eline_vbroad",
+        "eline_sigma_forb",
+    ],
 }
 
 
