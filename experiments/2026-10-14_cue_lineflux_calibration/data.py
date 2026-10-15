@@ -15,8 +15,9 @@ Fluxes, all in 1e-17 erg/s/cm2 and not dust-corrected:
 - FSF_<line>: FastSpecFit Gaussian fluxes of the six EmFit lines, for the FastSpecFit-only run.
 
 [OIII]4959 and [NII]6548 are left out, since their ratio to the strong line is fixed by atomic
-physics. Also saved: Z, LOGMSTAR, the EmFit flags prob_broad, ha_b_sigma, oiii_dbl_flag and
-sii_dbl_flag, and WIDE_BROAD (prob_broad >= 80 and ha_b_sigma > 500 km/s).
+physics. Also saved: Z, LOGMSTAR, the FastSpecFit rest-frame HBETA_EW (A) as EW_HB, the EmFit
+flags prob_broad, ha_b_sigma, oiii_dbl_flag and sii_dbl_flag, and WIDE_BROAD (prob_broad >= 80 and
+ha_b_sigma > 500 km/s).
 
 COMMAND: ``uv run python experiments/2026-10-14_cue_lineflux_calibration/data.py`` from the
 repository root. It queries Astro Data Lab.
@@ -128,6 +129,7 @@ out = Table()
 out["TARGETID"] = fsf["TARGETID"]
 out["Z"] = fsf["Z"]
 out["LOGMSTAR"] = fsf["LOGMSTAR"]
+out["EW_HB"] = fsf["HBETA_EW"]
 for name, comps in EMFIT.items():
     out[f"F_{name}"] = sum(col(f"{c}_flux") for c in comps)
     out[f"E_{name}"] = np.sqrt(sum(col(f"{c}_flux_err") ** 2 for c in comps))
