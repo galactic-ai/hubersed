@@ -16,6 +16,14 @@ semi_ids.txt, KEEP) and against N2. If [SII] and [SIII] are off by the same fact
 is the likely cause; if their ratio is off, low-ionization emission from outside HII regions is
 (von Raesfeld+26 arXiv:2609.27081 Fig. 3). SEED: none.
 
+RESULT: 2026-10-15, 444 galaxies, 443 semi fits (ls6 idev; 1 not finished), direct T_e kept for 433
+(rho with N2 +0.53, median 8.09 to 8.59 from N2 <= -1.2 to > -0.6). Cue semi O/H is flat at 8.1-8.2
+in every N2 bin (rho with direct -0.09, with N2 +0.09; median offset -0.14 [-0.49, +0.20]); strong
+on the 107 with both: rho -0.22. Metal-poorer galaxies (N2 <= -0.8, 309): model/data [SII] 0.95,
+[SIII] 1.31, [SII]/[SIII] 0.70, held-out [OI] 0.53, the low-ionization excess of von Raesfeld+26;
+N2 > -0.8 (134): 0.99, 1.04, 0.95, 0.72. Adding [SIII] and He I does not break the branch
+degeneracy here; only 9% of SV3 star-forming galaxies (2% above log M* 10) have [SIII]9069 anyway.
+
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/semi.py ids``;
 ``direct.py --ids results/2026-10-14_cue_lineflux_calibration/semi/semi_ids.txt``; ``semi.py jobs``;
 each line of semi/jobs.txt from the repository root (ls6, one process per core); then ``semi.py
@@ -102,8 +110,12 @@ def compare():
         f"{'w>8.4':>5} {'SII':>5} {'SIII':>5} {'S2/S3':>5} {'OI':>5}",
     ]
     rows = []
+    missing = []
     for tid in np.loadtxt(SEM / "semi_ids.txt", dtype=np.int64):
         tid = int(tid)
+        if not (OUT / "fits" / f"{tid}_{SEMI}.npz").exists():
+            missing.append(tid)
+            continue
         r = t[tid]
         n2 = float(np.log10(r["F_NII6584"] / r["F_HA"]))
         s = forced.load(tid, SEMI)
@@ -124,6 +136,7 @@ def compare():
         rows.append((n2, dir_oh if keep else np.nan, st, s["oh"][1], s2, s3, rr, oi))
     a = np.array(rows, float)
     out.append("")
+    out.append(f"semi fits missing: {len(missing)} {missing}")
     out.append(
         f"N = {len(a)}; Cue semi O/H vs N2: rho {spearmanr(a[:, 3], a[:, 0]).statistic:+.2f}"
     )
