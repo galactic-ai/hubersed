@@ -17,7 +17,8 @@ quadrature. Lines with a NaN flux or a non-positive error are skipped.
 
 ``--lines strong`` fits HB, OIII5007, NII6584, HA, SII6716, SII6731, OII3727, NEIII3869, HG and
 OI6300. ``--lines all`` adds OIII4363, SIII6312 and OII7325. ``--fluxes fsf`` uses the FastSpecFit
-Gaussian fluxes of the six EmFit lines instead of the EmFit totals.
+Gaussian fluxes of the six EmFit lines instead of the EmFit totals. ``--drop`` leaves the named
+lines out of the fit; they are still predicted.
 
 COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/fit.py TARGETID
@@ -139,6 +140,7 @@ def main():
     ap.add_argument("--mu", type=float, default=0.4)
     ap.add_argument("--zstar", type=float, default=-0.41)
     ap.add_argument("--n-live", type=int, default=2000)
+    ap.add_argument("--drop", nargs="+", choices=list(LINES), default=[])
     a = ap.parse_args()
 
     grid = np.load(OUT / "ionspec.npz")
@@ -146,7 +148,7 @@ def main():
     assert i.size == 1, f"zstar {a.zstar} not in ionspec.npz {grid['zstar']}"
     model = LineModel(grid["ionspec"][i[0]], a.mu)
     obs, err = load_row(a.targetid, a.fluxes)
-    want = [k for k in LINES if a.lines == "all" or k not in AURORAL]
+    want = [k for k in LINES if (a.lines == "all" or k not in AURORAL) and k not in a.drop]
     used = [k for k in want if np.isfinite(obs[k]) and err[k] > 0]
     print(f"{a.targetid}: fitting {used}; skipped {sorted(set(want) - set(used))}")
     o = np.array([obs[k] for k in used])
@@ -195,7 +197,8 @@ def main():
             )
 
     (OUT / "fits").mkdir(parents=True, exist_ok=True)
-    name = f"{a.targetid}_{a.lines}_{a.fluxes}_mu{a.mu:.1f}_zs{a.zstar:+.2f}.npz"
+    drop = "".join(f"_no{k}" for k in a.drop)
+    name = f"{a.targetid}_{a.lines}{drop}_{a.fluxes}_mu{a.mu:.1f}_zs{a.zstar:+.2f}.npz"
     np.savez(
         OUT / "fits" / name,
         labels=np.array(labels),
