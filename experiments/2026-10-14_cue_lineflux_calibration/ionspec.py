@@ -16,7 +16,8 @@ COMMAND: from the repository root on the Mac with the C3K_ER build,
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
 experiments/2026-10-14_cue_lineflux_calibration/ionspec.py``
 
-OUTPUT: ionspec.txt in results/2026-10-14_cue_lineflux_calibration/.
+OUTPUT: ionspec.txt, and ionspec.npz (zstar, the 7 ionizing parameters per zstar, their keys) for
+fit.py, in results/2026-10-14_cue_lineflux_calibration/.
 """
 
 import jax.numpy as jnp
@@ -118,3 +119,9 @@ text = "\n".join(out)
 print(text)
 OUT.mkdir(parents=True, exist_ok=True)
 (OUT / "ionspec.txt").write_text(text + "\n")
+np.savez(
+    OUT / "ionspec.npz",
+    zstar=np.array(ZSTARS),
+    ionspec=np.array([ion[z] for z in ZSTARS]),
+    keys=np.array(ION_KEYS),
+)
