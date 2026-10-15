@@ -15,10 +15,12 @@ COMMAND: from the repository root on the Mac
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
 experiments/2026-10-13_nautilus_resolution_matrix/analysis.py``.
 
-RESULT: preliminary, rmatrix snapshot after link 3509798 (N_eff 583, unsettled). Lines as
-expected (eline_sigma_forb 22.3, eline_sigma 24.9, dust_ratio 0.39). Not as expected: sigma_smooth
-31, and the SFH moves (logzsol -0.61 to -0.41, logmass 8.78 to 8.69). Gas logU -2.54 to -2.06.
-Link 3509799 ended unconverged too (N_eff 511 at 11.6M calls). The gas logU and n_H are not
+RESULT: rmatrix final state after link 3509799, unconverged (N_eff 511 at 11.6M calls, flat since
+~7M). Accepted as stable (Nikhil 2026-10-14): all medians within 0.08 rmatrix half widths of the
+3509798 snapshot (at most 0.15 ER half widths), widths within 0.96-1.09. Lines as expected
+(eline_sigma_forb 22.3, eline_sigma 24.9, dust_ratio 0.39). Not as expected: sigma_smooth 31, and
+the SFH moves (logzsol -0.61 to -0.41, logmass 8.78 to 8.69). Gas logU -2.54 to -2.05. Snapshot
+outputs are in snap_3509798/ of the results folder. The gas logU and n_H are not
 robust: Cue's single cloud is too hot here ([SIII]6312/9069 +45% at max-L, auroral_checks.py),
 and n_H is set by [OII]7320,7330, not by the [SII] density (map_unmask.py).
 
