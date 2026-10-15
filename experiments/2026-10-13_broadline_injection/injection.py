@@ -299,8 +299,10 @@ def load_hypers():
     return {k: float(best[k]) for k in HYPERS}, float(d["z"])
 
 
-def setup():
+def setup(unmasked_lines=()):
     """Return the data, observation and truth used by every mock and fit.
+
+    ``unmasked_lines`` is passed to model_setup.load_data.
 
     Returns
     -------
@@ -309,7 +311,7 @@ def setup():
         ``truth`` and ``maxl`` (dicts by name) and ``hypers``.
     """
     hypers, z_post = load_hypers()
-    z, flux, unc, good = load_data(MASK_LINES)
+    z, flux, unc, good = load_data(MASK_LINES, unmasked_lines)
     assert np.isclose(z, z_post)
     obs = make_obs(flux, unc, good, "rmatrix")
     truth, maxl = load_truth()

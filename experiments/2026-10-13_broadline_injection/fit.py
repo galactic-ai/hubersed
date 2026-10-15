@@ -24,10 +24,12 @@ workers (6 were used) with
 ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
 experiments/2026-10-13_broadline_injection/fit.py run --seeds -1 0 1 2 3 4``
-once per worker, and ``... fit.py status`` to count done jobs. ``--scenarios`` limits the
-scenarios.
+once per worker, and ``... fit.py status`` to count done jobs. ``--scenarios``, ``--models`` and
+``--starts`` limit the jobs. ``--unmask "[SII]6731"`` also fits the pixels model_setup.UNMASK_LINES
+restores and writes to separate folders (the 2026-10-14 run used S0 S1 S3, shared, truth maxl).
 
-OUTPUT: fits/<scenario>_<seed>_<model>_<start>.npz in results/2026-10-13_broadline_injection/.
+OUTPUT: fits/<scenario>_<seed>_<model>_<start>.npz in results/2026-10-13_broadline_injection/, or
+fits_unmask_<lines>/ with ``--unmask``.
 """
 
 import argparse
@@ -79,11 +81,9 @@ def job_name(scenario, seed, fit_model, start):
     return f"{scenario}_{seed}_{fit_model}_{start}"
 
 
-def jobs(scenarios, seeds):
+def jobs(scenarios, seeds, models=FIT_MODELS, starts=STARTS):
     """Return the job list, scenario by scenario, then seed, fit model and start."""
-    return [
-        (sc, s, fm, st) for sc in scenarios for s in seeds for fm in FIT_MODELS for st in STARTS
-    ]
+    return [(sc, s, fm, st) for sc in scenarios for s in seeds for fm in models for st in starts]
 
 
 def claim(name):
@@ -179,29 +179,32 @@ def run_job(job, s, cue, mocks, models):
     )
 
 
-def run(scenarios, seeds):
-    """Claim and run jobs until none is left."""
+def run(scenarios, seeds, fit_models=FIT_MODELS, starts=STARTS, unmasked_lines=()):
+    """Claim and run jobs until none is left. ``unmasked_lines`` adds pixels to the fit."""
     FITS.mkdir(parents=True, exist_ok=True)
     CLAIMS.mkdir(parents=True, exist_ok=True)
     d = np.load(OUT / "mocks.npz")
     assert [str(x) for x in d["scenarios"]] == list(SCENARIOS)
-    s = setup()
-    assert np.array_equal(d["good"], s["good"]) and np.array_equal(d["unc"], s["unc"])
+    s = setup(unmasked_lines)
+    # restored pixels may only add to the mocks' pixels, with the same uncertainty elsewhere
+    g = d["good"]
+    assert np.all(s["good"][g]) and np.array_equal(d["unc"][g], s["unc"][g])
+    assert unmasked_lines or np.array_equal(g, s["good"])
     cue = get_cue()
     models = {
         fm: ResolutionMatrixModel(make_fit_params(s["z"], fm, s["hypers"])) for fm in FIT_MODELS
     }
     t_sh = theta_for(models["shared"], s["truth"])
     assert np.array_equal(t_sh, d["truth_theta"])
-    for job in jobs(scenarios, seeds):
+    for job in jobs(scenarios, seeds, fit_models, starts):
         if claim(job_name(*job)):
             run_job(job, s, cue, d["mocks"], models)
 
 
-def status(scenarios, seeds):
+def status(scenarios, seeds, models=FIT_MODELS, starts=STARTS):
     """Print how many jobs are done, claimed but not done, and left."""
     done = claimed = left = 0
-    for job in jobs(scenarios, seeds):
+    for job in jobs(scenarios, seeds, models, starts):
         n = job_name(*job)
         if (FITS / f"{n}.npz").exists():
             done += 1
@@ -217,10 +220,17 @@ if __name__ == "__main__":
     ap.add_argument("action", choices=("run", "status"))
     ap.add_argument("--scenarios", nargs="+", choices=SCENARIOS, default=list(SCENARIOS))
     ap.add_argument("--seeds", nargs="+", type=int, default=[-1, 0, 1, 2, 3, 4])
+    ap.add_argument("--models", nargs="+", choices=FIT_MODELS, default=list(FIT_MODELS))
+    ap.add_argument("--starts", nargs="+", choices=STARTS, default=list(STARTS))
+    ap.add_argument("--unmask", nargs="+", default=[], help="UNMASK_LINES names, e.g. [SII]6731")
     a = ap.parse_args()
+    if a.unmask:
+        # separate output, so these fits are not mixed with the masked ones
+        tag = "_".join(n.replace("[", "").replace("]", "").lower() for n in a.unmask)
+        FITS, CLAIMS = OUT / f"fits_unmask_{tag}", OUT / f"claims_unmask_{tag}"
     if a.action == "run":
         warnings.filterwarnings("ignore")
         np.seterr(all="ignore")
-        run(a.scenarios, a.seeds)
+        run(a.scenarios, a.seeds, a.models, a.starts, tuple(a.unmask))
     else:
-        status(a.scenarios, a.seeds)
+        status(a.scenarios, a.seeds, a.models, a.starts)
