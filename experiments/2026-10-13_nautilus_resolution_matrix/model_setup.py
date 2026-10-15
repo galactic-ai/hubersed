@@ -55,15 +55,22 @@ MISSING_LINES = {
     "Pa12": 8752.86,
     "Pa11": 8865.32,
 }
+# Lines whose pixels spender's sky-line mask removes, rest vacuum Angstrom, and the rest-frame half
+# width to restore. [SII]6731 lies on the weak OH line at 6902.7 A observed for this target.
+UNMASK_LINES = {"[SII]6731": 6732.67}
+UNMASK_HALF = 6.0
 
 
-def load_data(masked_lines=()):
+def load_data(masked_lines=(), unmasked_lines=()):
     """Return the redshift, flux and uncertainty in maggies, and the fitted pixels.
 
     Parameters
     ----------
     masked_lines : iterable of str
         Names in ``MISSING_LINES`` to mask at rest +-``LINE_HALF``.
+    unmasked_lines : iterable of str
+        Names in ``UNMASK_LINES``. Pixels within +-``UNMASK_HALF`` rest that only spender's mask
+        removed are fitted, with the recoadded flux and corrected ivar.
 
     Returns
     -------
@@ -90,6 +97,9 @@ def load_data(masked_lines=()):
     assert np.allclose(check[good], flux0[good], rtol=1e-5, atol=0), "DR1 coadd does not match"
     new = load_resolution_npz(COADD)
     good &= new["ivar"] > 0
+    for name in unmasked_lines:
+        near = np.abs(rest - UNMASK_LINES[name]) < UNMASK_HALF
+        good |= near & np.isfinite(new["flux"]) & (new["ivar"] > 0) & (rest < REST_MAX)
     flux = to_maggies(wave, new["flux"] * DESI_FLAM).value
     ivar = ivar_to_maggies(wave, np.where(good, new["ivar"], 1.0) * DESI_FLAM**-2).value
     for name in masked_lines:
