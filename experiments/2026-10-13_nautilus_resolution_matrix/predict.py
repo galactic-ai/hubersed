@@ -5,16 +5,42 @@ Run with the C3K_ER build first on PYTHONPATH, as for analysis.py.
 """
 
 import argparse
+import multiprocessing as mp
 import warnings
 
 import numpy as np
 from fit import MASKS, N_LIVE, OUT, loglike, process_state, stem
-from model_setup import load_data
+from model_setup import load_data, make_model, make_params
 from nautilus import Sampler
+from tqdm import tqdm
 
 from hubersed.fitting.chi2 import WAVE_OBS
 
 N_DRAW = 100
+N_PROC = 8
+_MODEL = {}
+
+
+def _init(z, lsf):
+    """Build one model per worker process."""
+    _MODEL["m"] = make_model(make_params(z), lsf)
+
+
+def _transform(rows):
+    """Return the prior transform of each row with the worker's model."""
+    return np.array([_MODEL["m"].prior_transform(x) for x in rows])
+
+
+def prior_transform_all(unit, z, lsf):
+    """Return model.prior_transform of every row of ``unit``, spread over N_PROC processes.
+
+    The SFH prior covariance depends on each point's hyperparameters, so points are done one by one.
+    """
+    chunks = np.array_split(unit, max(1, len(unit) // 5000))
+    ctx = mp.get_context("spawn")
+    with ctx.Pool(N_PROC, initializer=_init, initargs=(z, lsf)) as pool:
+        parts = list(tqdm(pool.imap(_transform, chunks), total=len(chunks), desc="prior transform"))
+    return np.vstack(parts)
 
 
 def main(lsf, mask):
@@ -37,7 +63,8 @@ def main(lsf, mask):
     # points more than e^-30 below the heaviest one add nothing to any statistic
     keep = log_w > log_w.max() - 30
     print(f"{name}: {len(unit)} points, {keep.sum()} kept, N_eff {s.n_eff:.0f}")
-    points = np.array([model.prior_transform(x) for x in unit[keep]])
+    points = prior_transform_all(unit[keep], z, lsf)
+    assert np.allclose(points[:100], [model.prior_transform(x) for x in unit[keep][:100]])
     log_w, log_l = log_w[keep], log_l[keep]
     w = np.exp(log_w - log_w.max())
     w /= w.sum()
