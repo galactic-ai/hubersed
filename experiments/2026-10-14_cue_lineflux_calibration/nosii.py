@@ -31,6 +31,15 @@ posterior predictions. It is reported only where the predicted log [OII]3727/[OI
 1 sigma of the observed (flux errors and prediction spread in quadrature), their cut for a fit that
 describes the HII regions. SEED: SEED for the Monte Carlo.
 
+RESULT: 2026-10-15, fits on ls6 idev. Direct T_e O/H follows N2 (rho +0.85, 19 galaxies); Cue does
+not in any variant. Cue - direct median [16, 84], rho: all lines -0.08 [-0.49, +0.41], -0.39; no
+[SII] +0.46 [-0.18, +0.69], +0.25; no [SII] + Nicholls +0.33 [-0.20, +0.63], +0.32; no [SII] and
+[OI] +0.20 [-0.23, +0.58], +0.10. Without [SII] most galaxies go to the upper branch (metal-poor
+ones included, 8.3-8.6 at direct 7.4-8.1), and held-out [SII] on the upper branch is 1.4-2.6x the
+data. Without [SII] and [OI], held-out [OI] model/data is 0.58 (N2 <= -0.8) and 0.81 (N2 > -0.8),
+f_exc[OI] 0.42 and 0.22, the sign of Raesfeld+26; the [OII]/[OIII] cut passes 76 of 78, so it does
+not vet these fits. The low direct values may themselves be biased low (n_e at the floor).
+
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/nosii.py jobs
 [OI6300]``; then each line of the job file from the repository root (ls6 idev); then ``nosii.py
 compare [OI6300]``.
