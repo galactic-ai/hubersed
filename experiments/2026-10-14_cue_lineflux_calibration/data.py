@@ -10,8 +10,8 @@ Fluxes, all in 1e-17 erg/s/cm2 and not dust-corrected:
 - EmFit totals for HB, HA, OIII5007, NII6584, SII6716, SII6731: the sum of the narrow, outflow and
   broad components EmFit fits. Errors are the component errors in quadrature.
 - FastSpecFit Gaussian fluxes for OII3727 (3726 + 3729, the split is not used), NEIII3869, HG,
-  OI6300, SIII6312, OIII4363 and OII7325 (7320 + 7330). Errors from FLUX_IVAR. A line with
-  FLUX_IVAR 0 gets NaN.
+  OI6300, SIII6312, OIII4363, OII7325 (7320 + 7330), SIII9069 and HEI5876. Errors from FLUX_IVAR.
+  A line with FLUX_IVAR 0 gets NaN ([SIII]9069 is beyond the DESI range above z ~0.08).
 - FSF_<line>: FastSpecFit Gaussian fluxes of the six EmFit lines, for the FastSpecFit-only run.
 
 [OIII]4959 and [NII]6548 are left out, since their ratio to the strong line is fixed by atomic
@@ -56,6 +56,8 @@ FSF = {
     "OI6300": ("OI_6300",),
     "SIII6312": ("SIII_6312",),
     "OII7325": ("OII_7320", "OII_7330"),
+    "SIII9069": ("SIII_9069",),
+    "HEI5876": ("HEI_5876",),
 }
 FSF_OF_EMFIT = {
     "HB": "HBETA",
