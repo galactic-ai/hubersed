@@ -26,12 +26,11 @@ COMMAND: ``uv run --no-sync python experiments/2026-10-13_broadline_injection/an
 the repository root (needs PYTHONPATH with experiments/2026-10-13_nautilus_resolution_matrix, as
 fit.py, for the paths in injection.py).
 
-RESULT: partial, 2026-10-13. Only 24 of 216 fits ran (S0, noise seeds -1, 0, 1; seed 1 without
-jitter starts) before the run was stopped, so S1 to S3 are not done. In S0 the jittered starts
-(5% of each prior range) ended in worse local optima (-ln p 25 to 624 above the best start, with
-gas_lognH at its floor), while the truth and max-L starts agreed to within 1.6 in -ln p. F-none on
-the noiseless S0 mock gives chi2 +2016 and gas_logz +0.8, gas_logno -0.7, gas_logco -5.4 posterior
-sd. See bias_table.txt.
+RESULT: 2026-10-14, 157 of 162 fits (S2 dropped; 5 jitter starts missing). S0 noiseless: F-shared
+recovers every gas parameter exactly. S1 (EmFit profile): F-shared unbiased (<= 0.04 sd, gas_logco at
+its ceiling aside). F-none biases gas_logz +0.8 to +1.0 sd and gas_logno -0.7 to -1.3 sd. S3 (broad
+ratios off Cue): F-shared biased, gas_logz -0.028 dex (-2.7 sd), gas_logno +0.012 dex (+1.9 sd),
+gas_logu -0.05 dex (-0.7 sd), gas_lognH -0.08 dex (-1.2 sd); F-free similar. See bias_table.txt.
 
 FIGURES: bias_gas.png (gas bias in posterior sd), bias_other.png (dust, logzsol, sigma_smooth,
 line parameters), starts.png (-ln p of each start minus the best start).
