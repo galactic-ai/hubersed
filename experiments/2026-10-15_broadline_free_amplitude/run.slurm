@@ -1,18 +1,9 @@
 #!/bin/bash
-# Nautilus run of the free-line model (fit_fork.py). Each job resumes the checkpoint, so it runs
-# either as one long job or as a chain of development-queue links with the same name, e.g.
-#   sbatch -J freeline --export=ALL,VARIANT=free experiments/2026-10-15_broadline_free_amplitude/run.slurm
-#   sbatch -J freeline --dependency=singleton --export=ALL,VARIANT=free <same script>   (next link)
-# For one long job override the queue on the command line: -p normal -t 48:00:00 and TIMEOUT
-# below the wall time (TIMEOUT=170000). The first job that ends without "Stopped before
-# convergence" writes a marker and cancels the pending links of its name.
-# Same as 2026-10-13_nautilus_resolution_matrix/chain.slurm (c3k_er_afe_v3, n_batch 960) with pool 96
-# and n_live 2000 (Nikhil 2026-10-15; ~165 GiB was free with pool 64),
-# EXP, VARIANT replacing LSF and MASK, the 10-13 folder on PYTHONPATH for model_setup.py,
-# and no RESUBMIT (TACC refuses sbatch from compute nodes).
-# A job that stops before convergence requeues itself (scontrol requeue), so it runs again without
-# a new submission. ls6 has JobRequeue 0 (hence --requeue here) and MaxBatchRequeue 5, so each
-# submitted job runs at most 6 times; REQUEUE=0 turns this off. Logs get the restart count.
+# Nautilus run of the free-line model. Each job resumes the checkpoint.
+# Chain links share a name: sbatch -J freeline2 --dependency=singleton run.slurm.
+# Normal queue: -p normal -t 48:00:00 and TIMEOUT=170000.
+# An unconverged job requeues itself, at most 5 times (ls6 MaxBatchRequeue). REQUEUE=0 turns it off.
+# A converged or failed job writes a marker and cancels the pending links.
 #SBATCH -p development
 #SBATCH -N 1
 #SBATCH -n 1
@@ -25,11 +16,11 @@
 REPO=/work/11006/nikhilgaruda/ls6/research/hubersed
 EXP=experiments/2026-10-15_broadline_free_amplitude
 SETUP=experiments/2026-10-13_nautilus_resolution_matrix
-TID=39627770174637084  # fixed in model_setup.py; used only in the marker and log names
+TID=39627770174637084  # for file names only
 VARIANT=${VARIANT:-free}
 POOL=${POOL:-96}
 NLIVE=${NLIVE:-2000}
-TIMEOUT=${TIMEOUT:-6000}  # sampler timeout in s; keep it below the -t wall time
+TIMEOUT=${TIMEOUT:-6000}  # s, below the wall time
 NBATCH=${NBATCH:-960}
 FLIVE=${FLIVE:-0.01}
 FSPS_SITE=${FSPS_SITE:-/work/11006/nikhilgaruda/ls6/research/fsps_builds/c3k_er_afe_v3/fsps_site}
@@ -48,7 +39,7 @@ export PYTHONPATH=$FSPS_SITE:$REPO/$SETUP
 export SPS_HOME=/work/11006/nikhilgaruda/ls6/research/sps_home_er
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 export XLA_FLAGS="--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1"
-# the venv's python directly, not uv run (uv run hung on a stale lock on 2026-10-10)
+# venv python, not uv run (uv run hung on a stale lock)
 $REPO/.venv/bin/python $EXP/fit_fork.py --variant $VARIANT --n-live $NLIVE \
     --pool $POOL --n-batch $NBATCH --timeout $TIMEOUT --f-live $FLIVE > "$LOG" 2>&1
 if grep -q "Stopped before convergence" "$LOG"; then
