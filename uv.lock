@@ -988,6 +988,7 @@ dependencies = [
     { name = "nautilus-sampler" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "pocomc" },
     { name = "pyneb" },
     { name = "requests" },
     { name = "schwimmbad" },
@@ -1030,6 +1031,7 @@ requires-dist = [
     { name = "nautilus-sampler", specifier = ">=1.0.6" },
     { name = "numpy", specifier = ">=2.3.4" },
     { name = "pandas", specifier = ">=2.3.3" },
+    { name = "pocomc", specifier = ">=1.2.6" },
     { name = "pyneb", specifier = ">=1.1.32" },
     { name = "requests", specifier = ">=2.32.5" },
     { name = "schwimmbad", specifier = ">=0.4.2" },
@@ -2485,6 +2487,24 @@ wheels = [
 ]
 
 [[package]]
+name = "pocomc"
+version = "1.2.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dill" },
+    { name = "multiprocess" },
+    { name = "numpy" },
+    { name = "scipy" },
+    { name = "torch" },
+    { name = "tqdm" },
+    { name = "zuko" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/13/91/b5118f38e75d0a6ef6f6736db1bf1f7af4e84a8f43cb728e15451b92f158/pocomc-1.2.6.tar.gz", hash = "sha256:c9d28250b379ccd80eee043c1d1b6fbfb68e4fe07cf848f5a8b0af9c42052b31", size = 46329, upload-time = "2024-09-20T13:39:26.281Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/db/43/9bcde0d06aefc46856af85e8c495e9026f3374af0e95a0bb396ef8f8c119/pocomc-1.2.6-py3-none-any.whl", hash = "sha256:fd087841d27cce0a0940697cd4ff95456dc15400d680db8fb82b133fa9945bd7", size = 45985, upload-time = "2024-09-20T13:39:24.937Z" },
+]
+
+[[package]]
 name = "pre-commit"
 version = "4.6.2"
 source = { registry = "https://pypi.org/simple" }
@@ -3627,4 +3647,17 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/41/53/2e0253c5efd69c9656b1843892052a31c36d37ad42812b5da45c62191f7e/widgetsnbextension-4.0.14.tar.gz", hash = "sha256:a3629b04e3edb893212df862038c7232f62973373869db5084aed739b437b5af", size = 1097428, upload-time = "2025-04-10T13:01:25.628Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ca/51/5447876806d1088a0f8f71e16542bf350918128d0a69437df26047c8e46f/widgetsnbextension-4.0.14-py3-none-any.whl", hash = "sha256:4875a9eaf72fbf5079dc372a51a9f268fc38d46f767cbf85c43a36da5cb9b575", size = 2196503, upload-time = "2025-04-10T13:01:23.086Z" },
+]
+
+[[package]]
+name = "zuko"
+version = "1.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "torch" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8c/41/ddbe72cb64996d7826ba427c675252be0c38fbd9fbf8920d0fcdaf5d8e38/zuko-1.6.0.tar.gz", hash = "sha256:edc516e51bbbf9d64e7663b617cf9293c6e1e6bbfcb39559bc383383e6663b04", size = 45245, upload-time = "2026-03-10T08:38:19.646Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/95/10/ff159867f522cd98e039e748c5e9777446e8b797a79be691c6b730676094/zuko-1.6.0-py3-none-any.whl", hash = "sha256:5c073b613a84a7cd65470ddb94855169020ac49432f73b85f25207e377248a4a", size = 48033, upload-time = "2026-03-10T08:38:21.039Z" },
 ]

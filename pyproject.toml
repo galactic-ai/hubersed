@@ -24,6 +24,7 @@ dependencies = [
     "nautilus-sampler>=1.0.6",
     "numpy>=2.3.4",
     "pandas>=2.3.3",
+    "pocomc>=1.2.6",
     "pyneb>=1.1.32",
     "requests>=2.32.5",
     "schwimmbad>=0.4.2",
