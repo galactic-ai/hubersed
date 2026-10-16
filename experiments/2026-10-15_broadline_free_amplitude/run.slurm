@@ -4,6 +4,7 @@
 # Normal queue: -p normal -t 48:00:00 and TIMEOUT=170000.
 # An unconverged job requeues itself, at most 5 times (ls6 MaxBatchRequeue). REQUEUE=0 turns it off.
 # A converged or failed job writes a marker and cancels the pending links.
+# MAILTO=<address> mails a short report at the end of each run.
 #SBATCH -p development
 #SBATCH -N 1
 #SBATCH -n 1
@@ -39,11 +40,22 @@ export PYTHONPATH=$FSPS_SITE:$REPO/$SETUP
 export SPS_HOME=/work/11006/nikhilgaruda/ls6/research/sps_home_er
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 export XLA_FLAGS="--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1"
+report() {
+    [ -n "$MAILTO" ] || return 0
+    {
+        echo "job $SLURM_JOB_ID run $RUN on $(hostname): $1, $(date)"
+        echo "status | bounds | ellipses | networks | calls | f_live | N_eff | log Z"
+        tr '\r' '\n' < "$LOG" | grep -E '^(Exploring|Sampling|Computing|Bounding)' | tail -1
+        grep -a -E '^log Z' "$LOG" | tail -1
+        echo "log $LOG"
+    } | mail -s "$SLURM_JOB_NAME $SLURM_JOB_ID run $RUN: $1" "$MAILTO" || true
+}
 # venv python, not uv run (uv run hung on a stale lock)
 $REPO/.venv/bin/python $EXP/fit_fork.py --variant $VARIANT --n-live $NLIVE \
     --pool $POOL --n-batch $NBATCH --timeout $TIMEOUT --f-live $FLIVE > "$LOG" 2>&1
 if grep -q "Stopped before convergence" "$LOG"; then
     echo "not converged, end $(date)"
+    report "not converged"
     if [ "${REQUEUE:-1}" = 1 ] && [ "$RUN" -lt 5 ]; then
         echo "requeueing job $SLURM_JOB_ID (run $RUN of at most 5 requeues)"
         scontrol requeue $SLURM_JOB_ID || echo "requeue failed, the next link continues"
@@ -51,5 +63,6 @@ if grep -q "Stopped before convergence" "$LOG"; then
 else
     echo "ended without 'Stopped before convergence' (converged or failed), $(date)" > "$MARKER"
     echo "converged or failed, wrote $MARKER, cancelling pending links, end $(date)"
+    report "converged or failed"
     scancel -u $USER -n $SLURM_JOB_NAME -t PENDING
 fi
