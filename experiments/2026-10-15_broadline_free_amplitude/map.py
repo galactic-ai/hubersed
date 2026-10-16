@@ -36,7 +36,7 @@ COMMAND: from the repository root on the Mac with the C3K_ER build,
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
 experiments/2026-10-15_broadline_free_amplitude/map.py {check,A,free,free_aur0.3,report}``.
 
-OUTPUT: map_<variant>.npz, map.txt and map_windows.png in
+OUTPUT: map_<variant>.npz, map.txt, map_windows.png and map_windows_A_free.png in
 results/2026-10-15_broadline_free_amplitude/.
 """
 
@@ -243,6 +243,9 @@ def report():
             f"\nA: f_b (all lines, shared) {states['A'][0]['theta'][lab.index('eline_fbroad')]:.3f}"
         )
     plot_windows({v: (states[v][2], states[v][3]) for v in cols}, z, OUT / "map_windows.png")
+    if "A" in states and "free" in states:
+        pair = {v: (states[v][2], states[v][3]) for v in ("A", "free")}
+        plot_windows(pair, z, OUT / "map_windows_A_free.png")
     text = "\n".join(out) + "\n"
     print(text)
     (OUT / "map.txt").write_text(text)
