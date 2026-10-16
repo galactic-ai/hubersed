@@ -1,7 +1,7 @@
 """Nautilus run of 39627770174637084 with the free-amplitude broadline model.
 
 Same data, mask, priors, library, resolution matrix and sampler settings as the rmatrix mask run
-of 2026-10-13_nautilus_resolution_matrix (its model_setup.py, n_live 1000, n_eff 2000), with the
+of 2026-10-13_nautilus_resolution_matrix (its model_setup.py, n_eff 2000), with the
 line model of hubersed.sps.free_lines (spec in UberSED
 knowledge/broadline_free_amplitude_spec_2026-10-15.md): Cue makes the narrow lines only, narrow
 [OII], [OIII] and [NII] have a 0.15 prior width about Cue, [SII], [OI] and [ArIII] are free, the
@@ -65,13 +65,13 @@ START_JSON = START.with_name(START.name.replace("_pred.npz", ".json"))
 VARIANTS = {"free": np.inf, "free_aur0.3": 0.3}
 STRONG_WIDTH = 0.15
 HYPERS = ("sigma_reg", "tau_eq", "sigma_dyn", "tau_dyn")
-N_LIVE = 1000
+N_LIVE = 2000  # 1000 in the 10-13 run, whose chain stalled at N_eff 400-700
 N_EFF = 2000
 
 
-def stem(variant):
+def stem(variant, n_live):
     """Return the file stem of one run."""
-    return f"{TID}_rmatrix_mask_{variant}_split{SPLIT:g}_rest{REST_MAX:g}_seed0"
+    return f"{TID}_rmatrix_mask_{variant}_nlive{n_live}_split{SPLIT:g}_rest{REST_MAX:g}_seed0"
 
 
 def make_model(z, variant):
@@ -161,7 +161,7 @@ def main(args, pool=None):
         Pool for nautilus. None makes a pool of ``args.pool`` workers with the spawn start
         method. ``fit_fork.py`` passes a forked one.
     """
-    name = stem(args.variant)
+    name = stem(args.variant, args.n_live)
     resuming = (args.out / f"{name}.h5").exists()
     if resuming and not args.check_only:
         print("resuming a checkpoint, setup checks skipped")
@@ -192,7 +192,7 @@ def main(args, pool=None):
         auroral_width=VARIANTS[args.variant],
         sigma_split=SPLIT,
         n_pix=int(good.sum()),
-        n_live=N_LIVE,
+        n_live=args.n_live,
         n_eff=N_EFF,
         f_live=args.f_live,
         labels=list(model.theta_labels()),
@@ -208,7 +208,7 @@ def main(args, pool=None):
             lnlike_of_unit_cube, prior_transform=model.prior_transform, likelihood_function=lnl
         ),
         n_dim=model.ndim,
-        n_live=N_LIVE,
+        n_live=args.n_live,
         pool=args.pool if pool is None else pool,
         n_batch=args.n_batch,
         seed=0,
@@ -241,6 +241,7 @@ def parse_args():
     parser.add_argument("--n-batch", type=int, default=None)
     parser.add_argument("--timeout", type=float, default=np.inf)
     parser.add_argument("--f-live", type=float, default=0.01)
+    parser.add_argument("--n-live", type=int, default=N_LIVE)
     parser.add_argument("--check-only", action="store_true")
     parser.add_argument("--out", type=Path, default=OUT)
     return parser.parse_args()
