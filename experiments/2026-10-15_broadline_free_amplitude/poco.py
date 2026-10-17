@@ -115,6 +115,7 @@ def run(args, pool):
         n_dim=model.ndim,
         n_effective=args.n_effective,
         n_active=args.n_active,
+        n_max_steps=args.n_max_steps,
         pool=pool,
         output_dir=str(folder),
         output_label="pmc",
@@ -142,6 +143,7 @@ def main():
     parser.add_argument("--n-total", type=int, default=4096)
     parser.add_argument("--n-evidence", type=int, default=4096)
     parser.add_argument("--save-every", type=int, default=5)
+    parser.add_argument("--n-max-steps", type=int, default=None, help="None is 10 * n_dim // 2")
     parser.add_argument("--mpi", action="store_true", help="one MPI rank per node, see NodePool")
     args = parser.parse_args()
     init = None
