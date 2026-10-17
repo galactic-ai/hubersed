@@ -12,6 +12,10 @@ is forked after the SSP build, as in fit_fork.py; with older builds (the Mac) ea
 own SSPs, ~6 GB each. State files go to ``poco_<TID>_<variant>_neff<n>/`` every ``--save-every``
 iterations, and a rerun resumes from the newest one.
 
+With ``--mpi`` (one MPI rank per node, e.g. through ibrun) each rank forks its own pool before MPI
+starts, and rank 0 splits each batch of likelihood calls over the ranks (NodePool). A toy run with
+the same seed gave the same log Z with a local pool and with two ranks (2026-10-17, Mac mpirun).
+
 RESULT: 2026-10-16, Mac, pool 2, n_effective 256, n_active 128 (poco_run2.log). Stopped at
 iteration 25 after 60 min and 87k calls, beta 0.00269. beta grew ~1.6x per iteration to iteration
 14 (22k calls), then ~1.25x; calls per iteration rose from ~2k to ~15k as the flow efficiency fell
@@ -31,10 +35,13 @@ results/2026-10-15_broadline_free_amplitude/.
 import argparse
 import multiprocessing as mp
 import re
+import sys
 import time
+import traceback
 from functools import partial
 
 import fsps
+import numpy as np
 from fit_fork import init_worker, jax_backend_started, prebuild_ssps
 
 
@@ -42,6 +49,50 @@ def latest_state(folder):
     """Return the newest state file in ``folder``, or None if there is none."""
     states = [p for p in folder.glob("pmc_*.state") if re.fullmatch(r"pmc_\d+", p.stem)]
     return max(states, key=lambda p: int(p.stem.split("_")[1])) if states else None
+
+
+class NodePool:
+    """Pool over MPI ranks, one per node, each mapping its share with its own forked pool.
+
+    Rank 0 runs the sampler and keeps the first share. The function is sent again only when it
+    changes.
+    """
+
+    def __init__(self, comm, local):
+        self.comm, self.local, self.size = comm, local, comm.Get_size()
+        self._sent = None
+
+    def map(self, f, tasks):
+        """Return ``[f(t) for t in tasks]``, split over the ranks in contiguous blocks."""
+        tasks = list(tasks)
+        blocks = [list(b) for b in np.array_split(np.arange(len(tasks)), self.size)]
+        new = f is not self._sent
+        for r in range(1, self.size):
+            self.comm.send((f if new else None, [tasks[i] for i in blocks[r]]), dest=r)
+        self._sent = f
+        out = self.local.map(f, [tasks[i] for i in blocks[0]])
+        for r in range(1, self.size):
+            out += self.comm.recv(source=r)
+        return out
+
+    def close(self):
+        """Stop the other ranks."""
+        for r in range(1, self.size):
+            self.comm.send("stop", dest=r)
+
+
+def serve(comm, local):
+    """Map the blocks rank 0 sends with the local pool until it says stop."""
+    f = None
+    while True:
+        while not comm.Iprobe(source=0):
+            time.sleep(0.005)  # no busy wait on a core the workers use
+        msg = comm.recv(source=0)
+        if msg == "stop":
+            return
+        g, block = msg
+        f = g if g is not None else f
+        comm.send(local.map(f, block), dest=0)
 
 
 def run(args, pool):
@@ -91,6 +142,7 @@ def main():
     parser.add_argument("--n-total", type=int, default=4096)
     parser.add_argument("--n-evidence", type=int, default=4096)
     parser.add_argument("--save-every", type=int, default=5)
+    parser.add_argument("--mpi", action="store_true", help="one MPI rank per node, see NodePool")
     args = parser.parse_args()
     init = None
     if hasattr(fsps.StellarPopulation, "build_ssps"):  # the ls6 fork; older builds skip the share
@@ -100,7 +152,26 @@ def main():
         init = init_worker
     assert not jax_backend_started(), "the JAX backend started before the fork"
     with mp.get_context("fork").Pool(args.pool, initializer=init) as pool:
-        run(args, pool)
+        if not args.mpi:
+            run(args, pool)
+            return
+        from mpi4py import MPI  # initialises MPI, so only after the fork
+
+        comm = MPI.COMM_WORLD
+        print(
+            f"rank {comm.Get_rank()} of {comm.Get_size()} on {MPI.Get_processor_name()}", flush=True
+        )
+        if comm.Get_rank() > 0:
+            serve(comm, pool)
+            return
+        nodes = NodePool(comm, pool)
+        try:
+            run(args, nodes)
+        except BaseException:
+            traceback.print_exc()
+            sys.stdout.flush()
+            comm.Abort(1)
+        nodes.close()
 
 
 if __name__ == "__main__":
