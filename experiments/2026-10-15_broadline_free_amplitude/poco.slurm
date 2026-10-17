@@ -10,7 +10,7 @@
 #SBATCH -n 1
 #SBATCH -c 128
 #SBATCH -t 06:00:00
-#SBATCH -A AST25023
+#SBATCH -A AST25022
 #SBATCH --requeue
 #SBATCH --open-mode=append
 #SBATCH -o /work/11006/nikhilgaruda/ls6/research/hubersed/%x_%j.out
