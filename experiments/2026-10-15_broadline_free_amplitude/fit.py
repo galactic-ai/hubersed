@@ -8,7 +8,9 @@ knowledge/broadline_free_amplitude_spec_2026-10-15.md): Cue makes the narrow lin
 auroral lines, [NeIII] and [SIII] are free (``--variant free``) or have width 0.3
 (``--variant free_aur0.3``), and broad H, [OII], [OIII], [NII], [SII] and [OI] have free
 amplitudes marginalized analytically. eline_fbroad is replaced by eline_sigma_broad_forb, so the
-run has the same 29 free parameters as the 10-13 run.
+run has the same 29 free parameters as the 10-13 run. ``--variant free_dust`` is free with
+dust_ratio Uniform(0, 2) instead of ClippedNormal(1, 0.3) and frac_nodust free, Uniform(0, 0.9),
+for 30 parameters.
 
 The setup check requires those labels (against the 10-13 run's .json) and, where the 10-13
 ``_pred.npz`` exists (the Mac), prints the chi2 at its max-L point and, if map.py's
@@ -51,6 +53,7 @@ from model_setup import (
 from nautilus import Sampler
 from prospect.fitting import lnprobfn
 from prospect.fitting.nested import lnlike_of_unit_cube, unit_cube_identity
+from prospect.models.priors import TopHat
 
 from hubersed.paths import PATHS
 from hubersed.sps.free_lines import FreeLineModel, add_free_line_params
@@ -62,7 +65,7 @@ START = (
     / f"{TID}_rmatrix_mask_er_broad_shared_split45_rest9000_seed0_pred.npz"
 )
 START_JSON = START.with_name(START.name.replace("_pred.npz", ".json"))
-VARIANTS = {"free": np.inf, "free_aur0.3": 0.3}
+VARIANTS = {"free": np.inf, "free_aur0.3": 0.3, "free_dust": np.inf}
 STRONG_WIDTH = 0.15
 HYPERS = ("sigma_reg", "tau_eq", "sigma_dyn", "tau_dyn")
 N_LIVE = 2000  # 1000 in the 10-13 run, whose chain stalled at N_eff 400-700
@@ -82,6 +85,9 @@ def make_model(z, variant):
         strong_width=STRONG_WIDTH,
         auroral_width=VARIANTS[variant],
     )
+    if variant == "free_dust":
+        params["dust_ratio"]["prior"] = TopHat(mini=0.0, maxi=2.0)
+        params["frac_nodust"] = dict(N=1, isfree=True, init=0.1, prior=TopHat(mini=0.0, maxi=0.9))
     return FreeLineModel(params)
 
 
@@ -119,6 +125,7 @@ def check_setup(args):
     labels = list(model.theta_labels())
     old = json.loads(START_JSON.read_text())["labels"]
     expect = [k for k in old if k != "eline_fbroad"] + ["eline_sigma_broad_forb"]
+    expect += ["frac_nodust"] if args.variant == "free_dust" else []
     assert sorted(labels) == sorted(expect), (labels, expect)
     lnl = loglike(model.theta, args.variant)  # the first call also compiles
     assert np.isfinite(lnl)
@@ -134,6 +141,7 @@ def check_setup(args):
     pred = np.load(START, allow_pickle=True)
     best = dict(zip([str(x) for x in pred["labels"]], pred["best"], strict=True))
     best["eline_sigma_broad_forb"] = best["eline_sigma_broad"]
+    best["frac_nodust"] = 0.0
     theta = np.array([best[k] for k in labels])
     t0 = time.time()
     chi2 = chi2_at(model, obs, cue, theta)
@@ -143,6 +151,7 @@ def check_setup(args):
         m = np.load(path)
         point = dict(zip([str(x) for x in m["labels"]], m["theta"], strict=True))
         point.update({k: best[k] for k in HYPERS})
+        point.setdefault("frac_nodust", 0.0)
         theta = np.array([point[k] for k in labels])
         print(f"chi2 at the MAP point of {path.name} {chi2_at(model, obs, cue, theta):.1f}")
     else:
