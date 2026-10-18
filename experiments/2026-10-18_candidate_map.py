@@ -10,17 +10,23 @@ the missing-line masks of model_setup.load_data. sigma_reg, tau_eq, sigma_dyn an
 at the #14 values map.py used, the max-L point of the 10-13 rmatrix chain. The start is the #14
 ``free`` MAP point with logmass set to the target's v2 MAP value. One Powell start, 40000 calls.
 
+``--start K --n-starts N`` runs only start K of N, so the starts can run as separate processes
+(2026-10-18_candidate_map.slurm). Start 0 is the unjittered start, the others add Gaussian jitter of
+``--jitter`` times each prior range (seed 0), drawn the same way in every process.
+
 model_setup reads TID, COADD and DR1_COADD as module globals, so they are set per target here.
 
 INPUTS: map_free.npz of map.py, the 10-13 _pred.npz, the candidate recoadds and the v2 MAP pkls in
-results/map_fits_outliers310_v2/. SEED: none.
+results/map_fits_outliers310_v2/. SEED: 0 for the jittered starts.
 
 COMMAND: from the repository root on the Mac with the C3K_ER build,
 ``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-18_candidate_map.py {fit,report} --tid <TID>``.
+experiments/2026-10-18_candidate_map.py {fit,report} --tid <TID>``. Multi-start on ls6: see the
+slurm script.
 
-OUTPUT: <TID>_map_free.npz, <TID>_map.txt and <TID>_map.png in results/2026-10-18_candidate_map/.
+OUTPUT: <TID>_map_free.npz, <TID>_map.txt and <TID>_map.png in results/2026-10-18_candidate_map/,
+with suffix _s<K> for a run with ``--start K``.
 """
 
 import argparse
@@ -33,7 +39,7 @@ import numpy as np
 from map import HYPERS, SPLIT, START, WINDOWS, amplitude_lines, chi2
 from model_setup import MISSING_LINES, get_cue, load_data, make_obs, make_params
 
-from hubersed.fitting.map_fits import map_fit
+from hubersed.fitting.map_fits import jitter_scale, map_fit, safe_lnprior
 from hubersed.paths import PATHS
 from hubersed.plotting.style import use_apj_style
 from hubersed.sps.free_lines import FreeLineModel, add_free_line_params
@@ -74,16 +80,40 @@ def build(tid):
     return model, make_obs(flux, unc, good, "rmatrix"), get_cue(), theta0
 
 
-def fit(tid, maxfev):
+def pick_start(model, theta0, start, n_starts, jitter):
+    """Return start ``start`` of ``n_starts``: theta0 for 0, else a jittered draw inside the prior."""
+    if start == 0:
+        return theta0
+    rng = np.random.default_rng(0)
+    scale = jitter_scale(model, theta0, jitter)
+    starts = []
+    for _ in range(400 * n_starts):
+        st = theta0 + rng.normal(0.0, scale)
+        if np.isfinite(safe_lnprior(model, st)):
+            starts.append(st)
+        if len(starts) == n_starts - 1:
+            return starts[start - 1]
+    raise RuntimeError(f"only {len(starts)} jittered starts inside the prior")
+
+
+def suffix(start):
+    """Return the file name suffix of a run."""
+    return "" if start is None else f"_s{start}"
+
+
+def fit(tid, maxfev, start=None, n_starts=1, jitter=0.02):
     """Run one MAP and save it."""
     model, obs, cue, theta0 = build(tid)
+    if start is not None:
+        theta0 = pick_start(model, theta0, start, n_starts, jitter)
     t = time.time()
     model.predict(theta0, observations=obs, sps=cue)
     print(f"{tid}: one prediction {time.time() - t:.2f} s", flush=True)
-    best, _ = map_fit(model, obs, cue, n_seeds=0, maxfev=maxfev, theta0=theta0, tag=str(tid))
+    tag = f"{tid}{suffix(start)}"
+    best, _ = map_fit(model, obs, cue, n_seeds=0, maxfev=maxfev, theta0=theta0, tag=tag)
     OUT.mkdir(parents=True, exist_ok=True)
     np.savez(
-        OUT / f"{tid}_map_free.npz",
+        OUT / f"{tid}_map_free{suffix(start)}.npz",
         labels=np.array(model.theta_labels()),
         theta0=theta0,
         theta=best.x,
@@ -91,13 +121,16 @@ def fit(tid, maxfev):
         nfev=best.nfev,
         success=best.success,
         maxfev=maxfev,
+        start=-1 if start is None else start,
+        n_starts=n_starts,
+        jitter=jitter,
     )
-    print(f"{tid}: -lnp {best.fun:.2f}, nfev {best.nfev}, success {best.success}", flush=True)
+    print(f"{tag}: -lnp {best.fun:.2f}, nfev {best.nfev}, success {best.success}", flush=True)
 
 
-def report(tid):
+def report(tid, start=None):
     """Write the chi2 table and parameters, and plot the spectrum and line windows."""
-    r = np.load(OUT / f"{tid}_map_free.npz")
+    r = np.load(OUT / f"{tid}_map_free{suffix(start)}.npz")
     model, obs, cue, _ = build(tid)
     spec = model.predict(r["theta"], observations=obs, sps=cue)[0][0]
     o = obs[0]
@@ -106,7 +139,8 @@ def report(tid):
     c2, n = chi2(obs, spec)
     nfree = len(r["theta"])
     out = [
-        f"MAP of {tid} (z {z:.5f}), free-line model, SFH hyperparameters fixed at #14's",
+        f"MAP of {tid} (z {z:.5f}), free-line model, SFH hyperparameters fixed at #14's"
+        + ("" if start is None else f", start {start} of {int(r['n_starts'])}"),
         f"-lnp {float(r['fun']):.2f}, nfev {int(r['nfev'])} of {int(r['maxfev'])}, "
         f"success {bool(r['success'])}, marginal term {float(model._ln_eline_penalty):.2f}",
         f"chi2 {c2:.1f} on {n} px, chi2/(n - {nfree}) {c2 / (n - nfree):.3f}",
@@ -131,7 +165,7 @@ def report(tid):
             for c in model.free_amplitudes
         ]
     text = "\n".join(out) + "\n"
-    (OUT / f"{tid}_map.txt").write_text(text)
+    (OUT / f"{tid}_map{suffix(start)}.txt").write_text(text)
     print(text)
 
     use_apj_style()
@@ -157,7 +191,7 @@ def report(tid):
         ax.set_title(f"{key}\nchi2/N {cw / max(nw, 1):.1f}", fontsize=9)
         ax.tick_params(labelsize=7)
         axc.tick_params(labelsize=7)
-    fig.savefig(OUT / f"{tid}_map.png", dpi=110, bbox_inches="tight")
+    fig.savefig(OUT / f"{tid}_map{suffix(start)}.png", dpi=110, bbox_inches="tight")
 
 
 def main():
@@ -166,8 +200,18 @@ def main():
     ap.add_argument("step", choices=("fit", "report"))
     ap.add_argument("--tid", type=int, required=True, choices=CANDIDATES)
     ap.add_argument("--maxfev", type=int, default=40000)
+    ap.add_argument("--start", type=int, default=None, help="run only this start")
+    ap.add_argument("--n-starts", type=int, default=1, help="number of starts, with --start")
+    ap.add_argument(
+        "--jitter", type=float, default=0.02, help="jitter as a fraction of each prior range"
+    )
     a = ap.parse_args()
-    fit(a.tid, a.maxfev) if a.step == "fit" else report(a.tid)
+    if a.start is not None and not 0 <= a.start < a.n_starts:
+        ap.error("--start must be in [0, --n-starts)")
+    if a.step == "fit":
+        fit(a.tid, a.maxfev, a.start, a.n_starts, a.jitter)
+    else:
+        report(a.tid, a.start)
 
 
 if __name__ == "__main__":
