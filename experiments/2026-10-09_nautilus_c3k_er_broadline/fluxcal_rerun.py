@@ -1,6 +1,6 @@
-"""Rerun the iron flux calibration of 39627770174637084, as iron ran it and with the ivar fixes.
+"""Rerun the iron flux calibration of a target's exposures, as iron ran it and with the ivar fixes.
 
-QUESTION: what is the calibration-vector ivar of this target's two exposures once the desispec
+QUESTION: what is the calibration-vector ivar of this target's exposures once the desispec
 fixes to the calibration uncertainty are applied, with the calibration vector itself unchanged?
 
 Iron (desispec 0.56.2) leaves an error floor of 20% on the standard-star ivars in the final
@@ -20,18 +20,24 @@ with numpy 1.23.5 instead of iron's 3.10 and 1.22.4, and desimodel/io.py load_pl
 ValueError as well as IndexError for numpy 1.23 (desi_env_0562/PATCHES.txt). DESIMODEL points at
 the desimodel 0.18.0 data folders focalplane and throughput.
 
-INPUTS: the iron frame, sky, fiberflatexp, stdstars-1, calibstars and fluxcalib files of exposures
-87113 and 88269, petal 1 (b1, r1, z1), under data/desi_iron_exposures/<night>/<expid>/. SEED: none.
+It was written for 39627770174637084 (exposures 87113 and 88269, petal 1), the default. --tid picks
+another target of targets.py. The cameras follow each exposure's petal, and the target row is the
+fiber modulo 500.
+
+INPUTS: the iron frame, sky, fiberflatexp, stdstars, calibstars and fluxcalib files of the target's
+exposures and petal, under data/desi_iron_exposures/<night>/<expid>/. SEED: none.
 
 COMMAND: on an ls6 compute node from the hubersed repository root,
 ``DESIMODEL=/work/11006/nikhilgaruda/ls6/research/desi_env_0562/desimodel
 /work/11006/nikhilgaruda/ls6/research/desi_env_0562/venv/bin/python
-experiments/2026-10-09_nautilus_c3k_er_broadline/fluxcal_rerun.py``.
+experiments/2026-10-09_nautilus_c3k_er_broadline/fluxcal_rerun.py``, with ``--tid <targetid>`` for
+the others.
 
 OUTPUT: fluxcal_rerun.txt and fluxcalib_rerun/{unpatched,patched}/fluxcalib-*.fits.gz with logs in
-results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/.
+the target's output folder of targets.py.
 """
 
+import argparse
 import importlib.util
 import pathlib
 import subprocess
@@ -39,13 +45,10 @@ import sys
 
 import numpy as np
 from astropy.io import fits
+from targets import REFERENCE, target
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DATA = ROOT / "data" / "desi_iron_exposures"
-OUT = ROOT / "results" / "2026-10-09_nautilus_c3k_er_broadline" / "39627770174637084"
-EXPOSURES = {87113: "20210503", 88269: "20210513"}
-CAMERAS = ("b1", "r1", "z1")
-TARGET_ROW = {87113: 224, 88269: 204}
 
 OLD_FINAL = """    # solve once again to get deconvolved variance
     #calibration,calibcovar=cholesky_solve_and_invert(A.todense(),B)
@@ -87,20 +90,20 @@ def patched_source():
     return path, src
 
 
-def run_one(mode):
-    """Run the calibration for every exposure and camera, in a child process per mode."""
+def run_one(mode, t):
+    """Return the arguments of every exposure and camera of target entry ``t`` for one mode."""
     args = []
-    for expid, night in EXPOSURES.items():
+    for expid, (night, petal, _) in t["exposures"].items():
         d = DATA / night / f"{expid:08d}"
-        for cam in CAMERAS:
-            out = OUT / "fluxcalib_rerun" / mode / f"fluxcalib-{cam}-{expid:08d}.fits.gz"
+        for cam in (f"{arm}{petal}" for arm in "brz"):
+            out = t["out"] / "fluxcalib_rerun" / mode / f"fluxcalib-{cam}-{expid:08d}.fits.gz"
             out.parent.mkdir(parents=True, exist_ok=True)
             args.append(
                 [
                     "--infile", str(d / f"frame-{cam}-{expid:08d}.fits.gz"),
                     "--sky", str(d / f"sky-{cam}-{expid:08d}.fits.gz"),
                     "--fiberflat", str(d / f"fiberflatexp-{cam}-{expid:08d}.fits.gz"),
-                    "--models", str(d / f"stdstars-1-{expid:08d}.fits.gz"),
+                    "--models", str(d / f"stdstars-{petal}-{expid:08d}.fits.gz"),
                     "--selected-calibration-stars", str(d / f"calibstars-{expid:08d}.csv"),
                     "--outfile", str(out),
                 ]
@@ -141,9 +144,15 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] == "--child":
         child(sys.argv[2], sys.argv[3:])
         return
-    lines = ["Iron flux calibration rerun of 39627770174637084 (desispec 0.56.2, petal 1)"]
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--tid", type=int, default=REFERENCE, help="target of targets.py")
+    tid = ap.parse_args().tid
+    t = target(tid)
+    petals = sorted({p for _, p, _ in t["exposures"].values()})
+    petal_text = ", ".join(str(p) for p in petals)
+    lines = [f"Iron flux calibration rerun of {tid} (desispec 0.56.2, petal {petal_text})"]
     for mode in ("unpatched", "patched"):
-        for argv in run_one(mode):
+        for argv in run_one(mode, t):
             log = pathlib.Path(argv[-1].replace(".fits.gz", ".log"))
             with open(log, "w") as fh:
                 r = subprocess.run(
@@ -154,14 +163,14 @@ def main():
         "unpatched vs iron, and patched vs unpatched: max rel diff over all fibers; for IVAR also"
         " the median ratio at the target row"
     )
-    for expid, night in EXPOSURES.items():
-        for cam in CAMERAS:
+    for expid, (night, petal, fiber) in t["exposures"].items():
+        for cam in (f"{arm}{petal}" for arm in "brz"):
             name = f"fluxcalib-{cam}-{expid:08d}.fits.gz"
             iron = DATA / night / f"{expid:08d}" / name
-            un = OUT / "fluxcalib_rerun" / "unpatched" / name
-            pa = OUT / "fluxcalib_rerun" / "patched" / name
-            c1 = compare(iron, un, TARGET_ROW[expid])
-            c2 = compare(un, pa, TARGET_ROW[expid])
+            un = t["out"] / "fluxcalib_rerun" / "unpatched" / name
+            pa = t["out"] / "fluxcalib_rerun" / "patched" / name
+            c1 = compare(iron, un, fiber % 500)
+            c2 = compare(un, pa, fiber % 500)
             lines.append(
                 f"{expid} {cam}: unpatched/iron C {c1['FLUXCALIB'][0]:.1e} IVAR {c1['IVAR'][0]:.1e}; "
                 f"patched/unpatched C {c2['FLUXCALIB'][0]:.1e}, IVAR ratio at target "
@@ -169,7 +178,7 @@ def main():
             )
     text = "\n".join(lines) + "\n"
     print(text)
-    (OUT / "fluxcal_rerun.txt").write_text(text)
+    (t["out"] / "fluxcal_rerun.txt").write_text(text)
 
 
 if __name__ == "__main__":
