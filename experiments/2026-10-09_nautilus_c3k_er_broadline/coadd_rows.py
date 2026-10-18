@@ -10,7 +10,11 @@ A5_knownissues.tex:29) and desispec issue 2372 derives the correct form, the iva
 pixel, R_hat = (sum_e C_e^-1)^-1 sum_e C_e^-1 R_e. PR 2377 implements it as _resolution_coadd,
 where data[k, j] is weighted by the normalised ivar at pixel j + k - ndiag//2. The arms are then
 merged the same way (coadd_cameras in PR 2377). Cosmic masking needs three or more exposures, so
-it does not apply here.
+it does not apply to the two-exposure reference. For targets with more, the row-weighted coadd
+masks cosmics as PR 2377 does (_mask_cosmics as merged, 4 sigma). The column-weighted rebuild
+masks them as iron did, whose mean gradient divides by the sum of the weights over all pixels
+rather than per pixel (desispec 0.56.2 coaddition.py:416, fixed in PR 2377). The number of
+pixels each masks is reported, in total and near the lines.
 
 The script does five things from the iron spectra file of healpix 26004.
 
@@ -44,6 +48,7 @@ row-weighted matrices) in the target's output folder of targets.py.
 import argparse
 
 import numpy as np
+import scipy.stats
 from astropy.io import fits
 from targets import REFERENCE, target
 
@@ -59,9 +64,130 @@ LINES = {
 }
 
 
-def column_coadd(res, ivar, mask):
+COSMICS_NSIG = 4.0  # desispec coadd default, 0.56.2 and PR 2377
+
+
+def iron_cosmics(wave, flux, ivar, mask, nsig=COSMICS_NSIG):
+    """Return the cosmic mask of desispec 0.56.2 coadd for one arm, exposures by pixels.
+
+    Port of coaddition.py:377-431 of 0.56.2. The mean gradient divides by the sum of gradivar over
+    all exposures and pixels. As there, a fully masked exposure is skipped in the gradient stack
+    but the index of the stack picks the exposure.
+    """
+    cosmic = np.zeros(ivar.shape, dtype=bool)
+    if ivar.shape[0] <= 2:
+        return cosmic
+    masked = ivar * (mask == 0)
+    grad, gradvar = [], []
+    for j in range(ivar.shape[0]):
+        good = masked[j] > 0
+        bad = ~good
+        if good.sum() == 0:
+            continue
+        ttflux = flux[j].copy()
+        ttivar = ivar[j].copy()
+        if bad.any():
+            ttflux[bad] = np.interp(wave[bad], wave[good], ttflux[good])
+            ttivar[bad] = np.interp(wave[bad], wave[good], ttivar[good])
+        ttvar = 1.0 / (ttivar + (ttivar == 0))
+        ttflux[1:] = ttflux[1:] - ttflux[:-1]
+        ttvar[1:] = ttvar[1:] + ttvar[:-1]
+        ttflux[0] = 0
+        grad.append(ttflux)
+        gradvar.append(ttvar)
+    grad, gradvar = np.array(grad), np.array(gradvar)
+    gradivar = (gradvar > 0) / np.array(gradvar + (gradvar == 0))
+    nspec = grad.shape[0]
+    sgradivar = np.sum(gradivar)
+    if sgradivar > 0:
+        meangrad = np.sum(gradivar * grad, axis=0) / sgradivar
+        deltagrad = grad - meangrad
+        chi2 = np.sum(gradivar * deltagrad**2, axis=0) / (nspec - 1)
+        for bi in np.where(chi2 > nsig**2)[0]:
+            k = np.argmax(gradivar[:, bi] * deltagrad[:, bi] ** 2)
+            cosmic[k, bi] = True
+    return cosmic
+
+
+def chi2_threshold(nspec, nsig):
+    """Return the chi2 of nspec - 1 dof whose tail holds the nsig one-sided normal tail (PR 2377)."""
+    return scipy.stats.chi2(nspec - 1).isf(scipy.stats.norm.cdf(-nsig))
+
+
+def iterative_masker(vec, ivar, nsig, min_for_cosmics, threshold=None):
+    """Return the values PR 2377 masks at one pixel, dropping the worst until chi2 passes."""
+    good = np.ones(len(vec), dtype=bool)
+    while True:
+        mean = (ivar[good] * vec[good]).sum() / ivar[good].sum()
+        metric = (vec - mean) ** 2 * ivar
+        chi2 = metric[good].sum()
+        cur = chi2_threshold(good.sum(), nsig) if threshold is None else threshold
+        if chi2 > cur:
+            good[np.argmax(metric * good)] = False
+        else:
+            break
+        if good.sum() < min_for_cosmics:
+            break
+    return ~good
+
+
+def pr2377_cosmics(wave, flux, ivar, nsig=COSMICS_NSIG):
+    """Return the cosmic mask of PR 2377 _mask_cosmics for one arm, exposures by pixels.
+
+    ``ivar`` is zero at masked pixels. Port of coaddition.py:512-641 at the PR 2377 merge commit
+    79529f9, without the logging.
+    """
+    min_for_cosmics = 3
+    cosmic = np.zeros(ivar.shape, dtype=bool)
+    if ivar.shape[0] < min_for_cosmics:
+        return cosmic
+    grad, gradvar, spec_pos = [], [], []
+    for j in range(ivar.shape[0]):
+        good = ivar[j] > 0
+        bad = ~good
+        if good.sum() == 0:
+            continue
+        spec_pos.append(j)
+        ttflux = flux[j].copy()
+        ttivar = ivar[j].copy()
+        if bad.any():
+            ttflux[bad] = np.interp(wave[bad], wave[good], ttflux[good])
+            ttivar[bad] = np.interp(wave[bad], wave[good], ttivar[good])
+        ttvar = 1.0 / (ttivar + (ttivar == 0))
+        grad.append(ttflux[1:] - ttflux[:-1])
+        gradvar.append(ttvar[1:] + ttvar[:-1])
+    spec_pos, grad, gradvar = (np.array(x) for x in (spec_pos, grad, gradvar))
+    gradivar = (gradvar > 0) / np.array(gradvar + (gradvar == 0))
+    nspec = grad.shape[0]
+    if nspec < min_for_cosmics:
+        return cosmic
+    sgradivar = np.sum(gradivar, axis=0)
+    bad = sgradivar == 0
+    if (~bad).any():
+        meangrad = np.sum(gradivar * grad, axis=0) / (sgradivar + bad.astype(int))
+        deltagrad = grad - meangrad
+        chi2 = np.sum(gradivar * deltagrad**2, axis=0)
+        med_chi2 = np.median(chi2)
+        if med_chi2 > 2 * scipy.stats.chi2(nspec - 1).ppf(0.5):
+            threshold = med_chi2 + (scipy.stats.scoreatpercentile(chi2, 84) - med_chi2) * nsig
+            fix_threshold = threshold
+        else:
+            threshold = chi2_threshold(nspec, nsig)
+            fix_threshold = None
+        for bi in np.where((chi2 > threshold) & (~bad))[0]:
+            cur = iterative_masker(
+                deltagrad[:, bi], gradivar[:, bi], nsig, min_for_cosmics, threshold=fix_threshold
+            )
+            cosmic[spec_pos[cur], bi] = True
+            cosmic[spec_pos[cur], bi + 1] = True
+    return cosmic
+
+
+def column_coadd(res, ivar, mask, cosmic=None):
     """Return the DR1 coadd of one arm, matrix weighted by the ivar of the column pixel."""
     good = ivar * (mask == 0)
+    if cosmic is not None:
+        good[cosmic] = 0
     tivar = good.sum(0)
     flux_w = good
     rdata = (ivar[:, None, :] * res).sum(0)
@@ -78,9 +204,11 @@ def row_weights(res, weights):
     return np.array([w[idx] for w in weights])
 
 
-def row_coadd(res, ivar, mask):
+def row_coadd(res, ivar, mask, cosmic=None):
     """Return the PR 2377 coadd of one arm: flux weights and the row-weighted matrix."""
     masked = ivar * (mask == 0)
+    if cosmic is not None:
+        masked[cosmic] = 0
     tivar = masked.sum(0)
     weights = masked.copy()
     bad = tivar == 0
@@ -169,19 +297,36 @@ def main(path, tid=REFERENCE):
     old, new = {}, {}
     out.append("")
     out.append("Check: column-weighted rebuild against the DR1 coadd (max abs difference)")
+    cosmics = []
     for b, e in exps.items():
-        tivar, fw, r_old = column_coadd(e["res"], e["ivar"], e["mask"])
+        c_iron = iron_cosmics(e["wave"], e["flux"], e["ivar"], e["mask"])
+        c_new = pr2377_cosmics(e["wave"], e["flux"], e["ivar"] * (e["mask"] == 0))
+        near = np.zeros(e["wave"].size, dtype=bool)
+        for rest in LINES.values():
+            near |= np.abs(e["wave"] - rest * (1 + Z)) < 10 * np.median(np.diff(e["wave"]))
+        cosmics.append(
+            f"  {b}: iron {c_iron.sum(1).tolist()} ({c_iron[:, near].sum()} near lines), "
+            f"PR 2377 {c_new.sum(1).tolist()} ({c_new[:, near].sum()} near lines)"
+        )
+        tivar, fw, r_old = column_coadd(e["res"], e["ivar"], e["mask"], c_iron)
         f_old = (fw * e["flux"]).sum(0) / np.where(tivar > 0, tivar, 1.0)
         out.append(
             f"  {b}: R {np.max(abs(r_old - dr1[f'{b}_res'])):.2e}, flux rel "
             f"{np.nanmax(abs(f_old - dr1[f'{b}_flux']) / np.maximum(abs(dr1[f'{b}_flux']), 1e-3)):.2e}, "
             f"ivar rel {np.nanmax(abs(tivar - dr1[f'{b}_ivar']) / np.maximum(dr1[f'{b}_ivar'], 1e-12)):.2e}"
         )
-        tivar_n, w, r_new = row_coadd(e["res"], e["ivar"], e["mask"])
+        tivar_n, w, r_new = row_coadd(e["res"], e["ivar"], e["mask"], c_new)
         f_new = (w * e["flux"]).sum(0)
         mask_new = np.bitwise_and.reduce(e["mask"], axis=0) * (tivar_n == 0)
         old[b] = dict(wave=e["wave"], flux=f_old, ivar=tivar, mask=dr1[f"{b}_mask"], res=r_old)
         new[b] = dict(wave=e["wave"], flux=f_new, ivar=tivar_n, mask=mask_new, res=r_new)
+    if rows.size > 2:
+        out.append("")
+        out.append(
+            f"Cosmic-masked pixels per exposure ({COSMICS_NSIG:g} sigma), iron 0.56.2 and PR 2377, "
+            "and how many lie within 10 px of the lines"
+        )
+        out += cosmics
 
     out.append("")
     out.append("Row-weighted against column-weighted coadd, per arm")
