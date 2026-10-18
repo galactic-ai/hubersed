@@ -4,7 +4,8 @@
 # REQUEUE=0 turns that off. MAILTO=<address> mails a short report at the end of each run.
 # Other queues: -p gpu-a100-dev -t 02:00:00 TLIM=6900, or -p development (as run.slurm).
 # Several nodes: sbatch -N 2 -n 2 runs one MPI rank per node through ibrun (poco.py --mpi), each
-# with its own pool of POOL workers. NMAXSTEPS sets --n-max-steps.
+# with its own pool of POOL workers. NMAXSTEPS sets --n-max-steps. FIT_TID=<targetid> fits another
+# target whose recoadd is in results/2026-10-18_candidate_resolution_matrix/.
 #SBATCH -p gpu-a100
 #SBATCH -N 1
 #SBATCH -n 1
@@ -18,7 +19,8 @@
 REPO=/work/11006/nikhilgaruda/ls6/research/hubersed
 EXP=experiments/2026-10-15_broadline_free_amplitude
 SETUP=experiments/2026-10-13_nautilus_resolution_matrix
-TID=39627770174637084  # for file names only
+TID=${FIT_TID:-39627770174637084}  # model_setup reads FIT_TID; the default is #14
+export FIT_TID=$TID
 VARIANT=${VARIANT:-free}
 POOL=${POOL:-128}
 NEFF=${NEFF:-512}
