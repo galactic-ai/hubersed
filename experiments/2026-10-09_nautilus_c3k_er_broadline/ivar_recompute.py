@@ -13,8 +13,8 @@ iron's (cframe). The exposures are then coadded per arm with the row weights of 
 ivars on the first two exposures.
 
 It was written for 39627770174637084 (exposures 87113 and 88269, petal 1), the default. --tid picks
-another target of targets.py. The cameras follow each exposure's petal. No cosmic masking is
-applied, as for the two-exposure reference.
+another target of targets.py. The cameras follow each exposure's petal. With three or more
+exposures the coadd masks cosmics as PR 2377 does (coadd_rows.pr2377_cosmics), on the new ivars.
 
 INPUTS: iron sframe, cframe and fluxcalib files of the target's exposures and petal under
 data/desi_iron_exposures/<night>/<expid>/, the patched fluxcalib files of fluxcal_rerun.py, and
@@ -32,7 +32,7 @@ import argparse
 
 import numpy as np
 from astropy.io import fits
-from coadd_rows import merge_arms, row_coadd
+from coadd_rows import merge_arms, pr2377_cosmics, row_coadd
 from targets import REFERENCE, target
 
 from hubersed.paths import PATHS
@@ -114,7 +114,12 @@ def main(TID=REFERENCE):
     lines.append("Repeat test with the new ivars (std of the normalised difference; 1 is right)")
     for b, es in exps.items():
         stack = {k: np.array([e[k] for e in es]) for k in ("flux", "ivar", "mask", "res")}
-        tivar, w, rdata = row_coadd(stack["res"], stack["ivar"], stack["mask"])
+        cosmic = pr2377_cosmics(es[0]["wave"], stack["flux"], stack["ivar"] * (stack["mask"] == 0))
+        if len(es) > 2:
+            lines.append(
+                f"  {b}: PR 2377 cosmic-masked pixels per exposure {cosmic.sum(1).tolist()}"
+            )
+        tivar, w, rdata = row_coadd(stack["res"], stack["ivar"], stack["mask"], cosmic)
         flux = (w * stack["flux"]).sum(0)
         mask = np.bitwise_and.reduce(stack["mask"], axis=0) * (tivar == 0)
         arms[b] = dict(wave=es[0]["wave"], flux=flux, ivar=tivar, mask=mask, res=rdata)
