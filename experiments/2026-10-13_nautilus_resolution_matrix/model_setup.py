@@ -16,7 +16,13 @@ emission lines that are missing from the Cue line list are masked at rest +-4 A.
 
 The parameters are those of the 10-09 ER fit (make_params there): the Cue broadline model with a
 shared forbidden broad fraction and sigma_split 45 km/s.
+
+The environment variable FIT_TID picks another target, default 39627770174637084. Its recoadd and
+DR1 matrix files are read from results/2026-10-18_candidate_resolution_matrix/<TID>/, made by the
+same 10-09 scripts. An environment variable reaches the forked workers and the MPI ranks.
 """
+
+import os
 
 import astropy.units as u
 import numpy as np
@@ -34,12 +40,17 @@ from hubersed.sps.resolution_matrix import load_resolution_npz
 from hubersed.sps.resolution_model import ResolutionMatrixModel, build_resolution_obs
 from hubersed.sps.utils import universe_age_gyr
 
-TID = 39627770174637084
+REFERENCE = 39627770174637084
+TID = int(os.environ.get("FIT_TID", REFERENCE))
 FB, SPLIT = "shared", 45.0
 REST_MIN, REST_MAX = 3320.0, 9000.0
 ER_RESULTS = PATHS["RESULTS"] / "2026-10-09_nautilus_c3k_er_broadline"
-COADD = ER_RESULTS / str(TID) / "resolution_matrix_rows_ivar.npz"
-DR1_COADD = ER_RESULTS / str(TID) / "resolution_matrix.npz"
+if TID == REFERENCE:
+    RECOADD = ER_RESULTS / str(TID)
+else:
+    RECOADD = PATHS["RESULTS"] / "2026-10-18_candidate_resolution_matrix" / str(TID)
+COADD = RECOADD / "resolution_matrix_rows_ivar.npz"
+DR1_COADD = RECOADD / "resolution_matrix.npz"
 LINE_HALF = 4.0  # rest-frame half width of the missing-line masks, in Angstrom
 # Lines missing from the Cue line list, rest vacuum Angstrom. NIST ASD air wavelengths (H I the
 # Aki-weighted mean over fine structure) converted to vacuum with Morton (2000).
