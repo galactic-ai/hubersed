@@ -1,21 +1,19 @@
-"""Refit the free-line model of 39627770174637084 with the spectrum ends masked: what holds dust_index at 0.4?
+"""Refit the free-line model of 39627770174637084 with the spectrum ends masked.
 
-QUESTION: the pocoMC posterior puts dust_index on its 0.4 ceiling. Is it held there by the blue end, the red
-end, or the whole spectrum? A calibration error at one end would show as n leaving the ceiling, or as a much
-smaller cost of forcing n down, once that end is masked.
+QUESTION: the pocoMC posterior puts dust_index on its 0.4 ceiling. Is it held there by the blue end,
+the red end, or the whole spectrum?
 
-Starts at the pocoMC best point (highest ln L + ln prior of the 300 particles with the highest ln L in a
-poco.py state) and maximises ln L + model.prior_product over dust2, dust_ratio, dust_index, logmass, logzsol
-and logsfr_ratios_1-9 (gas, line and SFH hyperparameters fixed; they are uncorrelated with dust_index in the
-posterior, |r| <= 0.1). Powell, then a Nelder-Mead polish. Local maximisation, not a posterior. Masks: none,
-rest < 3800 A, rest > 7600 A, both. For each mask, n free, n fixed at 0 and n fixed at -0.7.
+Starts at the pocoMC best point (highest ln L + ln prior of the 300 particles with the highest ln L)
+and maximises ln L + model.prior_product over dust2, dust_ratio, dust_index, logmass, logzsol and
+logsfr_ratios_1-9. Gas, line and SFH hyperparameters stay fixed (|r| <= 0.1 with dust_index).
+Powell, then Nelder-Mead. Masks: none, rest < 3800 A, rest > 7600 A, both. For each, n free, n = 0
+and n = -0.7.
 
-RESULT: 2026-10-17, mask_refit.txt. Neither end holds n up. n free: 0.365 (none), 0.365 (rest < 3800),
-0.384 (rest > 7600), 0.394 (both). Cost of n = 0: +21.7, +21.3, +36.9, +35.1; of n = -0.7: +131, +135, +153,
-+143. Masking the red end makes a steeper curve costlier, and at n = 0 dust_ratio goes to its lower bound
-0 (0.000 red-masked, 0.021 both). The grey slope is set by the 3800-7600 A continuum together with the
-emission lines: with a steeper curve the continuum wants more reddening than the Balmer lines allow once
-the lines see at least the diffuse dust. logmass falls 0.10-0.19 dex at n = 0 and 0.20-0.33 dex at -0.7.
+RESULT: 2026-10-17, mask_refit.txt. Neither end holds n up. n free is 0.365 to 0.394 for all masks.
+The cost of n = 0 is +21.7 (none), +21.3, +36.9 and +35.1 (both), and of n = -0.7 +131 to +153. With
+the red end masked, dust_ratio goes to 0 at n = 0. The grey slope comes from the 3800-7600 A
+continuum together with the emission lines. logmass falls 0.10-0.19 dex at n = 0 and 0.20-0.33 dex
+at n = -0.7.
 
 INPUTS: pmc_final.state of poco.py. SEED: none.
 

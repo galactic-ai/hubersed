@@ -1,23 +1,19 @@
-"""Is the 4600-4800 A cost of dust_index = 0 in the free-line fit of 39627770174637084 a spectral feature?
+"""Is the 4600-4800 A cost of dust_index = 0 in the fit of 39627770174637084 a feature?
 
-QUESTION: region_chi2.py puts the largest single-bin cost of n = 0 (no mask) at rest 4600-4800 A (+9.9), a
-bin with no model line. Is there a feature the model lacks there (He II 4686, the Wolf-Rayet blue bump
-of N III 4640 and C III 4650, [Fe III] 4658, [Ar IV] 4711/4740), or is it the smooth continuum bow?
+QUESTION: region_chi2.py puts the largest single-bin cost of n = 0 (no mask) at rest 4600-4800 A
+(+9.9), where the model has no line. Is it a missing feature (He II 4686, the Wolf-Rayet blue bump,
+[Fe III] 4658, [Ar IV] 4711/4740) or the smooth continuum bow?
 
-Repeats region_chi2's no-mask refits (n free and n = 0, same start, free set and objective), saves both
-points, lists the Cue lines in 4550-4800 A, and plots rest 4400-5000 A: data and both models with the
-n-free continuum, the residual from each model in % of the n-free continuum (10 A bins), and the running
-sum of the per-pixel chi2 difference. Also gives the excess equivalent width of data over each model in
-rest 4640-4700 A, with its error from the pipeline uncertainties. SEED: none.
+Repeats region_chi2's no-mask refits (n free and n = 0), lists the Cue lines in 4550-4800 A, and
+plots rest 4400-5000 A with the residuals and the running chi2 difference. Gives the excess
+equivalent width in rest 4640-4700 A. SEED: none.
 
-RESULT: 2026-10-17, he2_window.txt and .png. The data sit 2-8% above both models over rest ~4590-4700 A
-(observed 4710-4820 A at z 0.0253, mid b arm). Excess EW over 4640-4700 A is 4.3 +- 0.6 A (n free) and
-4.6 +- 0.6 A (n 0). In 60 A sliding windows over rest 4000-7400 A (line pixels dropped), 4600-4660 and
-4660-4720 A are the two largest positive excesses (4.7 and 5.8 sigma); other windows reach +-3.4 sigma
-(4.3 at 7240-7300 A), so the noise floor is above the pipeline errors. Cue has only weak lines there
-(largest 1.8% of continuum). 4600-4700 A carries +10.0 of the +21.7 no-mask cost of n = 0, because the
-n-free continuum is 0.4% higher there. The broad shape matches a Wolf-Rayet blue bump; a stellar
-absorption mismatch or a calibration wiggle is not ruled out.
+RESULT: 2026-10-17, he2_window.txt and .png. The data sit 2-8% above both models over rest
+~4590-4700 A. The excess EW over 4640-4700 A is 4.3 +- 0.6 A (n free) and 4.6 +- 0.6 A (n = 0).
+Among 60 A windows over rest 4000-7400 A these are the two largest excesses (4.7 and 5.8 sigma).
+Other windows reach +-3.4 sigma, so the noise is above the pipeline errors. 4600-4700 A carries
++10.0 of the +21.7 no-mask cost of n = 0. The shape matches a Wolf-Rayet bump. A stellar absorption
+mismatch or a calibration wiggle is not ruled out.
 
 COMMAND: from the repository root on the Mac with the C3K_ER build,
 ``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix

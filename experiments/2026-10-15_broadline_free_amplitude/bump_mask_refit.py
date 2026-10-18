@@ -1,18 +1,16 @@
 """Does the grey dust slope of 39627770174637084 survive masking the 4590-4720 A excess?
 
-QUESTION: he2_window.py finds the data 2-8% above the model over rest ~4590-4700 A (a possible Wolf-Rayet
-blue bump) and that this window carries +10.0 of the +21.7 no-mask cost of dust_index = 0. With it masked,
-how far does n move and what do n = 0 and n = -0.7 cost?
+QUESTION: he2_window.py finds a 2-8% excess over rest ~4590-4700 A that carries +10.0 of the +21.7
+no-mask cost of dust_index = 0. With it masked, how far does n move and what do n = 0 and n = -0.7
+cost?
 
-Repeats mask_refit.py (same start, free set, objective and slopes) for the masks none and both (rest
-3800-7600 A), with rest 4590-4720 A removed as well. Compare with mask_refit.txt. SEED: none.
+Repeats mask_refit.py for the masks none and both, with rest 4590-4720 A removed too. SEED: none.
 
-RESULT: 2026-10-17, bump_mask_refit.txt. Inconclusive. No mask: n free 0.365 -> 0.324, cost of
-n = 0 +21.7 -> +12.0, of n = -0.7 +131 -> +115. 3800-7600 A: n free 0.394 -> 0.400, n = 0 +35.1 -> +23.5
-(dust_ratio again at its 0 bound), n = -0.7 +143 -> +130. The excess explains about half of the
-no-mask n = 0 cost and a third of the 3800-7600 A one; the rest is the smooth continuum bow. These are
-local refits with pipeline errors, which understate the noise on 50-200 A scales, on the frac_nodust
-ridge, so this spectrum does not decide between a grey and a Calzetti-like slope.
+RESULT: 2026-10-17, bump_mask_refit.txt. Inconclusive. No mask: n free 0.365 to 0.324, cost of n = 0
++21.7 to +12.0, of n = -0.7 +131 to +115. 3800-7600 A: n free 0.394 to 0.400, n = 0 +35.1 to +23.5,
+n = -0.7 +143 to +130. The excess explains about half of the no-mask cost and the rest is the
+continuum bow. These local refits use pipeline errors, which understate the noise on 50-200 A
+scales, so this spectrum does not decide between a grey and a Calzetti-like slope.
 
 COMMAND: from the repository root on the Mac with the C3K_ER build,
 ``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix

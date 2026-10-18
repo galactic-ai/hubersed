@@ -1,18 +1,15 @@
 """Check the Balmer decrement of the free-line fit of 39627770174637084 at the pocoMC best point.
 
-QUESTION: the mask refits show the grey dust slope comes from the 3800-7600 A continuum against the
-emission lines (at n = 0, dust_ratio hits 0). Is the model's Halpha/Hbeta right? Prints (1) Cue's
-intrinsic Halpha/Hbeta (dust2 = dust_ratio = 0), (2) the model's attenuated ratio, (3) the ratio measured
-from the spectrum: data minus the model continuum, summed in clean windows (Hbeta rest 4855-4870 A,
-Halpha 6555-6572 A, clear of [NII] at 3 broad sigma), scaled by the model's own window sums, and (4)
-EmFit and FastSpecFit catalogue ratios. In the free-line model the narrow Balmer lines are tied to Cue
-and the broad Balmer amplitudes share one ratio, so the model ratio is Cue's attenuated ratio.
+QUESTION: at n = 0 the mask refits put dust_ratio at 0. Is the model's Halpha/Hbeta right?
 
-RESULT: 2026-10-17, balmer_check.txt. Cue intrinsic Halpha/Hbeta 2.804 (Case B 10^4 K 2.86), model
-attenuated 3.443, spectrum (data minus model continuum, clean windows) 3.460 (data/model Halpha 1.003,
-Hbeta 0.998), EmFit 3.551 +- 0.077, FastSpecFit 3.363 +- 0.028. The fit matches the decrement to 0.5%,
-so the line side of the dust is fine; the grey slope comes from the continuum wanting more reddening than
-the decrement allows at a steeper curve.
+Prints Cue's intrinsic Halpha/Hbeta, the model's attenuated ratio, the ratio of data minus model
+continuum in clean windows (Hbeta 4855-4870 A, Halpha 6555-6572 A), and the EmFit and FastSpecFit
+ratios. The narrow Balmer lines are tied to Cue and the broad ones share one ratio, so the model
+ratio is Cue's attenuated ratio.
+
+RESULT: 2026-10-17, balmer_check.txt. Cue intrinsic 2.804 (Case B 2.86), model 3.443, spectrum
+3.460, EmFit 3.551 +- 0.077, FastSpecFit 3.363 +- 0.028. The fit matches the decrement to 0.5%, so
+the grey slope comes from the continuum, not the lines.
 
 INPUTS: pmc_final.state of poco.py; results/2026-10-14_cue_lineflux_calibration/lineflux_table.fits.
 SEED: none.

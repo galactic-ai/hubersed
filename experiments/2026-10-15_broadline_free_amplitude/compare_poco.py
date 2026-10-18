@@ -1,13 +1,11 @@
 """Summarize a pocoMC state of the free-line fit and compare it with the MAP point.
 
-Loads a poco.py state file without running the sampler, maps the unit-cube samples through
-model.prior_transform, and prints the weighted 16/50/84% of every parameter and of gas-phase
-12+log(O/H) = gas_logz + 8.71, the effective sample size, beta, calls and log Z (final states
-only). The best log L of the particles is compared with the likelihood at the MAP point of
-map.py (map_free.npz, SFH hyperparameters at the 10-13 max-L, as in fit.py's check).
+Loads a poco.py state without running the sampler. Prints the weighted 16/50/84% of each parameter
+and of 12+log(O/H) = gas_logz + 8.71, the ESS, beta, calls and log Z (final states only). The best
+particle log L is compared with the map.py MAP point (map_free.npz).
 
-INPUTS: a pmc_<i>.state or pmc_final.state from poco.py, copied from ls6; map_free.npz and the
-10-13 _pred.npz for the MAP point. SEED: none.
+INPUTS: a pmc_<i>.state or pmc_final.state copied from ls6; map_free.npz and the 10-13 _pred.npz.
+SEED: none.
 
 COMMAND: from the repository root on the Mac with the C3K_ER build,
 ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-15_broadline_free_amplitude
@@ -46,7 +44,7 @@ def quantiles(x, w, q=(0.16, 0.5, 0.84)):
 def edges(model, name, x, w, frac=0.02):
     """Return the prior range of ``name`` and the posterior weight within ``frac`` of each edge.
 
-    Vector parameters such as logsfr_ratios_1 have no prior entry of their own and get blanks.
+    Vector parameters such as logsfr_ratios_1 get blanks.
     """
     if name not in model.config_dict:
         return ""

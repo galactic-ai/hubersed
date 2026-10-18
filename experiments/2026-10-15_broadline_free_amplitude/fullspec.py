@@ -1,9 +1,7 @@
 """Plot the full spectrum of 39627770174637084 with the model A and free-line MAP fits.
 
-The DESI data and both MAP spectra on top in DESI units (1e-17 erg/s/cm^2/A), then the chi of A
-and of the free-line model. The legend gives the reduced chi2, chi2 over the fitted pixels, as in
-the 10-13 fullspec_plot.py. Pixels the fits do not use are left empty, and the lines masked as
-missing from Cue are shaded.
+The data and both MAP spectra in DESI units, then the chi of each. The legend gives the reduced chi2
+over the fitted pixels. Unused pixels are empty and the lines missing from Cue are shaded.
 
 INPUTS: map_A.npz and map_free.npz of map.py. SEED: none.
 

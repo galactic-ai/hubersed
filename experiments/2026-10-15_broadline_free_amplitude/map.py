@@ -1,35 +1,25 @@
 """MAP fits of 39627770174637084 with the free-amplitude broadline model against model A.
 
-QUESTION: does the free-line model (hubersed.sps.free_lines; spec in UberSED
-knowledge/broadline_free_amplitude_spec_2026-10-15.md) fit the target as well as model A, and how
-do the narrow gas parameters and the line amplitudes move?
+QUESTION: does the free-line model (hubersed.sps.free_lines, spec in UberSED
+knowledge/broadline_free_amplitude_spec_2026-10-15.md) fit as well as model A, and how do the gas
+parameters and line amplitudes move?
 
-HYPOTHESIS: chi2 drops or stays (more free amplitudes). [SII] and [OI] take narrow amplitudes away
-from Cue ([OI] above it), so U, n_H and Z move. [OIII] keeps its own broad amplitude. The broad
-Balmer fraction stays near model A's 0.18.
+HYPOTHESIS: chi2 drops or stays. [SII] and [OI] leave Cue, so U, n_H and Z move. The broad Balmer
+fraction stays near model A's 0.18.
 
-Changes from model A (the 10-13 rmatrix fit, model_setup.py there): Cue makes the narrow lines
-only; narrow [OII], [OIII] and [NII] have a Gaussian prior of width 0.15 about Cue; [SII], [OI] and
-[ArIII] are free; the auroral lines, [NeIII] and [SIII] are free (free) or have width 0.3
-(free_aur0.3); broad H, [OII], [OIII], [NII], [SII] and [OI] each have a free amplitude, with
-widths eline_sigma_broad (Balmer) and eline_sigma_broad_forb (forbidden) and one shift.
+The line model is as in fit.py. Data, mask and start are those of the 10-13 rmatrix chain, with the
+SFH hyperparameters at its max-L and one Powell start. Model A is rerun from the same start.
+``check`` asserts that the free-line model with zero widths and no broad part reproduces model A.
 
-Data, mask and start are those of the rmatrix nautilus chain (lines missing from Cue masked). The
-SFH hyperparameters are fixed at its max-L point, one Powell start (map_fits.map_fit). Model A is
-rerun from the same start so the two are compared like for like. ``check`` first asserts that the
-free-line model with every width 0 and no broad part reproduces model A at f_b = 0.
+RESULT: 2026-10-15, map.txt. chi2 on 5530 px: A 6058.8, free 5887.3, free_aur0.3 5896.0. The gain is
+in [NeIII], [OII]3727, [OIII]4363, [OI] and [SII]. Broad f_b: H 0.167 (A 0.179), forbidden 0.09 to
+0.21; sigma_b 87.9 and sigma_f 85.9 km/s. 12+log(O/H) goes from 7.96 (A) to 8.67 (free) and 8.61
+(free_aur0.3), against direct 8.23, and C/O leaves its ceiling. Cue now over-predicts narrow [SII]
+and [OI] and is too cold for [OIII]4363 and [OII]7325. U and n_H differ by up to 0.9 dex between the
+two auroral settings.
 
-RESULT: 2026-10-15, map.txt. chi2 on 5530 px: A 6058.8, free 5887.3, free_aur0.3 5896.0. The
-gain is in [NeIII] (94 to 27), [OII]3727 (86 to 61), [OIII]4363 (40 to 24), [OI] (29 to 17) and
-[SII] (39 to 28); Halpha+[NII] stays ~140. Broad f_b: H 0.167 (A 0.179), [OIII] 0.163, [NII]
-0.200, [SII] 0.212, [OI] 0.20 +- 0.13, [OII] 0.09 +- 0.04; sigma_b 87.9 and sigma_f 85.9 km/s.
-No negative amplitudes. Gas flips branch: 12+log(O/H) 7.96 (A) to 8.67 (free) and 8.61
-(free_aur0.3), against direct 8.23; C/O leaves its ceiling (0.73 to -0.01). Narrow [SII] q 0.52 and
-[OI] 0.74 (Cue now over-predicts both); [OIII]4363 q 2.0 +- 0.6 and [OII]7325 1.34 (Cue now too
-cold, where A was too hot). U and n_H move by up to 0.9 dex between the two auroral settings.
-
-INPUTS: results/2026-10-13_nautilus_resolution_matrix/<TID>_rmatrix_mask_..._pred.npz (start),
-the 10-09 recoadd files that model_setup.load_data reads. SEED: none (one start, no jitter).
+INPUTS: the 10-13 <TID>_rmatrix_mask_..._pred.npz (start) and the 10-09 recoadd files that
+model_setup.load_data reads. SEED: none.
 
 COMMAND: from the repository root on the Mac with the C3K_ER build,
 ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
@@ -162,10 +152,9 @@ def run(variant, maxfev):
 
 
 def amplitude_lines(model):
-    """Return report lines for the free amplitudes of a free-line model at its last prediction.
+    """Return report lines for the free amplitudes at the last prediction.
 
-    Narrow q is the narrow flux over Cue's. Broad r is the broad flux over the narrow flux, and
-    f_b = r / (1 + r) the broad share of the ion's flux.
+    q is the narrow flux over Cue's. f_b is the broad share of the ion's flux.
     """
     amps = {(c["name"], c["kind"]): c for c in model.free_amplitudes}
     out = [f"{'ion':>12} {'narrow q':>16} {'broad r':>16} {'f_b':>6}  flags"]

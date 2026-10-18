@@ -1,10 +1,8 @@
 """Corner plots of the pocoMC posterior of the free-line fit, and its best point against the MAP.
 
-The weighted posterior of a poco.py state (unit-cube samples mapped through model.prior_transform)
-is drawn in three corner plots with the MAP point of map.py (SFH hyperparameters at the 10-13
-max-L, as in fit.py's check) and the pocoMC point of highest log posterior marked. The log
-posterior is ln L + model.prior_product, computed for the 300 particles of highest ln L. The line
-windows of map.py then show the data and both spectra in DESI units with their chi below.
+Draws the weighted posterior of a poco.py state in three corner plots, with the map.py MAP point and
+the pocoMC point of highest ln L + model.prior_product (among the 300 particles of highest ln L)
+marked. The map.py line windows then show the data and both spectra with their chi.
 
 INPUTS: pmc_final.state of poco.py copied from ls6, map_free.npz, the 10-13 _pred.npz. SEED: none.
 

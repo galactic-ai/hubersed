@@ -1,20 +1,17 @@
 """Where does forcing dust_index = 0 cost chi2 in the free-line fit of 39627770174637084?
 
-QUESTION: mask_refit.py found that n = 0 costs +21.7 (no mask) and +35.1 (rest 3800-7600 A only) against
-n free (~0.37-0.39), and balmer_check.py that the Balmer decrement is matched to 0.5%. Is the cost a broad
-continuum colour mismatch (stellar population or calibration) or local features?
+QUESTION: n = 0 costs +21.7 (no mask) and +35.1 (rest 3800-7600 A) against n free (mask_refit.py),
+and the Balmer decrement matches to 0.5% (balmer_check.py). Is the cost a broad continuum colour
+mismatch or local features?
 
-For the no-mask and the 3800-7600 A fits, repeats mask_refit's n-free and n = 0 refits (same start, free
-set and objective), then splits the chi2 difference into 200 A rest bins, separately for continuum pixels
-and line pixels (model line spectrum > 2% of the model continuum), and gives the median ratio of the n = 0
-to the n-free model continuum per bin. SEED: none.
+Repeats mask_refit's n-free and n = 0 refits for those two masks, splits the chi2 difference into
+200 A rest bins for continuum and line pixels, and gives the n = 0 to n-free continuum ratio per
+bin. SEED: none.
 
-RESULT: 2026-10-17, region_chi2.txt. The cost is a broad continuum shape, not lines or one feature. No
-mask: continuum +18.9, lines -2.0, prior about +4.8; the largest bin is 4600-4800 A (+9.9), the rest is
-spread over 4400-4600, 6000-6400 and 8200-8400 A. 3800-7600 A only: continuum +32.0, lines -3.1, prior
-about +6.2, spread over 4600-4800, 5000-5800, 6000-6400 and 7200-7600 A. The n = 0 continuum differs
-from the n-free one by a smooth bow of under 1% (ratio 0.993 at 4000 A, 1.003 at 5800-6200 A, 0.994 at
-7200-7600 A). So the grey slope rests on sub-percent continuum curvature.
+RESULT: 2026-10-17, region_chi2.txt. The cost is a broad continuum shape. No mask: continuum +18.9,
+lines -2.0, prior about +4.8, largest bin 4600-4800 A (+9.9). 3800-7600 A: continuum +32.0, lines
+-3.1, spread over several bins. The two continua differ by a smooth bow under 1% (0.993 at 4000 A,
+1.003 at 5800-6200 A, 0.994 at 7200-7600 A).
 
 COMMAND: from the repository root on the Mac with the C3K_ER build,
 ``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix

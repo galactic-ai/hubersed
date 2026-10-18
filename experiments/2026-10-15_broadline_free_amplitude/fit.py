@@ -1,25 +1,15 @@
-"""Nautilus run of 39627770174637084 with the free-amplitude broadline model.
+"""Nautilus fit of 39627770174637084 with the free-amplitude broadline model.
 
-Same data, mask, priors, library, resolution matrix and sampler settings as the rmatrix mask run
-of 2026-10-13_nautilus_resolution_matrix (its model_setup.py, n_eff 2000), with the
-line model of hubersed.sps.free_lines (spec in UberSED
-knowledge/broadline_free_amplitude_spec_2026-10-15.md): Cue makes the narrow lines only, narrow
-[OII], [OIII] and [NII] have a 0.15 prior width about Cue, [SII], [OI] and [ArIII] are free, the
-auroral lines, [NeIII] and [SIII] are free (``--variant free``) or have width 0.3
-(``--variant free_aur0.3``), and broad H, [OII], [OIII], [NII], [SII] and [OI] have free
-amplitudes marginalized analytically. eline_fbroad is replaced by eline_sigma_broad_forb, so the
-run has the same 29 free parameters as the 10-13 run. ``--variant free_dust`` is free with
-dust_ratio Uniform(0, 2) instead of ClippedNormal(1, 0.3) and frac_nodust free, Uniform(0, 0.9),
-for 30 parameters.
+Same data, mask, priors, library, resolution matrix and sampler settings as the 10-13 rmatrix mask
+run (its model_setup.py, n_eff 2000), with the line model of hubersed.sps.free_lines (spec in
+UberSED knowledge/broadline_free_amplitude_spec_2026-10-15.md). eline_fbroad is replaced by
+eline_sigma_broad_forb. Variants: ``free`` and ``free_aur0.3`` (auroral lines, [NeIII] and [SIII]
+free or of width 0.3) have 29 parameters. ``free_dust`` is free with dust_ratio Uniform(0, 2) and
+frac_nodust free, Uniform(0, 0.9), for 30 parameters.
 
-The setup check requires those labels (against the 10-13 run's .json) and, where the 10-13
-``_pred.npz`` exists (the Mac), prints the chi2 at its max-L point and, if map.py's
-``map_<variant>.npz`` is in the output folder, at its MAP point with the SFH hyperparameters at the
-10-13 max-L (map.txt: free 5887.3, free_aur0.3 5896.0).
-
-FSPS comes from the C3K_ER build with AFE_FLAG, put first on PYTHONPATH with the 10-13 folder (for
-model_setup.py), and SPS_HOME holds the ER spectra. Run from the repository root on an ls6 compute
-node through run.slurm (fit_fork.py), or with ``--check-only`` to run the setup checks only.
+``--check-only`` checks the labels against the 10-13 .json and prints the chi2 at the 10-13 max-L
+point and at the map.py MAP point (map.txt: free 5887.3, free_aur0.3 5896.0). FSPS is the C3K_ER
+build with AFE_FLAG, first on PYTHONPATH, and SPS_HOME holds the ER spectra.
 
 COMMAND: on the Mac, ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
@@ -95,10 +85,9 @@ _STATE = {}
 
 
 def process_state(variant):
-    """Return this process's model, observation and Cue source, building them on the first call.
+    """Return this process's model, observation and Cue source, built on the first call.
 
-    Pool workers build their own, because the Cue emulator cannot be pickled and JAX is not fork
-    safe, as in the 10-13 fit.
+    Each pool worker builds its own, since Cue cannot be pickled and JAX is not fork safe.
     """
     if variant not in _STATE:
         z, flux, unc, good = load_data(tuple(MISSING_LINES))
@@ -167,8 +156,7 @@ def main(args, pool=None):
     args : argparse.Namespace
         The command-line options, see ``parse_args``.
     pool : multiprocessing.pool.Pool or None
-        Pool for nautilus. None makes a pool of ``args.pool`` workers with the spawn start
-        method. ``fit_fork.py`` passes a forked one.
+        Pool for nautilus. None makes a spawned pool of ``args.pool`` workers.
     """
     name = stem(args.variant, args.n_live)
     resuming = (args.out / f"{name}.h5").exists()

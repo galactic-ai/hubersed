@@ -1,17 +1,12 @@
 """Run fit.py with forked pool workers that share one FSPS setup and one set of SSPs.
 
-The main process runs the FSPS setup once and builds every SSP slot the fit can reach
-with StellarPopulation.build_ssps (python-fsps dc3e41e), then forks the pool. Workers inherit both
-copy on write, so each needs about 1 GiB instead of 15 GiB and none waits on SSP builds (job
-3500970). python-fsps keeps the inherited SSP cache because the fit's SSP inputs equal the defaults
-the main process built with. A worker whose inputs differ warns and rebuilds.
+The main process builds every SSP slot the fit can reach (StellarPopulation.build_ssps, python-fsps
+dc3e41e), then forks the pool. Workers share them copy on write, about 1 GiB each instead of 15 GiB
+(job 3500970). The fork comes before JAX starts, since JAX is not fork safe. Each worker is pinned
+to one core, so XLA stays under the 16384-thread user limit on ls6 (job 3500937).
 
-The fork must come before the JAX backend starts (JAX is not fork safe), so workers import
-prospect in their initializer. Each worker is pinned to one core first, so XLA makes ~15 threads
-instead of ~300 and the pool stays under the 16384-thread user limit on ls6 (job 3500937).
-
-Copied unchanged from 2026-10-13_nautilus_resolution_matrix; it imports this folder's fit.py.
-Takes the same options as fit.py, with the same PYTHONPATH and SPS_HOME, for example
+Copied from 2026-10-13_nautilus_resolution_matrix. It imports this folder's fit.py and takes the
+same options, with the same PYTHONPATH and SPS_HOME, for example
 ``.venv/bin/python experiments/2026-10-15_broadline_free_amplitude/fit_fork.py
 --variant free --pool 64 --n-batch 960``.
 """
@@ -29,9 +24,8 @@ import fsps
 def prebuild_ssps(sp):
     """Build every SSP slot a fit at afe 0 can reach, in parallel helper processes.
 
-    FSPS builds the two grid metallicities around ``logzsol`` and the two afe slots around
-    ``afe`` (``compute_zdep`` in fsps.f90). At afe 0 these are afe slots 2 and 3 (afe 0 and +0.2)
-    with AFE_FLAG, and slot 1 without it, so every metallicity in those afe slots covers the fit.
+    At afe 0 FSPS uses afe slots 2 and 3 with AFE_FLAG and slot 1 without it
+    (``compute_zdep`` in fsps.f90).
 
     Parameters
     ----------

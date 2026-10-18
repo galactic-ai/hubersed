@@ -1,29 +1,19 @@
-"""Test pocoMC (preconditioned Monte Carlo) on the free-line fit of 39627770174637084.
+"""Run pocoMC on the free-line fit of 39627770174637084.
 
-QUESTION: the nautilus run of the free variant spends most of its time building bounds on one core
-and had not left exploration after 2.7M calls and 102 bounds (ls6 freeline2 chain, 2026-10-16).
-Does pocoMC (Karamanis+22, arXiv:2207.05652; pocomc 1.2.6) climb from prior to posterior faster per
-call and per hour, and does a new process resume from its saved state?
+QUESTION: nautilus had not left exploration after 2.7M calls (freeline2, 2026-10-16). Does pocoMC
+(arXiv:2207.05652, pocomc 1.2.6) reach the posterior faster, and does it resume from a saved state?
 
-Same model, data, priors and likelihood as fit.py. pocoMC samples the unit cube with a Uniform(0, 1)
-prior and the likelihood applies model.prior_transform, as fit.py does for nautilus, so the
-posterior and log Z are those of the model priors. With the ls6 python-fsps (build_ssps) the pool
-is forked after the SSP build, as in fit_fork.py; with older builds (the Mac) each worker builds its
-own SSPs, ~6 GB each. State files go to ``poco_<TID>_<variant>_neff<n>/`` every ``--save-every``
-iterations, and a rerun resumes from the newest one.
+Same model, data, priors and likelihood as fit.py. pocoMC samples the unit cube and the likelihood
+applies model.prior_transform. The pool forks after the SSP build, as in fit_fork.py. With ``--mpi``
+each node runs one MPI rank with its own pool, and rank 0 splits each batch over the ranks.
 
-With ``--mpi`` (one MPI rank per node, e.g. through ibrun) each rank forks its own pool before MPI
-starts, and rank 0 splits each batch of likelihood calls over the ranks (NodePool). A toy run with
-the same seed gave the same log Z with a local pool and with two ranks (2026-10-17, Mac mpirun).
+RESULT: ls6 free_dust, job 3517041, 2 nodes x 128 workers, 1024/512, cap 300, 2026-10-17. Beta
+reached 1 at iteration 62 after 4 segments (~7 h, 5.78M calls), with ESS steady at ~1020. The cap
+bound in 5 of iterations 27-33 and in all of 43-60 as eff fell to ~0.25. The first resume reproduced
+iteration 33 exactly. Final log Z and posterior pending. Mac test runs: poco_run2.log,
+poco_run3_resume.log.
 
-RESULT: 2026-10-16, Mac, pool 2, n_effective 256, n_active 128 (poco_run2.log). Stopped at
-iteration 25 after 60 min and 87k calls, beta 0.00269. beta grew ~1.6x per iteration to iteration
-14 (22k calls), then ~1.25x; calls per iteration rose from ~2k to ~15k as the flow efficiency fell
-to ~0.35 (88-126 MCMC steps from iteration 24). A new process resumed from pmc_24.state and
-reproduced iteration 25 (beta 0.00269; poco_run3_resume.log). Not reached: beta = 1, the peak and
-posterior checks against nautilus.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
+COMMAND: on ls6 through poco.slurm. On the Mac, from the repository root,
 ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-15_broadline_free_amplitude
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
 experiments/2026-10-15_broadline_free_amplitude/poco.py --pool 8``.
@@ -52,11 +42,7 @@ def latest_state(folder):
 
 
 class NodePool:
-    """Pool over MPI ranks, one per node, each mapping its share with its own forked pool.
-
-    Rank 0 runs the sampler and keeps the first share. The function is sent again only when it
-    changes.
-    """
+    """Map over MPI ranks, one per node, each with its own forked pool. Rank 0 runs the sampler."""
 
     def __init__(self, comm, local):
         self.comm, self.local, self.size = comm, local, comm.Get_size()
