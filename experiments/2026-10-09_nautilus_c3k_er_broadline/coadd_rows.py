@@ -1,4 +1,4 @@
-"""Recoadd 39627770174637084 with the row-weighted resolution matrix of desispec PR 2377.
+"""Recoadd a target with the row-weighted resolution matrix of desispec PR 2377.
 
 QUESTION: how much does the DR1 coadd resolution matrix of this two-exposure target change when
 the exposures are combined with the corrected weights, and do the per-exposure matrices and ivars
@@ -26,28 +26,29 @@ The script does five things from the iron spectra file of healpix 26004.
   per arm, in bins of S/N, as in desispec issue 2420. Near strong lines the two matrices differ,
   which adds to the scatter there.
 
-INPUTS: spectra-sv3-bright-26004.fits.gz (iron), resolution_matrix.npz of resolution_check.py.
+It was written for 39627770174637084 (healpix 26004), the default. --tid picks another target of
+targets.py, whose resolution_matrix.npz comes from experiments/2026-10-18_candidate_resolution_matrix.py.
+
+INPUTS: spectra-sv3-bright-<healpix>.fits.gz (iron), resolution_matrix.npz of resolution_check.py.
 SEED: none.
 
 COMMAND: on an ls6 compute node from the repository root,
 ``.venv/bin/python experiments/2026-10-09_nautilus_c3k_er_broadline/coadd_rows.py
-/corral/utexas/AST25023/nikhilgaruda/hubersed/data/desi_iron_spectra/spectra-sv3-bright-26004.fits.gz``.
+/corral/utexas/AST25023/nikhilgaruda/hubersed/data/desi_iron_spectra/spectra-sv3-bright-26004.fits.gz``,
+and with ``--tid <targetid>`` and that target's spectra file for the others.
 
 OUTPUT: coadd_rows.txt and resolution_matrix_rows.npz (same keys as resolution_matrix.npz, with the
-row-weighted matrices) in results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/.
+row-weighted matrices) in the target's output folder of targets.py.
 """
 
 import argparse
 
 import numpy as np
 from astropy.io import fits
+from targets import REFERENCE, target
 
-from hubersed.paths import PATHS
 from hubersed.sps.lsf import DESI_WAV
 
-TID = 39627770174637084
-Z = 0.025319
-OUT = PATHS["RESULTS"] / "2026-10-09_nautilus_c3k_er_broadline" / str(TID)
 LINES = {
     "[OIII]5007": 5008.240,
     "[OIII]4959": 4960.295,
@@ -139,7 +140,8 @@ def asym(R, i0, half=8, band=3):
     return np.abs(B - B.T)[m].sum() / np.abs(B + B.T)[m].sum()
 
 
-def main(path):
+def main(path, tid=REFERENCE):
+    TID, Z, OUT = tid, target(tid)["z"], target(tid)["out"]
     out = [f"Recoadd of {TID} from {path}"]
     with fits.open(path) as h:
         fm = h["FIBERMAP"].data
@@ -262,5 +264,7 @@ def main(path):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("spectra", help="iron spectra file of healpix 26004")
-    main(ap.parse_args().spectra)
+    ap.add_argument("spectra", help="iron spectra file of the target's healpix")
+    ap.add_argument("--tid", type=int, default=REFERENCE, help="target of targets.py")
+    args = ap.parse_args()
+    main(args.spectra, args.tid)
