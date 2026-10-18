@@ -62,6 +62,7 @@ def map_point(model):
     m = np.load(fit.OUT / "map_free.npz")
     point = dict(zip([str(x) for x in m["labels"]], m["theta"], strict=True))
     point.update({k: best[k] for k in fit.HYPERS})
+    point.setdefault("frac_nodust", 0.0)  # fixed at 0 in the free variant, as in fit.py
     return np.array([point[k] for k in model.theta_labels()])
 
 

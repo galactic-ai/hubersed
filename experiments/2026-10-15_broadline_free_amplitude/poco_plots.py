@@ -48,6 +48,7 @@ GROUPS = {
         "dust2",
         "dust_ratio",
         "dust_index",
+        "frac_nodust",
         "sigma_smooth",
         "sigma_reg",
         "tau_eq",
@@ -65,9 +66,10 @@ def desi(wave, maggies):
     return to_flambda(wave * u.AA, maggies * u.mgy).value
 
 
-def corner_plot(theta, w, labels, points, group, path):
-    """Draw one corner plot of ``group`` with the marked ``points``."""
-    idx = [labels.index(p) for p in GROUPS[group]]
+def corner_plot(theta, w, labels, points, group, path, variant):
+    """Draw one corner plot of ``group`` with the marked ``points``, skipping fixed parameters."""
+    names = [p for p in GROUPS[group] if p in labels]
+    idx = [labels.index(p) for p in names]
     k = len(idx)
     fig = plt.figure(figsize=(2.4 * k, 2.4 * k))
     corner.corner(
@@ -75,7 +77,7 @@ def corner_plot(theta, w, labels, points, group, path):
         weights=w,
         fig=fig,
         color=COLORS["posterior"],
-        labels=GROUPS[group],
+        labels=names,
         plot_datapoints=False,
         plot_density=False,
         smooth=1.0,
@@ -91,7 +93,7 @@ def corner_plot(theta, w, labels, points, group, path):
         corner.overplot_points(fig, p[idx][None], color=COLORS[name], marker="s", ms=6)
     handles = [plt.Line2D([], [], color=c, lw=3) for c in COLORS.values()]
     fig.legend(handles, list(COLORS), loc="upper right", fontsize=16, frameon=False)
-    fig.suptitle(f"{fit.TID} pocoMC free-line, {group}", fontsize=20, y=1.01)
+    fig.suptitle(f"{fit.TID} pocoMC {variant}, {group}", fontsize=20, y=1.01)
     fig.savefig(path, dpi=90, bbox_inches="tight")
     plt.close(fig)
     print(f"wrote {path}")
@@ -177,7 +179,7 @@ def main():
     (out / "poco_best.txt").write_text(text + "\n")
 
     for group in GROUPS:
-        corner_plot(theta, w, labels, points, group, out / f"poco_corner_{group}.png")
+        corner_plot(theta, w, labels, points, group, out / f"poco_corner_{group}.png", args.variant)
     windows_plot(obs, z, spectra, out / "poco_windows.png")
 
 
