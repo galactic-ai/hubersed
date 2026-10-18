@@ -1,4 +1,4 @@
-"""Check the iron flux-calibration ivar of 39627770174637084 against the formula fixed in desispec.
+"""Check the iron flux-calibration ivar of a target against the formula fixed in desispec.
 
 QUESTION: does the iron cframe ivar of this target follow the old desispec 0.56 formula, and how far
 off is it from the formula fixed in desispec PR 2422, with iron's own calibration ivar?
@@ -10,32 +10,36 @@ itself too small (an error floor left in the final variance solve). So the fixed
 ivar_C is not the corrected ivar. This script only checks the reading and shows the size of each
 term, before the calibration is rerun.
 
-For each exposure and camera of this target (petal 1) it checks F/C against the cframe flux, the
-old formula against the cframe ivar, and the old formula inverted for ivar_F against the sframe ivar
+For each exposure and camera of this target it checks F/C against the cframe flux, the old formula
+against the cframe ivar, and the old formula inverted for ivar_F against the sframe ivar
 (sky-subtracted, before calibration). It then reports sigma_C / C and the inflation sqrt(Var_fixed /
 Var_iron) in bins of S/N.
 
-INPUTS: the iron cframe, sframe and fluxcalib files of exposures 87113 and 88269, petal 1, under
+It was written for 39627770174637084 (exposures 87113 and 88269, petal 1), the default. --tid picks
+another target of targets.py. The cameras follow each exposure's petal.
+
+INPUTS: the iron cframe, sframe and fluxcalib files of the target's exposures and petal, under
 data/desi_iron_exposures/<night>/<expid>/. SEED: none.
 
 COMMAND: on an ls6 compute node from the repository root,
-``.venv/bin/python experiments/2026-10-09_nautilus_c3k_er_broadline/ivar_check.py``.
+``.venv/bin/python experiments/2026-10-09_nautilus_c3k_er_broadline/ivar_check.py``, with
+``--tid <targetid>`` for the others.
 
-OUTPUT: ivar_check.txt in results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/.
+OUTPUT: ivar_check.txt in the target's output folder of targets.py.
 """
+
+import argparse
 
 import numpy as np
 from astropy.io import fits
+from targets import REFERENCE, target
 
 from hubersed.paths import PATHS
 
-TID = 39627770174637084
-EXPOSURES = {87113: "20210503", 88269: "20210513"}
 DATA = PATHS["DATA"] / "desi_iron_exposures"
-OUT = PATHS["RESULTS"] / "2026-10-09_nautilus_c3k_er_broadline" / str(TID)
 
 
-def load(night, expid, cam):
+def load(night, expid, cam, TID):
     """Return the target's cframe, sframe and fluxcalib arrays for one camera."""
     d = DATA / night / f"{expid:08d}"
     with (
@@ -59,11 +63,13 @@ def load(night, expid, cam):
     return out
 
 
-def main():
-    lines = [f"Iron flux-calibration ivar of {TID} (petal 1)"]
-    for expid, night in EXPOSURES.items():
-        for cam in ("b1", "r1", "z1"):
-            x = load(night, expid, cam)
+def main(TID=REFERENCE):
+    t = target(TID)
+    petals = ", ".join(str(p) for p in sorted({p for _, p, _ in t["exposures"].values()}))
+    lines = [f"Iron flux-calibration ivar of {TID} (petal {petals})"]
+    for expid, (night, petal, _) in t["exposures"].items():
+        for cam in (f"{arm}{petal}" for arm in "brz"):
+            x = load(night, expid, cam, TID)
             Fp, iv, F, ivF, C, ivC = (x[k] for k in ("Fp", "iv", "F", "ivF", "C", "ivC"))
             ok = (iv > 0) & (ivF > 0) & (ivC > 0) & (C > 0)
             var_old = 1 / (ivF * C**2) + (F / C) ** 2 / (ivC * C**4)
@@ -90,9 +96,11 @@ def main():
             lines.append(row)
     text = "\n".join(lines) + "\n"
     print(text)
-    OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "ivar_check.txt").write_text(text)
+    t["out"].mkdir(parents=True, exist_ok=True)
+    (t["out"] / "ivar_check.txt").write_text(text)
 
 
 if __name__ == "__main__":
-    main()
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--tid", type=int, default=REFERENCE, help="target of targets.py")
+    main(ap.parse_args().tid)
