@@ -5,7 +5,7 @@
 # After the fits, the report step writes <TID>_map_s<K>.txt and .png for each finished start.
 # FIT_TID stays unset: map.py reads it at import for the #14 start file.
 # Submit from the repository root on ls6:
-#   sbatch --export=ALL,TID=39628357133926597 experiments/2026-10-18_candidate_map.slurm
+#   sbatch --export=ALL,TID=39628357133926597 experiments/2026-10-18_candidate_map/fit.slurm
 #SBATCH -J candmap
 #SBATCH -p vm-small
 #SBATCH -N 1
@@ -15,7 +15,7 @@
 #SBATCH -o /work/11006/nikhilgaruda/ls6/research/hubersed/logs/candmap_%j.log
 
 REPO=/work/11006/nikhilgaruda/ls6/research/hubersed
-SCRIPT=experiments/2026-10-18_candidate_map.py
+SCRIPT=experiments/2026-10-18_candidate_map/fit.py
 TID=${TID:?set TID}
 NSTART=${NSTART:-8}
 MAXFEV=${MAXFEV:-120000}
@@ -36,7 +36,7 @@ CORES=($($PY -c "import os; print(*sorted(os.sched_getaffinity(0)))"))
 echo "job $SLURM_JOB_ID on $(hostname), repo $(git rev-parse --short HEAD), tid $TID, $NSTART starts," \
     "maxfev $MAXFEV, jitter $JITTER, ${#CORES[@]} cores, start $(date)"
 free -g
-sha256sum $SCRIPT experiments/2026-10-18_candidate_map.slurm
+sha256sum $SCRIPT experiments/2026-10-18_candidate_map/fit.slurm
 
 # Memory and load every 10 min, so a too-big start count shows up in the log.
 (while true; do
