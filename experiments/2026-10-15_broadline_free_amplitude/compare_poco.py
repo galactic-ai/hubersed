@@ -2,10 +2,11 @@
 
 Loads a poco.py state without running the sampler. Prints the weighted 16/50/84% of each parameter
 and of 12+log(O/H) = gas_logz + 8.71, the ESS, beta, calls and log Z (final states only). The best
-particle log L is compared with the map.py MAP point (map_free.npz).
+particle log L is compared with the map.py MAP point (map_free.npz), or with the MAP given by --map.
+For another target set FIT_TID and pass its 2026-10-18_candidate_map npz as --map.
 
-INPUTS: a pmc_<i>.state or pmc_final.state copied from ls6; map_free.npz and the 10-13 _pred.npz.
-SEED: none.
+INPUTS: a pmc_<i>.state or pmc_final.state copied from ls6; map_free.npz or --map, and the 10-13
+_pred.npz of 39627770174637084 for the SFH hyperparameters. SEED: none.
 
 COMMAND: from the repository root on the Mac with the C3K_ER build,
 ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-15_broadline_free_amplitude
@@ -22,6 +23,7 @@ import dill
 import fit
 import numpy as np
 import pocomc as pc
+from model_setup import REFERENCE
 
 CUE_OH_ZERO = 8.71
 
@@ -55,11 +57,16 @@ def edges(model, name, x, w, frac=0.02):
     return f" {a:9.3g} {b:9.3g} {np.sum(w[x < a + d]):6.3f} {np.sum(w[x > b - d]):6.3f}"
 
 
-def map_point(model):
-    """Return the MAP theta of map.py with the SFH hyperparameters at the 10-13 max-L."""
-    pred = np.load(fit.START, allow_pickle=True)
+def map_point(model, path=None):
+    """Return a MAP theta with the SFH hyperparameters at the 10-13 max-L of 39627770174637084.
+
+    ``path`` is a MAP npz, by default map_free.npz of map.py. The candidate MAPs fixed the
+    hyperparameters at these values too.
+    """
+    start = fit.START.with_name(fit.START.name.replace(str(fit.TID), str(REFERENCE)))
+    pred = np.load(start, allow_pickle=True)
     best = dict(zip([str(x) for x in pred["labels"]], pred["best"], strict=True))
-    m = np.load(fit.OUT / "map_free.npz")
+    m = np.load(path if path is not None else fit.OUT / "map_free.npz")
     point = dict(zip([str(x) for x in m["labels"]], m["theta"], strict=True))
     point.update({k: best[k] for k in fit.HYPERS})
     point.setdefault("frac_nodust", 0.0)  # fixed at 0 in the free variant, as in fit.py
@@ -71,6 +78,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--state", type=Path, required=True)
     parser.add_argument("--variant", default="free")
+    parser.add_argument("--map", type=Path, default=None, help="MAP npz, default map_free.npz")
     args = parser.parse_args()
 
     s = load_sampler(args.state)
@@ -82,7 +90,7 @@ def main():
     labels = list(model.theta_labels())
     theta = np.array([model.prior_transform(ui) for ui in u])
 
-    lnl_map = fit.loglike(map_point(model), args.variant)
+    lnl_map = fit.loglike(map_point(model, args.map), args.variant)
     lines = [
         f"{args.state}: iteration {s.t}, beta {beta:.4g}, calls {s.calls}, "
         f"log Z {getattr(s, 'logz', None)}",
