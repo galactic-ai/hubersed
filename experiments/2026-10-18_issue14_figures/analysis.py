@@ -30,7 +30,7 @@ import numpy as np
 from hubersed.paths import PATHS
 
 TID = 39627770174637084
-EXP = Path(__file__).resolve().parent
+EXP = Path(__file__).resolve().parents[1]  # the experiments folder
 RES = PATHS["RESULTS"]
 OUT = RES / "2026-10-18_issue14_figures"
 PLOTDATA = RES / "2026-09-25_nautilus_tauin_c3k_hr"
