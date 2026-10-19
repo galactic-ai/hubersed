@@ -31,7 +31,7 @@ The script does five things from the iron spectra file of healpix 26004.
   which adds to the scatter there.
 
 It was written for 39627770174637084 (healpix 26004), the default. --tid picks another target of
-targets.py, whose resolution_matrix.npz comes from experiments/2026-10-18_candidate_resolution_matrix.py.
+targets.py, whose resolution_matrix.npz comes from experiments/2026-10-18_candidate_resolution_matrix/analysis.py.
 
 INPUTS: spectra-sv3-bright-<healpix>.fits.gz (iron), resolution_matrix.npz of resolution_check.py.
 SEED: none.

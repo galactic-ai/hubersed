@@ -10,7 +10,7 @@ and the pipeline's line curve at the target's rmatrix nautilus medians (dust_ind
 dust_ratio 0.390, dust1_index -1). Temperature slopes d ln R / d ln T are PyNeb emissivity ratios
 at 1e4 K and n_e 250 cm^-3. SEED: none.
 
-COMMAND: ``uv run python experiments/2026-10-14_dust_curve_leverage.py`` from the repository root.
+COMMAND: ``uv run python experiments/2026-10-14_dust_curve_leverage/analysis.py`` from the repository root.
 
 RESULT: see results/2026-10-14_dust_curve_leverage.txt.
 """

@@ -15,7 +15,7 @@ RESULT: 2026-10-18. chi2_red on own data: MILES 2.52 and C3K HR 1.77 (4448 px), 
 COMMAND: from the repository root on the Mac, after 2026-10-18_issue14_miles.py,
 ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-15_broadline_free_amplitude:experiments/2026-10-13_nautilus_resolution_matrix
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-18_issue14_figures.py``.
+experiments/2026-10-18_issue14_figures/analysis.py``.
 
 OUTPUT: corner_sfh.png, residuals_by_run.png and windows_by_run.png in
 results/2026-10-18_issue14_figures/.

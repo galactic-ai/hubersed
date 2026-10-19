@@ -22,7 +22,7 @@ results/map_fits_outliers310_v2/. SEED: 0 for the jittered starts.
 COMMAND: from the repository root on the Mac with the C3K_ER build,
 ``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-18_candidate_map.py {fit,report} --tid <TID>``. Multi-start on ls6: see the
+experiments/2026-10-18_candidate_map/fit.py {fit,report} --tid <TID>``. Multi-start on ls6: see the
 slurm script.
 
 OUTPUT: <TID>_map_free.npz, <TID>_map.txt and <TID>_map.png in results/2026-10-18_candidate_map/,

@@ -8,7 +8,7 @@ data/. Star-forming means Halpha, Hbeta, [OIII]5007 and [NII]6584 at S/N >= 3 an
 Kauffmann+03 line. [OII]7320,7330 is the sum of both lines. A line with FLUX_IVAR 0 counts as not
 detected. SEED: none.
 
-COMMAND: ``uv run python experiments/2026-10-14_auroral_snr_fraction.py`` from the repository root.
+COMMAND: ``uv run python experiments/2026-10-14_auroral_snr_fraction/analysis.py`` from the repository root.
 
 RESULT: see results/2026-10-14_auroral_snr_fraction.txt.
 """

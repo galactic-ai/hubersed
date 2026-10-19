@@ -8,7 +8,7 @@ The flow is pocomc.flow.Flow(30, "nsf6") with random weights. Its cost does not 
 Rows are inverted independently, so a split result must match the serial one to float32 rounding.
 
 COMMAND: on an idle compute node, ``OMP_WAIT_POLICY=PASSIVE uv run python
-experiments/2026-10-17_flow_inverse_speed.py``. ``--threads`` and ``--chunks`` set the trials.
+experiments/2026-10-17_flow_inverse_speed/analysis.py``. ``--threads`` and ``--chunks`` set the trials.
 """
 
 import argparse

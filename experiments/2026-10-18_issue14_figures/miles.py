@@ -14,7 +14,7 @@ experiments/2026-09-24_nautilus_tauin`` with ``git show d4fb8ef:<file>`` into <o
 ``UV_PROJECT_ENVIRONMENT=<venv> uv sync --frozen --no-dev --python 3.13`` in <old>. Write FSPS
 82a8735 (python-fsps 0.4.7's libfsps), without SPECTRA/C3K, doc and src, the same way into <sps>.
 Then from the repository root, ``SPS_HOME=<sps> <venv>/bin/python
-experiments/2026-10-18_issue14_miles.py --repo .``.
+experiments/2026-10-18_issue14_figures/miles.py --repo .``.
 
 OUTPUT: results/2026-10-18_issue14_figures/miles_0924.npz.
 """

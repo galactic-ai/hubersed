@@ -18,7 +18,7 @@ INPUTS: the two pmc_final.state files of poco.py, copied from ls6. SEED: 0 for t
 COMMAND: from the repository root on the Mac,
 ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-15_broadline_free_amplitude:experiments/2026-10-13_nautilus_resolution_matrix
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-18_poco_free_vs_free_dust.py``.
+experiments/2026-10-18_poco_free_vs_free_dust/analysis.py``.
 
 RESULT: 2026-10-18. The hypothesis fails. A_old(5500) falls from 0.69 to 0.33 mag and A_neb(Ha)
 from 0.81 to 0.56 mag, but the nebular E(Hb - Ha) stays at 0.22-0.23 mag. In free_dust the covered

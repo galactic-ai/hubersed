@@ -17,7 +17,7 @@ resolution_matrix.npz of the reference. Redshifts from fastspec-iron-sv3-bright 
 
 COMMAND: from the repository root on the Mac,
 ``PYTHONPATH=experiments/2026-10-09_nautilus_c3k_er_broadline uv run --no-sync python
-experiments/2026-10-18_candidate_resolution_matrix.py``.
+experiments/2026-10-18_candidate_resolution_matrix/analysis.py``.
 
 OUTPUT: results/2026-10-18_candidate_resolution_matrix/, one folder per target with
 resolution_matrix.npz, and snr_table.txt.
