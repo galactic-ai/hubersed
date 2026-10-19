@@ -29,7 +29,7 @@ uv run python scripts/get_latent_space.py "$OUT/_chunks" \
 
 for script in \
     scripts/make_alf_input.py scripts/read_alf_sample.py \
-    experiments/2026-08-25_compare_alf_solar_scaled.py \
+    experiments/2026-08-25_compare_alf_solar_scaled/analysis.py \
     scripts/get_stochastic_priors.py scripts/make_model_seds.py \
     scripts/run_map_fits_outliers.py \
     scripts/agn_star_screen.py scripts/build_cont_outlier_sample.py \
