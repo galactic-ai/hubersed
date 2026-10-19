@@ -5,6 +5,7 @@ the pocoMC point of highest ln L + model.prior_product (among the 300 particles 
 marked. The map.py line windows then show the data and both spectra with their chi.
 
 INPUTS: pmc_final.state of poco.py copied from ls6, map_free.npz, the 10-13 _pred.npz. SEED: none.
+For another target set FIT_TID and pass its 2026-10-18_candidate_map npz as --map.
 
 COMMAND: from the repository root on the Mac with the C3K_ER build,
 ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-15_broadline_free_amplitude
@@ -142,6 +143,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--state", type=Path, required=True)
     parser.add_argument("--variant", default="free")
+    parser.add_argument("--map", type=Path, default=None, help="MAP npz, default map_free.npz")
     args = parser.parse_args()
     use_apj_style()
 
@@ -155,7 +157,7 @@ def main():
     top = np.argsort(logl)[-N_TOP:]
     lnp = np.array([logl[i] + model.prior_product(theta[i]) for i in top])
     best = theta[top[np.argmax(lnp)]]
-    theta_map = map_point(model)
+    theta_map = map_point(model, args.map)
     lnl_map = fit.loglike(theta_map, args.variant)
     lnp_map = lnl_map + model.prior_product(theta_map)
     points = {"MAP": theta_map, "pocoMC best": best}
