@@ -16,6 +16,8 @@ experiments/2026-10-19_candidate_poco_figures/analysis.py
 RESULT: 2026-10-19. chi2_nu 1.350 (pocoMC) and 1.456 (MAP) on 5541 px for 39633278973513279, 0.963
 and 1.005 on 5397 px for 39633001071509599.
 FIGURES: <TID>_residuals.png and <TID>_windows.png in results/2026-10-19_candidate_poco_figures/.
+With --poco-only, <TID>_residuals_poco.png: the pocoMC chi alone, with no text box. --flux-pct p
+stops its flux axis at the p-th percentile of the data, in <TID>_residuals_poco_p<p>.png.
 """
 
 # %%
@@ -86,8 +88,12 @@ def chi_label(row, mask, sel=None):
     return rf"$\chi^2_\nu$ = {red:.3f} ({n} px, {off} beyond $\pm$5)"
 
 
-def residual_figure(tid, data, rows, path):
-    """Draw the data and the pocoMC best fit, then the chi of each row from -5 to 5."""
+def residual_figure(tid, data, rows, path, label=True, flux_pct=None):
+    """Draw the data and the pocoMC best fit, then the chi of each row from -5 to 5.
+
+    With ``label`` False the chi panels carry no chi2_nu text box. With ``flux_pct`` the flux axis
+    runs from 0, or the lowest data value, to that percentile of the fitted data flux.
+    """
     import matplotlib.pyplot as plt
 
     rest, mask = data["rest"], data["mask"]
@@ -107,6 +113,9 @@ def residual_figure(tid, data, rows, path):
         color=COLORS["poco"], lw=0.8, label=rows["poco"]["name"],
     )  # fmt: skip
     ax[0].set_ylabel(r"$f_\lambda$ [$10^{-17}$ erg s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]", fontsize=14)
+    if flux_pct is not None:
+        f = desi(data["wave"], data["flux"])[mask]
+        ax[0].set_ylim(min(0.0, f.min()), np.percentile(f, flux_pct))
     ax[0].legend(frameon=False, fontsize=13, loc="upper right")
     ax[0].set_title(f"{tid}, z = {data['z']:.5f}", fontsize=15)
     for a, (key, row) in zip(ax[1:], rows.items(), strict=True):
@@ -116,6 +125,8 @@ def residual_figure(tid, data, rows, path):
         a.axhline(0, color="0.3", lw=0.6)
         a.set_ylim(-5, 5)
         a.set_ylabel(r"$\chi$", fontsize=14)
+        if not label:
+            continue
         a.text(
             0.005, 0.88, f"{row['name']}: " + chi_label(row, mask), transform=a.transAxes,
             fontsize=12, va="top", bbox=dict(facecolor="white", edgecolor="none", alpha=0.8),
@@ -186,13 +197,28 @@ def main():
 
     from hubersed.plotting.style import use_apj_style
 
-    argparse.ArgumentParser(description=__doc__).parse_args()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--poco-only", action="store_true",
+        help="write only <TID>_residuals_poco.png, the pocoMC chi with no text box",
+    )  # fmt: skip
+    parser.add_argument(
+        "--flux-pct", type=float, default=None,
+        help="with --poco-only, stop the flux axis at this percentile of the data",
+    )  # fmt: skip
+    args = parser.parse_args()
     use_apj_style()
     OUT.mkdir(exist_ok=True)
     tid = fit.TID
     data, rows = rows_of(tid)
     for row in rows.values():
         print(row["name"], chi_label(row, data["mask"]))
+    if args.poco_only:
+        poco = {"poco": rows["poco"]}
+        tag = "" if args.flux_pct is None else f"_p{args.flux_pct:g}"
+        path = OUT / f"{tid}_residuals_poco{tag}.png"
+        residual_figure(tid, data, poco, path, label=False, flux_pct=args.flux_pct)
+        return
     residual_figure(tid, data, rows, OUT / f"{tid}_residuals.png")
     windows_figure(tid, data, rows, OUT / f"{tid}_windows.png")
 
