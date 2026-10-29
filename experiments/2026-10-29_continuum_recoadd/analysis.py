@@ -43,7 +43,7 @@ RUNS = {
         "recoadd": OUT / "main" / f"{TID}_map.npz",
     },
 }
-COLORS = {"DR1": "0.45", "recoadd": "#b2182b"}
+COLORS = {"DR1": "#e6c35c", "recoadd": "#b2182b"}  # DR1 fit light gold, recoadd fit red
 BINS = [(lo, lo + 500) for lo in range(3300, 8800, 500)]
 # rest-frame windows, Angstrom: the Mgb and NaD feature bands of allindices.dat and the Ha core
 WINDOWS = {"Mgb": (5160.1, 5192.6), "NaD": (5876.9, 5909.4), "Ha core": (6555.0, 6575.0)}
@@ -121,7 +121,7 @@ text = "\n".join(lines)
 (OUT / "dr1_vs_recoadd.txt").write_text(text)
 print(text)
 
-# %% figures: recoadded data and its fit, then chi of the DR1 and recoadd fits
+# %% figures: recoadded data with both fits, then the chi of both fits in one panel
 use_apj_style()
 bands = index_bands()
 for survey, f in fits.items():
@@ -129,27 +129,28 @@ for survey, f in fits.items():
     g = m["good"]
     data = flam(m, m["flux"])
     fig, ax = plt.subplots(
-        3, 1, figsize=(16, 9), sharex=True, gridspec_kw={"height_ratios": [3, 1, 1], "hspace": 0.06}
+        2, 1, figsize=(16, 8), sharex=True, gridspec_kw={"height_ratios": [3, 1], "hspace": 0.06}
     )
     ax[0].plot(rest(m), np.where(g, data, np.nan), color="0.75", lw=0.5,
                label=f"DESI {survey}, PR 2377 recoadd")  # fmt: skip
     med = np.full(data.size, np.nan)
     med[g] = medfilt(data[g], N_MEDIAN)
     ax[0].plot(rest(m), med, color="k", lw=0.8, label=f"median filter, {N_MEDIAN} pixels")
-    ax[0].plot(rest(m), np.where(g, flam(m, m["sp_best"]), np.nan), color=COLORS["recoadd"], lw=0.8,
-               label="C3K ER + afe + R matrix (MAP), recoadd")  # fmt: skip
+    for k, label in (("DR1", "MAP on the DR1 coadd"), ("recoadd", "MAP on the recoadd")):
+        d = f[k]
+        ax[0].plot(rest(d), np.where(d["good"], flam(d, d["sp_best"]), np.nan), color=COLORS[k],
+                   lw=0.8, label=label)  # fmt: skip
     ax[0].set_ylim(bottom=0)
     ax[0].set_ylabel(r"$f_\lambda$ [$10^{-17}$ erg s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]", fontsize=14)
     ax[0].legend(frameon=False, fontsize=12, loc="upper right")
-    for a, k in zip(ax[1:], ("DR1", "recoadd"), strict=True):
-        a.plot(rest(f[k]), chi(f[k]), color=COLORS[k], lw=0.5)
-        for h in (-2, 2):
-            a.axhline(h, color="0.3", ls="--", lw=1)
-        a.axhline(0, color="0.3", lw=0.6)
-        a.set_ylim(-5, 5)
-        a.set_ylabel(r"$\chi$", fontsize=14)
-        a.text(0.005, 0.88, f"{survey}, {k} data and its MAP", transform=a.transAxes, fontsize=12,
-               va="top", bbox=dict(facecolor="white", edgecolor="none", alpha=0.8))  # fmt: skip
+    # one residual panel: the DR1 fit on its data, with the recoadd fit on its data on top
+    for k in ("DR1", "recoadd"):
+        ax[1].plot(rest(f[k]), chi(f[k]), color=COLORS[k], lw=0.5)
+    for h in (-2, 2):
+        ax[1].axhline(h, color="0.3", ls="--", lw=1)
+    ax[1].axhline(0, color="0.3", lw=0.6)
+    ax[1].set_ylim(-5, 5)
+    ax[1].set_ylabel(r"$\chi$", fontsize=14)
     for name, spans in bands.items():
         for s0, s1 in spans:
             for a in ax:
