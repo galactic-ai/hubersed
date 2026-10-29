@@ -8,6 +8,11 @@ model is the stellar continuum only (no Cue, no broad lines), the fitted pixels 
 fixed at the max-L point of the afefree run, and start 0 is that point. The other priors are those
 of the 10-08 run.
 
+``--nebular on`` adds Cue nebular emission (build_full_cue_model, no broad lines), with the Cue
+priors of the 10-08 run. Its start 0 is the continuum MAP best point (<TID>_map.npz) for the
+stellar parameters and the afefree max-L for the gas parameters and eline_sigma. Its outputs carry
+the tag _cue. The resolution matrix is the same, including its zero rows at ivar 0 pixels.
+
 Steps: ``check`` builds the model, checks the setup and times warm likelihood calls. ``fit
 --start K`` runs start K of ``--n-starts`` (start 0 unjittered, the others jittered by ``--jitter``
 times each prior range, seed 0) and saves map_s<K>.npz. ``collect`` keeps the lowest -lnp and saves
@@ -32,10 +37,11 @@ from prospect.models.priors import TopHat
 
 import hubersed.io.desi as desi_io
 from hubersed.conversion import DESI_FLAM, ivar_to_maggies, to_maggies
+from hubersed.fitting.map_fits import get_sps as get_cue_sps
 from hubersed.fitting.map_fits import jitter_scale, map_fit, safe_lnprior
 from hubersed.io.desi import load_spectrum
 from hubersed.paths import PATHS
-from hubersed.sps.config import build_continuum_model
+from hubersed.sps.config import build_continuum_model, build_full_cue_model
 from hubersed.sps.parameter_file import WAVE_OBS, build_sps
 from hubersed.sps.resolution_matrix import load_resolution_npz
 from hubersed.sps.resolution_model import ResolutionMatrixModel, build_resolution_obs
@@ -96,11 +102,18 @@ def hr_best():
     return dict(zip([str(x) for x in d["labels"]], d["best"], strict=True))
 
 
-def make_model(z):
-    """Return the continuum model with free afe and the SFH hyperparameters fixed at the HR max-L."""
+def make_model(z, nebular=False):
+    """Return the model with free afe and the SFH hyperparameters fixed at the HR max-L.
+
+    Without ``nebular`` it is the stellar continuum only. With it, Cue nebular emission is added
+    as in 2026-10-08_continuum_outlier/fit.py.
+    """
     best = hr_best()
-    _, t = build_continuum_model(z)
-    t["add_neb_emission"] = {"N": 1, "isfree": False, "init": False}
+    cont_model, t = build_continuum_model(z)
+    if nebular:
+        _, t = build_full_cue_model(t, cont_model.theta, cont_model)
+    else:
+        t["add_neb_emission"] = {"N": 1, "isfree": False, "init": False}
     t["tau_in"]["isfree"] = False
     t["tau_in"]["init"] = universe_age_gyr(z)
     for name in HYPERS:
@@ -118,26 +131,47 @@ def make_obs(flux, unc, good):
     )
 
 
-def get_sps():
-    """Return the stellar source, checked to be C3K_ER with five afe slots."""
+def get_sps(nebular=False):
+    """Return the source, checked to be C3K_ER with five afe slots.
+
+    With ``nebular`` it is the Cue source of map_fits.get_sps, as in
+    2026-10-13_nautilus_resolution_matrix, with the library resolution kept.
+    """
     import fsps
 
-    sps = build_sps(zcontinuous=1, zero_library_resolution=False)
+    sps = (
+        get_cue_sps(zero_library_resolution=False)["cue"]
+        if nebular
+        else build_sps(zcontinuous=1, zero_library_resolution=False)
+    )
     assert sps.ssp.libraries[1] in ("c3k_er", b"c3k_er"), sps.ssp.libraries
     assert fsps.fsps.driver.get_nafe() == 5, "FSPS was built without AFE_FLAG"
     return sps
 
 
-def build():
+def start_values(nebular):
+    """Return start 0 as a dict of label to value.
+
+    Without ``nebular`` it is the HR max-L. With it, the continuum MAP best point overrides the
+    HR max-L for the parameters it has.
+    """
+    best = hr_best()
+    if nebular:
+        m = np.load(OUT / f"{TID}_map.npz")
+        best.update(zip([str(x) for x in m["labels"]], m["best"], strict=True))
+    return best
+
+
+def build(nebular=False):
     """Return the model, observation, source, start 0 and the fitted data."""
     z, flux, unc, good = load_data()
-    model = make_model(z)
+    model = make_model(z, nebular)
     obs = make_obs(flux, unc, good)
-    sps = get_sps()
-    best = hr_best()
+    sps = get_sps(nebular)
+    best = start_values(nebular)
     labels = model.theta_labels()
     missing = [k for k in labels if k not in best]
-    assert not missing, f"no HR value for {missing}"
+    assert not missing, f"no start value for {missing}"
     theta0 = np.array([best[k] for k in labels], float)
     return model, obs, sps, theta0, dict(z=z, flux=flux, unc=unc, good=good)
 
@@ -174,10 +208,10 @@ def peak_memory_gib():
     return float("nan")
 
 
-def check(n_starts, jitter, n_calls):
+def check(n_starts, jitter, n_calls, nebular=False):
     """Check the setup and time warm likelihood calls at the starts."""
     t = time.time()
-    model, obs, sps, theta0, data = build()
+    model, obs, sps, theta0, data = build(nebular)
     print(f"build {time.time() - t:.0f} s, peak memory {peak_memory_gib():.1f} GiB", flush=True)
     print(f"z {data['z']:.5f}, fitted px {data['good'].sum()}, free {model.theta_labels()}")
     print(f"fixed hypers {[(k, float(model.params[k][0])) for k in HYPERS]}")
@@ -201,9 +235,9 @@ def check(n_starts, jitter, n_calls):
     )
 
 
-def fit(start, n_starts, jitter, maxfev, tag):
+def fit(start, n_starts, jitter, maxfev, tag, nebular=False):
     """Run one start and save it to map_s<start><tag>.npz."""
-    model, obs, sps, theta0, _ = build()
+    model, obs, sps, theta0, _ = build(nebular)
     theta_start = pick_start(model, theta0, start, n_starts, jitter)
     best, _ = map_fit(
         model, obs, sps, n_seeds=0, maxfev=maxfev, theta0=theta_start, tag=f"s{start}"
@@ -226,7 +260,7 @@ def fit(start, n_starts, jitter, maxfev, tag):
     print(f"peak memory {peak_memory_gib():.1f} GiB")
 
 
-def collect(n_starts, tag):
+def collect(n_starts, tag, nebular=False):
     """Keep the start with the lowest -lnp, save its spectrum and write map.txt.
 
     A start with no output file (for example killed by the time limit) is listed as missing.
@@ -237,7 +271,7 @@ def collect(n_starts, tag):
     runs = {k: r for k, r in runs.items() if np.isfinite(float(r["fun"]))}
     k_best = min(runs, key=lambda k: float(runs[k]["fun"]))
     r = runs[k_best]
-    model, obs, sps, theta0, data = build()
+    model, obs, sps, theta0, data = build(nebular)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         spec = np.asarray(model.predict(r["theta"], observations=obs, sps=sps)[0][0], float)
@@ -254,14 +288,15 @@ def collect(n_starts, tag):
         start=k_best,
         fun_all=np.array([float(runs[k]["fun"]) for k in sorted(runs)]),
     )
-    lines = [f"MAP of {TID}, C3K_ER + afe + R matrix, best start {k_best} of {n_starts}"]
+    name = "C3K_ER + afe + R matrix" + (" + Cue" if nebular else "")
+    lines = [f"MAP of {TID}, {name}, best start {k_best} of {n_starts}"]
     lines += [f"missing starts {missing}", ""]
     lines += [
         f"start {k}: -lnp {float(runs[k]['fun']):.2f}, nfev {int(runs[k]['nfev'])} of "
         f"{int(runs[k]['maxfev'])}, success {bool(runs[k]['success'])}"
         for k in sorted(runs)
     ]
-    lines += ["", f"{'parameter':>16} {'HR max-L':>10} {'MAP':>10}"]
+    lines += ["", f"{'parameter':>16} {'start 0':>10} {'MAP':>10}"]
     for name, a, b in zip(r["labels"], theta0, r["theta"], strict=True):
         lines.append(f"{name!s:>16} {a:10.4f} {b:10.4f}")
     text = "\n".join(lines) + "\n"
@@ -279,13 +314,16 @@ def main():
     ap.add_argument("--maxfev", type=int, default=150000)
     ap.add_argument("--n-calls", type=int, default=21, help="warm calls timed by check")
     ap.add_argument("--tag", default="", help="suffix of the output files, for test runs")
+    ap.add_argument("--nebular", choices=("on", "off"), default="off")
     a = ap.parse_args()
+    neb = a.nebular == "on"
+    tag = ("_cue" if neb else "") + a.tag
     if a.step == "check":
-        check(a.n_starts, a.jitter, a.n_calls)
+        check(a.n_starts, a.jitter, a.n_calls, neb)
     elif a.step == "fit":
-        fit(a.start, a.n_starts, a.jitter, a.maxfev, a.tag)
+        fit(a.start, a.n_starts, a.jitter, a.maxfev, tag, neb)
     else:
-        collect(a.n_starts, a.tag)
+        collect(a.n_starts, tag, neb)
 
 
 if __name__ == "__main__":
