@@ -39,6 +39,7 @@ the target's output folder of targets.py.
 
 import argparse
 import importlib.util
+import os
 import pathlib
 import subprocess
 import sys
@@ -48,7 +49,8 @@ from astropy.io import fits
 from targets import REFERENCE, target
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-DATA = ROOT / "data" / "desi_iron_exposures"
+# IRON_EXPOSURES overrides the folder, for nodes that do not mount Corral
+DATA = pathlib.Path(os.environ.get("IRON_EXPOSURES", ROOT / "data" / "desi_iron_exposures"))
 
 OLD_FINAL = """    # solve once again to get deconvolved variance
     #calibration,calibcovar=cholesky_solve_and_invert(A.todense(),B)

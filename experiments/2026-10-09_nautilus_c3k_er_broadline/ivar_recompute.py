@@ -29,6 +29,8 @@ in the target's output folder of targets.py.
 """
 
 import argparse
+import os
+from pathlib import Path
 
 import numpy as np
 from astropy.io import fits
@@ -37,7 +39,8 @@ from targets import REFERENCE, target
 
 from hubersed.paths import PATHS
 
-DATA = PATHS["DATA"] / "desi_iron_exposures"
+# IRON_EXPOSURES overrides the folder, for nodes that do not mount Corral
+DATA = Path(os.environ.get("IRON_EXPOSURES", PATHS["DATA"] / "desi_iron_exposures"))
 
 
 def exposure(night, expid, cam, TID):
