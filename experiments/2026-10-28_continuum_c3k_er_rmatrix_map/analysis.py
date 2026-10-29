@@ -2,16 +2,25 @@
 
 QUESTION: how do the residuals of MILES + Cue, C3K HR + Cue + free afe, and a C3K ER + free afe +
 resolution matrix MAP compare across the DESI spectrum?
-HYPOTHESIS: none registered. The ER MAP is not run yet, so its panel stays empty.
+HYPOTHESIS: none registered.
 INPUTS: the DESI DR1 coadd from hubersed.io.desi.load_spectrum. The 10-08 max-L spectra
 miles_miles_nebon_nodeg_pred.npz and c3k_hr_full_nebon_afefree_pred.npz in
-results/2026-10-08_continuum_outlier/ (md5 equal to the ls6 copies, 2026-10-28). Index bands from
+results/2026-10-08_continuum_outlier/ (md5 equal to the ls6 copies, 2026-10-28). The MAP
+<TID>_map.npz of fit.py collect, icx job 3655467, copied from stampede3. Index bands from
 $SPS_HOME/data/allindices.dat, as in the 10-08 analysis.
 SEED: none.
 COMMAND: from the repository root on the Mac,
 ``SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
 experiments/2026-10-28_continuum_c3k_er_rmatrix_map/analysis.py``.
-RESULT: pending.
+RESULT: 2026-10-28, map.txt. All 7 Powell starts stopped on tolerance (1836-14003 calls). Best
+start 6, -lnp -93625.70. Start 0 is 2.4 worse, starts 3-4 8-12 worse, starts 1, 2, 5 44-52 worse.
+MAP against the HR max-L: afe 0.109 (0.128), logzsol -0.021 (0.037), dust2 0.042 (0.056),
+dust_index -2.500 at its prior edge (-1.953), sigma_smooth 282.2 (281.1), logmass 11.13 (11.15).
+logsfr_ratios 1-5 move by 0.02 to 0.83, 6-9 by up to 0.13.
+Redward of rest 6400 A the ER and MILES chi, both on native data, scatter more than the HR chi on
+degraded data, so chi amplitude does not compare across those panels.
+Assumptions: SFH hyperparameters fixed at the HR values (fit with nebular on); no nebular
+emission; DR1 coadd ivar; one MAP, not shown to be the global optimum.
 FIGURES: results/2026-10-28_continuum_c3k_er_rmatrix_map/residuals_by_model.png.
 """
 
