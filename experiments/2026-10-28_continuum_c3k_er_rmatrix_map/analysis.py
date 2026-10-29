@@ -1,12 +1,13 @@
 """Spectrum and residuals of the continuum outlier 39627757533007793 by model (issue #17).
 
-QUESTION: how do the residuals of MILES + Cue, C3K HR + Cue + free afe, and a C3K ER + free afe +
-resolution matrix MAP compare across the DESI spectrum?
+QUESTION: how do the residuals of MILES + Cue, C3K HR + Cue + free afe, and a C3K ER + Cue + free
+afe + resolution matrix MAP compare across the DESI spectrum?
 HYPOTHESIS: none registered.
 INPUTS: the DESI DR1 coadd from hubersed.io.desi.load_spectrum. The 10-08 max-L spectra
 miles_miles_nebon_nodeg_pred.npz and c3k_hr_full_nebon_afefree_pred.npz in
-results/2026-10-08_continuum_outlier/ (md5 equal to the ls6 copies, 2026-10-28). The MAP
-<TID>_map.npz of fit.py collect, icx job 3655467, copied from stampede3. Index bands from
+results/2026-10-08_continuum_outlier/ (md5 equal to the ls6 copies, 2026-10-28). The Cue MAP
+<TID>_map_cue.npz of fit.py collect --nebular on (fits icx job 3655624), copied from stampede3.
+The continuum MAP <TID>_map.npz (icx job 3655467) is no longer drawn. Index bands from
 $SPS_HOME/data/allindices.dat, as in the 10-08 analysis.
 SEED: none.
 COMMAND: from the repository root on the Mac,
@@ -21,7 +22,8 @@ Redward of rest 6400 A the ER and MILES chi, both on native data, scatter more t
 degraded data, so chi amplitude does not compare across those panels.
 Assumptions: SFH hyperparameters fixed at the HR values (fit with nebular on); no nebular
 emission; DR1 coadd ivar; one MAP, not shown to be the global optimum.
-FIGURES: results/2026-10-28_continuum_c3k_er_rmatrix_map/residuals_by_model.png.
+FIGURES: results/2026-10-28_continuum_c3k_er_rmatrix_map/residuals_by_model.png and its zoom
+residuals_by_model_7200_7650.png.
 """
 
 # %%
@@ -53,7 +55,7 @@ ROWS = {
         "#e08214",
         RUNS10 / f"{TID}_c3k_hr_full_nebon_afefree_pred.npz",
     ),
-    "c3k_er": ("C3K ER + afe + R matrix (MAP)", ER_COLOR, OUT / f"{TID}_map.npz"),
+    "c3k_er": ("C3K ER + Cue + afe + R matrix (MAP)", ER_COLOR, OUT / f"{TID}_map_cue.npz"),
 }
 INDEX_NAMES = "Dn4000 HdeltaA CN1 Ca4227 G4300 C4668 Hbeta Mgb Fe5270 Fe5335 NaD TiO1 TiO2".split()
 
@@ -92,52 +94,71 @@ m = fits["miles"]
 assert np.isclose(float(m["z"]), z)
 assert np.allclose(m["flux"][m["good"]], flux[m["good"]], rtol=1e-6, atol=0)
 
+
 # %% figure: data with the ER MAP on top, then chi of each fit on its own data
-use_apj_style()
-fig, ax = plt.subplots(
-    4, 1, figsize=(16, 11), sharex=True, gridspec_kw={"height_ratios": [3, 1, 1, 1], "hspace": 0.06}
-)
-ax[0].plot(rest, np.where(ok, desi(flux), np.nan), color="0.75", lw=0.5, label="DESI (DR1 coadd)")
-# median filter over the unmasked pixels; medfilt pads the two ends with zeros
-med = np.full(flux.size, np.nan)
-med[ok] = medfilt(desi(flux)[ok], N_MEDIAN)
-ax[0].plot(rest, med, color="k", lw=0.8, label=f"median filter, {N_MEDIAN} pixels")
-if "c3k_er" in fits:
-    e = fits["c3k_er"]
+def figure(path, xlim=None):
+    """Draw the figure over the whole spectrum, or over the rest-frame range ``xlim``."""
+    fig, ax = plt.subplots(
+        4,
+        1,
+        figsize=(16, 11),
+        sharex=True,
+        gridspec_kw={"height_ratios": [3, 1, 1, 1], "hspace": 0.06},
+    )
     ax[0].plot(
-        rest, np.where(e["good"], desi(e["sp_best"]), np.nan), color=ER_COLOR, lw=0.8,
-        label=ROWS["c3k_er"][0],
-    )  # fmt: skip
-ax[0].set_ylabel(r"$f_\lambda$ [$10^{-17}$ erg s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]", fontsize=14)
-ax[0].set_ylim(bottom=0)
-ax[0].legend(frameon=False, fontsize=13, loc="upper right")
-for a, (key, (label, color, _)) in zip(ax[1:], ROWS.items(), strict=True):
-    if key in fits:
-        d = fits[key]
-        with np.errstate(divide="ignore", invalid="ignore"):  # unfitted pixels can have unc 0
-            c = np.where(d["good"], (d["flux"] - d["sp_best"]) / d["unc"], np.nan)
-        a.plot(rest, c, color=color, lw=0.5)
-    else:
-        label += ", not run yet"
-    for h in (-2, 2):
-        a.axhline(h, color="0.3", ls="--", lw=1)
-    a.axhline(0, color="0.3", lw=0.6)
-    a.set_ylim(-5, 5)
-    a.set_ylabel(r"$\chi$", fontsize=14)
-    a.text(
-        0.005, 0.88, label, transform=a.transAxes, fontsize=12, va="top",
-        bbox=dict(facecolor="white", edgecolor="none", alpha=0.8),
-    )  # fmt: skip
-for name, spans in index_bands().items():
-    for s0, s1 in spans:
-        for a in ax:
-            a.axvspan(s0, s1, color="0.5", alpha=0.12, lw=0)
-    mid = 0.5 * (spans[0][0] + spans[-1][1])
-    ax[0].text(
-        mid, 1.01, name, transform=ax[0].get_xaxis_transform(), rotation=90, fontsize=9,
-        ha="center", va="bottom",
-    )  # fmt: skip
-ax[-1].set_xlabel(r"rest wavelength [$\AA$]", fontsize=14)
-fig.savefig(OUT / "residuals_by_model.png", dpi=130, bbox_inches="tight")
-plt.close(fig)
-print(f"wrote {OUT / 'residuals_by_model.png'}")
+        rest, np.where(ok, desi(flux), np.nan), color="0.75", lw=0.5, label="DESI (DR1 coadd)"
+    )
+    # median filter over the unmasked pixels; medfilt pads the two ends with zeros
+    med = np.full(flux.size, np.nan)
+    med[ok] = medfilt(desi(flux)[ok], N_MEDIAN)
+    ax[0].plot(rest, med, color="k", lw=0.8, label=f"median filter, {N_MEDIAN} pixels")
+    if "c3k_er" in fits:
+        e = fits["c3k_er"]
+        ax[0].plot(
+            rest, np.where(e["good"], desi(e["sp_best"]), np.nan), color=ER_COLOR, lw=0.8,
+            label=ROWS["c3k_er"][0],
+        )  # fmt: skip
+    ax[0].set_ylabel(r"$f_\lambda$ [$10^{-17}$ erg s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]", fontsize=14)
+    ax[0].set_ylim(bottom=0)
+    ax[0].legend(frameon=False, fontsize=13, loc="upper right")
+    for a, (key, (label, color, _)) in zip(ax[1:], ROWS.items(), strict=True):
+        if key in fits:
+            d = fits[key]
+            with np.errstate(divide="ignore", invalid="ignore"):  # unfitted pixels can have unc 0
+                c = np.where(d["good"], (d["flux"] - d["sp_best"]) / d["unc"], np.nan)
+            a.plot(rest, c, color=color, lw=0.5)
+        else:
+            label += ", not run yet"
+        for h in (-2, 2):
+            a.axhline(h, color="0.3", ls="--", lw=1)
+        a.axhline(0, color="0.3", lw=0.6)
+        a.set_ylim(-5, 5)
+        a.set_ylabel(r"$\chi$", fontsize=14)
+        a.text(
+            0.005, 0.88, label, transform=a.transAxes, fontsize=12, va="top",
+            bbox=dict(facecolor="white", edgecolor="none", alpha=0.8),
+        )  # fmt: skip
+    for name, spans in index_bands().items():
+        for s0, s1 in spans:
+            for a in ax:
+                a.axvspan(s0, s1, color="0.5", alpha=0.12, lw=0)
+        mid = 0.5 * (spans[0][0] + spans[-1][1])
+        if xlim is not None and not xlim[0] <= mid <= xlim[1]:
+            continue  # no label outside the zoom
+        ax[0].text(
+            mid, 1.01, name, transform=ax[0].get_xaxis_transform(), rotation=90, fontsize=9,
+            ha="center", va="bottom",
+        )  # fmt: skip
+    ax[-1].set_xlabel(r"rest wavelength [$\AA$]", fontsize=14)
+    if xlim is not None:
+        ax[-1].set_xlim(*xlim)
+    fig.savefig(path, dpi=130, bbox_inches="tight")
+    plt.close(fig)
+    print(f"wrote {path}")
+
+
+use_apj_style()
+figure(OUT / "residuals_by_model.png")
+
+# %% zoom on rest 7200-7650 A, same panels and flux limits as the full figure
+figure(OUT / "residuals_by_model_7200_7650.png", xlim=(7200.0, 7650.0))
