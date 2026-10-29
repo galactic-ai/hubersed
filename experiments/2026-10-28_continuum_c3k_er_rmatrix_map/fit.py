@@ -11,7 +11,7 @@ of the 10-08 run.
 ``--nebular on`` adds Cue nebular emission (build_full_cue_model, no broad lines), with the Cue
 priors of the 10-08 run. Its start 0 is the continuum MAP best point (<TID>_map.npz) for the
 stellar parameters and the afefree max-L for the gas parameters and eline_sigma. Its outputs carry
-the tag _cue. The resolution matrix is the same, including its zero rows at ivar 0 pixels.
+the tag _cue. The resolution matrix is the same, including its zero columns at ivar 0 pixels.
 
 Steps: ``check`` builds the model, checks the setup and times warm likelihood calls. ``fit
 --start K`` runs start K of ``--n-starts`` (start 0 unjittered, the others jittered by ``--jitter``
