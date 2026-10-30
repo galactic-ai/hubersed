@@ -5,7 +5,9 @@ the attenuation curves of the MILES and C3K ER best points compare? (4) are dust
 mass degenerate?
 HYPOTHESIS: none registered.
 INPUTS: (3) the best points of the C3K ER MAP (icx job 3657895) and the 10-08 MILES nautilus
-max-L, until the MILES MAP of 2026-10-29_nodust_map_39633433328091196 exists. (4) the weighted
+max-L, until the MILES MAP of 2026-10-29_nodust_map_39633433328091196 exists; since 2026-10-30
+also the C3K ER MAP of the SV3 dark spectrum (2026-10-30_continuum_39633433328091196_dark_map,
+spr job 3662995). (4) the weighted
 posterior points of the 10-08 nautilus runs miles_miles_neboff_nodeg, c3k_hr_full_neboff_afezero
 and c3k_hr_full_neboff (pred npz, md5 of the MILES one equal to /work; the two HR ones copied from
 /work 2026-10-29), and the c3k_hr_full_neboff_afefree checkpoint (no pred npz; points read as in
@@ -17,7 +19,9 @@ RESULT: 2026-10-29, degeneracy.txt and the spectra figures. Each library fits as
 point (chi2 4569 C3K ER, 4564 MILES on 4070 common px) but not at the other's (+2315, +5572). C3K HR
 posteriors: dust2 and log M correlate (r +0.78 afe free to +0.93 afe 0), A_V 0.37-0.40, E(B-V)
 0.069-0.086; MILES: A_V 0.06, E(B-V) 0.046, no correlation. Assumptions: 10-08 nautilus posteriors
-(HR on degraded data, SFH hyperparameters free); the MILES point is its max-L.
+(HR on degraded data, SFH hyperparameters free); the MILES point is its max-L. 2026-10-30: the C3K
+ER MAP of the SV3 dark spectrum has A_V 0.423, E(B-V) 0.098, dust_index +0.07 (bright: 0.447, 0.064,
++0.40); all of these fits but the dark one use the sky-contaminated SV3 bright coadd.
 FIGURES: results/2026-10-29_c3k_vs_miles_dust/curves.png, degeneracy.png, degeneracy.txt and,
 once the spectra exist, spectra.png.
 """
@@ -41,9 +45,11 @@ POSTERIORS = {
     "C3K HR, no afe": (RUNS10 / f"{TID}_c3k_hr_full_neboff_pred.npz", "#8c510a"),
     "C3K HR, afe free": (RUNS10 / f"{TID}_c3k_hr_full_neboff_afefree_seed0.h5", "#7b3294"),
 }
+DARKDIR = PATHS["RESULTS"] / "2026-10-30_continuum_39633433328091196_dark_map"
 BEST = {
-    "C3K ER MAP": (MAPDIR / f"{TID}_map.npz", "#b2182b"),
+    "C3K ER MAP, SV3 bright": (MAPDIR / f"{TID}_map.npz", "#b2182b"),
     "MILES max-L": (POSTERIORS["MILES"][0], "#4393c3"),
+    "C3K ER MAP, SV3 dark": (DARKDIR / f"{TID}_map.npz", "#1b7837"),
 }
 KEEP_WEIGHT = 0.9999  # posterior weight kept from a checkpoint read without a pred npz
 OUT.mkdir(parents=True, exist_ok=True)
@@ -83,7 +89,7 @@ def best(path):
 
 
 # check against FSPS itself (reddening.py): C3K ER MAP A_V 0.447 and E(B-V) 0.064
-p = best(BEST["C3K ER MAP"][0])
+p = best(BEST["C3K ER MAP, SV3 bright"][0])
 a_b, a_v = attenuation([4400.0, 5500.0], p["dust2"], p["dust_index"])[0]
 assert abs(a_v - 0.447) < 0.002 and abs(a_b - a_v - 0.064) < 0.002, (a_v, a_b - a_v)
 
@@ -96,6 +102,8 @@ for name, (path, color) in BEST.items():
     a = attenuation(lam, p["dust2"], p["dust_index"])[0]
     av = attenuation([5500.0], p["dust2"], p["dust_index"])[0, 0]
     label = f"{name}: dust2 {p['dust2']:.3f}, dust_index {p['dust_index']:+.2f}"
+    ab = attenuation([4400.0], p["dust2"], p["dust_index"])[0, 0]
+    print(f"{name}: A_V {av:.3f}, E(B-V) {ab - av:.3f}")
     ax[0].plot(lam, a, color=color, lw=1.5, label=label)
     ax[1].plot(lam, a / av, color=color, lw=1.5)
 ax[1].plot(lam, kc13_curve(lam, 0.0)[0] / kc13_curve([5500.0], 0.0)[0, 0], color="0.4", ls="--",
