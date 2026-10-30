@@ -17,7 +17,8 @@ with logzsol <= 0.2 +112.3, with 3850-4450 and 4600-4750 A masked +105.8; MILES 
 -9.8), with logzsol <= 0.2 +35.6 (+10.6). The cost sits at the blue end, 4300-5300 A and the red end.
 Masked, C3K's slope is free (steep low-dust start within 1.3 in ln p of the grey one). Assumptions:
 MAPs from 7 starts (4 for capped C3K with dust), fixed SFH hyperparameters, DR1 coadd ivar.
-FIGURES: results/2026-10-29_nodust_map_39633433328091196/nodust_<lib>.png and nodust.txt.
+FIGURES: results/2026-10-29_nodust_map_39633433328091196/nodust_<lib>.png and nodust.txt;
+miles_dust_zcap.png and .txt (MILES with dust, logzsol capped or not); er_vs_miles_zcap.png.
 """
 
 # %%
@@ -135,3 +136,62 @@ for lib, (a, b) in done.items():
     fig.savefig(path, dpi=130, bbox_inches="tight")
     plt.close(fig)
     print(f"wrote {path}")
+
+# %% MILES with dust, logzsol prior uncapped against capped at +0.2: data, both MAPs and both chi
+a = np.load(OUT / "miles_dust" / f"{TID}_map.npz")
+b = np.load(OUT / "miles_dust_zmax0.2" / f"{TID}_map.npz")
+assert np.array_equal(a["good"], b["good"]), "different pixels"
+g = a["good"]
+rest = a["wave"] / (1 + float(a["z"]))
+cap_colors = {"logzsol <= 0.5": "#b2182b", "logzsol <= 0.2": "#2166ac"}
+fig, ax = plt.subplots(2, 1, figsize=(16, 7), sharex=True,
+                       gridspec_kw={"height_ratios": [3, 1], "hspace": 0.06})  # fmt: skip
+ax[0].plot(rest, np.where(g, flam(a, a["flux"]), np.nan), color="0.6", lw=0.5,
+           label="DESI SV3 (DR1 coadd)")  # fmt: skip
+for key, d in (("logzsol <= 0.5", a), ("logzsol <= 0.2", b)):
+    ax[0].plot(rest, np.where(g, flam(d, d["sp_best"]), np.nan), color=cap_colors[key], lw=0.8,
+               label="MILES MAP with dust, logzsol $\\leq$ " + key[-3:])  # fmt: skip
+    ax[1].plot(rest, chi(d), color=cap_colors[key], lw=0.5, alpha=0.7)
+for h in (-2, 2):
+    ax[1].axhline(h, color="0.3", ls="--", lw=1)
+ax[1].axhline(0, color="0.3", lw=0.6)
+ax[1].set_ylim(-5, 5)
+ax[1].set_ylabel(r"$\chi$", fontsize=14)
+ax[0].set_ylabel(r"$f_\lambda$ [$10^{-17}$ erg s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]", fontsize=14)
+ax[0].legend(frameon=False, fontsize=12, loc="lower right")
+ax[1].set_xlabel(r"rest wavelength [$\AA$]", fontsize=14)
+fig.savefig(OUT / "miles_dust_zcap.png", dpi=130, bbox_inches="tight")
+plt.close(fig)
+pa = dict(zip([str(x) for x in a["labels"]], a["best"], strict=True))
+pb = dict(zip([str(x) for x in b["labels"]], b["best"], strict=True))
+rows = [f"{'parameter':>16} {'<= 0.5':>10} {'<= 0.2':>10} {'change':>10}"]
+rows += [f"{k:>16} {pa[k]:10.4f} {pb[k]:10.4f} {pb[k] - pa[k]:+10.4f}" for k in pa]
+(OUT / "miles_dust_zcap.txt").write_text("\n".join(rows) + "\n")
+print("\n".join(rows))
+
+# %% C3K ER MAP with dust against the MILES MAP with dust and logzsol <= 0.2: data, both MAPs, chi of each
+e = np.load(MAPDIR / f"{TID}_map.npz")
+m = np.load(OUT / "miles_dust_zmax0.2" / f"{TID}_map.npz")
+assert not np.any(m["good"] & ~e["good"]), "MILES fits pixels the ER fit drops"
+assert np.allclose(e["flux"][m["good"]], m["flux"][m["good"]]), "different data"
+rest = e["wave"] / (1 + float(e["z"]))
+fits = (("C3K ER MAP with dust", e, "#b2182b"),
+        (r"MILES MAP with dust, logzsol $\leq$ 0.2", m, "#2166ac"))  # fmt: skip
+fig, ax = plt.subplots(3, 1, figsize=(16, 9), sharex=True,
+                       gridspec_kw={"height_ratios": [3, 1, 1], "hspace": 0.06})  # fmt: skip
+ax[0].plot(rest, np.where(e["good"], flam(e, e["flux"]), np.nan), color="0.6", lw=0.5,
+           label="DESI SV3 (DR1 coadd)")  # fmt: skip
+for (label, d, color), a_chi in zip(fits, ax[1:], strict=True):
+    ax[0].plot(rest, np.where(d["good"], flam(d, d["sp_best"]), np.nan), color=color, lw=0.8,
+               label=label)  # fmt: skip
+    a_chi.plot(rest, chi(d), color=color, lw=0.5)
+    for h in (-2, 2):
+        a_chi.axhline(h, color="0.3", ls="--", lw=1)
+    a_chi.axhline(0, color="0.3", lw=0.6)
+    a_chi.set_ylim(-5, 5)
+    a_chi.set_ylabel(r"$\chi$", fontsize=14)
+ax[0].set_ylabel(r"$f_\lambda$ [$10^{-17}$ erg s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]", fontsize=14)
+ax[0].legend(frameon=False, fontsize=12, loc="lower right")
+ax[-1].set_xlabel(r"rest wavelength [$\AA$]", fontsize=14)
+fig.savefig(OUT / "er_vs_miles_zcap.png", dpi=130, bbox_inches="tight")
+plt.close(fig)
