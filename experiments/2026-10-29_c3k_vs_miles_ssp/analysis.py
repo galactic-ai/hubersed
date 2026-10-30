@@ -9,7 +9,10 @@ the Mac.
 SEED: none.
 COMMAND: from the repository root on the Mac,
 ``uv run --no-sync python experiments/2026-10-29_c3k_vs_miles_ssp/analysis.py``.
-RESULT: pending.
+RESULT: 2026-10-29, ratio.txt. Same MIST, IMF and SPS_HOME: the continuum agrees within ~2-3% at
+4500-7000 A; old ages at logzsol 0 differ in the Ca H&K bin (0.85), G band and Fe4383 (0.91-0.93)
+and C2 4668 (1.04). Above the MILES cap (+0.3) the H&K bin falls to 0.76. Assumptions: scaled-solar
+SSPs, 100 A bin means across different library resolutions, normalised at 5500 A.
 FIGURES: results/2026-10-29_c3k_vs_miles_ssp/ratio.png and ratio.txt.
 """
 

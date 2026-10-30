@@ -12,7 +12,10 @@ SEED: none.
 COMMAND: from the repository root on the Mac,
 ``SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
 experiments/2026-10-29_continuum_39633433328091196_map/analysis.py``.
-RESULT: pending.
+RESULT: 2026-10-29, map_summary.txt, map_ew.txt. ER MAP (job 3657895) chi2/(N-16) 1.117 on 4561 px,
+MILES max-L chi2/(N-19) 1.127 on 4070 px; 500 A bins 1.03-1.25 for both. Band EWs agree with the
+data within ~1 sigma (largest: Fe5335 +0.87 +- 0.75 A, NaD ER -0.56 +- 0.51 A). The HR afefree row is
+empty (its pred was never made). Assumptions: one MAP and one max-L, DR1 coadd ivar.
 FIGURES: results/2026-10-29_continuum_39633433328091196_map/residuals.png, zoom_features.png,
 map_summary.txt and map_ew.txt.
 """

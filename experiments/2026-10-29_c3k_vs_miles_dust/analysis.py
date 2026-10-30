@@ -13,7 +13,11 @@ hypers.py). (1, 2) spectra_er.npz and spectra_miles.npz of spectra.py, when copi
 SEED: none.
 COMMAND: from the repository root on the Mac,
 ``uv run --no-sync python experiments/2026-10-29_c3k_vs_miles_dust/analysis.py``.
-RESULT: pending.
+RESULT: 2026-10-29, degeneracy.txt and the spectra figures. Each library fits as well at its own
+point (chi2 4569 C3K ER, 4564 MILES on 4070 common px) but not at the other's (+2315, +5572). C3K HR
+posteriors: dust2 and log M correlate (r +0.78 afe free to +0.93 afe 0), A_V 0.37-0.40, E(B-V)
+0.069-0.086; MILES: A_V 0.06, E(B-V) 0.046, no correlation. Assumptions: 10-08 nautilus posteriors
+(HR on degraded data, SFH hyperparameters free); the MILES point is its max-L.
 FIGURES: results/2026-10-29_c3k_vs_miles_dust/curves.png, degeneracy.png, degeneracy.txt and,
 once the spectra exist, spectra.png.
 """

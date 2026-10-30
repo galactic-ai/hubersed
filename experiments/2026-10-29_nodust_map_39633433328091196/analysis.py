@@ -12,7 +12,11 @@ without dust, miles_dust/ and miles_nodust/ of fit.py (icx job 3658941); C3K ER 
 SEED: none.
 COMMAND: from the repository root on the Mac,
 ``uv run --no-sync python experiments/2026-10-29_nodust_map_39633433328091196/analysis.py``.
-RESULT: pending.
+RESULT: 2026-10-29, nodust.txt. Delta chi2 (no dust minus dust): C3K ER +112.9 (delta BIC +87.6),
+with logzsol <= 0.2 +112.3, with 3850-4450 and 4600-4750 A masked +105.8; MILES +15.2 (delta BIC
+-9.8), with logzsol <= 0.2 +35.6 (+10.6). The cost sits at the blue end, 4300-5300 A and the red end.
+Masked, C3K's slope is free (steep low-dust start within 1.3 in ln p of the grey one). Assumptions:
+MAPs from 7 starts (4 for capped C3K with dust), fixed SFH hyperparameters, DR1 coadd ivar.
 FIGURES: results/2026-10-29_nodust_map_39633433328091196/nodust_<lib>.png and nodust.txt.
 """
 
