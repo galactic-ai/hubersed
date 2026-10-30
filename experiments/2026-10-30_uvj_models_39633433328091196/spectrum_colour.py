@@ -71,6 +71,17 @@ lines.append(
     f"DESI SV3 dark spectrum (z {float(z_d[k]):.5f}, {(~good_d).sum()} px masked): "
     f"U-V {uv(rest_d, fnu_d):.3f}"
 )
+
+# the PR 2377 recoadd of the SV3 bright exposures (2026-10-30_recoadd_39633433328091196)
+rec = np.load(
+    colours.RESULTS
+    / "2026-10-30_recoadd_39633433328091196"
+    / "sv3"
+    / "resolution_matrix_rows_ivar.npz"
+)
+good_r = rec["ivar"] > 0
+fnu_r = np.interp(rest, rest[good_r], rec["flux"][good_r]) * rest**2
+lines.append(f"SV3 bright recoadd: U-V {uv(rest, fnu_r):.3f}")
 for lib, point in (("c3k_hr", "c3k"), ("miles", "miles")):
     d = np.load(colours.OUT / f"colours_{lib}.npz")
     w, f = d["full_wave"], d[f"full_spec_{point}_dust"]
