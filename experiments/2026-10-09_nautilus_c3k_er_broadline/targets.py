@@ -75,6 +75,18 @@ TARGETS = {
         out=CONTINUUM_OUT / "sv3",
         exposures={83526: ("20210405", 0, 229)},
     ),
+    # continuum outlier of experiments/2026-10-30_recoadd_39633433328091196; z of fastspec METADATA,
+    # exposures from desi_dr1.fiberassign joined to desi_dr1.exposure (Astro Data Lab, 2026-10-30)
+    39633433328091196: dict(
+        z=0.3924606144428253,
+        healpix=10231,
+        out=RESULTS / "2026-10-30_recoadd_39633433328091196" / "sv3",
+        exposures={
+            87837: ("20210509", 4, 2047),
+            87838: ("20210509", 4, 2047),
+            87839: ("20210509", 4, 2047),
+        },
+    ),
 }
 MAIN_TARGETS = {
     # z of the main row of desi_dr1.zpix (Astro Data Lab TAP, 2026-10-28)
