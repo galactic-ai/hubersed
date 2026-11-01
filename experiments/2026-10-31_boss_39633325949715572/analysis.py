@@ -23,8 +23,10 @@ Whole petal (petal_excess.txt, cframes z6 and z5 of EXPID 85210): on z6 the exce
 number, positive near fibres 3100-3190, 3300-3420 and 3450-3500 and negative near 3000-3050 and
 3200-3300, and the 45 sky fibres follow the same curve (16-84% -4.1 to 1.7); on z5 sky fibres sit at
 0 (16-84% -0.06 to 0.04). So the excess is in the sky-subtracted z6 frame, not in the objects.
+DESI tile QA (tile_qa_313.txt): petal 6 ZSKYCHI2PDF 8.556 and ZSKYTHRURMS 0.0595 (other petals
+0.945-0.993 and 0.0069-0.0114), tile VALID False; fibre 3332 has QAFIBERSTATUS 32768 (LOWEFFTIME).
 FIGURES: results/2026-10-31_boss_39633325949715572/ boss_spectrum.npz, desi_boss.png,
-neighbours.txt, neighbours.png, neighbour_checks.txt, petal_excess.txt, petal_excess.png
+neighbours.txt, neighbours.png, neighbour_checks.txt, petal_excess.txt, petal_excess.png, tile_qa_313.txt
 (cframes cached in data/iron_exposures/00085210/; <TID>_neighbours.npz of neighbours.slurm).
 """
 
@@ -222,9 +224,39 @@ def petal(cams=("z6", "z5")):
     print(f"wrote {OUT / 'petal_excess.png'}")
 
 
+# %%
+def tile_qa_313():
+    """Print the iron tile-QA petal sky metrics of tile 313 and the QA row of fibre 3332."""
+    import urllib.request
+
+    from astropy.io import fits
+
+    name = "tile-qa-313-thru20210417.fits"
+    path = PATHS["DATA"] / "iron_tileqa" / "313" / name
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        urllib.request.urlretrieve(
+            "https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/tiles/cumulative/313/20210417/"
+            + name, path)  # fmt: skip
+    with fits.open(path) as h:
+        pq, fq = h["PETALQA"].data, h["FIBERQA"].data
+        lines = [f"# {name}: VALID {h['FIBERQA'].header.get('VALID')}; petal, Z/R/B SKYCHI2PDF, "
+                 "ZSKYTHRURMS, EFFTIME_SPEC"]  # fmt: skip
+        for r in pq:
+            lines.append(f"petal {int(r['PETAL_LOC'])}: ZSKYCHI2PDF {r['ZSKYCHI2PDF']:.3f} "
+                         f"RSKYCHI2PDF {r['RSKYCHI2PDF']:.3f} BSKYCHI2PDF {r['BSKYCHI2PDF']:.3f} "
+                         f"ZSKYTHRURMS {r['ZSKYTHRURMS']:.4f} EFFTIME_SPEC {r['EFFTIME_SPEC']:.1f}")  # fmt: skip
+        i = np.flatnonzero(fq["FIBER"] == 3332)[0]
+        lines.append(f"fibre 3332: TARGETID {int(fq['TARGETID'][i])}, QAFIBERSTATUS "
+                     f"{int(fq['QAFIBERSTATUS'][i])} (bit 15 LOWEFFTIME in desispec 0.56.2 maskbits)")  # fmt: skip
+    (OUT / "tile_qa_313.txt").write_text("\n".join(lines) + "\n")
+    print("\n".join(lines))
+
+
 if __name__ == "__main__":
     main()
     if (OUT / f"{TID}_neighbours.npz").exists():
         neighbours()
         neighbour_checks()
     petal()
+    tile_qa_313()
