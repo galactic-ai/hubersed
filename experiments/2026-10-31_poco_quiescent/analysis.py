@@ -9,7 +9,9 @@ from the diffuse KC13 curve as in 2026-10-31_poco_c3k_er_dark_39633433328091196/
 corner style and plots this repeats without the MAP.
 SEED: 0, for 20000 prior draws and 2000 sSFR draws.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_poco_quiescent/analysis.py --tid <TARGETID>``.
-RESULT: not run yet.
+RESULT: 2026-11-01, 39633301257850206: ESS 4555, log Z 90445.08 +- 0.84; max-likelihood chi2/N 1.018 on
+5043 px with no structured residual. Medians: logmass 11.28, logzsol -0.17, afe +0.31, E(B-V) 0.17,
+A_V 0.50, dust_index -0.30 (posterior.txt).
 FIGURES: results/2026-10-31_poco_quiescent/<TARGETID>/ posterior.txt, prior_edges.txt, best_fit.png,
 corner.png, corner_stars_dust.png, corner_sfh.png, corner_all_ssfr.png.
 """
