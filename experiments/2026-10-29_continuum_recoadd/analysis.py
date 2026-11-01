@@ -18,8 +18,8 @@ The Mgb deficit stays (mean chi -0.42 SV3, -0.47 main), the main NaD deficit sta
 SV3 Halpha-core deficit shrinks (-1.16 to -0.71). SV3 and main still disagree: afe -0.03 vs 0.30,
 logzsol +0.19 vs -0.13, dust_index -2.5 (edge) vs -1.05. sigma_smooth is 275 vs 277 km/s.
 Assumptions: MAP only (7 Powell starts), SFH hyperparameters fixed, no calibration polynomial.
-FIGURES: results/2026-10-29_continuum_recoadd/<survey>_dr1_vs_recoadd.png, and
-dr1_vs_recoadd.txt.
+FIGURES: results/2026-10-29_continuum_recoadd/<survey>_dr1_vs_recoadd.png,
+zoom_5100_5400.png (Mgb to Fe5335), and dr1_vs_recoadd.txt.
 """
 
 # %%
@@ -168,3 +168,37 @@ for survey, f in fits.items():
     fig.savefig(path, dpi=130, bbox_inches="tight")
     plt.close(fig)
     print(f"wrote {path}")
+
+# %% zoom on Mgb, Fe5270 and Fe5335: each spectrum with its own MAP, rest 5100 to 5400 A
+ZOOM = (5100, 5400)
+panels = [(s, k) for s in ("sv3", "main") for k in ("DR1", "recoadd")]
+fig, axes = plt.subplots(4, 1, figsize=(12, 14), sharex=True)
+for ax, (survey, k) in zip(axes, panels, strict=True):
+    d = fits[survey][k]
+    g = d["good"]
+    data = flam(d, d["flux"])
+    med = np.full(data.size, np.nan)
+    med[g] = medfilt(data[g], N_MEDIAN)
+    model = np.where(g, flam(d, d["sp_best"]), np.nan)
+    ax.plot(rest(d), np.where(g, data, np.nan), color="0.6", lw=1.0, label="DESI spectrum")
+    ax.plot(rest(d), med, color="k", lw=0.6, label=f"median filter, {N_MEDIAN} pixels")
+    ax.plot(rest(d), model, color=COLORS[k], lw=1.2, label="continuum MAP")
+    # y range from the pixels shown, as autoscale would use the whole spectrum
+    s = g & (rest(d) >= ZOOM[0]) & (rest(d) <= ZOOM[1])
+    lo, hi = min(data[s].min(), model[s].min()), max(data[s].max(), model[s].max())
+    pad = 0.05 * (hi - lo)
+    ax.set_ylim(lo - pad, hi + pad)
+    for name in ("Mgb", "Fe5270", "Fe5335"):
+        ((f0, f1),) = bands[name]
+        ax.axvspan(f0, f1, color="0.5", alpha=0.15, lw=0)
+        ax.text(0.5 * (f0 + f1), hi + 0.5 * pad, name, ha="center", va="top", fontsize=11)
+    title = f"{'SV3' if survey == 'sv3' else 'main'} {'DR1 coadd' if k == 'DR1' else 'recoadd'}"
+    ax.set_title(title, fontsize=14)
+    ax.set_ylabel(r"$f_\lambda$ [$10^{-17}$ erg s$^{-1}$ cm$^{-2}$ $\AA^{-1}$]", fontsize=12)
+axes[0].set_xlim(*ZOOM)
+axes[-1].set_xlabel(r"rest wavelength [$\AA$]", fontsize=14)
+axes[0].legend(frameon=False, fontsize=10, loc="lower left")
+path = OUT / f"zoom_{ZOOM[0]}_{ZOOM[1]}.png"
+fig.savefig(path, dpi=130, bbox_inches="tight")
+plt.close(fig)
+print(f"wrote {path}")
