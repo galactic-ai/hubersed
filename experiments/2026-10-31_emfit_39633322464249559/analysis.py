@@ -12,8 +12,10 @@ RESULT: EmFit puts almost all Halpha in a broad component, sigma 1651 km/s, flux
 prob_broad 78.2; narrow Halpha 1.9 +- 14, [NII] 1.5 +- 8.8, Hbeta 2.6 +- 3.2, [OIII] 21 +- 9.
 FastSpecFit gives the opposite split (narrow Halpha and [NII] at S/N ~30, no broad), so the
 Halpha decomposition is degenerate here (Halpha at ~9100 A observed). No BPT from EmFit.
+FastSpecFit (fastspec.txt): MgII 2796/2803 sigma 2677 km/s, S/N 5.5 and 13.6; log [NII]/Ha 0.005 and
+EW Ha 9.4 A (WHAN strong AGN); [OIII]/Hb with Hb at +3 sigma 0.53, above Kewley+01 (-0.12).
 Assumptions: totals sum narrow, outflow and broad components, as the cue data.py.
-FIGURES: results/2026-10-31_emfit_39633322464249559/ emfit_row.fits, emfit.txt.
+FIGURES: results/2026-10-31_emfit_39633322464249559/ emfit_row.fits, emfit.txt, fastspec.txt.
 """
 
 # %%
@@ -74,5 +76,32 @@ def main():
     print(f"columns with 'sigma' or 'ew': {[c for c in r.colnames if 'sigma' in c or 'ew' in c]}")
 
 
+# %%
+def fastspec():
+    """Print FastSpecFit MgII, Balmer and forbidden lines of the target, WHAN and BPT at Hbeta's 3 sigma."""
+    from astropy.io import fits
+
+    with fits.open(PATHS["DATA"] / "fastspec-iron-sv3-bright.fits", memmap=True) as h:
+        i = np.flatnonzero(h["METADATA"].data["TARGETID"] == TID)[0]
+        r = h["FASTSPEC"].data[i]
+    v = {}
+    lines = [f"# {TID} FastSpecFit iron sv3 bright: flux (1e-17 cgs), S/N, sigma (km/s), EW (A)"]
+    for k in ("MGII_2796", "MGII_2803", "HBETA", "OIII_5007", "HALPHA", "HALPHA_BROAD", "NII_6584"):
+        f, iv = float(r[f"{k}_FLUX"]), float(r[f"{k}_FLUX_IVAR"])
+        v[k] = (f, np.sqrt(1 / iv) if iv > 0 else np.nan)
+        lines.append(
+            f"{k}: {f:.2f}, S/N {f * np.sqrt(iv):.1f}, sigma {r[f'{k}_SIGMA']:.0f}, EW {r[f'{k}_EW']:.2f}"
+        )
+    x = np.log10(v["NII_6584"][0] / v["HALPHA"][0])
+    hb3 = max(v["HBETA"][0], 0) + 3 * v["HBETA"][1]
+    y3 = np.log10(v["OIII_5007"][0] / hb3)
+    lines.append(f"log [NII]/Ha {x:.3f}, EW Ha {float(r['HALPHA_EW']):.2f} A (WHAN strong AGN if x > -0.4 "
+                 f"and EW > 6); log [OIII]/Hb with Hb at +3 sigma {y3:.3f}, Kewley+01 at x "
+                 f"{0.61 / (x - 0.47) + 1.19:.3f}")  # fmt: skip
+    (OUT / "fastspec.txt").write_text("\n".join(lines) + "\n")
+    print("\n".join(lines))
+
+
 if __name__ == "__main__":
     main()
+    fastspec()
