@@ -16,6 +16,7 @@ it: rest 6575-6600 (obs 7771-7801, chi2/N 4.5, mean chi +1.2, data above model) 
 emission (obs ~7757) is in every exposure but not fitted: spender's skyline mask (OH 7752.8 and
 7762.1 A, sky-lines.txt) zeroes ~70% of 7740-7775 A; that mask removes 1941 of 7781 pixels in all.
 The Hdelta dip (obs ~4852-4856) is deeper than the model in both B-arm exposures.
+FastSpecFit: log [NII]/Ha -0.61, log [OIII]/Hb -0.55, below Kauffmann+03; EW Ha 7.9 A: star-forming.
 Assumptions: bins of 25 A rest with >= 10 good pixels; ivar dips mark sky lines.
 FIGURES: results/2026-10-31_resid_39627782258426347/ resid.txt, resid.png.
 """
@@ -177,7 +178,27 @@ def exposures(order, n=4, smooth=15):
     print(f"wrote {OUT / 'worst_bins_exposures.png'} and {OUT / 'exposure_ratio.png'}")
 
 
+# %%
+def fastspec_bpt():
+    """Print the FastSpecFit BPT lines of the target and where it falls against Kewley+01."""
+    from astropy.io import fits
+
+    with fits.open(PATHS["DATA"] / "fastspec-iron-sv3-bright.fits", memmap=True) as h:
+        i = np.flatnonzero(h["METADATA"].data["TARGETID"] == TID)[0]
+        r = h["FASTSPEC"].data[i]
+    v = {}
+    for k in ("HALPHA", "NII_6584", "HBETA", "OIII_5007"):
+        v[k] = float(r[f"{k}_FLUX"])
+        print(f"{k}: flux {v[k]:.2f}, S/N {v[k] * np.sqrt(r[f'{k}_FLUX_IVAR']):.1f}, "
+              f"EW {r[f'{k}_EW']:.2f} A, sigma {r[f'{k}_SIGMA']:.0f} km/s")  # fmt: skip
+    x, y = np.log10(v["NII_6584"] / v["HALPHA"]), np.log10(v["OIII_5007"] / v["HBETA"])
+    print(
+        f"log [NII]/Ha {x:.3f}, log [OIII]/Hb {y:.3f}, Kewley+01 at x {0.61 / (x - 0.47) + 1.19:.3f}"
+    )
+
+
 if __name__ == "__main__":
     worst = main()
     if (OUT / f"{TID}_exposures.npz").exists():
         exposures(worst)
+    fastspec_bpt()
