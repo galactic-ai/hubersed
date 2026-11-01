@@ -11,7 +11,7 @@ COMMAND: ``uv run --no-sync python experiments/2026-10-31_batch2_scrutiny/analys
 RESULT: broad Halpha (S/N 28-34, sigma 671-1074 km/s) in 07, 09, 13: AGN. 14 composite BPT, WHAN
 strong AGN. 06, 10, 11 star-forming (06 and 10 at logM 7.6 and 7.4); 08 star-forming (single exposure,
 Halpha masked); 12 retired (Dn4000 1.95, Halpha EW 0.6, single exposure). Fits (Nikhil, 2026-10-31):
-06, 10, 11, 12 in 2026-10-31_poco_batch2; not 08 and 14.
+06, 10, 11, 12 planned, then cancelled when only quiescent galaxies are fitted; not 08 and 14.
 Assumptions: FastSpecFit 2.5.1 fluxes; BPT needs S/N >= 3 in all four lines.
 FIGURES: results/2026-10-31_batch2_scrutiny/ scrutiny.txt.
 """
