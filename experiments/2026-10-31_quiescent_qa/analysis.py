@@ -8,7 +8,10 @@ tile-qa-<TILEID>-thru<LASTNIGHT>.fits files (FIBERQA, PETALQA). Thresholds skyth
 skychi2pdf_max 1.5 from desispec 0.56.2 qa-params.yaml lines 106-107.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_quiescent_qa/analysis.py``.
-RESULT: not run yet.
+RESULT: tile-QA sky metrics are below both thresholds for all five (qa.txt). Fibre census of all
+36 (fibres_all.txt): fibre 2675 of petal 5 carries 5 tile rows (12, 15, 22 and two others), 2676 two;
+27 sits on 2666 and 2676. 12 and 22 have QAFIBERSTATUS 32768; 27 on tile 288 has 16777216 (BADAMPZ)
+and VALID False. Only 20 is off fibres 2666-2676.
 FIGURES: results/2026-10-31_quiescent_qa/ qa.txt, fibres_all.txt (tile-QA files cached in\ndata/iron_tileqa/).
 """
 
