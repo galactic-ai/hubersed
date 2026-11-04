@@ -1,0 +1,10 @@
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/tiles/cumulative/271/20210406/coadd-5-271-thru20210406.fits
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/tiles/cumulative/271/20210406/redrock-5-271-thru20210406.fits
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/tiles/cumulative/285/20210416/coadd-5-285-thru20210416.fits
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/tiles/cumulative/285/20210416/redrock-5-285-thru20210416.fits
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/tiles/cumulative/288/20210502/coadd-5-288-thru20210502.fits
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/tiles/cumulative/288/20210502/redrock-5-288-thru20210502.fits
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/tiles/cumulative/20103/20210612/coadd-4-20103-thru20210612.fits
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/tiles/cumulative/20103/20210612/redrock-4-20103-thru20210612.fits
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/tiles/cumulative/2694/20220330/coadd-5-2694-thru20220330.fits
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/tiles/cumulative/2694/20220330/redrock-5-2694-thru20220330.fits
