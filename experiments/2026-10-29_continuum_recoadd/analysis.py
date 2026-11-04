@@ -19,7 +19,7 @@ SV3 Halpha-core deficit shrinks (-1.16 to -0.71). SV3 and main still disagree: a
 logzsol +0.19 vs -0.13, dust_index -2.5 (edge) vs -1.05. sigma_smooth is 275 vs 277 km/s.
 Assumptions: MAP only (7 Powell starts), SFH hyperparameters fixed, no calibration polynomial.
 FIGURES: results/2026-10-29_continuum_recoadd/<survey>_dr1_vs_recoadd.png,
-zoom_5100_5400.png (Mgb to Fe5335), and dr1_vs_recoadd.txt.
+zoom_5100_5400.png (Mgb to Fe5335), dr1_vs_recoadd.txt and snr.txt.
 """
 
 # %%
@@ -202,3 +202,16 @@ path = OUT / f"zoom_{ZOOM[0]}_{ZOOM[1]}.png"
 fig.savefig(path, dpi=130, bbox_inches="tight")
 plt.close(fig)
 print(f"wrote {path}")
+
+# %% median S/N per pixel of each fitted spectrum, flux / uncertainty on its fitted pixels
+lines = ["median S/N per pixel over each fit's own fitted pixels (flux / unc, maggies)"]
+common = np.logical_and.reduce([f[k]["good"] for f in fits.values() for k in f])
+for survey, f in fits.items():
+    for k, d in f.items():
+        g = d["good"]
+        snr = d["flux"] / d["unc"]
+        lines.append(f"{survey:>5} {k:>8}: {np.median(snr[g]):6.3f} ({g.sum()} px); "
+                     f"on the {common.sum()} px all four fit {np.median(snr[common]):6.3f}")  # fmt: skip
+text = "\n".join(lines)
+(OUT / "snr.txt").write_text(text + "\n")
+print(text)
