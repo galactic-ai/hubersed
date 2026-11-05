@@ -1,0 +1,16 @@
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/healpix/sv3/bright/93/9342/spectra-sv3-bright-9342.fits.gz
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/healpix/sv3/bright/94/9425/spectra-sv3-bright-9425.fits.gz
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/healpix/sv3/bright/98/9837/spectra-sv3-bright-9837.fits.gz
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/healpix/sv3/bright/99/9923/spectra-sv3-bright-9923.fits.gz
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/healpix/sv3/bright/101/10199/spectra-sv3-bright-10199.fits.gz
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/healpix/sv3/bright/102/10231/spectra-sv3-bright-10231.fits.gz
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/healpix/sv3/bright/112/11230/spectra-sv3-bright-11230.fits.gz
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/healpix/sv3/bright/112/11231/spectra-sv3-bright-11231.fits.gz
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/healpix/sv3/bright/115/11523/spectra-sv3-bright-11523.fits.gz
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/healpix/sv3/bright/153/15358/spectra-sv3-bright-15358.fits.gz
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/healpix/sv3/bright/259/25934/spectra-sv3-bright-25934.fits.gz
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/healpix/sv3/bright/259/25954/spectra-sv3-bright-25954.fits.gz
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/healpix/sv3/bright/259/25956/spectra-sv3-bright-25956.fits.gz
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/healpix/sv3/bright/260/26065/spectra-sv3-bright-26065.fits.gz
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/healpix/sv3/bright/262/26278/spectra-sv3-bright-26278.fits.gz
+https://data.desi.lbl.gov/public/dr1/spectro/redux/iron/healpix/sv3/bright/262/26279/spectra-sv3-bright-26279.fits.gz
