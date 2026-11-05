@@ -124,7 +124,7 @@ def overlay(ana, rr, names, path, inset=False, tid=None):
                 else:
                     corner.hist2d(cols[names[j]], cols[names[i]], ax=ax, weights=w,
                                   range=[ranges[j], ranges[i]], color=colour, smooth=1.0, bins=30,
-                                  levels=(0.393, 0.865), plot_datapoints=False, plot_density=False,
+                                  levels=(0.393, 0.865), plot_datapoints=False, plot_density=False, no_fill_contours=True,
                                   fill_contours=False, contour_kwargs={"linewidths": 2})  # fmt: skip
             ax.set_xlim(ranges[j])
             if i != j:
