@@ -1,0 +1,8 @@
+# EmFit DR1 row of 39633416978694809, run by Nikhil in the Astro Data Lab query page on 2026-11-04,
+# because the TAP endpoint was not answering from scripts. Query:
+# SELECT targetid, survey, program, specprod, z, prob_broad, hb_n_flux, hb_n_flux_err, oiii5007_flux,
+#   oiii5007_flux_err, ha_n_flux, ha_n_flux_err, nii6583_flux, nii6583_flux_err, ha_n_sigma_flag
+#   FROM desi_dr1.emfit WHERE targetid = 39633416978694809
+# Fluxes in 1e-17 erg/s/cm2 (EmFit DR1 data model).
+targetid,survey,program,specprod,z,prob_broad,hb_n_flux,hb_n_flux_err,oiii5007_flux,oiii5007_flux_err,ha_n_flux,ha_n_flux_err,nii6583_flux,nii6583_flux_err,ha_n_sigma_flag
+39633416978694809,sv3,bright,iron,0.2604875935355176,0,0,0.2661238132388451,4.720229280255633,1.801946730496324,3.898746398632722,0.5541732204940276,1.800389027380245,1.172678463128713,0
