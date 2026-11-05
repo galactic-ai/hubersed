@@ -19,11 +19,14 @@ dependencies = [
     "fsps>=0.5.0",
     "h5py>=3.15.1",
     "ipykernel>=7.1.0",
+    "ipympl>=0.10.0",
     "matplotlib>=3.10.7",
     "mpi4py>=4.1.1",
     "nautilus-sampler>=1.0.6",
     "numpy>=2.3.4",
     "pandas>=2.3.3",
+    "pocomc>=1.2.6",
+    "pyneb>=1.1.32",
     "requests>=2.32.5",
     "schwimmbad>=0.4.2",
     "scipy>=1.16.3",
@@ -45,6 +48,7 @@ dev = [
     "ipykernel>=7.1.0",
     "jupyter>=1.1.1",
     "pre-commit>=4.6.2",
+    "py-spy>=0.4.2",
     "pytest>=9.1.1",
     "ruff>=0.15.21",
     "vulture>=2.16",
@@ -58,7 +62,7 @@ extra-build-variables = { fsps = { FFLAGS = "-DC3K_HR=1 -DC3K_LR=0 -DMILES=0 -DM
 spender = { git = "https://github.com/galactic-ai/spender" }
 astro-prospector = { git = "https://github.com/galactic-ai/prospector", rev = "feature/cue-on-v2" }
 astro-cue = { git = "https://github.com/galactic-ai/cue", rev = "cuejax" }
-fsps = { git = "https://github.com/galactic-ai/python-fsps", branch = "c3k-nzinit" }
+fsps = { git = "https://github.com/galactic-ai/python-fsps", branch = "exp/c3k-er-init" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

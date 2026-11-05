@@ -16,7 +16,7 @@ and then checked with forward-model fits.
     HYPOTHESIS, INPUTS, SEED, COMMAND, RESULT and FIGURES.
   - Slurm scripts, comparison scripts and small inputs sit in the same folder.
   - Outputs go to `results/YYYY-MM-DD_name/`, with the same name as the folder.
-  - A one-off with no fit can be a single `YYYY-MM-DD_name.py` file.
+  - Every experiment gets a folder, one-offs too. Docstrings stay short, one or two lines per field.
   - Notebooks are not source.
 - `tests/` holds the tests. `tests/golden/` holds the golden output check for pure moves.
 - `tmp/` and `nb/` are legacy and not linted. Do not add new work there.
@@ -48,3 +48,9 @@ Test markers are `fsps` (needs python-fsps and SPS_HOME), `data` (reads `data/`)
 - A pure move changes nothing but location. Check it with the golden output in
   `tests/golden/`, not with new unit tests.
 - Write numpy style docstrings in short plain sentences.
+
+## Experiments
+
+- Give a short plan (question, method, thresholds, assumptions, output folder) and get a yes first.
+- Numbers behind a claim come from committed experiment code, never from scratch scripts.
+- One experiment at a time. Each result ends with the assumptions that could change it.

@@ -1,10 +1,24 @@
-"""Two-component Balmer-line profiles, and an optional separate forbidden-line width.
+"""Line profiles with a second kinematic component and a separate forbidden-line width.
 
 Each line's total luminosity still comes from Cue and the star formation history, so the
 Balmer flux stays tied to the young stars. Only the line profile changes::
 
     Balmer lines:     (1 - f_b) * G(sigma_n) + f_b * G(sigma_b, shifted by v_b)
     all other lines:  G(sigma_forb), with sigma_forb = sigma_n unless eline_sigma_forb is set
+
+Two options of ``add_broad_params``, both off by default, change the line groups. With
+``he_balmer_profile`` the He I lines take the Balmer profile. With ``split_forbidden`` the
+forbidden lines of ions made above the O+ to O++ edge (35.12 eV: [O III], [Ne III], [Ar IV],
+[Ne IV], He II) get their own width ``eline_sigma_forb_hi``. Every other non-Balmer line,
+including [S III], [Ar III] and [Cl III], keeps ``eline_sigma_forb``. The groups and their sources
+are in knowledge/line_groups_ionization_zones_2026-10-10.md (UberSED notes); they cover the Cue
+lines at rest 3500-9000 A, and lines outside that range keep the low group. With
+``forbidden_hi_broad`` the high-ionization lines also get their own second-component fraction
+``eline_fbroad_forb_hi``.
+
+The second component is wider than the narrow one. It is a second kinematic component of the
+integrated spectrum, not necessarily an outflow or a broad-line region. Parameter and function
+names keep "broad" so that saved runs still load.
 """
 
 import numpy as np
@@ -27,14 +41,48 @@ FORB_PARAM = {
         N=1, isfree=True, init=30.0, units="km/s", prior=priors.TopHat(mini=10.0, maxi=100.0)
     )
 }
-# Balmer lines are named "Ba-..." in the FSPS and Cue line lists.
+FORB_HI_PARAM = {
+    "eline_sigma_forb_hi": dict(
+        N=1, isfree=True, init=30.0, units="km/s", prior=priors.TopHat(mini=10.0, maxi=100.0)
+    )
+}
+# Balmer lines are named "Ba-..." in the FSPS and Cue line lists, He I lines "He I ...".
 BALMER_PREFIX = "Ba-"
+HEI_PREFIX = "He I "
+# Cue names of the lines whose ion is made above 35.12 eV, for the high-ionization width.
+HIGH_ION_PREFIXES = ("[O III]", "[Ne III]", "[Ar IV]", "[Ne IV]", "He II ")
+
+
+def line_groups(names, he_balmer_profile=False):
+    """Split line names into the Balmer-profile and high-ionization groups.
+
+    Parameters
+    ----------
+    names : array_like of str
+        Line names as in the Cue or FSPS line list, for example "Ba-alpha 6563" or "[O III] 5007".
+    he_balmer_profile : bool
+        Put the He I lines in the Balmer-profile group.
+
+    Returns
+    -------
+    balmer, high : np.ndarray of bool
+        Lines with the Balmer profile, and forbidden lines with the high-ionization width. Lines
+        in neither group use the low-ionization width.
+    """
+    names = np.char.strip(np.asarray(names).astype(str))
+    balmer = np.char.startswith(names, BALMER_PREFIX)
+    if he_balmer_profile:
+        balmer |= np.char.startswith(names, HEI_PREFIX)
+    high = np.zeros(names.shape, dtype=bool)
+    for prefix in HIGH_ION_PREFIXES:
+        high |= np.char.startswith(names, prefix)
+    return balmer, high & ~balmer
 
 
 class TwoCompLineModel(HyperSpecModel):
-    """HyperSpecModel with a narrow plus broad profile for the Balmer lines.
+    """HyperSpecModel with a narrow plus second kinematic component for the Balmer lines.
 
-    The broad component takes a fraction ``eline_fbroad`` of each Balmer line's flux, so the
+    The second component takes a fraction ``eline_fbroad`` of each Balmer line's flux, so the
     line fluxes are unchanged. With ``eline_fbroad = 0`` and ``eline_sigma_forb`` equal to
     ``eline_sigma`` (or absent) the model is identical to HyperSpecModel.
     """
@@ -43,22 +91,39 @@ class TwoCompLineModel(HyperSpecModel):
         """Return the first element of a model parameter, or ``default`` if it is not set."""
         return float(np.atleast_1d(self.params.get(name, default))[0])
 
+    def _line_names(self):
+        """Return the line names of ``emline_info``."""
+        return np.asarray(self.emline_info["name"]).astype(str)
+
+    def _groups(self):
+        """Return the cached ``line_groups`` masks of ``emline_info``."""
+        if not hasattr(self, "_line_groups"):
+            he = bool(self._p("eline_he_balmer_profile", 0.0))
+            self._line_groups = line_groups(self._line_names(), he_balmer_profile=he)
+        return self._line_groups
+
     def _balmer_mask(self):
-        """Return a boolean mask of the Balmer lines in ``emline_info``, cached on first use."""
-        if not hasattr(self, "_is_balmer"):
-            names = np.char.strip(np.asarray(self.emline_info["name"]).astype(str))
-            self._is_balmer = np.char.startswith(names, BALMER_PREFIX)
-        return self._is_balmer
+        """Return a mask of the lines with the Balmer profile, see ``line_groups``."""
+        return self._groups()[0]
+
+    def _high_ion_mask(self):
+        """Return a mask of the high-ionization lines, see ``line_groups``."""
+        return self._groups()[1]
 
     def _broad_fraction(self):
-        """Return the per-line broad fraction of flux in the broad component.
+        """Return the per-line fraction of flux in the second component.
 
-        Balmer lines use ``eline_fbroad``; all other lines use ``eline_fbroad_forb``, which is
-        absent (zero) unless ``add_broad_params`` was called with ``forbidden_broad``.
+        Lines with the Balmer profile use ``eline_fbroad``; all other lines use
+        ``eline_fbroad_forb``, which is absent (zero) unless ``add_broad_params`` was called with
+        ``forbidden_broad``. If ``eline_fbroad_forb_hi`` is set, the high-ionization lines use it
+        instead of ``eline_fbroad_forb``.
         """
-        return np.where(
+        fb = np.where(
             self._balmer_mask(), self._p("eline_fbroad", 0.0), self._p("eline_fbroad_forb", 0.0)
         )
+        if "eline_fbroad_forb_hi" in self.params:
+            fb = np.where(self._high_ion_mask(), self._p("eline_fbroad_forb_hi", 0.0), fb)
+        return fb
 
     def _profile_widths(self):
         """Return per-line total widths of the main component and the widest component.
@@ -66,12 +131,13 @@ class TwoCompLineModel(HyperSpecModel):
         Returns
         -------
         prof : np.ndarray
-            Total width in km/s of the narrow (Balmer) or forbidden (other lines) component,
-            including the instrumental and library part cached by prospect.
+            Total width in km/s of the narrow (Balmer profile) or forbidden (other lines)
+            component, including the instrumental and library part cached by prospect.
+            High-ionization lines use ``eline_sigma_forb_hi`` if it is set.
         wide : np.ndarray
             Total width in km/s of the widest component of each line.
         shift : np.ndarray
-            Absolute velocity offset in km/s of the broad component (zero for lines without one).
+            Absolute velocity offset in km/s of the second component (zero for lines without one).
         inst2 : np.ndarray
             Squared instrumental (and library) width in km/s.
         """
@@ -81,7 +147,9 @@ class TwoCompLineModel(HyperSpecModel):
         # the cached width is hypot(eline_sigma, instrument); keep the instrumental part
         inst2 = np.clip(sig0**2 - self._p("eline_sigma", 0) ** 2, 0, None)
         s_forb = self._p("eline_sigma_forb", self._p("eline_sigma", 0))
-        prof = np.where(bal, sig0, np.sqrt(s_forb**2 + inst2))
+        s_hi = self._p("eline_sigma_forb_hi", s_forb)
+        s_line = np.where(self._high_ion_mask(), s_hi, s_forb)
+        prof = np.where(bal, sig0, np.sqrt(s_line**2 + inst2))
 
         has = self._broad_fraction() > 0
         broad = np.sqrt(self._p("eline_sigma_broad", 150.0) ** 2 + inst2)
@@ -127,7 +195,7 @@ class TwoCompLineModel(HyperSpecModel):
         self._elines_to_fit = self._fit_eline & self._valid_eline
 
     def get_eline_gaussians(self, lineidx=slice(None), wave=None):  # noqa: B008, same as parent
-        """Return unit-flux line profiles, two-component for lines with a broad component.
+        """Return unit-flux line profiles, two-component for lines with a second component.
 
         Parameters
         ----------
@@ -158,14 +226,20 @@ class TwoCompLineModel(HyperSpecModel):
 
 
 def same_fbroad(eline_fbroad=0.0, **extras):
-    """``depends_on`` function giving the forbidden lines the Balmer broad fraction."""
+    """``depends_on`` function giving the forbidden lines the Balmer second-component fraction."""
     return eline_fbroad
 
 
 def add_broad_params(
-    params, separate_forbidden_width=True, forbidden_broad=None, sigma_split=100.0
+    params,
+    separate_forbidden_width=True,
+    forbidden_broad=None,
+    sigma_split=100.0,
+    split_forbidden=False,
+    he_balmer_profile=False,
+    forbidden_hi_broad=None,
 ):
-    """Add the broad-line parameters to a model parameter dict.
+    """Add the second-component parameters to a model parameter dict.
 
     Parameters
     ----------
@@ -176,12 +250,26 @@ def add_broad_params(
     separate_forbidden_width : bool
         Also add ``eline_sigma_forb``, a separate width for the non-Balmer lines.
     forbidden_broad : {None, "shared", "free"}
-        Give the non-Balmer lines the broad component too, with same width and shift.
+        Give the non-Balmer lines the second component too, with the same width and shift.
         ``shared'' uses the Balmer fraction (``eline_fbroad_forb`` tied to ``eline_fbroad``).
-        ``free'' allows the forbidden broad fraction to vary independently.
-        None keeps it only on balmer lines.
+        ``free'' allows the non-Balmer fraction to vary independently.
+        None keeps it only on Balmer lines.
     sigma_split : float
-        Upper bound of the narrow and forbidden widths and lower bound of the broad width, in km/s.
+        Upper bound of the narrow and forbidden widths and lower bound of the second-component
+        width, in km/s.
+    split_forbidden : bool
+        Also add ``eline_sigma_forb_hi``, the width of the high-ionization forbidden lines
+        (``HIGH_ION_PREFIXES``). ``eline_sigma_forb`` then covers the other non-Balmer lines.
+        Needs ``separate_forbidden_width``.
+    he_balmer_profile : bool
+        Give the He I lines the Balmer profile (narrow ``eline_sigma`` and the Balmer second
+        component), through the fixed parameter ``eline_he_balmer_profile``.
+    forbidden_hi_broad : {None, "free"} or float
+        Give the high-ionization lines their own second-component fraction
+        ``eline_fbroad_forb_hi``, with the same second-component width and shift as the other
+        lines. ``free'' makes it a free parameter with the TopHat(0, 0.9) prior of the free
+        non-Balmer fraction. A number fixes it at that value. None leaves it out, and the
+        high-ionization lines then use ``eline_fbroad_forb``. Needs ``split_forbidden``.
 
     Returns
     -------
@@ -196,6 +284,12 @@ def add_broad_params(
 
     if separate_forbidden_width:
         params.update({k: dict(v, prior=narrow) for k, v in FORB_PARAM.items()})
+    if split_forbidden:
+        if not separate_forbidden_width:
+            raise ValueError("split_forbidden needs separate_forbidden_width")
+        params.update({k: dict(v, prior=narrow) for k, v in FORB_HI_PARAM.items()})
+    if he_balmer_profile:
+        params["eline_he_balmer_profile"] = dict(N=1, isfree=False, init=1.0)
     if forbidden_broad == "shared":
         params["eline_fbroad_forb"] = dict(N=1, isfree=False, init=0.0, depends_on=same_fbroad)
     elif forbidden_broad == "free":
@@ -206,6 +300,19 @@ def add_broad_params(
         raise ValueError(
             f"forbidden_broad must be None, 'shared' or 'free', not {forbidden_broad!r}"
         )
+    if forbidden_hi_broad is not None:
+        if not split_forbidden:
+            raise ValueError("forbidden_hi_broad needs split_forbidden")
+        if isinstance(forbidden_hi_broad, str):
+            if forbidden_hi_broad != "free":
+                raise ValueError(
+                    f"forbidden_hi_broad must be None, 'free' or a number, not {forbidden_hi_broad!r}"
+                )
+            params["eline_fbroad_forb_hi"] = dict(
+                N=1, isfree=True, init=0.1, prior=priors.TopHat(mini=0.0, maxi=0.9)
+            )
+        else:
+            params["eline_fbroad_forb_hi"] = dict(N=1, isfree=False, init=float(forbidden_hi_broad))
     params["eline_sigma"] = {**params["eline_sigma"], "prior": narrow}
     return params
 
@@ -218,9 +325,12 @@ def _trapezoid(y, x):
 def self_check(model_params, obs, sps, theta, n_prior=100, seed=0):
     """Check TwoCompLineModel against HyperSpecModel before sampling.
 
-    With ``eline_fbroad = 0`` and ``eline_sigma_forb = eline_sigma`` the two-component model
-    must reproduce the one-component model. With ``eline_fbroad = 0.5`` the Halpha + [NII] flux
-    should barely change, because the broad component redistributes flux instead of adding it.
+    With ``eline_fbroad = 0``, every second-component fraction (``eline_fbroad_forb`` and, if set,
+    ``eline_fbroad_forb_hi``) zero, and every line width (``eline_sigma_forb`` and, if set,
+    ``eline_sigma_forb_hi``) equal to ``eline_sigma`` the two-component model must reproduce the
+    one-component model, whatever the line groups. The prior draws use ``model_params`` as given,
+    and the other checks use a fixed ``eline_fbroad_forb_hi`` set to zero. With ``eline_fbroad = 0.5`` the Halpha + [NII] flux
+    should barely change, because the second component redistributes flux instead of adding it.
 
     Parameters
     ----------
@@ -246,19 +356,29 @@ def self_check(model_params, obs, sps, theta, n_prior=100, seed=0):
     if isinstance(obs, list | tuple):
         (obs,) = obs
 
+    fractions = ["eline_fbroad_forb", "eline_fbroad_forb_hi"]
+    hi = model_params.get("eline_fbroad_forb_hi")
+    given = model_params
+    if hi is not None and not hi["isfree"]:
+        # a fixed high-ionization fraction is set to zero for the comparison
+        model_params = {**model_params, "eline_fbroad_forb_hi": dict(hi, init=0.0)}
     m = TwoCompLineModel(model_params)
+    m_draw = m if model_params is given else TwoCompLineModel(given)
     ib = m.theta_index["eline_fbroad"].start
-    new = [k for k in [*BROAD_PARAMS, *FORB_PARAM, "eline_fbroad_forb"] if k in m.theta_index]
+    widths = [*FORB_PARAM, *FORB_HI_PARAM]
+    new = [k for k in [*BROAD_PARAMS, *widths, *fractions] if k in m.theta_index]
     drop = [m.theta_index[k].start for k in new]
-    base = HyperSpecModel(
-        {k: v for k, v in model_params.items() if k not in [*new, "eline_fbroad_forb"]}
-    )
+    fixed = [*new, *fractions, "eline_he_balmer_profile"]
+    base = HyperSpecModel({k: v for k, v in model_params.items() if k not in fixed})
     t0 = np.array(theta, dtype=float)
     t0[ib] = 0.0
-    if "eline_fbroad_forb" in m.theta_index:
-        t0[m.theta_index["eline_fbroad_forb"].start] = 0.0
-    if "eline_sigma_forb" in m.theta_index:  # same width for all lines, so equal to the base
-        t0[m.theta_index["eline_sigma_forb"].start] = t0[m.theta_index["eline_sigma"].start]
+    for k in fractions:
+        if k in m.theta_index:
+            t0[m.theta_index[k].start] = 0.0
+    # with one width for all lines the line groups do not matter, so the model equals the base
+    for k in widths:
+        if k in m.theta_index:
+            t0[m.theta_index[k].start] = t0[m.theta_index["eline_sigma"].start]
 
     s_base = base.predict(np.delete(t0, drop), observations=[obs], sps=sps)[0][0]
     s0 = m.predict(t0, observations=[obs], sps=sps)[0][0]
@@ -277,8 +397,8 @@ def self_check(model_params, obs, sps, theta, n_prior=100, seed=0):
     bad = 0
     with np.errstate(all="ignore"):
         for _ in range(n_prior):
-            t = m.prior_transform(rng.uniform(size=m.ndim))
-            bad += not np.all(np.isfinite(m.predict(t, observations=[obs], sps=sps)[0][0]))
+            t = m_draw.prior_transform(rng.uniform(size=m_draw.ndim))
+            bad += not np.all(np.isfinite(m_draw.predict(t, observations=[obs], sps=sps)[0][0]))
     assert bad == 0, f"{bad} of {n_prior} prior draws give a non-finite spectrum"
     print(
         f"OK: f_b=0 reproduces the one-component model. Halpha+[NII] flux change at f_b=0.5: "

@@ -208,7 +208,7 @@ wheels = [
 [[package]]
 name = "astro-cue"
 version = "0.0.0"
-source = { git = "https://github.com/galactic-ai/cue?rev=cuejax#5a81ad2d3145e5d2b33222e8c4a6cbd638f98923" }
+source = { git = "https://github.com/galactic-ai/cue?rev=cuejax#82ed9dc22ce7c58218635e982d8db5e2ee584f33" }
 dependencies = [
     { name = "dill" },
     { name = "jax" },
@@ -223,8 +223,8 @@ dependencies = [
 
 [[package]]
 name = "astro-prospector"
-version = "2.0a2.dev130+g9aced930e"
-source = { git = "https://github.com/galactic-ai/prospector?rev=feature%2Fcue-on-v2#9aced930e92d4cf5d5b1d8b1a4942d4e897fc252" }
+version = "2.0a2.dev138+g823a00dfe"
+source = { git = "https://github.com/galactic-ai/prospector?rev=feature%2Fcue-on-v2#823a00dfe22ae6280e273351f9af1814ffde1333" }
 dependencies = [
     { name = "astro-sedpy" },
     { name = "astropy" },
@@ -790,7 +790,7 @@ wheels = [
 [[package]]
 name = "fsps"
 version = "0.5.0"
-source = { git = "https://github.com/galactic-ai/python-fsps?branch=c3k-nzinit#8b142057c9120fd11fa93dce645d17290919b073" }
+source = { git = "https://github.com/galactic-ai/python-fsps?branch=exp%2Fc3k-er-init#dc3e41ee076977bf3d4e7879e9b7cd6a0010d996" }
 dependencies = [
     { name = "numpy" },
 ]
@@ -983,11 +983,14 @@ dependencies = [
     { name = "fsps" },
     { name = "h5py" },
     { name = "ipykernel" },
+    { name = "ipympl" },
     { name = "matplotlib" },
     { name = "mpi4py" },
     { name = "nautilus-sampler" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "pocomc" },
+    { name = "pyneb" },
     { name = "requests" },
     { name = "schwimmbad" },
     { name = "scipy" },
@@ -1005,6 +1008,7 @@ dev = [
     { name = "ipykernel" },
     { name = "jupyter" },
     { name = "pre-commit" },
+    { name = "py-spy" },
     { name = "pytest" },
     { name = "ruff" },
     { name = "vulture" },
@@ -1020,14 +1024,17 @@ requires-dist = [
     { name = "corner", specifier = ">=2.2.3" },
     { name = "dynesty", specifier = "==2.1.5" },
     { name = "emcee", specifier = ">=3.1.6" },
-    { name = "fsps", git = "https://github.com/galactic-ai/python-fsps?branch=c3k-nzinit" },
+    { name = "fsps", git = "https://github.com/galactic-ai/python-fsps?branch=exp%2Fc3k-er-init" },
     { name = "h5py", specifier = ">=3.15.1" },
     { name = "ipykernel", specifier = ">=7.1.0" },
+    { name = "ipympl", specifier = ">=0.10.0" },
     { name = "matplotlib", specifier = ">=3.10.7" },
     { name = "mpi4py", specifier = ">=4.1.1" },
     { name = "nautilus-sampler", specifier = ">=1.0.6" },
     { name = "numpy", specifier = ">=2.3.4" },
     { name = "pandas", specifier = ">=2.3.3" },
+    { name = "pocomc", specifier = ">=1.2.6" },
+    { name = "pyneb", specifier = ">=1.1.32" },
     { name = "requests", specifier = ">=2.32.5" },
     { name = "schwimmbad", specifier = ">=0.4.2" },
     { name = "scipy", specifier = ">=1.16.3" },
@@ -1045,6 +1052,7 @@ dev = [
     { name = "ipykernel", specifier = ">=7.1.0" },
     { name = "jupyter", specifier = ">=1.1.1" },
     { name = "pre-commit", specifier = ">=4.6.2" },
+    { name = "py-spy", specifier = ">=0.4.2" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "ruff", specifier = ">=0.15.21" },
     { name = "vulture", specifier = ">=2.16" },
@@ -1128,6 +1136,23 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b9/a4/4948be6eb88628505b83a1f2f40d90254cab66abf2043b3c40fa07dfce0f/ipykernel-7.1.0.tar.gz", hash = "sha256:58a3fc88533d5930c3546dc7eac66c6d288acde4f801e2001e65edc5dc9cf0db", size = 174579, upload-time = "2025-10-27T09:46:39.471Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a3/17/20c2552266728ceba271967b87919664ecc0e33efca29c3efc6baf88c5f9/ipykernel-7.1.0-py3-none-any.whl", hash = "sha256:763b5ec6c5b7776f6a8d7ce09b267693b4e5ce75cb50ae696aaefb3c85e1ea4c", size = 117968, upload-time = "2025-10-27T09:46:37.805Z" },
+]
+
+[[package]]
+name = "ipympl"
+version = "0.10.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ipython" },
+    { name = "ipywidgets" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "pillow" },
+    { name = "traitlets" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/16/9c/f79e29f6262e821a15757662aa11cbb1db0a51ef836a32a46ddcb25e6832/ipympl-0.10.0.tar.gz", hash = "sha256:eda69602a010af2a42e8ebd069b0ee0dbe8df7fc69d7c1e8b99fece0a2fe613f", size = 3595672, upload-time = "2026-01-21T20:19:47.971Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/12/b3/88c0ef22878c86035f058df0ac6c171319ffd0aa52a406455ed3a3847566/ipympl-0.10.0-py3-none-any.whl", hash = "sha256:a09c4f0ff86490cc62aed45e53b912fb706e3ec3506c4a51ce4a670d6667f5ce", size = 519020, upload-time = "2026-01-21T20:19:46.325Z" },
 ]
 
 [[package]]
@@ -2481,6 +2506,24 @@ wheels = [
 ]
 
 [[package]]
+name = "pocomc"
+version = "1.2.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dill" },
+    { name = "multiprocess" },
+    { name = "numpy" },
+    { name = "scipy" },
+    { name = "torch" },
+    { name = "tqdm" },
+    { name = "zuko" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/13/91/b5118f38e75d0a6ef6f6736db1bf1f7af4e84a8f43cb728e15451b92f158/pocomc-1.2.6.tar.gz", hash = "sha256:c9d28250b379ccd80eee043c1d1b6fbfb68e4fe07cf848f5a8b0af9c42052b31", size = 46329, upload-time = "2024-09-20T13:39:26.281Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/db/43/9bcde0d06aefc46856af85e8c495e9026f3374af0e95a0bb396ef8f8c119/pocomc-1.2.6-py3-none-any.whl", hash = "sha256:fd087841d27cce0a0940697cd4ff95456dc15400d680db8fb82b133fa9945bd7", size = 45985, upload-time = "2024-09-20T13:39:24.937Z" },
+]
+
+[[package]]
 name = "pre-commit"
 version = "4.6.2"
 source = { registry = "https://pypi.org/simple" }
@@ -2577,6 +2620,21 @@ wheels = [
 ]
 
 [[package]]
+name = "py-spy"
+version = "0.4.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/93/d8/5b71371f50cf153b1307e5a11ac8a4ce4d85651dae946bd7e9a064146545/py_spy-0.4.2.tar.gz", hash = "sha256:90e600b27bb6bb40479637baca5a5b4bc2ba3395c93d889e672315d93042c4ae", size = 286374, upload-time = "2026-04-24T22:08:54.906Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ef/21/ec030145a0c7992bd4b9eafb2f06f56358b3a5339eab4a16534baf3c69aa/py_spy-0.4.2-py2.py3-none-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:1ccf688393105111684435f035bc14ec3f22117dd2b85b2414612cf27a22755a", size = 3743992, upload-time = "2026-04-24T22:08:45.438Z" },
+    { url = "https://files.pythonhosted.org/packages/50/80/de5fd27243c2be03692ecd317bf0dbe24b4c6f78f689ce111e7277a7cb09/py_spy-0.4.2-py2.py3-none-macosx_11_0_arm64.whl", hash = "sha256:a0e6f6810ccf0fc5e64e85e0182a5b626c4496eec01b14fb8755154b363a4831", size = 1859057, upload-time = "2026-04-24T22:08:46.946Z" },
+    { url = "https://files.pythonhosted.org/packages/89/23/3eb4c23c684ebd667674ce1d076ae855e0621d1d9bd5e052aa3f7982f757/py_spy-0.4.2-py2.py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:142887e984a4e541071c99a4401ff8c3770f255d329dbd0f64e8c1dd51882cce", size = 2828136, upload-time = "2026-04-24T22:08:48.519Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/01/6314152cf9ad3310ebacbf2c47b5ed858086530f8e12b1a665725ca5e0f4/py_spy-0.4.2-py2.py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:7f1c6d9b0e2379ead5bf792df43f4cf36153aa79e6dda4fb8ac7740cf8017110", size = 2857707, upload-time = "2026-04-24T22:08:49.677Z" },
+    { url = "https://files.pythonhosted.org/packages/cc/1f/0960a129d504728d28a51dbd5a04ce94031eb75bac676341da7aefdd8232/py_spy-0.4.2-py2.py3-none-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:24720573f95230653b457671a1dcc3c5a381fcf4e92677761e328a430ad251b2", size = 2301852, upload-time = "2026-04-24T22:08:51.152Z" },
+    { url = "https://files.pythonhosted.org/packages/f9/34/dd7d3c763a00b7b965e25a5eab0acd1a345dbaf0f45fffe595278873a1c0/py_spy-0.4.2-py2.py3-none-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:aeb0323409199c785f730645e9f4bb7a7b9ca2c481f2c331a55642b5d13fa52f", size = 2936518, upload-time = "2026-04-24T22:08:52.264Z" },
+    { url = "https://files.pythonhosted.org/packages/6f/ed/1409cdb557e558a6c98003ab12fdd4284699e158c167c187cb0f124eea4c/py_spy-0.4.2-py2.py3-none-win_amd64.whl", hash = "sha256:8b06a353c177677e4e1701b288d8c58e2f8d4208ee81a8048d9f72ba800918f8", size = 1894002, upload-time = "2026-04-24T22:08:53.811Z" },
+]
+
+[[package]]
 name = "pycparser"
 version = "2.23"
 source = { registry = "https://pypi.org/simple" }
@@ -2610,6 +2668,22 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b0/77/a5b8c569bf593b0140bde72ea885a803b82086995367bf2037de0159d924/pygments-2.19.2.tar.gz", hash = "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887", size = 4968631, upload-time = "2025-06-21T13:39:12.283Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b", size = 1225217, upload-time = "2025-06-21T13:39:07.939Z" },
+]
+
+[[package]]
+name = "pyneb"
+version = "1.1.32"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "astropy" },
+    { name = "h5py" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "scipy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/83/de/480ae10d8f31e649606de37c5097e69597b0f69dcb90cd1ad13a8558ad28/pyneb-1.1.32.tar.gz", hash = "sha256:6dd86cc9594825fb0f16d07f67509327e95d2fd26a560d21c5a0b43b359b8277", size = 27920845, upload-time = "2026-07-27T19:27:29.03Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/14/c4/0557811390e7103d151836be6ffc05af095f801760ad0347541b28a96402/pyneb-1.1.32-py3-none-any.whl", hash = "sha256:96a63479536b4e53fdb36e1da20d72b9291cf920e042d765dd4a0c4ca3160cbe", size = 28751057, upload-time = "2026-07-27T19:27:02.305Z" },
 ]
 
 [[package]]
@@ -3592,4 +3666,17 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/41/53/2e0253c5efd69c9656b1843892052a31c36d37ad42812b5da45c62191f7e/widgetsnbextension-4.0.14.tar.gz", hash = "sha256:a3629b04e3edb893212df862038c7232f62973373869db5084aed739b437b5af", size = 1097428, upload-time = "2025-04-10T13:01:25.628Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ca/51/5447876806d1088a0f8f71e16542bf350918128d0a69437df26047c8e46f/widgetsnbextension-4.0.14-py3-none-any.whl", hash = "sha256:4875a9eaf72fbf5079dc372a51a9f268fc38d46f767cbf85c43a36da5cb9b575", size = 2196503, upload-time = "2025-04-10T13:01:23.086Z" },
+]
+
+[[package]]
+name = "zuko"
+version = "1.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "torch" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8c/41/ddbe72cb64996d7826ba427c675252be0c38fbd9fbf8920d0fcdaf5d8e38/zuko-1.6.0.tar.gz", hash = "sha256:edc516e51bbbf9d64e7663b617cf9293c6e1e6bbfcb39559bc383383e6663b04", size = 45245, upload-time = "2026-03-10T08:38:19.646Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/95/10/ff159867f522cd98e039e748c5e9777446e8b797a79be691c6b730676094/zuko-1.6.0-py3-none-any.whl", hash = "sha256:5c073b613a84a7cd65470ddb94855169020ac49432f73b85f25207e377248a4a", size = 48033, upload-time = "2026-03-10T08:38:21.039Z" },
 ]

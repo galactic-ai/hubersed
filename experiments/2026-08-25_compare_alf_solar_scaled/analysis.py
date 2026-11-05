@@ -1,6 +1,6 @@
 """Does alf's metallicity move toward Prospector's when alf is forced solar-scaled?
 
-Run ``uv run python experiments/2026-08-25_compare_alf_solar_scaled.py``. It needs alf runs
+Run ``uv run python experiments/2026-08-25_compare_alf_solar_scaled/analysis.py``. It needs alf runs
 tagged ``quiescent`` (free abundances) and ``solarscaled`` (fit_type=2). Line numbers refer to
 alf commit 4ef7bb8.
 
