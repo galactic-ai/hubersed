@@ -223,8 +223,8 @@ dependencies = [
 
 [[package]]
 name = "astro-prospector"
-version = "2.0a2.dev138+g823a00dfe"
-source = { git = "https://github.com/galactic-ai/prospector?rev=feature%2Fcue-on-v2#823a00dfe22ae6280e273351f9af1814ffde1333" }
+version = "2.0a2.dev143+g6621a3f73"
+source = { git = "https://github.com/galactic-ai/prospector?rev=6621a3f7308d0a45b20f3014a2a17738a8f80d13#6621a3f7308d0a45b20f3014a2a17738a8f80d13" }
 dependencies = [
     { name = "astro-sedpy" },
     { name = "astropy" },
@@ -1013,7 +1013,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "astro-cue", git = "https://github.com/galactic-ai/cue?rev=cuejax" },
-    { name = "astro-prospector", git = "https://github.com/galactic-ai/prospector?rev=feature%2Fcue-on-v2" },
+    { name = "astro-prospector", git = "https://github.com/galactic-ai/prospector?rev=6621a3f7308d0a45b20f3014a2a17738a8f80d13" },
     { name = "astro-sedpy", git = "https://github.com/Nikhil0504/sedpy?rev=247f2d4eef5e421ce282b43238f5c20ba8e5f7bf" },
     { name = "astropy", specifier = ">=7.2,<8" },
     { name = "astroquery", specifier = ">=0.4.11" },
