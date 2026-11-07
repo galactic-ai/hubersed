@@ -10,7 +10,12 @@ does. Excess is the median of exposure minus main coadd flux (1e-17 erg/s/cm2/A)
 each rest window, at the SV3 redrock redshift.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-05_exposures_39627770174637084/analysis.py``.
-RESULT: pending.
+RESULT: 2026-11-06, exposures.txt. Two SV3 exposures (sky g 22.00, 21.95) and one main (19.66), no
+FIBERSTATUS flags; the main coadd is that one exposure. SV3 minus main excess +0.30 to +0.83 in all
+three windows. By eye: same continuum tilt in both SV3 exposures (below main blue of ~4000 A, above
+red of ~4500 A) and ~5% dipoles at the strong lines, of opposite sign in the B and R arms.
+Assumptions: one bright-sky main exposure as reference; per-exposure flux calibration; dipoles not
+yet measured.
 FIGURES: results/2026-11-05_exposures_39627770174637084/ exposures.txt, full.png, zoom_<window>.png.
 """
 
