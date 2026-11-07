@@ -223,8 +223,8 @@ dependencies = [
 
 [[package]]
 name = "astro-prospector"
-version = "2.0a2.dev144+g7a8fc32a3"
-source = { git = "https://github.com/galactic-ai/prospector?rev=feature%2Fcue-on-v2#7a8fc32a34cb75db37d062285283e618a34e904b" }
+version = "2.0a2.dev149+g986bb6a68"
+source = { git = "https://github.com/galactic-ai/prospector?rev=feature%2Fcue-on-v2#986bb6a686497bc8cbdde8a0ebaf3908c1665150" }
 dependencies = [
     { name = "astro-sedpy" },
     { name = "astropy" },
