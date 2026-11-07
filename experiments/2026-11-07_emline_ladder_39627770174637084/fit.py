@@ -25,6 +25,7 @@ OUTPUT: results/2026-11-07_emline_ladder_39627770174637084/<STEM>/ (pmc_<i>.stat
 import argparse
 import json
 import multiprocessing as mp
+import os
 import resource
 import sys
 import time
@@ -33,7 +34,7 @@ import traceback
 import astropy.units as u
 import fsps
 import numpy as np
-from fit_fork import jax_backend_started, pin_worker, prebuild_ssps
+from fit_fork import jax_backend_started, pin_worker
 from poco import NodePool, latest_state, serve
 
 from hubersed.conversion import DESI_FLAM, ivar_to_maggies, to_maggies
@@ -151,8 +152,13 @@ def check(pool):
         """Run one batch on the pool, then stop the sampler."""
 
         def map(self, f, tasks):
+            t0 = time.time()
             out = pool.map(f, list(tasks))
-            print(f"first pocoMC batch: {len(out)} calls, {np.isfinite(out).mean():.3f} finite")
+            print(
+                f"first pocoMC batch: {len(out)} calls in {time.time() - t0:.0f} s, "
+                f"{np.isfinite(out).mean():.3f} finite; commit room {commit_room():.1f} GiB",
+                flush=True,
+            )
             raise OneBatch
 
     try:
@@ -207,20 +213,74 @@ def run(pool):
     write_hdf5(str(folder / f"{STEM}.h5"), run_params, model, observations, sampling, None)
 
 
+GIB_HELPER = 15.0  # commit of one build_ssps helper (10-31 job 3664748)
+GIB_WORKER = 8.0  # commit of one worker after the free: 5.44 GiB without Cue (job 3664817) + Cue
+GIB_MARGIN = 8.0  # commit left free on each node
+
+
+def commit_room():
+    """Return CommitLimit minus Committed_AS of this node in GiB, NaN where unknown."""
+    try:
+        with open("/proc/meminfo") as f:
+            info = {line.split(":")[0]: int(line.split()[1]) for line in f}
+        return (info["CommitLimit"] - info["Committed_AS"]) / 2**20
+    except FileNotFoundError:  # macOS
+        return float("nan")
+
+
+def pin_to_core(counter, cores):
+    """Pin this pool worker to its own core, skipping the first core, which the parent keeps."""
+    with counter.get_lock():
+        i = counter.value
+        counter.value += 1
+    os.sched_setaffinity(0, {cores[1 + i % (len(cores) - 1)]})
+
+
+def node_pool(npool):
+    """Return this node's forked pool, after the SSP build and the speclib free on TACC builds.
+
+    Stampede3 forbids memory overcommit, so each fork is charged all of its parent's private
+    memory. On the TACC FSPS build the parent builds every SSP slot with the flags Cue's source
+    uses, frees speclib (fsps_mem of 2026-10-31_poco_c3k_er_dark), and sizes the pool from the
+    node's commit room when ``npool`` is 0. Cue is built only after the fork, in each process.
+    """
+    ctx = mp.get_context("fork")
+    if not hasattr(fsps.StellarPopulation, "build_ssps"):  # macOS build
+        assert not jax_backend_started(), "the JAX backend started before the fork"
+        return ctx.Pool(npool or 2, initializer=pin_worker)
+    import fsps_mem
+
+    t = time.time()
+    sp = fsps.StellarPopulation(zcontinuous=1)
+    for k in ("add_igm_absorption", "add_dust_emission", "add_neb_emission", "nebemlineinspec"):
+        sp.params[k] = False  # as NebStepBasis sets them
+    sp.params["sfh"] = 0
+    room = commit_room()
+    nbuild = max(1, min(10, int((room - GIB_MARGIN) // GIB_HELPER)))
+    sp.build_ssps(processes=nbuild)
+    freed = fsps_mem.free_speclib()
+    room = commit_room()
+    cores = sorted(os.sched_getaffinity(0))
+    npool = npool or max(1, min(len(cores) - 1, int((room - GIB_MARGIN) // GIB_WORKER)))
+    print(
+        f"SSPs {time.time() - t:.0f} s with {nbuild} helpers, speclib freed {freed}, commit room "
+        f"{room:.1f} GiB, {len(cores)} cores, pool {npool}",
+        flush=True,
+    )
+    assert not jax_backend_started(), "the JAX backend started before the fork"
+    counter = ctx.Value("i", 0)
+    return ctx.Pool(npool, initializer=pin_to_core, initargs=(counter, cores))
+
+
 def main():
     """Build the SSPs, fork the pool, then check or run (one MPI rank per node with --mpi)."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["check", "run"])
-    parser.add_argument("--pool", type=int, default=2)
+    parser.add_argument("--pool", type=int, default=0, help="0 sizes it from the commit room")
     parser.add_argument("--mpi", action="store_true", help="one MPI rank per node, see NodePool")
     args = parser.parse_args()
-    if hasattr(fsps.StellarPopulation, "build_ssps"):  # the TACC fork; older builds skip the share
-        t = time.time()
-        prebuild_ssps(fsps.StellarPopulation(zcontinuous=1))
-        print(f"FSPS setup and SSPs {time.time() - t:.0f} s", flush=True)
-    assert not jax_backend_started(), "the JAX backend started before the fork"
     action = check if args.action == "check" else run
-    with mp.get_context("fork").Pool(args.pool, initializer=pin_worker) as pool:
+    with node_pool(args.pool) as pool:
         if not args.mpi:
             action(pool)
             return
