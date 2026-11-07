@@ -1,4 +1,4 @@
-"""Load DESI spectra from the spender chunk files by global index or TARGETID."""
+"""Load DESI spectra from the spender chunk files and coadd npz files."""
 
 import pickle
 
@@ -152,3 +152,44 @@ def desi_spectrum(flux, ivar, z, targetid):
         redshift=z,
         meta={"targetid": targetid},
     )
+
+
+def load_resolution_npz(path, arm=None):
+    """Load a coadded spectrum and its banded resolution matrix from an npz file.
+
+    The format is that of resolution_matrix_rows.npz and resolution_matrix_rows_ivar.npz in
+    experiments/2026-10-09_nautilus_c3k_er_broadline (coadd_rows.py, ivar_recompute.py). The
+    keys wave, res, flux and ivar hold the arms merged onto the DESI grid, and the same keys with
+    a b_, r_ or z_ prefix hold each arm. The flux is in the DESI units of 1e-17 erg/s/cm^2/A.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        The npz file.
+    arm : {None, "b", "r", "z"}
+        Arm to load. None loads the merged spectrum.
+
+    Returns
+    -------
+    dict
+        wave (uniform, float64), res (shape (ndiag, n), float64), flux and ivar (float64).
+
+    Raises
+    ------
+    ValueError
+        If the grid is not uniform or the matrix shape does not match it.
+    """
+    # prospect reads SPS_HOME on import
+    from prospect.observation.resolution import banded_offsets, uniform_step
+
+    if arm not in (None, "b", "r", "z"):
+        raise ValueError(f"arm must be None, 'b', 'r' or 'z', not {arm!r}")
+    pre = "" if arm is None else f"{arm}_"
+    with np.load(path) as d:
+        out = {k: np.asarray(d[pre + k], dtype=np.float64) for k in ("wave", "res", "flux", "ivar")}
+    uniform_step(out["wave"])
+    ndiag, n = out["res"].shape
+    banded_offsets(ndiag)
+    if n != out["wave"].size or out["flux"].shape != (n,) or out["ivar"].shape != (n,):
+        raise ValueError(f"{path}: the matrix, flux and ivar do not match the {n} wavelengths")
+    return out
