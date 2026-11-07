@@ -18,7 +18,12 @@ RESULT: 2026-11-07, ew_prior.txt, parent sample (median pixel S/N > 3, 114,136 g
 on the FSF continuum are unusable. Outliers exceed the 99.99th percentile in Halpha (1024),
 [OIII]5007 (733), [OIII]4363 (20), [SII]6716 (54) and [ArIII]7135 (30). Assumptions: EmFit EW on the
 FSF continuum; SV3 bright; EmFit v2.3.1. W_j (ew_limits.json) = max(p99.99, outlier max) per line.
-FIGURES: results/2026-11-06_line_ew_prior/ ew_prior.txt, ew_limits.json (W_j) and ew_hist.png.
+Per free column (ion_limits.json, summed ion EWs): [SII] 89 A, [OI] 26, [ArIII]7135 30, [OIII]4363 20,
+[OII]7325 15, [NII]5755 11, [NeIII] 74, [SIII]6312 10, [SIII]9069 177, H broad 507; broad forbidden
+columns take their ion's narrow W ([OII] 238, [OIII] 1040, [NII] 108). Cue ratios [OI]6363/6300 0.308,
+[NeIII]3968/3869 0.304.
+FIGURES: results/2026-11-06_line_ew_prior/ ew_prior.txt, ew_limits.json (per line), ion_limits.json
+(per free column) and ew_hist.png.
 """
 
 # %%
@@ -132,7 +137,65 @@ for name, ew in fsf.items():
     limits[name] = float(np.nanmax([q[1], mo]))
 lines += ["", "W_j = max(parent p99.99, outlier max), FastSpecFit:"]
 lines += [f"  {name:16} {w:8.1f}" for name, w in limits.items()]
+
+
+# W per free column (Nikhil 2026-11-07): per galaxy, the sum of the ion's FastSpecFit EWs, a missing
+# or undetected line counting zero; lines FastSpecFit lacks ([OI]6363, [NeIII]3968) are added with
+# Cue's median ratio to the measured line; broad forbidden columns take their ion's narrow W.
+def cue_ratio(missing, measured, n=500, seed=0):
+    """Return Cue's median luminosity ratio of two lines over random gas parameters."""
+    import importlib.resources
+
+    from cuejax.emulator import Emulator
+
+    path = importlib.resources.files("cuejax").joinpath("data/cue_emlines_info.dat")
+    info = np.genfromtxt(path, dtype=[("wave", "f8"), ("name", "<U20")], delimiter=",")
+    names = [str(x).strip() for x in info["name"]]
+    emu = Emulator()
+    order = list(emu.free_parameter_order)
+    theta = np.tile([float(np.atleast_1d(getattr(emu, k))[0]) for k in order], (n, 1))
+    rng = np.random.default_rng(seed)
+    ranges = {"gas_logu": (-4, -1), "gas_logn": (1, 4), "gas_logz": (-2.2, 0.5),
+              "gas_logno": (-1, np.log10(5.4)), "gas_logco": (-1, np.log10(5.4))}  # fmt: skip
+    for k, (lo, hi) in ranges.items():
+        theta[:, order.index(k)] = rng.uniform(lo, hi, n)
+    lum = np.asarray(emu.predict_lines(theta=theta))
+    return float(np.median(lum[:, names.index(missing)] / lum[:, names.index(measured)]))
+
+
+r_oi = cue_ratio("[O I] 6363", "[O I] 6300")
+r_ne = cue_ratio("[Ne III] 3968", "[Ne III] 3869")
+IONS = {  # column: ((FastSpecFit line, weight), ...)
+    "[SII]": (("SII_6716", 1.0), ("SII_6731", 1.0)),
+    "[OI]": (("OI_6300", 1.0 + r_oi),),
+    "[ArIII]7135": (("ARIII_7135", 1.0),),
+    "[OIII]4363": (("OIII_4363", 1.0),),
+    "[OII]7325": (("OII_7320", 1.0), ("OII_7330", 1.0)),
+    "[NII]5755": (("NII_5755", 1.0),),
+    "[NeIII]": (("NEIII_3869", 1.0 + r_ne),),
+    "[SIII]6312": (("SIII_6312", 1.0),),
+    "[SIII]9069": (("SIII_9069", 1.0),),
+    "[OII]": (("OII_3726", 1.0), ("OII_3729", 1.0)),
+    "[OIII]": (("OIII_4959", 1.0), ("OIII_5007", 1.0)),
+    "[NII]": (("NII_6548", 1.0), ("NII_6584", 1.0)),
+    "H broad": tuple((f"{b}_BROAD", 1.0) for b in ("HALPHA", "HBETA")),
+}
+ion_limits = {}
+for ion, members in IONS.items():
+    vals = np.array([np.nan_to_num(fsf[ln]) * w for ln, w in members]).sum(axis=0)
+    seen = np.any([np.isfinite(fsf[ln]) for ln, _ in members], axis=0)
+    ew = np.where(seen & (vals > 0), vals, np.nan)
+    _, _, q = stats(ew)
+    _, mo, _ = stats(ew[outlier])
+    ion_limits[ion] = float(np.nanmax([q[1], mo]))
+# broad forbidden columns use their ion's narrow W
+for ion in ("[OII]", "[OIII]", "[NII]", "[SII]", "[OI]"):
+    ion_limits[f"{ion} broad"] = ion_limits[ion]
+lines += ["", f"Cue ratios: [OI]6363/6300 {r_oi:.4f}, [NeIII]3968/3869 {r_ne:.4f}",
+          "W per free column (summed ion EWs, max(parent p99.99, outlier max)):"]  # fmt: skip
+lines += [f"  {ion:16} {w:8.1f}" for ion, w in ion_limits.items()]
 OUT.mkdir(parents=True, exist_ok=True)
+(OUT / "ion_limits.json").write_text(json.dumps(ion_limits, indent=1) + "\n")
 (OUT / "ew_limits.json").write_text(json.dumps(limits, indent=1) + "\n")
 (OUT / "ew_prior.txt").write_text("\n".join(lines) + "\n")
 print("\n".join(lines))
