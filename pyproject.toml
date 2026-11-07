@@ -63,6 +63,8 @@ spender = { git = "https://github.com/galactic-ai/spender" }
 astro-prospector = { git = "https://github.com/galactic-ai/prospector", rev = "feature/cue-on-v2" }
 astro-cue = { git = "https://github.com/galactic-ai/cue", rev = "cuejax" }
 fsps = { git = "https://github.com/galactic-ai/python-fsps", branch = "exp/c3k-er-init" }
+# Fourier smoothing fixes, bd-j/sedpy#51 and #52; back to PyPI once they are released
+astro-sedpy = { git = "https://github.com/Nikhil0504/sedpy", rev = "247f2d4eef5e421ce282b43238f5c20ba8e5f7bf" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

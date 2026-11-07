@@ -240,15 +240,11 @@ dependencies = [
 
 [[package]]
 name = "astro-sedpy"
-version = "0.4.1"
-source = { registry = "https://pypi.org/simple" }
+version = "0.4.2.dev13+g247f2d4ee"
+source = { git = "https://github.com/Nikhil0504/sedpy?rev=247f2d4eef5e421ce282b43238f5c20ba8e5f7bf#247f2d4eef5e421ce282b43238f5c20ba8e5f7bf" }
 dependencies = [
     { name = "astropy" },
     { name = "numpy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/50/5f/12768bfbe3bb5d779b48739e426d5ff41651dcfb8922810b8e4ef2948900/astro_sedpy-0.4.1.tar.gz", hash = "sha256:4326963296dd5c7952b4e36056f333d97922870350fd1ad7472844ce1a43911a", size = 3662825, upload-time = "2025-09-05T20:16:53.509Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/fd/50/eb818a9e185fcb2e158513a5f7e99f56ec40d0c9761a6ed0f07ffce71dbb/astro_sedpy-0.4.1-py3-none-any.whl", hash = "sha256:162e9d5604cc324597be7c5a7c586fbd57ae9fdd55d22957e2c8bce908cd72d1", size = 3714933, upload-time = "2025-09-05T20:16:52.109Z" },
 ]
 
 [[package]]
@@ -1018,7 +1014,7 @@ dev = [
 requires-dist = [
     { name = "astro-cue", git = "https://github.com/galactic-ai/cue?rev=cuejax" },
     { name = "astro-prospector", git = "https://github.com/galactic-ai/prospector?rev=feature%2Fcue-on-v2" },
-    { name = "astro-sedpy", specifier = ">=0.4.1" },
+    { name = "astro-sedpy", git = "https://github.com/Nikhil0504/sedpy?rev=247f2d4eef5e421ce282b43238f5c20ba8e5f7bf" },
     { name = "astropy", specifier = ">=7.2,<8" },
     { name = "astroquery", specifier = ">=0.4.11" },
     { name = "corner", specifier = ">=2.2.3" },
