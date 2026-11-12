@@ -4,8 +4,15 @@ import numpy as np
 
 BALMER_PREFIX = "Ba-"
 SIGMA_NARROW_MIN = 10.0  # km/s
-SIGMA_SPLIT = 250.0  # km/s, upper bound of the narrow width and lower bound of the broad widths
+# "split" widths (ladder steps 5-6 of 2026-11-07): narrow below 250 km/s, broad 250-800 km/s
+SIGMA_SPLIT = 250.0  # km/s
 SIGMA_BROAD_MAX = 800.0  # km/s
+# "ratio" widths: broad = r * narrow, bounds from the EmFit widths of the parent sample
+# (2026-11-10_line_width_split: narrow Halpha p99 408 km/s; second-component ratio p5 1.1-1.3,
+# p99 13.5 (Halpha) to 38 ([OIII]))
+SIGMA_NARROW_MAX = 450.0  # km/s
+RATIO_MIN, RATIO_MAX = 1.2, 40.0
+RATIO_INIT = 2.4  # median Halpha second-component ratio
 VBROAD_MAX = 300.0  # km/s, bound on the broad offset
 WEAK = ("free", "auroral")  # narrow classes that get a free narrow column
 # Each ion: Cue line names, narrow class, broad width ("balmer", "forb" or None for no broad part).
@@ -58,18 +65,32 @@ def ion_lines(names):
     return out
 
 
-def add_line_params(params):
+def broad_width_h(eline_sigma=None, r_broad=None, **extras):
+    """Return the Balmer broad width, ``r_broad`` times the narrow width, in km/s."""
+    return eline_sigma * r_broad
+
+
+def broad_width_forb(eline_sigma=None, r_broad_forb=None, **extras):
+    """Return the forbidden broad width, ``r_broad_forb`` times the narrow width, in km/s."""
+    return eline_sigma * r_broad_forb
+
+
+def add_line_params(params, widths="ratio"):
     """Set the narrow line width and add the broad widths and the broad offset.
 
-    The narrow width ``eline_sigma`` gets TopHat(10, 250) km/s. The broad widths of the Balmer
-    and the forbidden lines get TopHat(250, 800) km/s, and the broad offset TopHat(-300, 300)
-    km/s. Each width starts at the middle of its prior.
+    With ``widths="ratio"`` the narrow width ``eline_sigma`` gets TopHat(10, 450) km/s and each
+    broad width is the narrow width times a free ratio, ``r_broad`` (Balmer) or ``r_broad_forb``
+    (forbidden), each TopHat(1.2, 40). With ``widths="split"`` (ladder steps 5-6) the narrow width
+    gets TopHat(10, 250) and the broad widths TopHat(250, 800) km/s. The broad offset gets
+    TopHat(-300, 300) km/s in both.
 
     Parameters
     ----------
     params : dict
         Parameter specification with ``eline_sigma``, as from ``build_full_cue_model``.
         Changed in place.
+    widths : {"ratio", "split"}
+        How the broad widths are set.
 
     Returns
     -------
@@ -78,19 +99,38 @@ def add_line_params(params):
     """
     from prospect.models import priors
 
+    if widths not in ("ratio", "split"):
+        raise ValueError(f"widths must be 'ratio' or 'split', not {widths!r}")
+    narrow_max = SIGMA_NARROW_MAX if widths == "ratio" else SIGMA_SPLIT
     params["eline_sigma"] = {
         **params["eline_sigma"],
         "isfree": True,
         "init": 0.5 * (SIGMA_NARROW_MIN + SIGMA_SPLIT),
-        "prior": priors.TopHat(mini=SIGMA_NARROW_MIN, maxi=SIGMA_SPLIT),
+        "prior": priors.TopHat(mini=SIGMA_NARROW_MIN, maxi=narrow_max),
     }
-    for name in ("eline_sigma_broad", "eline_sigma_broad_forb"):
+    broad = (
+        ("eline_sigma_broad", "r_broad", broad_width_h),
+        ("eline_sigma_broad_forb", "r_broad_forb", broad_width_forb),
+    )
+    for name, ratio, fn in broad:
+        if widths == "split":
+            params[name] = dict(
+                N=1,
+                isfree=True,
+                init=0.5 * (SIGMA_SPLIT + SIGMA_BROAD_MAX),
+                units="km/s",
+                prior=priors.TopHat(mini=SIGMA_SPLIT, maxi=SIGMA_BROAD_MAX),
+            )
+            continue
+        params[ratio] = dict(
+            N=1, isfree=True, init=RATIO_INIT, prior=priors.TopHat(mini=RATIO_MIN, maxi=RATIO_MAX)
+        )
         params[name] = dict(
             N=1,
-            isfree=True,
-            init=0.5 * (SIGMA_SPLIT + SIGMA_BROAD_MAX),
+            isfree=False,
+            init=RATIO_INIT * params["eline_sigma"]["init"],
             units="km/s",
-            prior=priors.TopHat(mini=SIGMA_SPLIT, maxi=SIGMA_BROAD_MAX),
+            depends_on=fn,
         )
     params["eline_vbroad"] = dict(
         N=1,
