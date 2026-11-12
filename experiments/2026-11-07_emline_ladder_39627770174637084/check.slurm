@@ -23,7 +23,7 @@ EXTRA=
 case $STEP in  # FSPS build and SPS_HOME of each step, as 2026-11-01_poco_repeats/ladder.slurm
     1) BUILD=miles_ls6; SPS_HOME=/home1/11006/nikhilgaruda/research/fsps_5; EXTRA=--no-free ;;
     2) BUILD=c3k_hr_afe; SPS_HOME=$R/sps_home_hr_afe ;;
-    3 | 4 | 5) BUILD=c3k_er_afe_v3; SPS_HOME=$R/sps_home_er ;;
+    3 | 4 | 5 | 6 | 7 | 8) BUILD=c3k_er_afe_v3; SPS_HOME=$R/sps_home_er ;;
     *) echo "unknown STEP $STEP"; exit 1 ;;
 esac
 export SPS_HOME PYTHONPATH=$FSPS/$BUILD/fsps_site:$REPO/experiments/2026-10-15_broadline_free_amplitude:$REPO/experiments/2026-10-31_poco_c3k_er_dark_39633433328091196
