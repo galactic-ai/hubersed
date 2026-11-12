@@ -1,4 +1,6 @@
+import argparse
 import pickle
+from pathlib import Path
 
 import astropy.units as u
 import h5py
@@ -44,6 +46,17 @@ prospector_sed_file = (
         else "prospector_stochastic_model_seds_500000.h5"
     )
 )
+
+# The defaults above stay; the arguments let other mock sets use the same noise.
+ap = argparse.ArgumentParser(description="Add DESI-like noise to Prospector mock SEDs.")
+ap.add_argument("--input", type=Path, default=prospector_sed_file, help="mock h5 file")
+ap.add_argument("--outdir", type=Path, default=LOCAL_TMP, help="where the pkl batches go")
+ap.add_argument("--tag", default=TAG, help="batch files are named DESI<tag>_<i>.pkl")
+ap.add_argument("--device", default=str(device), help="cpu or cuda")
+args = ap.parse_args()
+prospector_sed_file, LOCAL_TMP, TAG = args.input, args.outdir, args.tag
+device = torch.device(args.device)
+print(f"input {prospector_sed_file}, outdir {LOCAL_TMP}, tag {TAG}, device {device}")
 
 flow_latent = 10
 instrument = desi.DESI()
