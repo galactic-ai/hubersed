@@ -313,8 +313,7 @@ def sfh_from_theta(model, theta):
 
     Notes
     -----
-    Current mass is taken as 0.6 times the mass formed, a fixed value, as in
-    ``derived_quantities.compute_logssfr``.
+    Current mass is taken as 0.6 times the mass formed, a fixed value.
     """
     model.set_parameters(np.asarray(theta, float))
     ab = np.asarray(model.params["agebins"], float)

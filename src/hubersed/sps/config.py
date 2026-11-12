@@ -58,7 +58,35 @@ def get_priors(redshift):
     }
 
 
-def build_continuum_model(redshift, logmass_init=None):
+def library_sigma_floor(sps, rest_min, rest_max):
+    """Return the largest library resolution over a rest-frame range, in km/s.
+
+    A stellar LOSVD below the library resolution cannot be modelled, so this is the floor of
+    the ``sigma_smooth`` prior. The resolution is the one the SPS reports, a Gaussian sigma in
+    km/s on its rest-frame wavelengths (FSPS flags ranges outside a library with negative
+    values, hence the absolute value).
+
+    Parameters
+    ----------
+    sps : prospect.sources.SSPBasis
+        The stellar population source, with ``wavelengths`` and ``spectral_resolution``.
+    rest_min, rest_max : float
+        Rest-frame range of the fitted pixels in Angstrom.
+
+    Returns
+    -------
+    float
+        The largest library resolution in the range.
+    """
+    wave = np.asarray(sps.wavelengths)
+    res = np.abs(np.broadcast_to(sps.spectral_resolution, wave.shape))
+    sel = (wave >= rest_min) & (wave <= rest_max)
+    if not sel.any():
+        raise ValueError(f"no library wavelengths in rest {rest_min:g}-{rest_max:g} A")
+    return float(res[sel].max())
+
+
+def build_continuum_model(redshift, logmass_init=None, sigma_floor=10.0):
     """Build the continuum-only model with a stochastic star formation history.
 
     Parameters
@@ -67,6 +95,9 @@ def build_continuum_model(redshift, logmass_init=None):
         Redshift, held fixed in the fit.
     logmass_init : float, optional
         Starting value of ``logmass`` in log10 solar masses. The default is 8.7.
+    sigma_floor : float, optional
+        Lower bound of the ``sigma_smooth`` prior in km/s. Use ``library_sigma_floor`` so the
+        LOSVD cannot go below the library resolution. The default, 10, is the old bound.
 
     Returns
     -------
@@ -149,7 +180,7 @@ def build_continuum_model(redshift, logmass_init=None):
         "isfree": True,
         "init": 200.0,
         "units": "km/s",
-        "prior": TopHat(mini=10.0, maxi=400.0),
+        "prior": TopHat(mini=float(sigma_floor), maxi=400.0),
     }
     template["smoothtype"] = {"N": 1, "isfree": False, "init": "vel"}
     template["fftsmooth"] = {"N": 1, "isfree": False, "init": True}

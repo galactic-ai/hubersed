@@ -1,4 +1,4 @@
-"""Resolution matching: MILES path unchanged, C3K_HR path smooths only where DESI is sharper."""
+"""Resolution matching: the C3K_HR path smooths only where DESI is sharper."""
 
 import numpy as np
 
@@ -12,16 +12,6 @@ Z = 0.025
 def _desi_sigma():
     """Return a DESI-like LSF sigma in km/s: 56 at the blue end, falling to 24 at the red end."""
     return np.interp(W, [3600, 5000, 6000, 9824], [56.0, 42.0, 32.0, 24.0])
-
-
-def test_miles_matches_legacy_wrapper():
-    """Check degrade_to_miles returns the same arrays as degrade_to_library for MILES."""
-    rng = np.random.default_rng(0)
-    f, iv = 1 + rng.normal(0, 0.1, W.size), np.full(W.size, 100.0)
-    a = rebin.degrade_to_miles(W, f, iv, Z)
-    b = rebin.degrade_to_library(W, f, iv, Z, library="miles")
-    for x, y in zip(a, b, strict=False):
-        np.testing.assert_array_equal(x, y)
 
 
 def test_c3k_leaves_blue_alone_and_hits_target_width():

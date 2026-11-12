@@ -26,6 +26,7 @@ import corner
 import matplotlib.pyplot as plt
 import numpy as np
 from fit import make_model
+from hubersed.sps.nebular_ties import CUE_LOGCO_RANGE, co_from_oh
 from matplotlib.lines import Line2D
 
 from hubersed.conversion import to_flambda
@@ -33,7 +34,6 @@ from hubersed.fitting.map_fits import sfh_from_theta
 from hubersed.paths import PATHS
 from hubersed.plotting.sfh import plot_cumulative_mass, plot_ssfr, sfh_figure
 from hubersed.plotting.spectra import residual_chi
-from hubersed.sps.nebular_ties import CUE_LOGCO_RANGE, co_from_oh
 
 # parse_known_args, so the cells also run in an interactive session
 parser = argparse.ArgumentParser(description=__doc__)
