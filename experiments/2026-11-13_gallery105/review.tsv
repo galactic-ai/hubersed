@@ -1,0 +1,106 @@
+nn	review_class	review_sure	review_note
+1	bad_data	False	repeat cleared: main bright coadd (1 exp, dchi2 626) not flagged; SV3 coadd dchi2 22
+2	agn	False	BPT AGN (Hb S/N 3.7); Balmer sigma 453 vs forbidden 142 km/s; Halpha 50-85% sky-masked; broad unconfirmed
+3	emission_line	True	narrow-line dwarf, EmFit Ha sigma 26 km/s; repeat robust
+4	psb	True	HdA 9.1 +- 1.0 (hda_good 0.44)
+5	bad_data	True	negative flux below rest 3400 A, step near 4850 A; Dn4000 5.1, d_gr 0.69; repeat cleared; exposures (2026-11-13_exposures_gallery105): both SV3 exposures used (tile 261, fibre 4277, 2021-04-30, sky g 19.7-19.8) share the blue deficit (-3.3) and red excess (+0.6) against main, so sky subtraction or flux calibration that night; 2 more SV3 exposures BADPOSITION and excluded
+6	emission_line	True	BPT SF; EmFit broad Ha sigma 475 km/s at prob_broad 51, possible wing or outflow
+7	emission_line	True	narrow-line low-Z dwarf, EmFit Ha sigma 17 km/s, log NII/Ha -1.58
+8	psb	True	HdA 11.2 +- 0.9; [OII] EW 4.2 fails Goto
+9	emission_line	True	narrow-line dwarf, EmFit Ha sigma 26 km/s
+10	psb	True	HdA 9.9 +- 0.8; [OII] EW 3.3 fails Goto
+11	emission_line	True	narrow-line dwarf, EmFit Ha sigma 17.5 km/s, log NII/Ha -1.30
+12	psb	False	HdA 7.2 +- 1.0; weak LINER-like lines (NII >= Ha, OIII S/N 11, no Hb, almost no OII); Ha in sky region; repeat robust; not a green pea
+13	emission_line	True	one elongated galaxy, faint blob 4 arcsec away; EmFit Ha sigma 13 km/s; repeat robust
+14	emission_line	True	EmFit Ha sigma 37 km/s; repeat robust
+15	emission_line	True	BPT SF, log SII/Ha -0.51, Ha/Hb 3.7; face-on disc; EmFit Ha sigma 25 km/s
+17	emission_line	True	SF; EmFit Ha sigma 21 km/s; Ha hidden by spender sky mask in the figure, FastSpecFit EW 55 A
+19	emission_line	True	blend: two nuclei ~1.5 arcsec in the fibre (pair or merger); weak SF lines; repeat robust
+20	emission_line	True	SF; EmFit Ha sigma 33 km/s
+16	agn	False	BL Lac candidate: featureless continuum, steady over 4 DR1 coadds; FIRST 22.95 mJy at 0.18 arcsec, NVSS 23.1 mJy; W1-W2 Vega 0.66; 2026-11-13_agn_check_16_18
+18	agn	False	MEx-AGN (log OIII/Hb 0.14 at log M* 11.64); weak narrow lines (Hb EW 4.7, OIII EW 5.4); no FIRST/NVSS; no MgII (Hg 4358 sky line); W1-W2 Vega 0.24
+21	emission_line	True	SF narrow dwarf, EmFit Ha sigma 28 km/s; repeat robust
+22	psb	True	textbook A-star PSB, HdA 9.9 +- 0.5, FastSpecFit age 0.59 Gyr, SFR 0; no FIRST/NVSS, W1-W2 Vega -0.26, no MgII, lines too weak for MEx; [OII] EW 5.4; LoTSS DR3 ILTJ142644.46+003701.6 at 2.4 arcsec, 2.44 +- 1.17 mJy (2.1 sigma), 17.6x4.7 arcsec E-W (~119 kpc), L144 3.1e24 W/Hz: radio excess by Best+23 for any SFR < 27 Msun/yr (FastSpecFit SFR 0), so a likely radio AGN; flux only 2.1 sigma
+23	emission_line	True	faint blue dwarf z 0.019, EmFit Ha sigma 19 km/s; HdA 9.7 +- 1.8 noisy
+25	emission_line	True	large SF galaxy; repeat robust
+26	emission_line	True	large diffuse SF galaxy z 0.019, fibre samples the centre; repeat cleared; d_gr -0.25
+27	emission_line	True	BPT SF; EmFit second Ha component sigma 193 km/s (prob 87), outflow not BLR; repeat cleared; HdA 5.3
+28	emission_line	True	bright high-excitation SF, EmFit sigma 22 and 135 km/s; repeat cleared
+29	emission_line	True	BPT SF, EmFit sigma 36 km/s; flat Ha block is the median filter over a sky-masked gap
+30	quiescent	False	old red light, weak LINER-like lines (Ha EW 8.6, log NII/Ha -0.40); spike at rest ~4200 A (obs ~5790, b/r overlap); repeat cleared
+31	emission_line	True	compact blue high-excitation SF, EmFit Ha sigma 29 km/s
+32	star	True	Gaia G 17.8 high-pm star at 1.0 arcsec inside the fibre, galaxy G 21.1 at 0.2 arcsec; d_gr -0.53; removed by the data-quality screen
+33	composite	True	BPT composite, WHAN AGN-like, log NII/Ha -0.28; EmFit sigma 42; HdA 6.6 +- 1.3 (good 0.48)
+34	emission_line	True	bright SF z 0.028, BPT SF; EmFit sigma 4.5 plus 165 km/s (prob 99), disc plus outflow
+35	quiescent	False	red galaxy with break; Gaia G 16.4 star at 3.75 arcsec can spill into the fibre; removed by the data-quality screen
+36	emission_line	True	BPT SF (log NII/Ha -0.56); EmFit 132 km/s second component (prob 100), outflow; repeat cleared; step near obs 5800 A (b/r overlap)
+37	emission_line	True	compact high-excitation SF z 0.094, EmFit sigma 32 km/s; wiggle near obs 5800 A
+38	psb	True	Hd and Hg absorption, HdA 7.1 +- 0.8, Dn4000 1.22; visual quiescent relabelled
+39	emission_line	True	BPT SF near composite (log NII/Ha -0.46), EmFit sigma 24 km/s; step near obs 5830 A
+40	agn	True	Type 1: broad MgII and Hb (FastSpecFit broad), strong [NeV]3426, [NeIII]; log OIII/Hb 1.18; d_gr -0.73
+41	agn	True	WISE W1-W2 Vega 0.94 (Stern+12 AGN, W2 15.13), MEx-AGN at the line, BPT composite; second Ha component at the 400 km/s fit floor (dBIC 796), outflow not BLR; LoTSS 1.2 mJy at 0.7 arcsec, no radio excess
+42	psb	True	deep Hd/Hg/Hb absorption, HdA 9.6 +- 0.8; [OIII]4959/5007 emission (log OIII/Hb 0.45), Ha EW 5.4; MEx-AGN but Ha/Hb 1.69 unphysical and [NII] undetected (BPT SF side at the limit), so ionisation source open; no FIRST/NVSS/LoTSS, W1-W2 Vega 0.25
+43	emission_line	True	BPT SF, EmFit sigma 10.5 km/s
+44	emission_line	True	BPT SF, EmFit sigma 39 km/s; Ha in a masked gap
+45	star	True	Gaia G 16.4 star within 5 arcsec blended in the cutout; spike near obs 5790 A (b/r overlap); removed by the data-quality screen
+46	emission_line	True	compact blue SF z 0.085, EmFit sigma 35 km/s; bright galaxy ~5 arcsec SW outside the fibre
+47	emission_line	True	compact blue SF z 0.085, EmFit sigma 16 km/s
+48	emission_line	True	BPT SF near composite (log NII/Ha -0.45), EmFit sigma 38 km/s
+49	emission_line	True	diffuse blue high-excitation SF z 0.026, EmFit sigma 8.8 km/s
+50	emission_line	True	compact blue SF z 0.022, EmFit sigma 23.5 km/s; spike near obs 7614 A (telluric A band)
+51	psb	True	textbook A-star PSB, deep Balmer series and break, HdA 8.4 +- 0.35; [OII] EW 3.7 fails Goto; faint Gaia star G 20.1 within 5 arcsec
+52	emission_line	False	diffuse blue dwarf z 0.022, low S/N, weak Ha, [OII] EW 7.3, EmFit sigma 94 km/s; HdA 7.0 +- 2.1 noisy
+53	emission_line	True	compact blue SF, EmFit sigma 39 km/s; neighbour ~5 arcsec NE
+54	emission_line	True	SF, EmFit sigma 27 km/s; repeat robust
+55	psb	True	Balmer series, HdA 9.0 +- 0.8, Goto-like; spike near obs 5830 A (b/r overlap)
+56	emission_line	True	weak SF lines, BPT SF (log NII/Ha -0.92); EmFit 156 km/s second component (prob 100), outflow
+57	emission_line	True	strong SF galaxy, EmFit sigma 27 km/s; Gaia G 18.0 star at 4.4 arcsec, removed by the data-quality screen
+58	emission_line	True	diffuse SF z 0.030, low S/N lines, EmFit sigma 16 km/s; repeat cleared
+59	agn	True	Type 1: broad MgII, Hg, Hb (FastSpecFit broad), [NeV]3426, [NeIII], log OIII/Hb 0.98
+62	emission_line	True	compact SF z 0.026, EmFit sigma 15 km/s
+63	psb	True	Balmer series, HdA 7.6 +- 0.7, Goto-like
+64	emission_line	True	clumpy blue SF, possibly interacting, red source ~3 arcsec SW (image blend); EmFit sigma 50 plus 234 km/s (prob 72)
+65	emission_line	True	diffuse SF z 0.047, EmFit sigma 24 km/s
+66	agn	True	broad Ha wings (FastSpecFit broad); narrow lines near SF/composite (log NII/Ha -0.42); compact red host
+67	psb	True	older PSB: HdA 7.0 +- 1.1, HgA 6.6 +- 1.1 at Dn4000 1.53, no lines; parent percentiles 90 (HdA) and 99 (HgA), 2026-11-13_hda_parent_67; Balmer absorption in all 3 exposures, 2026-11-13_exposures_gallery105
+68	emission_line	True	compact blue SF z 0.031, EmFit sigma 26 km/s
+69	psb	True	Balmer series and break; HdA 3.8 biased low by the [OI]6300 sky mask on the Hd band; HgA 7.2 +- 0.55
+70	agn	True	Type 1: broad Ha (FastSpecFit broad), BPT composite, WHAN AGN-like, blue continuum; disturbed host with tidal tail
+24	psb	True	Hd and Balmer series, HdA 8.4 +- 0.9 (all pixels good); [OII] EW 5.8 fails Goto; visual quiescent relabelled
+60	psb	False	Balmer dips near 3800-3900 A, HdA 6.9 +- 1.0, Goto-like; noisy
+61	psb	True	strong Balmer series with [OII], HdA 10.6 +- 1.0 (good 0.51); repeat robust; z 0.591 near the mock edge
+75	psb	True	clear Balmer series and break, HdA 8.2 +- 0.6, Goto-like
+71	quiescent	False	HdA 7.8 +- 1.0 at the 91st parent percentile but HgA 2.1 at the 71st (2026-11-13_hda_parent_67), so no clear A-star excess; [OII] EW 5.6
+72	quiescent	False	weak-featured old population; Gaia G 18.4 star at 3.75 arcsec, fibertot r = fibre r and d_gr 0.09, so contamination likely small; removed by the data-quality screen
+73	emission_line	True	BPT SF near composite (log NII/Ha -0.45), EmFit sigma 36.5 km/s; Ha at a masked jump
+74	emission_line	True	e(a)-like: HdA 4.7 +- 0.7 with [OII] EW 17.6 (Poggianti & Wu 2000 via Wild+07); BPT SF, MEx-SF, W1-W2 Vega 0.40; no radio at the galaxy; Ha/Hb 3.27; disturbed image
+76	emission_line	True	high-excitation SF z 0.158, EmFit sigma 19.5 km/s; compact blue with a knot
+79	psb	True	Balmer series, HdA 6.6 +- 0.9, HgA 5.2, Goto-like; spike at rest ~2860 A is the Hg 4358 sky line
+80	emission_line	True	bright SF z 0.067, log NII/Ha -0.41 near composite, EmFit 180 km/s outflow component; faint Gaia star G 20.7 below the screen cut
+77	emission_line	True	BPT SF, MEx-SF, W1-W2 Vega 0.62; weak second Ha component (dBIC 18 and 7 in two coadds), outflow; LoTSS 1.1 mJy, no radio excess; repeat robust
+78	agn	False	WISE W1-W2 Vega 0.92 (Stern+12 AGN, W2 14.11) but optical lines SF-dominated (BPT SF near composite, MEx-intermediate); second Ha component dBIC 413 at the 400 km/s floor; LoTSS 3.1 mJy at 0.35 arcsec, no radio excess
+83	emission_line	True	BPT SF (log NII/Ha -0.53), EmFit sigma 19 km/s
+84	emission_line	True	SF z 0.064, EmFit sigma 33 km/s; visual 'data error' is a Legacy imaging mask block east of the galaxy, not the spectrum
+85	psb	True	Balmer series, HdA 10.2 +- 1.0 (HgA 4.0), Dn4000 1.34; visual quiescent relabelled
+81	bad_data	True	SV3 coadd (S/N 3.6, dchi2 185) has a red upturn above obs ~9070 A and blue noise; deep SV1 coadd (15 exp, S/N 22) is a normal quiescent galaxy and is not flagged; true class quiescent
+82	emission_line	False	weak SF: Ha clear, weak [NII]; no Balmer excess, no broad Ha (dBIC -14), MEx-SF, W1-W2 Vega 0.66, no radio within 20 arcsec; single noisy coadd (dchi2 81); inclined disc with red centre
+87	emission_line	True	compact blue SF, EmFit sigma 38 km/s
+90	psb	True	Balmer series, HdA 8.3 +- 0.6, HgA 6.5, Goto-like; repeat robust; spike at rest 2800 A is the Hg 4358 sky line
+86	agn	True	broad-line AGN: FastSpecFit broad Hb sigma 1547 km/s (S/N 8.7) and broad Ha (S/N 34, Ha at obs ~9800 A); MEx-AGN (log OIII/Hb 0.50 at log M* 10.9); W1-W2 Vega 0.61; no radio; flat continuum from AGN dilution
+88	psb	False	HdA 6.3 +- 1.4, HgA 5.2: 86th and 94th percentile of all parent at Dn4000 1.25-1.40 but typical of line-free ones (50th, 71st); repeat cleared; b/r spike
+89	psb	True	deep Balmer series, HdA 8.9 +- 0.6; AGN-like [OIII]5007 (S/N 23.5, sigma 277 km/s), Hb undetected so log OIII/Hb > 1.05; no radio match (LoTSS 19 arcsec away), W1-W2 Vega -0.04; repeat cleared; z 0.599
+91	emission_line	True	compact blue SF z 0.035, EmFit sigma 27 km/s
+92	quiescent	True	old (Dn4000 1.88) with LINER-like lines: BPT AGN region (log NII/Ha 0.08, OIII/Hb 0.08), Ha EW 4.5, [OII] EW 12; neighbour galaxy ~4 arcsec NW
+93	emission_line	True	BPT SF (log NII/Ha -0.51), EmFit sigma 31 km/s; Ha in a masked gap
+94	emission_line	True	BPT SF by a small margin (log NII/Ha -0.33, OIII/Hb -0.41), WHAN AGN-like, EmFit sigma 14 km/s
+95	emission_line	True	inclined SF disc z 0.039, EmFit sigma 27 km/s
+97	emission_line	True	compact high-excitation SF z 0.055, EmFit sigma 27 km/s
+98	psb	True	deep Balmer series and break, HdA 7.9 +- 0.4, HgA 4.3, Goto-like; repeat robust
+100	emission_line	True	clumpy SF disc z 0.068, EmFit sigma 26.5 km/s
+96	bad_data	True	SV3 bright coadd (3 exp) much bluer than imaging (d_gr -1.08); SV3 dark coadd is a normal red elliptical, dark/bright ratio 0.2 (UV) to 1.3 (red), so excess blue light (likely sky) in the bright-time coadd; repeat cleared
+99	psb	False	dwarf (log M* 7.6) z 0.015: HdA 7.3 +- 1.1 and HgA 6.7 at the 92nd and 98th parent percentile (1184 controls); both coadds agree; weak residual SF (Ha EW 6.3, log NII/Ha -1.21) fails Goto; follow-up SFH fit target
+101	psb	True	Balmer series and break, HdA 5.7 +- 0.6, HgA 4.5; [OII] EW 7.0 fails Goto; repeat robust
+103	emission_line	True	inclined SF disc z 0.066, EmFit sigma 15 km/s
+105	emission_line	True	compact blue SF z 0.102, EmFit sigma 25 km/s
+102	emission_line	True	SF (BPT SF near composite, MEx-SF, W1-W2 Vega 0.31); Gaia G 19.5 star at 2.1 arcsec, removed by the data-quality screen; LoTSS 0.81 +- 0.46 mJy at 1.3 arcsec, too faint to call a radio excess; AGN not supported
+104	bad_data	False	single coadd, S/N 4.0, dchi2 218; no break, Ca H&K, Balmer, [OII] or Ha visible in the zooms, only the [OI]5577 sky line; redshift uncertain; W1-W2 Vega -0.05
