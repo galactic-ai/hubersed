@@ -31,3 +31,6 @@ CLAUDE.local.md
 
 # symlink to the UberSED I paper draft, outside the repo
 /paper
+
+# job and run logs
+*.log
