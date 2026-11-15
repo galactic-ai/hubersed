@@ -25,8 +25,13 @@ METHOD:
   Only mocks with the red sideband on the grid (z < 0.4766) can be tested.
 Assumptions: mocks are noiseless; data indices include noise and the sky mask of load_by_index.
 SEED: none (the subset is fixed in rebuild.py).
-COMMAND: ``python indices.py <rebuilt.h5> <mocks_v2_500000.h5> <psb_spectra.npz> <out dir>``.
-RESULT: pending.
+COMMAND: ``python indices.py <rebuilt.h5 or 'rebuilt_part*.h5'> <mocks_v2_500000.h5> <psb_spectra.npz>
+<out dir>`` (a quoted glob reads every part).
+RESULT: 2026-11-13, indices.txt (job 3719330). The 20,000 rebuilt mocks reproduce the stored flux
+exactly (continuum + lines within 1.3e-4 of the flux). 2b: 342 of 15,870 mocks with Halpha on the
+grid (2.2%) pass Leung. 2a: for 11 of the 24 gallery105 PSBs no mock within 0.05 in Dn4000 and z
+has HdA as strong; 22, 51, 69 have 0 of 223, 1 of 256 and 34%. Mocks are noiseless while the PSB
+HdA has errors of about 1 A, so a zero partly reflects that scatter.
 FIGURES: none (indices.txt, indices.npz).
 """
 
@@ -85,9 +90,13 @@ def w_halpha(wave, z, total_flam, lines_flam):
 def main(rebuilt, stored, psbfile, out):
     """Run the check, 2a and 2b, and write the tables."""
     out.mkdir(parents=True, exist_ok=True)
-    with h5py.File(rebuilt, "r") as h:
-        idx, z, ok = h["index"][:], h["redshift"][:], h["ok"][:]
-        flux, cont, lines = h["flux"][:], h["continuum"][:], h["lines"][:]
+    parts = sorted(rebuilt.parent.glob(rebuilt.name)) if "*" in rebuilt.name else [rebuilt]
+    cols = {k: [] for k in ("index", "redshift", "ok", "flux", "continuum", "lines")}
+    for path in parts:
+        with h5py.File(path, "r") as h:
+            for k in cols:
+                cols[k].append(h[k][:])
+    idx, z, ok, flux, cont, lines = (np.concatenate(cols[k]) for k in cols)
     with h5py.File(stored, "r") as h:
         wave = h["wavelength"][:]
         sflux = np.array([h["fluxes"][i] for i in idx])

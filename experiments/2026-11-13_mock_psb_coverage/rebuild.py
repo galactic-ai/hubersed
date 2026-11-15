@@ -6,8 +6,10 @@ model class unchanged, mock i drawn from default_rng([SEED, i]) and the same R b
 after model.predict, the returned spectrum, the prospect fork's _resolved_continuum (stars and
 nebular continuum, after R) and _resolved_lines (all lines, free columns included). Subset: 20,000
 indices from default_rng(0).choice(500000, 20000, replace=False), sorted.
-COMMAND: ``python rebuild.py <mocks.py> <out.h5> [--n 20000] [--pool 0] [--gib-worker 8]``
-(stampede3, run.slurm; pool sized from the node's commit room as mocks.py).
+COMMAND: ``python rebuild.py <mocks.py> <out.h5> [--n 20000] [--pool 0] [--gib-worker 8] [--cache
+<ssp cache>] [--part k --nparts K]`` (stampede3, run.slurm; pool sized from the node's commit room as
+mocks.py). With --cache the SSPs are loaded, not built; with --nparts the sorted subset is split
+into K slices (np.array_split) and slice k is rebuilt.
 OUTPUT: <out.h5> with index, redshift, flux (returned spectrum), continuum, lines, ok.
 """
 
@@ -68,12 +70,46 @@ def task(args):
     return idx, [one(m, i, r) for i, r in zip(idx, rows, strict=True)]
 
 
-def main(path, out, n, pool_size, gib_worker, block=20):
-    """Rebuild the subset and write it."""
+def cached_pool(lad, cache, npool, gib_worker):
+    """Return the ladder's forked pool with the SSPs loaded from ``cache`` instead of built.
+
+    As the ladder's node_pool (same population flags, speclib free, pool sizing and pinning), but
+    the SSP slots come from hubersed.sps.ssp_cache (2026-11-13_ssp_cache_c3k_er), checked there.
+    """
+    import multiprocessing as mp
+    import os
+
+    import fsps
+    import fsps_mem
+
+    from hubersed.sps.ssp_cache import load_ssp_cache
+
+    t = time.time()
+    sp = fsps.StellarPopulation(zcontinuous=1)
+    for k in ("add_igm_absorption", "add_dust_emission", "add_neb_emission", "nebemlineinspec"):
+        sp.params[k] = False  # as NebStepBasis sets them, as node_pool
+    sp.params["sfh"] = 0
+    nslot = load_ssp_cache(sp, cache)
+    freed = fsps_mem.free_speclib()
+    room = lad.commit_room()
+    cores = sorted(os.sched_getaffinity(0))
+    npool = npool or max(
+        1, min(len(cores) - lad.TORCH_THREADS, int((room - lad.GIB_MARGIN) // gib_worker))
+    )
+    print(f"{nslot} SSP slots loaded in {time.time() - t:.0f} s, speclib freed {freed}, commit "
+          f"room {room:.1f} GiB, {len(cores)} cores, pool {npool}", flush=True)  # fmt: skip
+    assert not lad.jax_backend_started(), "the JAX backend started before the fork"
+    return lad.parent_pool(mp.get_context("fork"), npool, cores)
+
+
+def main(path, out, n, pool_size, gib_worker, cache=None, part=0, nparts=1, block=20):
+    """Rebuild part ``part`` of ``nparts`` of the subset and write it."""
     import h5py
 
     m = mocks_module(path)
     idx = np.sort(np.random.default_rng(SUBSET_SEED).choice(N_TOTAL, n, replace=False))
+    idx = np.array_split(idx, nparts)[part]
+    n = idx.size
     rows = np.random.default_rng(m.SEED).integers(0, 1000, size=N_TOTAL)[idx]
     tasks = [(path, idx[k : k + block], rows[k : k + block]) for k in range(0, n, block)]
     lad = m.ladder()
@@ -81,6 +117,8 @@ def main(path, out, n, pool_size, gib_worker, block=20):
         import multiprocessing as mp
 
         pool_ctx = mp.get_context("fork").Pool(pool_size or 2)
+    elif cache is not None:
+        pool_ctx = cached_pool(lad, cache, pool_size, gib_worker)
     else:
         pool_ctx = lad.node_pool(pool_size, gib_worker)
     t0 = time.time()
@@ -111,5 +149,8 @@ if __name__ == "__main__":
     p.add_argument("--n", type=int, default=20_000)
     p.add_argument("--pool", type=int, default=0)
     p.add_argument("--gib-worker", type=float, default=8.0)
+    p.add_argument("--cache", type=Path, default=None, help="SSP cache to load instead of building")
+    p.add_argument("--part", type=int, default=0)
+    p.add_argument("--nparts", type=int, default=1)
     a = p.parse_args()
-    main(a.mocks_py, a.out, a.n, a.pool, a.gib_worker)
+    main(a.mocks_py, a.out, a.n, a.pool, a.gib_worker, a.cache, a.part, a.nparts)

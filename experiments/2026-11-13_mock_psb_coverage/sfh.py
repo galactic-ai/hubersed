@@ -19,7 +19,9 @@ fraction; the peak is located on the bin grid (factor ~2.3 wide bins at z~0.5); 
 from z~1 galaxies.
 SEED: none.
 COMMAND: ``python sfh.py <mocks_v2_500000.h5> <out dir>`` (stampede3, run.slurm).
-RESULT: pending.
+RESULT: 2026-11-13, sfh_psb.txt (job 3719330). 628 of 500,000 mocks (0.126%) are PSB-like with the
+100 Myr window, 192 of 127,015 (0.151%) at z 0.45-0.60; 2,140 (0.43%) with the 10 Myr window.
+Quenched 14.9%, burst-like 54.0%, f1.5 > 0.4 14.5%.
 FIGURES: none (sfh_psb.txt, sfh_psb.npz).
 """
 
