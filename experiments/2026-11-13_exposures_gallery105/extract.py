@@ -1,8 +1,9 @@
-"""Save every bright exposure and coadd of gallery105 figures 05 and 67 from their healpix files.
+"""Save every bright exposure and coadd of gallery105 figures 05, 67 and 99 from their healpix files.
 
 Adapted from 2026-11-05_exposures_39627770174637084/extract.py (itself as
 2026-11-02_exposure_checks/extract.py) to a list of targets: 05 (39627770317246630, healpix 25944,
-SV3 and main bright) and 67 (39633136522363591, healpix 9841, SV3 bright only). For each target and
+SV3 and main bright), 67 (39633136522363591, healpix 9841, SV3 bright only) and 99
+(39633421919584782, healpix 11231, SV3 and main bright; added 2026-11-14). For each target and
 survey it saves the FIBERMAP columns, the per-arm flux, ivar and mask of every exposure from the
 spectra file, and the target's row of the coadd file. Run with the DESI environment.
 COMMAND: ``$DESIPY extract.py <spectra dir> <out dir>`` through extract.slurm.
@@ -21,6 +22,7 @@ from desispec.maskbits import fibermask
 TARGETS = {
     "05": (39627770317246630, 25944, ("sv3", "main")),
     "67": (39633136522363591, 9841, ("sv3",)),
+    "99": (39633421919584782, 11231, ("sv3", "main")),
 }
 EXTRA = ("EXPID", "NIGHT", "TILEID", "FIBER", "PETAL_LOC", "EXPTIME", "FIBERSTATUS")
 

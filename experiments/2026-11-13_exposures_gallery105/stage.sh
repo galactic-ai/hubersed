@@ -1,7 +1,7 @@
 #!/bin/bash
-# Fetch the iron spectra files of urls.txt (healpix 25944 and 9841, gallery105 figures 05 and
-# 67) to /scratch, skipping files already there. Run on the stampede3 login node from the
-# repository root:
+# Fetch the iron spectra files of urls.txt (healpix 25944, 9841 and 11231, gallery105 figures 05,
+# 67 and 99) to /scratch, skipping files already there. Run on the stampede3 login node from the
+# repository root (or a copy of it):
 #   bash experiments/2026-11-13_exposures_gallery105/stage.sh
 set -euo pipefail
 HERE=experiments/2026-11-13_exposures_gallery105

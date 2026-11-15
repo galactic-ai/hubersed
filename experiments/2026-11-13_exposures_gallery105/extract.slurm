@@ -1,7 +1,8 @@
 #!/bin/bash
-# Unzip the spectra files of urls.txt and extract gallery105 figures 05 and 67 (extract.py),
-# after stage.sh.
-# Submit from the repository root on stampede3:
+# Unzip the spectra files of urls.txt and extract gallery105 figures 05, 67 and 99 (extract.py),
+# after stage.sh. Scripts are taken from the submit folder (the repository root or a copy of it);
+# outputs go to the repository's results folder.
+# Submit from the repository root (or the copy) on stampede3:
 #   sbatch experiments/2026-11-13_exposures_gallery105/extract.slurm
 #SBATCH -J exp05g
 #SBATCH -p skx-dev
@@ -14,7 +15,7 @@
 set -euo pipefail
 REPO=/work/11006/nikhilgaruda/ls6/research/hubersed
 cd $REPO
-HERE=experiments/2026-11-13_exposures_gallery105
+HERE=$SLURM_SUBMIT_DIR/experiments/2026-11-13_exposures_gallery105
 DESIPY=/work/11006/nikhilgaruda/ls6/research/desi_env_0562/venv_shared/bin/python
 SPEC=/scratch/11006/nikhilgaruda/hubersed_data/desi_iron_spectra
 UNZ=$SPEC/unzipped
