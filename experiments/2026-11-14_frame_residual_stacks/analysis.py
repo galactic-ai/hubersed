@@ -1,29 +1,15 @@
 """Is the DESI minus best-fit continuum residual coherent in observed or in rest wavelength?
 
-QUESTION: For the MAP fits of the 310 old outliers, does the residual F / (s M) agree between the
-low-z and high-z halves when stacked in observed wavelength (instrument or calibration shared by
-all DR1 spectra) or in rest wavelength (model physics or prior coverage)? Plan in
-~/.claude/plans/calib_injection_2026-11-13.md.
+QUESTION: for the MAP fits of the 310 old outliers, does the residual F / (s M) of the low-z and
+high-z halves agree better stacked in observed (instrument) or in rest wavelength (model)?
 HYPOTHESIS: the frame with the higher split-half correlation wins when the difference exceeds 3
 bootstrap sigma; otherwise undecided. A residual broader than the frame shift cannot decide.
-INPUTS: results/map_fits_outliers310_v2/<tid>.pkl (flux, unc, model on the DESI grid, z; prospect
-Spectrum with response 1, so no calibration polynomial in the model).
-METHOD: good pixels have finite flux, unc > 0, model > 0, are outside the spender sky-line mask and
-the telluric A (7590-7700 A) and B (6860-6950 A) bands, and more than 15 A rest from the strong
-lines in LINES. r = F / (s M) with s the median of F / M over good pixels at rest 5300-5850 A
-(galaxies with under 10 such pixels dropped). Each r is averaged in 10 A bins in observed
-(3600-9800 A) and rest (2800-9400 A) wavelength. Stacks are the median over galaxies per bin, kept
-where 10 or more galaxies contribute. The sample is split at its median z; per frame the Pearson
-correlation of the two half stacks (minus 1) is taken over bins both cover. The bootstrap takes
-1000 resamples of galaxies within each half, on the difference corr_obs - corr_rest.
+INPUTS: results/map_fits_outliers310_v2/<tid>.pkl.
 SEED: 0 (bootstrap).
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_frame_residual_stacks/analysis.py``.
-RESULT: 2026-11-14, frame_stacks.txt. 310 fits, z median 0.075 (10-90% 0.030-0.374). Split-half
-correlation 0.69 in observed and 0.79 in rest frame (491 and 528 bins); difference -0.10 +- 0.08
-(-1.2 sigma): undecided. Stack rms(r - 1) 0.046 observed, 0.056 rest. Both frames correlate
-strongly, as a residual broader than the frame shift (~770 A at 5800 A between the half medians)
-does. Assumptions: the 310 are old outliers at low z, not the high-S/N cont outliers; MAP fits of
-the 10-2025 model; no scale separation of broad and narrow residuals.
+RESULT: 2026-11-14, frame_stacks.txt. Split-half correlation 0.69 observed and 0.79 rest, difference
+-0.10 +- 0.08 (-1.2 sigma), so undecided.
+Assumptions: the 310 are low-z old outliers; MAP fits of the 10-2025 model; no scale separation.
 FIGURES: none (frame_stacks.txt, frame_stacks.npz).
 """
 

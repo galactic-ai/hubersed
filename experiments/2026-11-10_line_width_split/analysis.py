@@ -1,21 +1,15 @@
 """Narrow and second-component line widths of the parent sample, to set the broad-width prior.
 
-QUESTION: What range of second-component width, as a ratio r = sigma_second / sigma_narrow and in
-km/s, does EmFit find in our 104,990 parent galaxies? This sets the broad-width prior of the
-line columns (sigma_broad = r * eline_sigma) instead of the fixed 250 km/s split.
-HYPOTHESIS: Second components sit at r ~ 1.5-5 and sigma ~ 60-300 km/s (CLASSY, green peas); the
+QUESTION: what range of second-component width, as r = sigma_second / sigma_narrow and in km/s,
+does EmFit find in our 104,990 parent galaxies?
+HYPOTHESIS: second components sit at r ~ 1.5-5 and sigma ~ 60-300 km/s (CLASSY, green peas). The
 250 km/s lower bound excludes most of them.
-INPUTS: emfit_widths_sv3_bright.fits (fetch.py, Data Lab desi_dr1.emfit) and
-results/prescreened_sample_v1.npz (the parent). EmFit fits a second component only when a
-Delta chi2 test passes at 5 sigma and defines it as the wider one (Pucha+25, arXiv:2411.00091,
-pucha2024.tex l.432 and l.931); Halpha takes its widths from the [SII] fit (l.434), [OIII] is
-fitted on its own (l.438). Sigmas are intrinsic only where the flag is 0.
+INPUTS: emfit_widths_sv3_bright.fits (fetch.py) and results/prescreened_sample_v1.npz.
 SEED: none.
 COMMAND: ``uv run python experiments/2026-11-10_line_width_split/analysis.py``.
-RESULT: 87,278 of 104,990 parent in EmFit. Halpha narrow sigma p50 90, p99 408 km/s; second
-component in 1.2%, sigma p50 82, p99 259 km/s, r p5 1.1, p50 2.4, p99 13.5; [OIII] second r p5 1.3,
-p50 3.6, p99 38. So the 250 km/s split excludes ~99% of second components; prior set to narrow
-TopHat(10, 450), r TopHat(1.2, 40). Assumption: EmFit 5-sigma detections stand for all wings.
+RESULT: Halpha second component in 1.2% of 87,278, sigma p50 82, p99 259 km/s, r p50 2.4. The 250
+km/s split excludes ~99%. Prior set to narrow TopHat(10, 450), r TopHat(1.2, 40).
+Assumptions: EmFit 5-sigma detections stand for all wings.
 FIGURES: none (table only).
 """
 

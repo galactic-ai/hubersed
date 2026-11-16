@@ -1,13 +1,8 @@
 """Model, start point and windows of the same-ion null test of the second-component fractions.
 
-Builds on F1 of 2026-10-13_oiii_second_component, with split forbidden widths, a free
-low-ionization fraction ``eline_fbroad_forb`` and a free high-ionization fraction
-``eline_fbroad_forb_hi``. Here each line of two doublets, [O III] 4959 and 5007 and [N II] 6548
-and 6584, gets its own second-component fraction. Each pair comes from one upper level of one
-ion, so both lines are emitted by the same gas in a fixed ratio and must have the same profile. A
-difference between the fitted fractions of a pair measures the systematics of the fit (noise,
-continuum, blends, the line-spread function), not physics. Every other line keeps its group
-fraction, and the widths and the second component's width and shift stay shared as in F1.
+Builds on F1 of 2026-10-13_oiii_second_component and gives [O III] 4959 and 5007 and [N II] 6548
+and 6584 each their own second-component fraction. A pair difference measures the systematics of
+the fit, not physics. Every other line keeps its group fraction.
 """
 
 import numpy as np
@@ -57,11 +52,7 @@ WINDOWS = {
 
 
 class PerLineModel(ResolutionMatrixModel):
-    """ResolutionMatrixModel with its own second-component fraction for each line in PER_LINE.
-
-    A line takes its per-line fraction only when that parameter is in the model; otherwise it keeps
-    the fraction of its group, so with no per-line parameters this is ResolutionMatrixModel.
-    """
+    """ResolutionMatrixModel with its own second-component fraction for each line in PER_LINE."""
 
     def _broad_fraction(self):
         """Return the per-line fractions, with the PER_LINE overrides applied."""

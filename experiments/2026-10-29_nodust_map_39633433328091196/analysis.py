@@ -1,24 +1,21 @@
-"""MAPs with and without dust of the continuum outlier 39633433328091196 (C. Hahn's test, issue #17).
+"""MAPs with and without dust of the continuum outlier 39633433328091196 (issue #17).
+
+SUPERSEDED BY: experiments/2026-10-30_nodust_miles_39633433328091196_dark.
+Same runs on the SV3 dark coadd, since the bright coadd has blue sky residual.
 
 QUESTION: is the best fit without dust about as good as the one with dust, for C3K ER and MILES,
 and where in rest wavelength does turning dust off cost chi2?
 HYPOTHESIS: none registered.
-INPUTS: C3K ER with dust, <TID>_map.npz of 2026-10-29_continuum_39633433328091196_map (icx job
-3657895); C3K ER without dust, er_nodust/<TID>_map.npz of fit.py (icx job 3658736); MILES with and
-without dust, miles_dust/ and miles_nodust/ of fit.py (icx job 3658941); C3K ER with rest
-3850-4450 and 4600-4750 A masked, with and without dust, er_dust_features/ and er_nodust_features/
-(icx jobs 3659211 and 3659176); both libraries with the logzsol prior capped at +0.2,
-*_zmax0.2/ (icx jobs 3659851, 3659852, 3659853). Copied from stampede3.
+INPUTS: <TID>_map.npz of 2026-10-29_continuum_39633433328091196_map, and er_nodust/, miles_dust/,
+miles_nodust/, er_dust_features/, er_nodust_features/ and *_zmax0.2/ of fit.py.
 SEED: none.
-COMMAND: from the repository root on the Mac,
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-29_nodust_map_39633433328091196/analysis.py``.
-RESULT: 2026-10-29, nodust.txt. Delta chi2 (no dust minus dust): C3K ER +112.9 (delta BIC +87.6),
-with logzsol <= 0.2 +112.3, with 3850-4450 and 4600-4750 A masked +105.8; MILES +15.2 (delta BIC
--9.8), with logzsol <= 0.2 +35.6 (+10.6). The cost sits at the blue end, 4300-5300 A and the red end.
-Masked, C3K's slope is free (steep low-dust start within 1.3 in ln p of the grey one). Assumptions:
-MAPs from 7 starts (4 for capped C3K with dust), fixed SFH hyperparameters, DR1 coadd ivar.
-FIGURES: results/2026-10-29_nodust_map_39633433328091196/nodust_<lib>.png and nodust.txt;
-miles_dust_zcap.png and .txt (MILES with dust, logzsol capped or not); er_vs_miles_zcap.png.
+RESULT: 2026-10-29. No dust minus dust, delta chi2 C3K ER +112.9 (delta BIC +87.6), MILES +15.2
+(-9.8), with logzsol <= 0.2 +35.6 (+10.6). Cost at the blue end, 4300-5300 A and the red end.
+Assumptions: 7-start MAPs (4 for capped C3K with dust), fixed SFH hyperparameters, DR1 coadd ivar.
+FIGURES: results/2026-10-29_nodust_map_39633433328091196/nodust_<lib>.png, nodust.txt,
+miles_dust_zcap.png and .txt, er_vs_miles_zcap.png.
 """
 
 # %%

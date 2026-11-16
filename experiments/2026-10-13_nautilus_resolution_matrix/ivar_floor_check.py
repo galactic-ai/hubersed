@@ -1,27 +1,8 @@
 """Check how well a fractional error floor on the iron ivar reproduces the corrected ivar.
 
-QUESTION: can the corrected calibrated variance of DESI DR1 spectra be approximated for a sample by
-adding a fractional floor, Var = 1/ivar_iron + (f F')^2, without rerunning the flux calibration of
-every exposure?
-
-The corrected variance of one exposure (desispec PR 2422 formula with the ivar_C of PRs 2496, 2827
-and 2452) is Var_new = 1/(ivar_F C^2) + F'^2 / (ivar_C,new C^2), with F' the calibrated flux. The
-iron variance is 1/(ivar_F C^2) + F'^2 / (ivar_C,old C^4). So Var_new = 1/ivar_iron - F'^2 /
-(ivar_C,old C^4) + (F' sigma_C / C)^2, a fractional floor with f = sigma_C / C, which depends on
-exposure, camera and wavelength. This script builds Var_new exactly for both exposures of this
-target and compares it with two floor models, a constant f per exposure and camera (the median
-of sigma_C / C) and one global f for everything (chosen to fit best at coadd S/N above 20). The
-comparison is sigma_floor / sigma_exact of the row-weighted coadd in bins of S/N.
-
-INPUTS: resolution_matrix_rows.npz (iron per-exposure flux and ivar, from the iron spectra file),
-resolution_matrix_rows_ivar.npz (the exact recoadd, as a check) and the unpatched and patched
-fluxcalib files of fluxcal_rerun.py, all in results/2026-10-09_nautilus_c3k_er_broadline/
-39627770174637084/. SEED: none.
-
-COMMAND: from the repository root, ``uv run python
+Compares sigma_floor / sigma_exact for a constant f per exposure and camera and one global f, in
+S/N bins, and writes ivar_floor_check.txt. Run from the repository root as ``uv run python
 experiments/2026-10-13_nautilus_resolution_matrix/ivar_floor_check.py``.
-
-OUTPUT: ivar_floor_check.txt in results/2026-10-13_nautilus_resolution_matrix/.
 """
 
 import numpy as np

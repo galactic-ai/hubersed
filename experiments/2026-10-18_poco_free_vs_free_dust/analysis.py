@@ -2,35 +2,18 @@
 
 QUESTION: what changes when dust_ratio gets a TopHat(0, 2) prior and frac_nodust is freed, and is
 the new dust split set by the data or by the prior?
-
 HYPOTHESIS: dust2, dust_index and frac_nodust trade off, so the raw values differ but the effective
-attenuation the spectrum sees stays close. Mass and SFH follow the effective attenuation.
-
-The raw dust parameters cannot be compared directly, so the script derives what the light sees.
-Prospect's add_dust (fork, sources/fake_fsps.py) applies, to stars and Cue lines alike,
-T = [young exp(-dust1 (l/5500)^-1) + old] [(1 - f) exp(-tau2(l)) + f], with tau2 the Kriek and
-Conroy curve times dust2 and f = frac_nodust. A_old = -2.5 log10 of the second factor. Nebular
-lines are all young, so A_neb = A_old + 1.086 dust1 (l/5500)^-1. Prior draws of free_dust show
-which derived values the data pin down.
-
-INPUTS: the two pmc_final.state files of poco.py, copied from ls6. SEED: 0 for the prior draws.
-
-COMMAND: from the repository root on the Mac,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-15_broadline_free_amplitude:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+attenuation stays close. Mass and SFH follow the effective attenuation.
+INPUTS: the two pmc_final.state files of poco.py.
+SEED: 0 for the prior draws.
+COMMAND: from the repository root,
+``PYTHONPATH=<er_path>:experiments/2026-10-15_broadline_free_amplitude:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-18_poco_free_vs_free_dust/analysis.py``.
-
-RESULT: 2026-10-18. The hypothesis fails. A_old(5500) falls from 0.69 to 0.33 mag and A_neb(Ha)
-from 0.81 to 0.56 mag, but the nebular E(Hb - Ha) stays at 0.22-0.23 mag. In free_dust the covered
-30% of the light is opaque blueward of ~4500 A, so A_old is flat at -2.5 log10(0.70) = 0.39 mag
-there. free gets a similar grey slope at its dust_index ceiling of 0.4. With less attenuation the
-formed log mass falls 0.14 dex, SFR over 100 Myr halves (0.105 to 0.058 Msun/yr) and the
-mass-weighted age falls from 7.0 to 6.2 Gyr. Gas and line widths move less than 1 sigma (O/H 8.679
-to 8.659). free_dust raises log Z by 32.8 and the best log L by 29.3. Both runs stop their MCMC at
-the step cap (140 and 300), so neither is a converged reference.
-
-FIGURES: marginals.png (shared and derived parameters) and dust_sfh.png (effective attenuation
-curves and sSFR) in results/2026-10-18_poco_free_vs_free_dust/, with summary.txt.
+RESULT: 2026-10-18. The hypothesis fails. A_old(5500) falls from 0.69 to 0.33 mag and A_neb(Ha) from
+0.81 to 0.56 mag, but nebular E(Hb - Ha) stays 0.22-0.23 mag. Formed log mass falls 0.14 dex.
+Assumptions: both runs stop at the MCMC step cap (140 and 300), so neither is a converged reference.
+FIGURES: marginals.png, dust_sfh.png and summary.txt in results/2026-10-18_poco_free_vs_free_dust/.
 """
 
 import numpy as np

@@ -1,19 +1,7 @@
 """Model ladder of one poco_repeats target, with its SV3 recoadd, recoadd fit and chi of six models.
 
 As 2026-10-08_continuum_outlier/spectrum_ladder_recoadd.py for 39627757533007793, with pocoMC
-max-likelihood models in place of the nautilus and MAP ones. The top panel shows the recoadd flux
-on the pixels its fit used, a 9 pixel median filter, and the recoadd model. Below, one chi panel
-per step, each on the data and uncertainty that step was fitted to or predicted for. The steps are
-MILES, C3K HR (degraded), C3K HR + afe (degraded), C3K ER + afe (median LSF, predicted at the
-R-matrix fit's max-likelihood point), C3K ER + afe + R matrix on the DR1 coadd, and on the recoadd.
-As the 10-08 figure, the top panel starts at zero and the x range spans every step's fitted pixels.
-A step whose file does not exist yet gets an empty panel marked "not run yet", and until the
-recoadd fit exists the top panel shows the DR1 coadd with its R-matrix model. The index bands of 2026-10-29_continuum_recoadd/analysis.py
-($SPS_HOME/data/allindices.dat) are shaded in every panel, the legend sits centred above the top
-panel, and the target's Legacy Survey DR10 griz cutout (spender DESI.get_image, 96 px at
-0.262''/px, RA and Dec from the METADATA of data/fastspec-iron-sv3-bright.fits as in
-2026-10-29_quiescent_candidates_spectra) sits in the top right of the top panel, with the 1.5''
-DESI fibre aperture drawn at its centre as in tmp/fetch_cutouts.py.
+max-likelihood models in place of the nautilus and MAP ones.
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_poco_repeats/ladder_plot.py --tid <TARGETID>``.
 OUTPUT: results/2026-11-01_poco_repeats/<TARGETID>/ladder.png.
 """

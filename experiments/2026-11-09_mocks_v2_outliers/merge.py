@@ -1,13 +1,9 @@
 """Merge the 25 mock parts into one file with the keys of the old 500k mock sets.
 
-Reads the 25 parts results/2026-11-09_mocks_v2_outliers/mocks_<start>_<start + 20000>.h5 in order
-and writes data/prospector_model/mocks_v2_500000.h5, next to the old mock sets, with fluxes
-(maggies, chunks of 1024 rows), wavelength, failed, priors/redshifts, priors/theta,
-priors/column_ew, priors/rbank_index and the attributes of the first part. It checks that the parts
-tile 0..500,000 with no gap, that every part has the same wavelength and labels, and that no mock
-failed.
-COMMAND: from the repository root on the Mac or a compute node,
-``uv run python experiments/2026-11-09_mocks_v2_outliers/merge.py`` (post.slurm on stampede3).
+Reads results/2026-11-09_mocks_v2_outliers/mocks_<start>_<start + 20000>.h5, checks that they tile
+0..500,000 and no mock failed, and writes data/prospector_model/mocks_v2_500000.h5.
+COMMAND: from the repository root or a compute node,
+``uv run python experiments/2026-11-09_mocks_v2_outliers/merge.py`` (post.slurm).
 """
 
 import h5py

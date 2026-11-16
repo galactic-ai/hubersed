@@ -1,14 +1,10 @@
 """pocoMC fit of the C3K ER continuum model to one of the six robust continuum outliers (#17).
 
-Changes from 2026-10-31_poco_c3k_er_dark_39633433328091196/fit.py, which this file loads by path:
-the data are the target's SV3 bright DR1 coadd (load_spectrum) with its DR1 resolution matrix
-(resolution_matrix.py), the output folder is results/2026-10-31_poco_robust6/<TARGETID>/, the check
-step has no MAP to compare with, and a resumed state keeps this output folder (load_state also
-restores output_dir, a bug noted in handoff_2026-10-31_poco_dark_39633433328091196.md). Model, priors
-and sampler settings are those of that fit: continuum only, C3K ER, free afe and SFH hyperparameters,
-rest 3320 to 9000 A, n_effective 1024, n_active 512.
-COMMAND: on stampede3 through prep.slurm (check) and prod.slurm (runfork), for example
+Against 2026-10-31_poco_c3k_er_dark_39633433328091196/fit.py, the data are the target's SV3 bright
+DR1 coadd and resolution matrix, the check has no MAP and a resumed state keeps output_dir.
+COMMAND: through prep.slurm (check) and prod.slurm (runfork), for example
 ``ibrun <venv>/bin/python experiments/2026-10-31_poco_robust6/fit.py runfork --tid <TARGETID>``.
+OUTPUT: results/2026-10-31_poco_robust6/<TARGETID>/.
 """
 
 import argparse

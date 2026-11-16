@@ -1,40 +1,11 @@
 """Rerun the iron flux calibration of a target's exposures, as iron ran it and with the ivar fixes.
 
-QUESTION: what is the calibration-vector ivar of this target's exposures once the desispec
-fixes to the calibration uncertainty are applied, with the calibration vector itself unchanged?
-
-Iron (desispec 0.56.2) leaves an error floor of 20% on the standard-star ivars in the final
-variance solve of compute_flux_calibration, which inflates the calibration variance (desispec
-PR 2496). PR 2827 resets the normal matrix before that final solve. PR 2452 scales the calibration
-ivar by the fiber aperture correction, as the calibration itself is scaled. This script runs
-desi_compute_fluxcalibration of desispec 0.56.2 with iron's arguments (from the iron tile-night
-logs), once unchanged and once with those three changes. They are applied to the text of the
-installed desispec/fluxcalibration.py in memory and the result is loaded in its place, so the
-installed package is not modified. Each anchor must match exactly once.
-
-It checks that the unchanged run reproduces the iron fluxcalib files and that the patched run
-gives the same FLUXCALIB with a larger IVAR.
-
-This runs with the separate desispec 0.56.2 environment, not the hubersed one. It is Python 3.11
-with numpy 1.23.5 instead of iron's 3.10 and 1.22.4, and desimodel/io.py load_platescale catches
-ValueError as well as IndexError for numpy 1.23 (desi_env_0562/PATCHES.txt). DESIMODEL points at
-the desimodel 0.18.0 data folders focalplane and throughput.
-
-It was written for 39627770174637084 (exposures 87113 and 88269, petal 1), the default. --tid picks
-another target of targets.py. The cameras follow each exposure's petal, and the target row is the
-fiber modulo 500.
-
-INPUTS: the iron frame, sky, fiberflatexp, stdstars, calibstars and fluxcalib files of the target's
-exposures and petal, under data/desi_iron_exposures/<night>/<expid>/. SEED: none.
-
-COMMAND: on an ls6 compute node from the hubersed repository root,
-``DESIMODEL=/work/11006/nikhilgaruda/ls6/research/desi_env_0562/desimodel
-/work/11006/nikhilgaruda/ls6/research/desi_env_0562/venv/bin/python
+Applies desispec PRs 2496, 2827 and 2452 in memory and writes fluxcal_rerun.txt. Run from
+the hubersed repository root with the desispec 0.56.2 environment as
+``DESIMODEL=<desi_env_0562>/desimodel
+<desi_env_0562>/venv/bin/python
 experiments/2026-10-09_nautilus_c3k_er_broadline/fluxcal_rerun.py``, with ``--tid <targetid>`` for
 the others.
-
-OUTPUT: fluxcal_rerun.txt and fluxcalib_rerun/{unpatched,patched}/fluxcalib-*.fits.gz with logs in
-the target's output folder of targets.py.
 """
 
 import argparse

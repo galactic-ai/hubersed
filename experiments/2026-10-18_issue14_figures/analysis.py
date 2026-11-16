@@ -1,22 +1,14 @@
 """Corner plot, residuals by run and line windows of 39627770174637084 for issue #14.
 
-The residual and window figures compare three fits, each against the data it saw.
-1. MILES + Cue, 2026-09-24_nautilus_tauin. DR1 coadd, MILES window, not degraded.
-2. C3K HR + Cue, 2026-09-25_nautilus_tauin_c3k_hr. The same data degraded to 43.6 km/s.
-3. C3K ER + free-line broad model + Cue + resolution matrix + recoadd ivar, the pocoMC free_dust run
-   of 2026-10-15_broadline_free_amplitude.
-Each row's best fit is its maximum-likelihood point (rows 1 and 2) or the highest-posterior pocoMC
-particle (row 3). Row 1 comes from 2026-10-18_issue14_miles.py, run first in the 09-24 environment,
-because the current code shifts that model by 6.6%. Row 2 is the saved sp_best of 09-25.
-
-RESULT: 2026-10-18. chi2_red on own data: MILES 2.52 and C3K HR 1.77 (4448 px), pocoMC 1.05
-(5530 px). Rows 1-2 use the DR1 coadd ivar and row 3 the recoadd ivar.
-
-COMMAND: from the repository root on the Mac, after 2026-10-18_issue14_miles.py,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-15_broadline_free_amplitude:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+INPUTS: 2026-09-24_nautilus_tauin (MILES + Cue), 2026-09-25_nautilus_tauin_c3k_hr (C3K HR + Cue) and
+the pocoMC free_dust run of 2026-10-15_broadline_free_amplitude.
+COMMAND: from the repository root, after 2026-10-18_issue14_miles.py,
+``PYTHONPATH=<er_path>:experiments/2026-10-15_broadline_free_amplitude:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-18_issue14_figures/analysis.py``.
-
+RESULT: 2026-10-18. chi2_red on own data is MILES 2.52 and C3K HR 1.77 (4448 px), pocoMC 1.05
+(5530 px).
+Assumptions: rows 1-2 use the DR1 coadd ivar and row 3 the recoadd ivar.
 OUTPUT: corner_sfh.png, residuals_by_run.png and windows_by_run.png in
 results/2026-10-18_issue14_figures/.
 """

@@ -1,17 +1,10 @@
 """Corner plots of the pocoMC posterior of the free-line fit, and its best point against the MAP.
 
-Draws the weighted posterior of a poco.py state in three corner plots, with the map.py MAP point and
-the pocoMC point of highest ln L + model.prior_product (among the 300 particles of highest ln L)
-marked. The map.py line windows then show the data and both spectra with their chi.
-
-INPUTS: pmc_final.state of poco.py copied from ls6, map_free.npz, the 10-13 _pred.npz. SEED: none.
-For another target set FIT_TID and pass its 2026-10-18_candidate_map npz as --map.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-15_broadline_free_amplitude
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+COMMAND: from the repository root with the C3K_ER build,
+``PYTHONPATH=<er_path>:experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-15_broadline_free_amplitude
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-15_broadline_free_amplitude/poco_plots.py --state <path>``.
-
+For another target set FIT_TID and pass its 2026-10-18_candidate_map npz as --map.
 OUTPUT: poco_corner_{gas_lines,stars_dust,sfh}.png, poco_windows.png and poco_best.txt next to
 the state file.
 """

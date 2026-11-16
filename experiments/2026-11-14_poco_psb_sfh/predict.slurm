@@ -1,7 +1,7 @@
 #!/bin/bash
 # predict.py for every target and model, in one process on one skx-dev node, after prod.slurm.
 # Environment as check.slurm. TIDS and MODELS (space-separated) restrict it to those targets and models.
-# Submit from $RUN on stampede3:
+# Submit from $RUN:
 #   [TIDS="<TARGETID> ..." MODELS="<model> ..."] sbatch --export=ALL experiments/2026-11-14_poco_psb_sfh/predict.slurm
 #SBATCH -J psbpred
 #SBATCH -p skx-dev

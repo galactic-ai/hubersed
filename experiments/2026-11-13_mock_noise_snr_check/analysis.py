@@ -1,29 +1,19 @@
 """Do the noised v2 mocks the flows trained on have the S/N of DESI, and does S/N drive the outliers?
 
-QUESTION: (1) How do the median per-pixel S/N distributions of the flow training mocks (noised v2,
-S/N > 3) and the DESI spectra the flows scored compare, overall and per redshift? (2) What sets the
-mock S/N, redshift, mass formed or the normalisation A? (3) Per S/N bin, what are the DESI outlier rate
-and median log p of each flow, and the median log p of the mocks?
-HYPOTHESIS: none registered. A first look (2026-11-13_psb_fraction_like_for_like snr step) found
-two thirds of the S/N > 3 mocks above S/N 8, against 13.5% of the DESI parent.
-INPUTS: data/latents/mocks_v2/prospector_noise_spec_cuev2_<tag>latent_snr3.h5 (latents, snr_med, A,
-target_ids = mock index, zs); results/2026-11-09_mocks_v2_outliers/flows/flow_nsf_<tag>latent.pt and
-desi_outliers_flow_nsf_<tag>latent_snr3.pt (log_p_desi, desi_target_ids, threshold);
-data/dataset_z_snr.npz (DESI median S/N, the latent-cut S/N); data/latents/spender_spec_cont10latent_
-snr3.h5 (DESI A); data/prospector_model/mocks_v2_500000.h5 (logmass); 2026-11-13_gallery105 review.tsv
-and gallery105.tsv (the 105 new outliers).
-METHOD: mock log p from each saved flow (build_flow, the saved scaler) on the mock latents. S/N bins
-3-5, 5-8, 8-15, >15; z bins of 0.1. A is compared across samples only through its quantiles (its
-units in the two loaders are not checked here).
+QUESTION: how do mock and DESI median per-pixel S/N compare overall and per z, what sets the mock
+S/N, and per S/N bin what are each flow's DESI outlier rate and median log p?
+HYPOTHESIS: none registered. A first look found two thirds of the S/N > 3 mocks above S/N 8, against
+13.5% of the DESI parent.
+INPUTS: data/latents/mocks_v2/prospector_noise_spec_cuev2_<tag>latent_snr3.h5,
+results/2026-11-09_mocks_v2_outliers/flows/ (flow_nsf_<tag>latent.pt and
+desi_outliers_flow_nsf_<tag>latent_snr3.pt), data/dataset_z_snr.npz,
+data/latents/spender_spec_cont10latent_snr3.h5, data/prospector_model/mocks_v2_500000.h5,
+2026-11-13_gallery105 review.tsv and gallery105.tsv.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-13_mock_noise_snr_check/analysis.py``.
-RESULT: 2026-11-13, snr_check.txt. (1) Mock S/N median 11.9 vs DESI 4.6; S/N > 15: 40% vs 3.6%; mocks
-are higher at every z (z 0.5-0.6: 6.4 vs 3.5). (2) Mock S/N rises with mass formed (median 5.7 at
-log M 7-9, 14.5 at 11-12; 88k of the 158k mocks have log M 11-12) and follows A (r 0.70; DESI 0.84);
-mock A median 16 vs DESI 3.6. (3) DESI outlier rate rises with S/N in every flow (cont10 1.6% at S/N
-3-5 to 11.9% above 15; cont15 0.35% to 5.1%); mocks stay near 0.1% below threshold in every bin. The
-105 new outliers have median S/N 4.6, as the parent. Assumptions: A in the two loaders is in the same
-units (not checked); S/N is the latent-cut definition for both.
+RESULT: 2026-11-13, snr_check.txt. Mock S/N median 11.9 vs DESI 4.6, higher at every z. DESI outlier
+rate rises with S/N (cont10 1.6% at S/N 3-5 to 11.9% above 15), mocks stay near 0.1%.
+Assumptions: same A units in both loaders (not checked); S/N is the latent-cut definition.
 FIGURES: none (snr_check.txt).
 """
 

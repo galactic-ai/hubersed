@@ -1,9 +1,9 @@
 #!/bin/bash
 # Follow-up 2: C3K ER MAP of 39633433328091196 with the logzsol prior capped at +0.2 (fit.py
-# --lib er --zmax 0.2), dust on or off by DUST (default off), on one stampede3 icx node: check,
+# --lib er --zmax 0.2), dust on or off by DUST (default off), on one icx node: check,
 # 7 starts on one core each, collect. Env and start layout as
 # 2026-10-29_continuum_39633433328091196_map/map.slurm. A start killed by the timeout saves nothing.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch --export=ALL,DUST=on experiments/2026-10-29_nodust_map_39633433328091196/er_z.slurm
 #   sbatch --export=ALL,DUST=off experiments/2026-10-29_nodust_map_39633433328091196/er_z.slurm
 #SBATCH -J er_z

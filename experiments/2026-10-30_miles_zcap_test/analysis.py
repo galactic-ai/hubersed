@@ -1,20 +1,17 @@
 """How FSPS builds MILES SSPs above the top of the MILES metallicity grid.
 
 QUESTION: above log Z/Zsun +0.2 (MILES top, Z 0.030), does FSPS give the +0.2 MILES star spectra
-at the Teff and logg of the higher-Z MIST isochrone, so colour moves but line strength at fixed
-Teff and logg does not?
+at higher-Z MIST Teff and logg, so colour moves but line strength at fixed Teff and logg does not?
 HYPOTHESIS: yes, from the clamp in sps_setup.f90:331-335. C3K_HR, whose grid reaches +0.5,
 is the control.
-INPUTS: ssp_miles.npz (miles_mac build) and ssp_c3k_hr.npz (hubersed venv) from ssp.py.
+INPUTS: ssp_miles.npz and ssp_c3k_hr.npz of ssp.py.
 SEED: none.
-COMMAND: from the repository root on the Mac, with SPS_HOME=~/Astronomy_Research/fsps and
-OMP_NUM_THREADS=1,
-``~/Astronomy_Research/fsps_builds/miles_mac/.venv/bin/python experiments/2026-10-30_miles_zcap_test/ssp.py --name miles``,
+COMMAND: from the repository root, with SPS_HOME=<fsps> and OMP_NUM_THREADS=1,
+``<MILES fsps venv>/bin/python experiments/2026-10-30_miles_zcap_test/ssp.py --name miles``,
 ``uv run --no-sync python experiments/2026-10-30_miles_zcap_test/ssp.py --name c3k_hr``, then
 ``uv run --no-sync python experiments/2026-10-30_miles_zcap_test/analysis.py``.
-RESULT: 2026-10-30, ratio.txt. Partial. MILES spectra are frozen from MIST node +0.25 up (library swap
-12->13 changes nothing); indices still grow via cooler MIST stars (Mgb +0.27 A, iso 12->13), but the
-line-blanketing part of the blue continuum is frozen too. logzsol 0.2 mixes 20% node 0 library.
+RESULT: 2026-10-30, partial. MILES spectra are frozen from MIST node +0.25 up (library swap 12 to 13
+changes nothing). Indices still grow via cooler MIST stars (Mgb +0.27 A, iso 12 to 13).
 Assumptions: 10 Gyr scaled-solar SSPs, native resolution, ad hoc CaHK band.
 FIGURES: results/2026-10-30_miles_zcap_test/ratio.png and ratio.txt.
 """

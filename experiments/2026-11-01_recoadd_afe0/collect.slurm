@@ -1,5 +1,5 @@
 #!/bin/bash
-# fit.py collect for the SV3 and main afe = 0 MAPs on one stampede3 node, over whichever of the 7
+# fit.py collect for the SV3 and main afe = 0 MAPs on one node, over whichever of the 7
 # starts have finished. Run it again once every start is done; each run overwrites the last.
 #   sbatch -p spr --export=ALL,SRC=<copy> collect.slurm
 #SBATCH -J afe0col

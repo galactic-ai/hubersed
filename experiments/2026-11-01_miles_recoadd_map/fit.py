@@ -1,17 +1,9 @@
 """MILES continuum MAP of 39627757533007793 on its recoadded SV3 spectrum (#17).
 
-Changes from 2026-10-08_continuum_outlier run 1d (MILES, MILES window, nebular off, no degrading,
-nautilus on the SV3 DR1 coadd): the data are the SV3 recoadd flux and ivar of
-2026-10-29_continuum_recoadd (fitted pixels as there, cut to the MILES window, rest 3601.8 to
-7400.8 A), and the fit is a 7-start Powell MAP as 2026-10-28_continuum_c3k_er_rmatrix_map, with the
-four SFH hyperparameters fixed at the C3K HR afefree max-L instead of free. As in run 1d the MILES
-library resolution is set to zero and prospect smooths the model to a Gaussian of the median DESI
-resolution (hubersed.sps.lsf.desi_resolution). Start 0 is the run 1d max-L. Steps check, fit and
-collect are those of the 10-28 fit.py, which this file runs with model, observation, source, data
-and output folder swapped.
-
-FSPS must be the MILES build first on PYTHONPATH, with SPS_HOME holding the MILES spectra. Run on a
-stampede3 compute node through map.slurm.
+Against 2026-10-08_continuum_outlier run 1d, data are the 2026-10-29_continuum_recoadd SV3 recoadd
+and four SFH hyperparameters are fixed at the C3K HR afefree max-L, in a 7-start Powell MAP.
+FSPS must be the MILES build first on PYTHONPATH, with SPS_HOME holding the MILES spectra.
+Steps as 2026-10-28_continuum_c3k_er_rmatrix_map/fit.py. Run on a compute node through map.slurm.
 """
 
 import importlib.util

@@ -4,7 +4,7 @@
 # Two nodes, so blocks go over MPI. Run 1 for RUN1 s, killed by timeout, then a resume run for RUN2 s;
 # each run builds the slots again (~15 min). Production sampler settings, written to
 # poco_neff1024_forktest. I_MPI_PIN=0 leaves the affinity to fit.py, which pins each worker to a core.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch experiments/2026-10-31_poco_c3k_er_dark_39633433328091196/test_fork.slurm
 #SBATCH -J pocofork1031
 #SBATCH -p skx-dev

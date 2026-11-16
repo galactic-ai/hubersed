@@ -1,37 +1,7 @@
 """Check where the continuum chi2 excess of the ER maximum likelihood spectrum comes from.
 
-QUESTION
-    The continuum pixels of the ER fit have chi2 6199 over 5259 pixels. Is the excess from a
-    uniform noise underestimate, sky or telluric residuals, a few outlier pixels, correlated
-    residuals, or model mismatch at stellar absorption features?
-
-INPUTS
-    results/2026-10-09_nautilus_c3k_er_broadline/
-    39627770174637084_er_broad_shared_split45_rest9000_seed0_pred.npz from predict.py, and
-    39627770174637084/jacobian.npz from jacobian.py, whose region array marks the continuum
-    pixels. No model is evaluated here.
-
-    The telluric band edges are approximate and were written from memory. The night sky line
-    wavelengths are air values converted to vacuum. They match the vacuum values in spender's
-    sky-lines.txt. spender already masks these sky lines in the data, so no continuum pixel
-    falls near them.
-
-    Some continuum pixels sit on emission lines that the model line list (eline_wave in
-    jacobian.npz) does not have, such as Pa11 to Pa16, H11, H12 and He I 7281. Their air
-    wavelengths were written from memory. The budget is given twice. Order A is the one asked
-    for. Order B takes these lines out first and uses |chi| > 4 instead of the worst 1%, because
-    the worst 1% of unit Gaussian noise already carries a large excess.
-
-SEED
-    None. Nothing is random.
-
-COMMAND
-    uv run python experiments/2026-10-09_nautilus_c3k_er_broadline/continuum_check.py
-
-OUTPUT
-    results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/continuum_check.txt with the
-    tables and the excess budget, and continuum_check.png with chi against observed wavelength
-    and the chi histogram against a unit Gaussian.
+Budgets the excess over noise, sky, telluric, outlier, correlated and absorption-feature terms
+and writes continuum_check.txt and continuum_check.png. Telluric edges are from memory. Run as ``uv run python experiments/2026-10-09_nautilus_c3k_er_broadline/continuum_check.py``.
 """
 
 import math

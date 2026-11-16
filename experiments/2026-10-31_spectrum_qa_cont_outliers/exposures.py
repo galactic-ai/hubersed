@@ -1,10 +1,7 @@
 """Save the DR1 SV3 bright exposures with their sky brightness and effective time.
 
-One query of desi_dr1.exposure on the Astro Data Lab TAP service. analysis.py joins it to each
-target through TILEID_LIST of the FastSpecFit VAC.
-
-COMMAND: from the repository root on the Mac,
-``uv run --no-sync python experiments/2026-10-31_spectrum_qa_cont_outliers/exposures.py``.
+One query of desi_dr1.exposure on the Astro Data Lab TAP service.
+COMMAND: ``uv run --no-sync python experiments/2026-10-31_spectrum_qa_cont_outliers/exposures.py``.
 OUTPUT: results/2026-10-31_spectrum_qa_cont_outliers/sv3_bright_exposures.csv.
 """
 

@@ -1,33 +1,11 @@
 """MAPs of the continuum outlier 39633433328091196 with dust attenuation off, for C3K_ER and MILES.
 
-QUESTION: is the best fit without dust about as good as the one with dust? This is C. Hahn's test.
+SUPERSEDED BY: experiments/2026-10-30_nodust_miles_39633433328091196_dark.
+Same runs on the SV3 dark coadd, since the bright coadd has blue sky residual.
 
-``--lib er`` changes 2026-10-29_continuum_39633433328091196_map/fit.py (dusty MAP, icx job 3657895)
-in one way: dust2 is fixed at 0, so dust1 = dust2 * dust_ratio is 0 and dust_index scales nothing;
-dust_ratio and dust_index are fixed as well. Start 0 is the dusty MAP best point. All else is that
-fit (C3K_ER + afe, DR1 R matrix, rest 3320-9000 A, SFH hyperparameters fixed at the C3K_HR max-L,
-7 Powell starts).
-
-``--lib miles`` is a MAP with the model, data and likelihood of the 10-08 run
-miles_miles_neboff_nodeg (2026-10-08_continuum_outlier/fit.py: MILES build, native data, MILES
-window, nebular off), with dust as in that run (``--dust on``) or off. The four SFH
-hyperparameters, free in the 10-08 run, are fixed at its max-L point, as the ER fit fixes them,
-since with them free a MAP drifts to their prior floors (hubersed.sps.config, notes of
-build_full_cue_model). Start 0 is the 10-08 max-L point.
-
-``--mask features`` (C3K ER only) drops rest 3850-4450 A and 4600-4750 A from the fitted pixels,
-where C3K and MILES SSPs differ most at fixed age and metallicity (Ca H and K, G band, C2 4668 in
-2026-10-29_c3k_vs_miles_ssp), and fits with dust on and off. Outputs go
-to er_dust_features and er_nodust_features.
-
-``--zmax 0.2`` caps the logzsol prior at +0.2 (Uniform -2.5 to 0.2 instead of 0.5),
-the top of FSPS's MILES spectral grid (Z 0.030, zsol_spec 0.019; MILES spectra are not extrapolated,
-sps_setup.f90), for either library; starts above the cap are moved to 0.195. Outputs carry _zmax0.2.
-
-Steps check, fit and collect as in 2026-10-28_continuum_c3k_er_rmatrix_map/fit.py, whose step
-code this file reuses. check also asserts, with dust off, that dust_index and dust_ratio leave the
-spectrum unchanged, and for MILES with dust on, that the log likelihood at start 0 is the 10-08 max
-log L. Run on a compute node through er.slurm (stampede3) or miles.slurm (ls6).
+Changes from 2026-10-29_continuum_39633433328091196_map/fit.py are dust2 0 with dust_ratio and
+dust_index fixed, ``--lib miles`` (miles_miles_neboff_nodeg), ``--mask features``, ``--zmax 0.2``.
+COMMAND: on a compute node through er.slurm or miles.slurm.
 """
 
 import argparse

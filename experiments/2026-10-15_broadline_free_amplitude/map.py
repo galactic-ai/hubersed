@@ -1,31 +1,18 @@
 """MAP fits of 39627770174637084 with the free-amplitude broadline model against model A.
 
-QUESTION: does the free-line model (hubersed.sps.free_lines, spec in UberSED
-knowledge/broadline_free_amplitude_spec_2026-10-15.md) fit as well as model A, and how do the gas
-parameters and line amplitudes move?
-
+QUESTION: does the free-line model (hubersed.sps.free_lines) fit as well as model A, and how do the
+gas parameters and line amplitudes move?
 HYPOTHESIS: chi2 drops or stays. [SII] and [OI] leave Cue, so U, n_H and Z move. The broad Balmer
 fraction stays near model A's 0.18.
-
-The line model is as in fit.py. Data, mask and start are those of the 10-13 rmatrix chain, with the
-SFH hyperparameters at its max-L and one Powell start. Model A is rerun from the same start.
-``check`` asserts that the free-line model with zero widths and no broad part reproduces model A.
-
-RESULT: 2026-10-15, map.txt. chi2 on 5530 px: A 6058.8, free 5887.3, free_aur0.3 5896.0. The gain is
-in [NeIII], [OII]3727, [OIII]4363, [OI] and [SII]. Broad f_b: H 0.167 (A 0.179), forbidden 0.09 to
-0.21; sigma_b 87.9 and sigma_f 85.9 km/s. 12+log(O/H) goes from 7.96 (A) to 8.67 (free) and 8.61
-(free_aur0.3), against direct 8.23, and C/O leaves its ceiling. Cue now over-predicts narrow [SII]
-and [OI] and is too cold for [OIII]4363 and [OII]7325. U and n_H differ by up to 0.9 dex between the
-two auroral settings.
-
-INPUTS: the 10-13 <TID>_rmatrix_mask_..._pred.npz (start) and the 10-09 recoadd files that
-model_setup.load_data reads. SEED: none.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+INPUTS: the 10-13 <TID>_rmatrix_mask_..._pred.npz and the 10-09 recoadd files.
+SEED: none.
+COMMAND: from the repository root with the C3K_ER build,
+``PYTHONPATH=<er_path>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-15_broadline_free_amplitude/map.py {check,A,free,free_aur0.3,report}``.
-
+RESULT: 2026-10-15. chi2 on 5530 px is A 6058.8, free 5887.3, free_aur0.3 5896.0. Broad H f_b 0.167
+(A 0.179). 12+log(O/H) 7.96 (A) to 8.67 (free) and 8.61 (free_aur0.3), direct 8.23.
+Assumptions: one Powell start with SFH hyperparameters at the 10-13 max-L of the rmatrix chain.
 OUTPUT: map_<variant>.npz, map.txt, map_windows.png and map_windows_A_free.png in
 results/2026-10-15_broadline_free_amplitude/.
 """
@@ -152,10 +139,7 @@ def run(variant, maxfev):
 
 
 def amplitude_lines(model):
-    """Return report lines for the free amplitudes at the last prediction.
-
-    q is the narrow flux over Cue's. f_b is the broad share of the ion's flux.
-    """
+    """Return report lines for the free amplitudes at the last prediction."""
     amps = {(c["name"], c["kind"]): c for c in model.free_amplitudes}
     out = [f"{'ion':>12} {'narrow q':>16} {'broad r':>16} {'f_b':>6}  flags"]
     for ion in dict.fromkeys(n for n, _ in amps):

@@ -27,21 +27,14 @@ RUNS = {"free": (False, False), "tied": (True, False), "tied_fixed": (True, True
 
 
 def co_from_oh(gas_logz=0.0, gas_dlogco=0.0, **extras):
-    """Return Cue's ``gas_logco`` from O/H with the Nicholls et al. (2017) relation.
-
-    log(C/O) = log10(10^-0.8 + 10^(log(O/H) + 2.72)) plus the offset ``gas_dlogco``, relative to
-    Cue's solar C/O and clipped to the Cue grid.
-    """
+    """Return Cue's ``gas_logco`` from O/H by Nicholls et al. (2017) plus ``gas_dlogco``."""
     log_oh = CUE_LOGOH_SUN + np.atleast_1d(gas_logz)
     log_co = np.log10(10**-0.8 + 10 ** (log_oh + 2.72))
     return np.clip(log_co - CUE_LOGCO_SUN + np.atleast_1d(gas_dlogco), *CUE_LOGCO_RANGE)
 
 
 def best_point(z, checkpoint):
-    """Return max-likelihood point of nautilus checkpoint as a dictionary.
-
-    Only reads the checkpoint file.
-    """
+    """Return the max-likelihood point of a nautilus checkpoint as a dict, reading only the file."""
     run_model = broadline.TwoCompLineModel(make_params(z))
     s = Sampler(
         run_model.prior_transform,

@@ -1,13 +1,8 @@
 """Total metallicity [Z/H] of each MIST2 grid point, from the initial X and Z of its MESA runs.
 
-The MESA work directories of Dotter et al. 2026 (MIST2, arXiv:2602.22012), Zenodo record
-15232687, rotating_workdirs.tgz (md5 8c63c7e2f1859c8d1773aaad348fe1d9, vvcrit0.4 as the FSPS
-isochrones), hold input_XYZ (initial X, Y, Z) for every grid point and mass. [Z/H] is
-log10(Z/X) minus that of [Fe/H] = 0, [alpha/Fe] = 0, so it equals the [Fe/H] label at
-[alpha/Fe] = 0, as MILES logzsol does. The script checks that every mass of a grid point has the
-same X and Z, and that log10(X_fe56/X_h1) relative to solar reproduces the [Fe/H] label.
-Get the inputs with ``tar -xzf rotating_workdirs.tgz -C extracted '*/input_XYZ' '*/input_initial_xa.data'``
-in data/mist2_zenodo.
+Inputs are rotating_workdirs.tgz (md5 8c63c7e2f1859c8d1773aaad348fe1d9) of Zenodo record 15232687
+(Dotter et al. 2026, arXiv:2602.22012), unpacked in data/mist2_zenodo with
+``tar -xzf rotating_workdirs.tgz -C extracted '*/input_XYZ' '*/input_initial_xa.data'``.
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_poco_repeats/mist2_zh.py``.
 OUTPUT: results/2026-11-01_poco_repeats/mist2_zh.txt.
 """

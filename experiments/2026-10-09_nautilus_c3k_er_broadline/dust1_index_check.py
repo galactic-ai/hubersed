@@ -1,33 +1,10 @@
 """Would a free dust1_index fix the Balmer decrement misfit of the ER fit of 39627770174637084?
 
-QUESTION: at the ER max-L point the data Hbeta/Halpha is about 4.7% below the model. The young
-CSP is attenuated by tau1 = dust1 (lambda/5500)^dust1_index, and dust1_index is not a model
-parameter, so it stays at the FSPS default of -1. How much chi2 could a free dust1_index buy, and
-does it move the Balmer windows the right way without hurting the continuum?
-
-Two parts. A grid moves dust1_index with every other parameter at the max-L point ``best``. It
-gives the total chi2, the chi2 in each line window of jacobian.py and in the rest (continuum), and
-the model Balmer line ratios from ``model._eline_lum``. A profile re-optimizes dust2, dust_ratio,
-logmass, logzsol, logsfr_ratios_1 and logsfr_ratios_2 at five dust1_index values with Powell
-(at most 400 likelihood calls each), starting from ``best``. The objective is the likelihood
-only. Points outside the prior give minus infinity, and Powell is bounded by the prior bounds.
-The profile chi2 is quoted against the same re-optimization at dust1_index = -1.
-
-dust1_index is set on ``ssp.params`` of the cached Cue source. prospect's ``update`` only copies
-model parameters into ``ssp.params``, and dust1_index is not one, so it stays where it is set.
-``get_spectrum`` of nebssp_basis.py passes it to ``add_dust``. FSPS gets dust1 = dust2 = 0, so the
-FSPS spectra do not depend on it, which the script checks. It is put back to -1 at the end.
-
-INPUTS: the ER ``_pred.npz`` of predict.py, jacobian.npz of jacobian.py (posterior widths that
-scale the optimizer steps) and the same data, model and build as the fit. SEED: none
-(deterministic).
-
-COMMAND: from the repository root on the Mac with the C3K_ER build, as jacobian.py,
+Grids dust1_index at the max-L point and profiles it at five values with Powell, and writes
+dust1_index_check.txt. Run from the repository root as
 ``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-09_nautilus_c3k_er_broadline
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
 experiments/2026-10-09_nautilus_c3k_er_broadline/dust1_index_check.py``.
-
-OUTPUT: results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/dust1_index_check.txt.
 """
 
 import time

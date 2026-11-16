@@ -3,16 +3,13 @@
 QUESTION: is any of follow28 12, 15, 20, 22, 27 on a petal whose sky model DESI's tile QA flags,
 as 39633325949715572 was (petal 6 of tile 313, 2026-10-31_boss_39633325949715572)?
 HYPOTHESIS: none registered.
-INPUTS: desi_dr1.ztile (sv3, bright, cumulative) on Astro Data Lab for TILEID and LASTNIGHT; the iron
-tile-qa-<TILEID>-thru<LASTNIGHT>.fits files (FIBERQA, PETALQA). Thresholds skythrurms_max 0.05 and
-skychi2pdf_max 1.5 from desispec 0.56.2 qa-params.yaml lines 106-107.
+INPUTS: desi_dr1.ztile (Astro Data Lab), tile-qa-<TILEID>-thru<LASTNIGHT>.fits in data/iron_tileqa/;
+thresholds skythrurms_max 0.05, skychi2pdf_max 1.5 (desispec 0.56.2 qa-params.yaml lines 106-107).
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_quiescent_qa/analysis.py``.
-RESULT: tile-QA sky metrics are below both thresholds for all five (qa.txt). Fibre census of all
-36 (fibres_all.txt): fibre 2675 of petal 5 carries 5 tile rows (12, 15, 22 and two others), 2676 two;
-27 sits on 2666 and 2676. 12 and 22 have QAFIBERSTATUS 32768; 27 on tile 288 has 16777216 (BADAMPZ)
-and VALID False. Only 20 is off fibres 2666-2676.
-FIGURES: results/2026-10-31_quiescent_qa/ qa.txt, fibres_all.txt (tile-QA files cached in\ndata/iron_tileqa/).
+RESULT: tile-QA sky metrics are below both thresholds for all five. Of all 36 outliers, fibre 2675
+of petal 5 carries 5 tile rows, and only 20 is off fibres 2666-2676.
+FIGURES: results/2026-10-31_quiescent_qa/ qa.txt, fibres_all.txt.
 """
 
 # %%

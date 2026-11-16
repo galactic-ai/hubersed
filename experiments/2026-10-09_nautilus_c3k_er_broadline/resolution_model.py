@@ -1,15 +1,8 @@
 """Apply a DESI resolution matrix to a high-resolution model, resampled as in Guy et al. 2023.
 
-The DESI matrix R is square on the 0.8 A extraction grid. Rebinning a model with unresolved
-features onto that grid before applying R biases it (Guy et al. 2023, arXiv:2209.14482, appendix
-on resampling the resolution matrix). There each row of R is interpolated with a cubic spline onto
-the model's finer grid, which gives a non-square matrix R' that applies the resolution and rebins
-in one step. The paper does not give the normalisation. Here each spline value is multiplied by
-the fine step over the 0.8 A step, so R' reproduces R on a smooth model and an unresolved line keeps
-the normalisation of R. The spline is tied to zero one pixel beyond the outermost diagonals, with
-zero slope there.
-
-This is a prototype for the evaluation and MAP checks in this folder, not the prospect feature.
+Each row of R is splined onto the fine model grid (arXiv:2209.14482) and scaled by the fine step
+over the 0.8 A step, a normalisation the paper does not give. A prototype for the checks in this
+folder, not the prospect feature.
 """
 
 import numpy as np
@@ -31,22 +24,13 @@ def fine_grid(wave, ndiag, step=FINE_STEP):
 
 
 def resampled_matrix(wave, data, fine):
-    """Return R', the rows of a banded DESI matrix resampled onto ``fine``.
+    """Return R', the rows of a banded DESI matrix resampled onto ``fine``, shape ``(n, fine.size)``.
 
     Parameters
     ----------
-    wave : np.ndarray
-        The uniform extraction grid in Angstrom.
     data : np.ndarray
         Banded matrix, shape ``(ndiag, n)``, with R[j - offset_k, j] = data[k, j] and offsets
         running from ndiag//2 down to -(ndiag//2), as desispec.resolution.Resolution.
-    fine : np.ndarray
-        The uniform fine model grid, from ``fine_grid``.
-
-    Returns
-    -------
-    scipy.sparse.csr_matrix
-        Shape ``(n, fine.size)``. R' @ m is the extracted model for a model m on ``fine``.
     """
     ndiag, n = data.shape
     c = ndiag // 2
@@ -73,11 +57,7 @@ def resampled_matrix(wave, data, fine):
 
 
 def line_segment(fine, mu, sigma_kms, nsig=8.0):
-    """Return the fine-grid slice and values of a unit-flux Gaussian line in f_nu (per Hz).
-
-    The profile is prospect's get_eline_gaussians, a Gaussian in velocity about ``mu`` times
-    d(v)/d(nu), sampled at the fine grid points. Its integral over frequency is one.
-    """
+    """Return the fine-grid slice and values of a unit-flux Gaussian line in f_nu (per Hz)."""
     half = nsig * mu * sigma_kms / C_KMS
     f0, f1 = np.searchsorted(fine, [mu - half, mu + half])
     w = fine[f0:f1]
@@ -88,9 +68,6 @@ def line_segment(fine, mu, sigma_kms, nsig=8.0):
 
 def intrinsic_line_segments(model, fine):
     """Return each added line of a TwoCompLineModel at its intrinsic widths on ``fine``.
-
-    Must run after the model has predicted the observation, since it reads the cached line
-    parameters. The instrumental part prospect adds to the widths is removed.
 
     Returns
     -------
@@ -124,10 +101,7 @@ def apply_segments(rp, comps):
 
 
 def continuum(model, sigma):
-    """Return the model continuum smoothed by a velocity dispersion ``sigma``, on the library grid.
-
-    Below 1 km/s the continuum is left unsmoothed.
-    """
+    """Return the model continuum smoothed by a velocity dispersion ``sigma``, on the library grid."""
     keep = model.params["sigma_smooth"]
     try:
         if sigma < 1.0:
@@ -143,13 +117,7 @@ def continuum(model, sigma):
 
 
 class ResampledRModel(TwoCompLineModel):
-    """TwoCompLineModel that applies a resampled resolution matrix R' instead of prospect's LSF.
-
-    The continuum is smoothed by sqrt(sigma_smooth^2 - lib^2), with lib the median library
-    resolution over the fine grid, so the library resolution is not counted twice (no smoothing if
-    sigma_smooth is below lib). The lines have their intrinsic widths only. Both are put on the fine
-    grid and R' is applied once. Call ``set_resolution`` before predicting.
-    """
+    """TwoCompLineModel that applies a resampled resolution matrix R' instead of prospect's LSF."""
 
     def set_resolution(self, rp, fine):
         """Store R' and its fine grid, from ``resampled_matrix`` and ``fine_grid``."""

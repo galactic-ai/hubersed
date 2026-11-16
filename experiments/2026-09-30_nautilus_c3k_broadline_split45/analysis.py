@@ -1,16 +1,19 @@
-"""QUESTION: with the narrow/broad split at 45 km/s and the [OI]/[SII] sky pixels unmasked, does the
-broad Balmer width leave the rail it hit at the 100 km/s split (37084, 2026-09-26), does gas_lognH leave
-its floor once both [SII] lines are fitted, and what do the line residuals look like in both objects?
-HYPOTHESIS: sigma_b settles below 100 km/s (EmFit outflow sigma ~59 / 73 km/s); gas_lognH moves off
-1.0 in 37084 now that [SII]6731 is in the fit; eline_sigma_forb and gas_logco stay railed (one forbidden
-width cannot serve [OIII] and [NII]/[SII]; design note 6.2, 6.7).
+"""Does a 45 km/s split with [OI]/[SII] sky pixels unmasked free the railed line parameters?
+
+SUPERSEDED BY: experiments/2026-10-09_nautilus_c3k_er_broadline.
+Same fit with C3K_ER and data that are no longer degraded.
+
+QUESTION: With a 45 km/s split and [OI]/[SII] unmasked, do the broad Balmer width (railed at the
+100 km/s split, 37084, 2026-09-26) and gas_lognH leave their rails, and how do line residuals look?
+HYPOTHESIS: sigma_b settles below 100 km/s (EmFit outflow sigma ~59 / 73 km/s). gas_lognH moves off
+1.0 in 37084. eline_sigma_forb and gas_logco stay railed.
 INPUTS: results/2026-09-30_nautilus_c3k_broadline_split45/<tid>_broad_shared_split45_unmask_rest9000_seed0.h5
-(runs A = 37084, C = 26597, both forbidden_broad="shared"); for comparison
-results/2026-09-26_nautilus_c3k_broadline/run2/39627770174637084_broad_miles_seed0.h5 and
-results/2026-09-28_nautilus_c3k_broadline_shared/39628357133926597_broad_full_rest9000_seed0_plotdata.npz.
+(A = 37084, C = 26597), results/2026-09-26_nautilus_c3k_broadline/run2/39627770174637084_broad_miles_seed0.h5,
+results/2026-09-28_nautilus_c3k_broadline_shared/39628357133926597_broad_full_rest9000_seed0_plotdata.npz
 SEED: none needed (no random draws).
 COMMAND: uv run python experiments/2026-09-30_nautilus_c3k_broadline_split45/analysis.py
 RESULT: see analysis_summary.txt next to the figures.
+Assumptions: none stated.
 FIGURES: params_table.txt, corner_lines_<tid>.png, line_windows.png, spectrum_<tid>.png
 """
 

@@ -2,16 +2,12 @@
 
 QUESTION: what do the 105 v2-mock outliers after SIMBAD that are not in the 310 look like?
 HYPOTHESIS: none registered; a visual look.
-INPUTS: full and cont of results/2026-11-09_mocks_v2_outliers/postsimbad_v2.npz minus target_ids
-of results/outliers310_sample.npz, sorted by TARGETID; DR1 coadds through load_by_index; RA and
-DEC from the METADATA of data/fastspec-iron-sv3-bright.fits; 96 px ls-dr9 cutouts at 0.262''/px,
-reused from earlier galleries when there, else downloaded to results/2026-11-13_gallery105/cutouts/.
-The cutout sits in its own panel right of the spectrum, not as an inset, so it hides no pixels.
+INPUTS: results/2026-11-09_mocks_v2_outliers/postsimbad_v2.npz minus results/outliers310_sample.npz,
+data/fastspec-iron-sv3-bright.fits, cutouts in results/2026-11-13_gallery105/cutouts/.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-13_gallery105/analysis.py``.
 RESULT: figures only.
-FIGURES: results/2026-11-13_gallery105/<NN>_<TARGETID>.png, rest-frame pixels with ivar > 0 (grey)
-and their 9 px median filter (black).
+FIGURES: results/2026-11-13_gallery105/<NN>_<TARGETID>.png.
 """
 
 import io

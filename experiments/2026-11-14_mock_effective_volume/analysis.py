@@ -1,29 +1,14 @@
 """Is the v2 mock density in latent space even across the prior, and where is it thin?
 
-QUESTION: Model only, no DESI. With parameters drawn independently and uniformly in rank, how
-uneven is the mock density in the latent space of flows 6, 10 and 15, which parameter ranges give
-low density (spectra spread out there), and how dense are mocks in the emission-line emitters' region?
-HYPOTHESIS: none registered. Plan ~/.claude/plans/logp_hist_and_effective_volume_2026-11-14.md.
-INPUTS: results/2026-11-09_mocks_v2_outliers/flows (flow_nsf_<tag>latent.pt, desi_outliers_flow_nsf_
-<tag>latent_snr3.pt for the mock file and threshold); data/prospector_model/mocks_v2_500000.h5
-(priors/theta, theta_labels, priors/redshifts, failed).
-METHOD: held-out mocks (first tenth of the default_rng(0) permutation) scored with the saved flow.
-The first check uses that mock target_id is the row of the 500k file (make_prospector_noisy_sed.py),
-so the latent-file z must equal priors/redshifts at that row and no row may be failed. Unevenness
-uses weights w = 1/p, Kish ESS/N = (sum w)^2 / (N sum w^2), and the largest single weight share.
-Per parameter, rank u among not failed mocks (as params.py) in deciles gives the median log p and
-the share below the saved threshold. The region is u < 0.3 in dust2, gas_logno, logzsol and u > 0.6
-in gas_logu, gas_logz, with its count among not failed mocks against N x 0.3^3 x 0.4^2, and
-held-out log p inside vs outside it.
+QUESTION: model only, no DESI. How uneven is the mock density in the latent space of flows 6, 10
+and 15, which parameter ranges give low density, and how dense are mocks in the emitters' region?
+HYPOTHESIS: none registered.
+INPUTS: results/2026-11-09_mocks_v2_outliers/flows, data/prospector_model/mocks_v2_500000.h5.
 SEED: none (the split uses the flows' seed 0).
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_mock_effective_volume/analysis.py``.
-RESULT: 2026-11-14, effvol.txt. Check passes (z match 3e-8, no failed rows). Region holds 2,204
-mocks against 2,160 if independent; its held-out mocks (74) have median log p -4.7/-4.0/-4.7
-against -2.3/-1.1/-1.8 for the rest (flows 6/10/15), about 10-20x lower density. Largest decile
-gradients: eline_sigma (lowest decile median log p 4-6.5 below the top), then r_broad_forb, logmass,
-logzsol, r_broad, dust2, all lower at low u. ESS/N of 1/p weights is 6e-5 (one mock holds 95-100% of
-the weight), so raw 1/p weights are unusable. Assumptions: flow log p as the density, poor in its
-own tail; 74 region mocks; u mixes redshifts for z-dependent priors.
+RESULT: 2026-11-14, effvol.txt. The region holds 2,204 mocks against 2,160 if independent, at about
+10-20x lower density. eline_sigma has the largest decile gradient, lower at low u.
+Assumptions: flow log p as the density, poor in its own tail; 74 region mocks; u mixes redshifts.
 FIGURES: none (effvol.txt).
 """
 

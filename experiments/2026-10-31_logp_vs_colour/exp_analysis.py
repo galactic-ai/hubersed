@@ -1,18 +1,13 @@
-"""Per-exposure spectrum-minus-photometry g-r of the blue outliers, against each exposure's sky (#17).
+"""Per-exposure spectrum-minus-photometry g-r of the blue outliers against exposure sky (#17).
 
 QUESTION: is the blue offset of the exp_targets.txt outliers in one exposure (sky-like) or in all?
 HYPOTHESIS: none registered.
-INPUTS: results/2026-10-31_logp_vs_colour/exposures/<TARGETID>.npz (exp_extract.py on stampede3),
+INPUTS: results/2026-10-31_logp_vs_colour/exposures/<TARGETID>.npz (exp_extract.py),
 sv3_bright_exposures.csv of the QA experiment, FIBERTOTFLUX of the FastSpecFit VAC, BASS g and r.
-Arms are joined at 5750 and 7580 A on their own pixels; masked pixels are interpolated over.
-The ivar-weighted mean of the exposures is a check against the VAC dgr.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_logp_vs_colour/exp_analysis.py``.
-RESULT: 2026-10-31. Exposure mean matches the VAC dgr within 0.04. Exposure dgr varies by up to
-1.3 mag within a target. In 4 of 18 the bluest exposure has the brightest sky; within-target
-Spearman with sky g is +0.13 (p 0.36) and with efftime -0.02 (p 0.88). Three galaxies on tile 95
-petal 5 share bluer 84639 and 84934 and a redder 85078. Within-target Spearman with seeing
--0.50 (p 9e-5).
+RESULT: 2026-10-31. Exposure dgr varies by up to 1.3 mag within a target; in 4 of 18 the bluest
+exposure has the brightest sky. Within-target Spearman, sky g +0.13 (p 0.36), seeing -0.50 (p 9e-5).
 FIGURES: results/2026-10-31_logp_vs_colour/exp_table.txt and exp_sky.png.
 """
 

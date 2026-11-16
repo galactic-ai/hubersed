@@ -1,18 +1,7 @@
 """1D posteriors of one target's free parameters for three ladder runs, on the prior range.
 
-The runs are MILES, C3K HR + afe (degraded) and C3K ER + afe + R matrix on the DR1 coadd, loaded as
-in ladder_corner.py. One panel per free parameter of the DR1 run. The x axis spans the union of the
-runs' prior bounds. Bins are 30 equal steps over the 0.1 to 99.9 per cent span of the runs' weighted
-samples, so narrow posteriors stay resolved on a wide axis. The logsfr_ratios prior is a Gaussian
-set by the SFH hyperparameters, with no bounds, so its nine panels share one axis and one set of
-bins, set by the widest 0.1 to 99.9 per cent span over the three runs and nine ratios. A run
-without a parameter (afe in MILES) has no curve in that panel. With afe free logzsol is [Fe/H],
-without it [Z/H].
-A last panel puts every run on log10(Z/Zsun), with Z the initial metal mass fraction of the MIST2
-model (mist2_zh.py), linear in log Z between the ([Fe/H], [alpha/Fe]) grid nodes, and Zsun the Z
-of the [Fe/H] = 0, [alpha/Fe] = 0 model. Solar-scaled runs take logzsol as [Fe/H] at [alpha/Fe] = 0.
-Its axis spans the prior corners of logzsol and afe. ladder_metallicity.txt gives log10(Z/Zsun) of
-every run, and [Fe/H] and [alpha/Fe] of the afe runs, as 16, 50 and 84 per cent quantiles.
+Runs are MILES, C3K HR + afe (degraded) and C3K ER + afe + R matrix on the DR1 coadd. A last panel
+puts every run on log10(Z/Zsun) of MIST2 (mist2_zh.py).
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_poco_repeats/ladder_hist.py --tid <TARGETID>``.
 OUTPUT: results/2026-11-01_poco_repeats/<TARGETID>/ladder_hist.png and ladder_metallicity.txt.
 """

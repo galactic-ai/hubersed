@@ -1,21 +1,7 @@
 """Build the per exposure-petal-camera calibration error table of the SV3 bright sample and check it.
 
-QUESTION: what is the corrected calibration error f = sigma_C / C of every exposure-petal-camera that
-holds our sample, did the reruns reproduce iron, and what predicts f?
-
-Reads the merged tables of fluxcal_sample.py (the two halves of the run ``all``) and the unit list
-units_all.csv of make_units.py. For each exposure, petal and camera it keeps the median over good
-fibers (FIBERSTATUS 0) of the per-fiber median f, corrected and iron, the 5-95% spread of the
-corrected f over fibers, the checks against iron, and the unit's QA values. Units that were skipped
-or failed get f = NaN and a status. The text output gives the checks, the distribution of f per
-camera, weighted by the number of sample targets, and how f depends on NSTDSTAR and STARRMS.
-
-INPUTS: results/2026-10-13_fluxcal_sample/all/{cameras,fibers}_part{0,1}.fits, units_all.csv.
-SEED: none.
-
-COMMAND: from the repository root, ``uv run python experiments/2026-10-13_fluxcal_sample/summarise_f.py``.
-
-OUTPUT: f_table.fits and summarise_f.txt in results/2026-10-13_fluxcal_sample/all/.
+Writes f_table.fits and summarise_f.txt in results/2026-10-13_fluxcal_sample/all/. Run from the
+repository root as ``uv run python experiments/2026-10-13_fluxcal_sample/summarise_f.py``.
 """
 
 import numpy as np

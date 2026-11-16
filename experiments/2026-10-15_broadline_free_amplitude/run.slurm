@@ -2,7 +2,7 @@
 # Nautilus run of the free-line model. Each job resumes the checkpoint.
 # Chain links share a name: sbatch -J freeline2 --dependency=singleton run.slurm.
 # Normal queue: -p normal -t 48:00:00 and TIMEOUT=170000.
-# An unconverged job requeues itself, at most 5 times (ls6 MaxBatchRequeue). REQUEUE=0 turns it off.
+# An unconverged job requeues itself, at most 5 times (MaxBatchRequeue). REQUEUE=0 turns it off.
 # A converged or failed job writes a marker and cancels the pending links.
 # MAILTO=<address> mails a short report at the end of each run.
 #SBATCH -p development

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Fetch the iron spectra files of urls.txt to /scratch, skipping files already there. Run on the
-# stampede3 login node from the repository root:
+# login node from the repository root:
 #   bash experiments/2026-11-05_exposures_39627770174637084/stage.sh
 set -euo pipefail
 HERE=experiments/2026-11-05_exposures_39627770174637084

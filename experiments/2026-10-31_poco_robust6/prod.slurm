@@ -1,7 +1,7 @@
 #!/bin/bash
 # Production pocoMC run of fit.py runfork for one target on 8 spr nodes, as the 10-31 prod.slurm of
 # 39633433328091196. Output results/2026-10-31_poco_robust6/<TID>/poco_neff1024; a resubmission
-# resumes from the newest state there. After prep.slurm. Submit from the repository root on stampede3:
+# resumes from the newest state there. After prep.slurm. Submit from the repository root:
 #   TID=<TARGETID> sbatch --export=ALL -J poco_<TID> experiments/2026-10-31_poco_robust6/prod.slurm
 #SBATCH -p spr
 #SBATCH -N 8

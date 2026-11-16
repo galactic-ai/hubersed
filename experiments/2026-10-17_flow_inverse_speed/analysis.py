@@ -1,14 +1,10 @@
 """Time ways to speed up pocoMC's nsf6 flow inverse, the serial part of each MCMC step.
 
-QUESTION: rank 0 of the pocoMC free_dust run (job 3517041) spends about half of each 1.8 s MCMC
-step in ``flow.inverse`` on 512 x 30 points (py-spy, 2026-10-17) while the workers wait. How much
-faster is the same nsf6 flow with more torch threads, or split by rows over forked processes?
-
-The flow is pocomc.flow.Flow(30, "nsf6") with random weights. Its cost does not depend on the weights.
-Rows are inverted independently, so a split result must match the serial one to float32 rounding.
-
+QUESTION: rank 0 of the free_dust run spends about half of each 1.8 s MCMC step in ``flow.inverse``
+on 512 x 30 points. How much faster with more torch threads, or split by rows over forked processes?
 COMMAND: on an idle compute node, ``OMP_WAIT_POLICY=PASSIVE uv run python
-experiments/2026-10-17_flow_inverse_speed/analysis.py``. ``--threads`` and ``--chunks`` set the trials.
+experiments/2026-10-17_flow_inverse_speed/analysis.py``.
+``--threads`` and ``--chunks`` set the trials.
 """
 
 import argparse

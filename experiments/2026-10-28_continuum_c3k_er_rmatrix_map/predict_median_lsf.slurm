@@ -1,5 +1,5 @@
 #!/bin/bash
-# predict_median_lsf.py on one stampede3 skx-dev node, one process.
+# predict_median_lsf.py on one skx-dev node, one process.
 # Submit with this folder's predict_median_lsf.py and fit.py copied to $DIR:
 #   sbatch --export=ALL,DIR=<folder> predict_median_lsf.slurm
 #SBATCH -J er1028lsf

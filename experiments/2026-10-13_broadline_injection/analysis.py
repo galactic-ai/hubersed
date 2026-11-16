@@ -1,37 +1,20 @@
 """Bias of the Cue gas and dust parameters when the true line profiles differ from our model.
 
-QUESTION: our model takes each line's flux from Cue and gives every line the same broad fraction,
-width and shift. If the truth has another profile (S1, EmFit's three components), per-line broad
-fractions (S2) or broad line ratios off Cue (S3), how biased are the gas and dust parameters, and
-does the broad component reduce or add bias against no broad component (F-none)?
-
-HYPOTHESIS: S1 and S2 keep every Cue flux, so the gas parameters should move little and most of
-the mismatch should go into the line widths and f_b. S3 changes total forbidden fluxes ([O III]
--7%, [N II] +7%, [O I] +39%), which the model can only absorb through the gas parameters, so S3
-should bias gas_logu (from [O III]/[O II]) and gas_logno (from [N II]) at the level of the 10-09
-posterior widths or more. F-none should leave larger residuals at the lines and, through the
-line windows, bias sigma_smooth and the line widths more than F-shared.
-
-INPUTS: fits/*.npz from fit.py, mocks.npz and validation.txt from mocks.py, the truth point
-(map_rmatrix_mask.npz of 2026-10-13_nautilus_resolution_matrix) and the 10-09 nautilus posterior
-(the _pred.npz of 2026-10-09_nautilus_c3k_er_broadline, weighted by exp(log_w)) for the
-posterior standard deviations.
-
-SEED: noise seeds 1000 + s, s = 0..4 (and the noiseless mock, s = -1); jitter starts 7000 + s.
-The same noise seed is used in every scenario, so scenario shifts can be compared seed by seed.
-
+QUESTION: How biased are the gas and dust parameters if the truth has another profile (S1), per-line
+broad fractions (S2) or broad ratios off Cue (S3), and does the broad component beat F-none?
+HYPOTHESIS: S1 and S2 move the gas parameters little, the mismatch going into line widths and f_b.
+S3 ([O III] -7%, [N II] +7%, [O I] +39%) biases gas_logu and gas_logno by >= the 10-09 posterior
+widths. F-none leaves larger line residuals and biases sigma_smooth and widths more than F-shared.
+INPUTS: fits/*.npz of fit.py, mocks.npz and validation.txt of mocks.py, map_rmatrix_mask.npz of
+2026-10-13_nautilus_resolution_matrix and the _pred.npz of 2026-10-09_nautilus_c3k_er_broadline.
+SEED: noise seeds 1000 + s, s = 0..4 (s = -1 noiseless), jitter starts 7000 + s.
 COMMAND: ``uv run --no-sync python experiments/2026-10-13_broadline_injection/analysis.py`` from
-the repository root (needs PYTHONPATH with experiments/2026-10-13_nautilus_resolution_matrix, as
-fit.py, for the paths in injection.py).
-
-RESULT: 2026-10-14, 157 of 162 fits (S2 dropped; 5 jitter starts missing). S0 noiseless: F-shared
-recovers every gas parameter exactly. S1 (EmFit profile): F-shared unbiased (<= 0.04 sd, gas_logco at
-its ceiling aside). F-none biases gas_logz +0.8 to +1.0 sd and gas_logno -0.7 to -1.3 sd. S3 (broad
-ratios off Cue): F-shared biased, gas_logz -0.028 dex (-2.7 sd), gas_logno +0.012 dex (+1.9 sd),
-gas_logu -0.05 dex (-0.7 sd), gas_lognH -0.08 dex (-1.2 sd); F-free similar. See bias_table.txt.
-
-FIGURES: bias_gas.png (gas bias in posterior sd), bias_other.png (dust, logzsol, sigma_smooth,
-line parameters), starts.png (-ln p of each start minus the best start).
+the repository root (needs PYTHONPATH with experiments/2026-10-13_nautilus_resolution_matrix).
+RESULT: 157 of 162 fits (2026-10-14, S2 dropped). In S1 F-shared is unbiased (<= 0.04 sd) and F-none
+biases gas_logz +0.8 to +1.0 sd and gas_logno -0.7 to -1.3 sd. In S3 F-shared biases gas_logz
+-2.7 sd, gas_logno +1.9 sd and gas_logu -0.7 sd, F-free similar. Details in bias_table.txt.
+Assumptions: biases are in sd of the 10-09 posterior, with gas_logco at its ceiling set aside.
+FIGURES: bias_gas.png, bias_other.png, starts.png.
 """
 
 # %%

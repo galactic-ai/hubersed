@@ -1,11 +1,11 @@
 #!/bin/bash
-# Recoadd the continuum outlier 39633433328091196 (SV3 bright, 3 exposures) on stampede3, as
+# Recoadd the continuum outlier 39633433328091196 (SV3 bright, 3 exposures), as
 # experiments/2026-10-29_continuum_recoadd/recoadd.slurm did for 39627757533007793, and save its
-# single-exposure spectra (exposures.py). No reference rerun: the 10-29 job checked the stampede3
-# setup against ls6. Inputs come from $SCR (stage.sh on the login node first). The DR1
+# single-exposure spectra (exposures.py). No reference rerun: the 10-29 job checked the
+# setup. Inputs come from $SCR (stage.sh on the login node first). The DR1
 # resolution_matrix.npz of 2026-10-29_continuum_39633433328091196_map goes into the output folder,
 # for coadd_rows.py to check its column-weighted rebuild against.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch experiments/2026-10-30_recoadd_39633433328091196/recoadd.slurm
 #SBATCH -J recoadd1030
 #SBATCH -p skx-dev

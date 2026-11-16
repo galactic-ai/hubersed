@@ -1,21 +1,15 @@
-"""Does the outlier flag of 11 and 62 depend on depth? SV3 bright coadd degraded to the main spectrum's noise.
+"""Does the outlier flag of 11 and 62 depend on depth? SV3 coadd degraded to the main noise.
 
-QUESTION: 39627776201853253 (11) and 39633275186053602 (62) are flagged in their SV3 bright coadd but
-not in any single exposure or in their main bright spectrum rescored at the SV3 redshift. Does the
-flag go away when the SV3 coadd gets the main spectrum's noise?
+QUESTION: does the flag of 39627776201853253 (11) and 39633275186053602 (62), absent in their single
+exposures and main bright spectrum, go away when the SV3 coadd gets the main spectrum's noise?
 HYPOTHESIS: none registered. If the flag needs the coadd's depth, most degraded realisations are
 not flagged.
-INPUTS: results/2026-11-01_repeats92/sparcl_spectra.npz (SV3 bright and main bright coadds); encoders
-and seed 0 flows as 2026-11-01_repeats92/analysis.py; prepare() of analysis.py in this folder.
-Gaussian noise of variance max(1/ivar_main - 1/ivar_sv3, 0) is added to the SV3 flux on pixels good
-in both, which gives it the main spectrum's per-pixel noise there; the degraded spectrum keeps the
-SV3 mask and redshift. The main spectrum is also scored at the SV3 redshift for comparison.
+INPUTS: results/2026-11-01_repeats92/sparcl_spectra.npz, prepare() of analysis.py in this folder,
+encoders and seed 0 flows as 2026-11-01_repeats92/analysis.py.
 SEED: 0, N_REAL realisations per target.
 COMMAND: ``uv run --no-sync python experiments/2026-11-02_exposure_checks/degrade.py``.
-RESULT: 2026-11-02, degrade.txt. Degrading removes the flag. 11 (added variance 3.8x the SV3
-variance): cont10 -24.93 to a median -4.55, cont15 -54.38 to -8.41, flagged in 1/50 realisations.
-62 (added 2.0x): cont10 -15.77 to -3.39 (0/50 flagged), cont15 -41.29 to -15.75 (8/50). The main
-spectra at the SV3 redshift score -3.43/+3.76 and -0.32/-8.36, inside those ranges.
+RESULT: 2026-11-02. Degrading removes the flag. 11 goes from cont10 -24.93 and cont15 -54.38 to
+medians -4.55, -8.41 (1/50 flagged); 62 from -15.77, -41.29 to -3.39 (0/50), -15.75 (8/50).
 Assumptions: Gaussian, uncorrelated added noise; main ivar taken as correct; seed 0 flows; the SV3
 coadd keeps its own mask and its known DR1 ivar underestimate.
 FIGURES: results/2026-11-02_exposure_checks/degrade.txt.

@@ -1,16 +1,8 @@
 """Predict the SV3 continuum MAP of 39627757533007793 with the median DESI LSF instead of its R matrix.
 
-The parameters are the best point of <TID>_map.npz (fit.py collect, continuum only), with no refit.
-The model has the parameters of fit.py make_model, as a HyperSpecModel. prospect smooths the C3K_ER
-spectrum from the library resolution to a Gaussian of the median DESI resolution
-(hubersed.sps.lsf.desi_resolution), as 2026-10-08_continuum_outlier/fit.py does without degrading,
-but with the library resolution kept. Off the fitted pixels and in prospect's padding the target is
-kept 10 km/s above the library, as there.
-
-COMMAND: on a stampede3 compute node, through predict_median_lsf.slurm, with fit.py next to this file.
-
-OUTPUT: results/2026-10-28_continuum_c3k_er_rmatrix_map/<TID>_median_lsf_pred.npz, with the keys of
-<TID>_map.npz for the data, ``best`` and ``labels``, and ``sp_best`` from this model.
+Uses the best point of <TID>_map.npz with no refit.
+COMMAND: on a compute node, through predict_median_lsf.slurm, with fit.py next to this file.
+OUTPUT: results/2026-10-28_continuum_c3k_er_rmatrix_map/<TID>_median_lsf_pred.npz.
 """
 
 import fit

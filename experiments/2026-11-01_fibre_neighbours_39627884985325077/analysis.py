@@ -1,23 +1,17 @@
-"""Flow log p and flux shape of 39627884985325077 (follow-up 27) on each fibre it was observed on (#17).
+"""Flow log p and flux shape of 39627884985325077 (follow-up 27) on each of its fibres (#17).
 
-QUESTION: is follow-up 27 an outlier only in its SV3 bright spectra (fibres 2676 and 2666 of petal 5,
-next to fibre 2675), and not in its main bright (2478), main dark (2995) and SV3 dark (2904) spectra?
-Does the flux shape change with fibre?
+QUESTION: is follow-up 27 an outlier only in its SV3 bright spectra (fibres 2676, 2666), not in
+main bright (2478), main dark (2995) and SV3 dark (2904)? Does the flux shape change with fibre?
 HYPOTHESIS: none registered.
-INPUTS: the five single-exposure tile coadds and redrocks in iron_urls.txt, in
-data/iron_tile_spectra/; the SV3 bright healpix coadd row from its DESIchunk1024 pkl. Encoders and
-seed 0 flows as 2026-10-31_dark_latent_39633433328091196.
+INPUTS: tile coadds and redrocks of iron_urls.txt in data/iron_tile_spectra/, the DESIchunk1024
+pkl row; encoders and seed 0 flows as 2026-10-31_dark_latent_39633433328091196.
 SEED: none.
-COMMAND: from the repository root on the Mac,
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-11-01_fibre_neighbours_39627884985325077/analysis.py``.
-RESULT: 2026-11-01, fibre_logp.txt. Only the fibre 2676 exposure (85093) is an outlier: cont10
--19.93, cont15 -35.22 (thresholds -15.72, -25.24). 2666, 2904, 2478 and 2995 give -5.0 to -5.4 and
-+0.7 to +15.9. S/N does not explain it (2676 1.91, 2666 1.85). Against main dark, 2676 is +0.21 at
-7550-8300 A and near 0 elsewhere red of 5800 A. 2666 has its z arm masked from 7621 A (BADAMPZ).
-The stored SV3 bright coadd is -0.23 at 8300-9824 A where 2676 is -0.03, so the healpix coadd z arm
-is not 2676 alone (cause not checked).
-Assumptions: one galaxy, so fibre is confounded with exposure, sky and tile; encode() takes no
-weights, so masked pixels (all of 2666's z arm) enter as zero flux; seed 0 flows; Mac CPU encoding.
+RESULT: 2026-11-01. Only the fibre 2676 exposure (85093) is an outlier, cont10 -19.93, cont15 -35.22
+(thresholds -15.72, -25.24). Against main dark, 2676 is +0.21 at 7550-8300 A.
+Assumptions: one galaxy (fibre confounded with exposure, sky and tile); masked pixels enter as zero
+flux; seed 0 flows; CPU encoding.
 FIGURES: results/2026-11-01_fibre_neighbours_39627884985325077/ fibre_logp.txt, fibre_diff.png.
 """
 
@@ -62,10 +56,7 @@ KERNEL = 101  # pixels of the median filter on the flux ratio
 
 
 def prepare_one(coadd, redrock, tid):
-    """Return spec, w, z of one target, with the steps of spender DESI.prepare_spectra.
-
-    The keep cuts (fibre status, target bits, ZWARN) are not applied, so flagged spectra are kept.
-    """
+    """Return spec, w, z of one target by spender's DESI.prepare_spectra steps, without keep cuts."""
     h = fits.open(coadd)
     rr = fits.open(redrock)[1].data
     i = int(np.flatnonzero(h["FIBERMAP"].data["TARGETID"] == tid)[0])

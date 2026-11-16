@@ -1,12 +1,9 @@
-"""Continuum MAP of 39627757533007793 on its recoadded SV3 or main spectrum with afe fixed at 0 (#17).
+"""Continuum MAP of 39627757533007793 on its recoadded SV3 or main spectrum, afe fixed at 0 (#17).
 
-Changes from 2026-10-29_continuum_recoadd/fit.py, which this file runs: afe is fixed at 0 instead of
-free over -0.2 to 0.6, so logzsol is [Fe/H] and the model has 15 free parameters, not 16. Start 0 is
-that spectrum's afe-free recoadd MAP without afe. Data, resolution matrix, fitted pixels, priors,
-fixed SFH hyperparameters and the steps check, fit and collect are unchanged. Outputs go to
-results/2026-11-01_recoadd_afe0/<survey>/.
-
-RECOADD_SURVEY (sv3 or main) picks the spectrum. Run on a stampede3 compute node through map.slurm.
+Against 2026-10-29_continuum_recoadd/fit.py, which this file runs, afe is fixed at 0 instead of free
+over -0.2 to 0.6 (15 free parameters, not 16), and start 0 is the afe-free recoadd MAP without afe.
+RECOADD_SURVEY (sv3 or main) picks the spectrum. Run on a compute node through map.slurm.
+OUTPUT: results/2026-11-01_recoadd_afe0/<survey>/.
 """
 
 import importlib.util

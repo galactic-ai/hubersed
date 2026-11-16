@@ -2,14 +2,7 @@
 
 QUESTION: is the model U-V (1.6-2.0) below the CIGALE and FastSpecFit 2.15 because of the fits,
 or does the DESI spectrum itself give a low U-V?
-The SV3 DR1 coadd (load_spectrum) covers rest 2586-7058 A at z 0.392, so the FSPS U and V curves
-of colours.py are inside it. Masked pixels are filled by linear interpolation. The model spectra
-are the own-point full rest spectra of colours.py (colours_<lib>.npz, with dust). Each colour is
-also given with every spectrum cut to the rest range the DESI data cover, so the data and models
-see the same wavelengths. No Milky Way extinction correction (E(B-V) 0.029 in the fastspec
-METADATA) is applied to the data.
-
-COMMAND: from the repository root on the Mac, with SPS_HOME=~/Astronomy_Research/fsps,
+COMMAND: from the repository root, with SPS_HOME=<fsps>,
 ``uv run --no-sync python experiments/2026-10-30_uvj_models_39633433328091196/spectrum_colour.py``.
 OUTPUT: results/2026-10-30_uvj_models_39633433328091196/spectrum_colour.txt.
 """

@@ -1,25 +1,8 @@
 """Data, model and observation for the resolution-matrix fits of 39627770174637084.
 
-Both runs of this experiment fit the same data with the same priors. Only the line spread differs.
-
-- rmatrix, the target's own DESI resolution matrix through ResolutionMatrixModel and
-  ResolutionMatrixSpectrum (hubersed.sps.resolution_model).
-- median, the control, prospect's own path with the median Gaussian LSF of map_fits.LSF, as every
-  fit so far.
-
-The data are the row-weighted recoadd with the corrected calibration ivar,
-resolution_matrix_rows_ivar.npz of experiments/2026-10-09_nautilus_c3k_er_broadline/
-ivar_recompute.py (iron flux calibration rerun with desispec PRs 2496, 2827 and 2452, ivar with
-PR 2422, coadd rows weighted as PR 2377). The fitted pixels are those of the 10-09 fit (spender's
-mask and sky mask, rest 3320 to 9000 A) where the recoadded ivar is positive. Optionally the
-emission lines that are missing from the Cue line list are masked at rest +-4 A.
-
-The parameters are those of the 10-09 ER fit (make_params there), the Cue broadline model with a
-shared forbidden broad fraction and sigma_split 45 km/s.
-
-The environment variable FIT_TID picks another target, default 39627770174637084. Its recoadd and
-DR1 matrix files are read from results/2026-10-18_candidate_resolution_matrix/<TID>/, made by the
-same 10-09 scripts. An environment variable reaches the forked workers and the MPI ranks.
+The rmatrix run uses the target's own DESI resolution matrix (ResolutionMatrixModel), the median
+run prospect's median Gaussian LSF. Data are resolution_matrix_rows_ivar.npz of the 10-09 folder.
+FIT_TID picks another target, read from results/2026-10-18_candidate_resolution_matrix/<TID>/.
 """
 
 import os
@@ -81,17 +64,7 @@ def load_data(masked_lines=(), unmasked_lines=()):
         Names in ``MISSING_LINES`` to mask at rest +-``LINE_HALF``.
     unmasked_lines : iterable of str
         Names in ``UNMASK_LINES``. Pixels within +-``UNMASK_HALF`` rest that only spender's mask
-        removed are fitted, with the recoadded flux and corrected ivar.
-
-    Returns
-    -------
-    z : float
-        Redshift.
-    flux, unc : np.ndarray
-        Recoadded flux and its uncertainty in maggies on ``WAVE_OBS``. Pixels outside ``good``
-        have infinite uncertainty.
-    good : np.ndarray of bool
-        Fitted pixels.
+        removed are fitted.
     """
     s = load_spectrum(TID)
     z = float(s.redshift.value)

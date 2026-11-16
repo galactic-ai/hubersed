@@ -1,9 +1,9 @@
 #!/bin/bash
 # Follow-up 2, MILES side: MAPs of 39633433328091196 with the logzsol prior capped at +0.2 (fit.py
-# --lib miles --zmax 0.2), dust on and off, 7 starts each on one core each, on one stampede3 icx node,
-# then collect both. Env as 2026-10-29_c3k_vs_miles_dust/miles_s3.slurm (ls6 MILES build copied to
+# --lib miles --zmax 0.2), dust on and off, 7 starts each on one core each, on one icx node,
+# then collect both. Env as 2026-10-29_c3k_vs_miles_dust/miles_s3.slurm (MILES build copied to
 # fsps_builds/miles_ls6, SPS_HOME sps_home_er). A start killed by the timeout saves nothing.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch experiments/2026-10-29_nodust_map_39633433328091196/miles_z.slurm
 #SBATCH -J miles_z
 #SBATCH -p icx

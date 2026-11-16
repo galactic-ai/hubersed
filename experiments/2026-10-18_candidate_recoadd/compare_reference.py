@@ -1,10 +1,6 @@
 """Check that the recoadd outputs of the reference are unchanged after the --tid and cosmic commits.
 
-recoadd.slurm copies the reference outputs of the 2026-10-09 scripts to a backup folder, reruns the
-four scripts for 39627770174637084 and calls this script. Text files must match exactly, npz files
-must hold the same keys with equal arrays, and the fluxcalib files the same data in every HDU.
-The fluxcalib logs hold timestamps and are skipped.
-
+recoadd.slurm backs up the 2026-10-09 reference outputs, reruns the four scripts and calls this one.
 COMMAND: ``.venv/bin/python experiments/2026-10-18_candidate_recoadd/compare_reference.py
 <backup folder> <reference folder>``. Exits 1 if anything differs.
 """

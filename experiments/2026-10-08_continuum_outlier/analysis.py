@@ -1,42 +1,25 @@
-"""QUESTION: Do the vanilla models fit the continuum outlier 39627757533007793, and what do the
-library (MILES or C3K_HR), the window, the resolution handling and nebular emission change?
+"""Do the vanilla models fit the continuum outlier 39627757533007793?
+
+SUPERSEDED BY: experiments/2026-10-28_continuum_c3k_er_rmatrix_map.
+Continuum MAP with C3K_ER and the DR1 resolution matrix instead of C3K_HR.
+
+QUESTION: Do the vanilla models fit 39627757533007793, and what do the library (MILES or C3K_HR),
+the window, the resolution handling and nebular emission change?
 HYPOTHESIS: The vanilla MILES fits leave structured residuals at age and abundance features, and
-C3K_HR with degraded data reduces them. The predictions registered before this analysis are in
-knowledge/_evidence/2026-10-08_toggle_physics/README.md, section 4.
-INPUTS: DESI DR1 spectrum from hubersed.io.desi.load_spectrum. The <run>_pred.npz files that
-predict.py writes from the checkpoints results/2026-10-08_continuum_outlier/<run>_seed0.h5.
-Index definitions from $SPS_HOME/data/allindices.dat.
+C3K_HR with degraded data reduces them.
+INPUTS: hubersed.io.desi.load_spectrum, <run>_pred.npz (predict.py) from the checkpoints
+results/2026-10-08_continuum_outlier/<run>_seed0.h5, $SPS_HOME/data/allindices.dat
 SEED: 0 for nautilus, 0 for the 100 posterior draws in predict.py, 0 here.
-COMMAND: on an ls6 compute node, run predict.py once per converged run (MILES runs with the MILES
-build first on PYTHONPATH, as in run.sh), then
+COMMAND: on a compute node, run predict.py once per converged run (MILES runs with the MILES build
+first on PYTHONPATH, as in run.sh), then
 uv run python experiments/2026-10-08_continuum_outlier/analysis.py --tid 39627757533007793
-RESULT: All eight runs converged (N_eff 2001-2028, 2026-10-08). Nebular off wins every pair:
-Delta log Z (on - off) is -6.74 (1a-1b), -6.56 (1c-1d), -11.32 (2a) and -9.78 (2b). Every run piles
-95-98% of the mass into the oldest bin, with mass-weighted age 7.51-7.68 Gyr against a cap of
-7.81. MILES puts logzsol at +0.27, above the +0.20 edge of the MILES spectra, and dust2 at its
-floor. C3K gives logzsol +0.12 to +0.16, dust2 0.12-0.16 and 1-1.4% of the mass younger than
-1 Gyr. sigma_smooth is 264-267 km/s for degraded MILES, 250-254 for undegraded MILES and 287-291
-for C3K. With the native noise (1c, 1d) the max-L chi2_nu is 1.58. In the C3K runs nebular
-emission pushes sigma_dyn to about 0.89 (prior LogU 0.01-1). In all eight runs the data have
-stronger Mgb (+2.5 to +3.0 sigma), weaker Fe5335 (-2.2 to -3.0), stronger HdeltaA (+2.1 to +3.0)
-and a weaker Dn4000 (-0.9 to -2.0) than the model. No switch removes that pattern. Fe5270 and
-NaD have masked pixels. The gas parameters stay at their priors, except eline_sigma (median 218-221).
-Alpha, nebular on (2026-10-09). 3n-zero is the same run as 2b-on, since the AFE build at afe 0 is
-bitwise identical and the sampler is seeded. 3n-free gives afe 0.119 (0.105-0.132) and
-Delta log Z +7.79 over 3n-zero, and the max-L Delta chi2 is +24.7. It loses 32 at rest 3000-6600 A
-and gains 57 in the z arm, 34 of it from 42 pixels at rest 7250-7320 A (observed 8488-8570 A).
-The index bands lose 7.7 in total, with Mgb +2.9 and Fe5335 +1.7.
-Mgb and Fe5335 in 3n-zero have no single bad stretch. The Mgb feature band is deeper than the model
-throughout (mean chi -0.41, 47 pixels, max |chi| 1.7) with no sky line or unfitted pixel, and
-putting the model there moves the data index from 4.65 to 3.65 (model 3.13). The Fe5335 feature
-band sits above the model (mean chi +0.44, 59 pixels), and putting the model there moves the data
-index from 0.87 to 2.28 (model 2.20). That band holds sky lines at 6223.5 and 6245.4 A observed
-(intensity 1.56 and 1.08). The Fe5270 feature band is deeper than the model (mean chi -0.22) and
-has 12 unfitted pixels at the 6172.3 A sky line.
+RESULT: Nebular off wins every pair (Delta log Z -6.56 to -11.32). In all eight runs the data have
+stronger Mgb and HdeltaA and weaker Fe5335 and Dn4000 than the model, and no switch removes that.
+Assumptions: degraded runs keep the original ivar (index errors too large), sky lines in Fe5335.
 FIGURES: results/2026-10-08_continuum_outlier/<tid>/. Per run spectrum_<run>.png,
 spectrum_zoom_<run>.png, corner_phys_<run>.png, corner_sfh_<run>.png and sfh_<run>.png. Across runs
-residuals.png, zoom.png, chi2_observed.png, corner_<pair>.png, cmf.png, dchi2_alpha_nebon.png, bands_mgb_fe.png, spectrum_alpha_nebon.png and
-sfh_alpha_nebon.png.
+residuals.png, zoom.png, chi2_observed.png, corner_<pair>.png, cmf.png, dchi2_alpha_nebon.png,
+bands_mgb_fe.png, spectrum_alpha_nebon.png and sfh_alpha_nebon.png.
 """
 
 # %%

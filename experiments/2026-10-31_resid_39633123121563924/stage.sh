@@ -1,6 +1,6 @@
 #!/bin/bash
 # Fetch the iron spectra file of each healpix in targets.txt to /scratch, as
-# 2026-10-31_screen_all/sky_stage.sh. Run on the stampede3 login node from the repository root:
+# 2026-10-31_screen_all/sky_stage.sh. Run on the login node from the repository root:
 #   bash experiments/2026-10-31_resid_39633123121563924/stage.sh
 set -euo pipefail
 HERE=experiments/2026-10-31_resid_39633123121563924

@@ -1,10 +1,10 @@
 """Helpers and the nautilus run for the 2026-09-26_nautilus_c3k_broadline experiment.
 
-Same data, degradation, priors and sampler settings as 2026-09-25_nautilus_tauin_c3k_hr, but the
-Balmer lines get a narrow plus broad profile and the other lines their own width
-(hubersed.sps.broadline.TwoCompLineModel). ``--window full`` fits the whole DESI spectrum and
-``--window miles`` the MILES rest-frame window of the first run, pixel for pixel.
+SUPERSEDED BY: experiments/2026-09-30_nautilus_c3k_broadline_split45.
+Refit of 37084 with the narrow and broad split at 45 km/s.
 
+As 2026-09-25_nautilus_tauin_c3k_hr, but Balmer lines get a narrow plus broad profile, the other
+lines their own width (hubersed.sps.broadline.TwoCompLineModel) and eline_sigma a 10-100 km/s prior.
 Run from the repository root with
 ``uv run python experiments/2026-09-26_nautilus_c3k_broadline/fit.py --window miles --pool 24
 --n-batch 480``.
@@ -40,27 +40,7 @@ MILES_REST = (3601.8, 7400.8)  # the fitted window of 2026-09-24_nautilus_tauin
 
 
 def load_data(tid, window="full"):
-    """Load one DESI spectrum in maggies, degraded to ``TARGET_KMS`` where DESI is sharper.
-
-    The whole spectrum is degraded, so both windows see the same degraded flux.
-
-    Parameters
-    ----------
-    tid : int
-        DESI TARGETID.
-    window : {"full", "miles"}
-        Fit every good pixel inside the C3K_HR window, or only those inside ``MILES_REST``.
-
-    Returns
-    -------
-    z : float
-        Redshift.
-    flux, unc : np.ndarray
-        Degraded flux and the original uncertainty in maggies on ``WAVE_OBS``. Pixels outside
-        ``good`` have zero uncertainty.
-    good : np.ndarray of bool
-        Pixels not masked by the pipeline and inside the window.
-    """
+    """Return z, flux, unc and good in maggies, degraded to ``TARGET_KMS`` where DESI is sharper."""
     s = load_spectrum(tid)
     z = float(s.redshift.value)
     flux = to_maggies(WAVE_OBS * u.AA, s.flux).value
@@ -79,23 +59,7 @@ def load_data(tid, window="full"):
 
 
 def make_params(z):
-    """Build the parameter specification of the two-component line model.
-
-    tau_in is fixed at the age of the universe at ``z``. sigma_dyn, tau_dyn, sigma_reg and
-    tau_eq get log-uniform priors. The broad-line parameters and the forbidden-line width come
-    from ``broadline.add_broad_params``, which also narrows the eline_sigma prior to 10-100 km/s.
-    Every other parameter keeps the bounds of the v2 MAP fits.
-
-    Parameters
-    ----------
-    z : float
-        Redshift.
-
-    Returns
-    -------
-    dict
-        The parameter specification.
-    """
+    """Build the parameter specification of the two-component line model."""
     cont_model, cont_tmpl = build_continuum_model(z)
     _, tmpl = build_full_cue_model(cont_tmpl, cont_model.theta, cont_model)
     tmpl["tau_in"]["isfree"] = False
@@ -111,36 +75,12 @@ def make_params(z):
 
 
 def make_model(z):
-    """Build the two-component line model.
-
-    Parameters
-    ----------
-    z : float
-        Redshift.
-
-    Returns
-    -------
-    hubersed.sps.broadline.TwoCompLineModel
-        The model.
-    """
+    """Build the two-component line model."""
     return broadline.TwoCompLineModel(make_params(z))
 
 
 def make_obs(flux, unc, mask):
-    """Wrap a spectrum as a prospect observation with the resolution of the degraded data.
-
-    Parameters
-    ----------
-    flux, unc : np.ndarray
-        Flux and uncertainty in maggies on ``WAVE_OBS``.
-    mask : np.ndarray of bool
-        Pixels to fit.
-
-    Returns
-    -------
-    list
-        The prospect observations.
-    """
+    """Wrap a spectrum as a prospect observation with the resolution of the degraded data."""
     return build_obs(spec=flux, unc=unc, mask=mask, resolution=RES, wavelength=WAVE_OBS)
 
 
@@ -148,26 +88,7 @@ _STATE = {}
 
 
 def loglike(theta, tid, window="full"):
-    """Return the log likelihood of ``theta`` for one galaxy.
-
-    Each process builds its own model, observation and Cue source on its first call and keeps
-    them in ``_STATE``. Pool workers cannot receive them from the main process, because the Cue
-    emulator cannot be pickled and JAX is not fork safe, so the pool uses spawn.
-
-    Parameters
-    ----------
-    theta : np.ndarray
-        Free parameters in the order of ``make_model(z).theta_labels()``.
-    tid : int
-        DESI TARGETID.
-    window : {"full", "miles"}
-        Rest-frame window, see ``load_data``.
-
-    Returns
-    -------
-    float
-        The log likelihood, with the prior left to the sampler.
-    """
+    """Return the log likelihood of ``theta``, with the model cached per spawned process."""
     key = (tid, window)
     if key not in _STATE:
         z, flux, unc, good = load_data(tid, window)
@@ -178,23 +99,7 @@ def loglike(theta, tid, window="full"):
 
 
 def main(tid, window, pool, n_batch, timeout, out):
-    """Check the library and resolution setup, then run or resume nautilus.
-
-    Parameters
-    ----------
-    tid : int
-        DESI TARGETID.
-    window : {"full", "miles"}
-        Rest-frame window, see ``load_data``.
-    pool : int
-        Number of spawned worker processes.
-    n_batch : int or None
-        Likelihood calls per batch. None uses the nautilus default.
-    timeout : float
-        Seconds before the sampler stops and saves. Rerunning resumes from the checkpoint.
-    out : pathlib.Path
-        Directory for the checkpoint.
-    """
+    """Check the library and resolution setup, then run or resume nautilus."""
     out.mkdir(parents=True, exist_ok=True)
     z, flux, unc, good = load_data(tid, window)
     model = make_model(z)

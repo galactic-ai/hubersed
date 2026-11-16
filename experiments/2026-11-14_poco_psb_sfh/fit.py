@@ -1,39 +1,8 @@
 """pocoMC fits of gallery105 22, 51 and 69 with the current SFH (model A) and a PSB SFH (model B).
 
-Changes from 2026-11-01_poco_repeats/fit.py: ported to prospect's fit_model(nested_sampler="pocomc")
-with likelihood_builder=build and the forked node pool of 2026-11-07_emline_ladder fit.py, since the
-hubersed ResolutionMatrixModel it used was removed (75eac31); the DR1 R now goes in prospect's
-ResolutionMatrixSpectrum. The parent loads the SSPs from the C3K ER cache (hubersed.sps.ssp_cache,
-2026-11-13_ssp_cache_c3k_er) before the fork and never builds them; check stops if a likelihood call
-changes the FSPS SSP cache key.
-Model A is the poco_repeats model, continuum only, with C3K ER, stochastic SFH with sigma_reg,
-tau_eq, sigma_dyn, tau_dyn free under the #14 priors, afe TopHat(-0.2, 0.6) and sigma_smooth floor
-10 km/s. ``repro`` checks that model A gives the poco_repeats max-L lnlike and spectrum of
-39633332836764152 within the 2026-11-06_rmatrix_port_check tolerances (|dlnL| < 1,
-max |dmodel|/sigma < 0.1).
-Model B is A with prospect's continuity_psb_sfh in place of the stochastic SFH, with tflex 2 Gyr,
-nflex 5, nfixed 3, tlast TopHat(0.01, 1.5) Gyr, the template's StudentT priors, old bin edges
-linspace(tflex, t_univ(z), 4) instead of the template's 13.6 Gyr, and logmass prior as A.
-FastStepBasis gives lnL -inf when a bin is under 1 Myr, which 29% of B's prior draws hit
-(heavy-tailed StudentT ratios squeeze the flexible bins), so B's prior is the template's cut there
-and ln Z(B) is lower by about ln 0.71 = -0.35 than without the cut.
-Models AC and BC (for 99) are A and B plus Cue nebular emission, with prospect's
-cue_stellar_nebular block (gas_logz, gas_logu, gas_lognH, gas_logno, gas_logco free with its priors,
-ionizing spectrum from the young stars), nebemlineinspec False as hubersed.sps.config, eline_sigma
-TopHat(10, 250) km/s, and NebStepBasis (build_cue_sps) as the source. All else as A and B, afe free
-and tau_in fixed included (hubersed's build_full_cue_model would fix afe and free tau_in).
-For 99, AC0 is AC with afe fixed at 0, and a "_main" suffix (AC_main, BC_main) fits the main bright
-coadd instead, with flux, ivar and R from coadd-main-bright-<hp>.fits (resolution_matrix.py
---coadd main, as the ladder's recoadd step) at the main redrock z, with spender's pixel cuts (ivar >
-1e-6, sky-line mask; spender/data/desi.py l.528, l.537) so the fitted pixels match the SV3 data's.
-Model L (for five emission-line outliers) is step 7 of 2026-11-07_emline_ladder (issue 14), with
-stochastic SFH, Cue, and free weak-ion and broad line columns with broad widths as a ratio of the
-narrow width, built with that fit.py's make_params and build_columns. afe is not free, and the
-sigma_smooth floor is the library resolution. Its own data, pixels and the cached SSPs are as here.
-Data as poco_repeats, the SV3 bright DR1 coadd with own DR1 R (resolution_matrix.py), rest
-3320-9000 A and no line mask. Sampler as poco_repeats, with n_effective 1024, n_active 512,
-n_total 4096 and n_evidence 4096.
-COMMAND: on stampede3 through check.slurm and prod.slurm, for example
+Changed from 2026-11-01_poco_repeats/fit.py are prospect's pocoMC fit_model, the ladder node pool,
+ResolutionMatrixSpectrum, the SSP cache, models B (PSB SFH), AC and BC (Cue), AC0, _main and L.
+COMMAND: through check.slurm and prod.slurm, for example
 ``ibrun <venv>/bin/python experiments/2026-11-14_poco_psb_sfh/fit.py run --tid <TID> --model B --mpi``.
 OUTPUT: results/2026-11-14_poco_psb_sfh/<TID>/<model>/ (pmc_<i>.state, fit.h5).
 """
@@ -118,11 +87,7 @@ def load_data(tid, coadd="sv3"):
     Parameters
     ----------
     coadd : str
-        "sv3" fits pixels that are unmasked, finite, with positive ivar in the coadd and the R
-        file, at rest 3320 to 9000 A, and the R file flux must equal load_spectrum's there.
-        "main" takes flux and ivar from the R file of the main coadd, fitted where its ivar > 1e-6
-        and outside spender's sky-line mask (the cuts the SV3 spender files carry) in the same
-        window, at the main redrock z.
+        "sv3" for the SV3 coadd and R file, "main" for the main coadd R file at the main redrock z.
     """
     wave = WAVE_OBS * u.AA
     if coadd == "main":
@@ -224,10 +189,7 @@ def ladder_module():
 
 
 def model_l(z, floor):
-    """Return model L, ladder step 7 (stochastic SFH, Cue, free and broad line columns, ratio widths).
-
-    Uses the emline ladder's make_params and build_columns with its line EW limits. afe is not free
-    (fixed at its init, as the ladder).
+    """Return model L, ladder step 7 (stochastic SFH, Cue, free and broad lines, ratio widths).
 
     Parameters
     ----------
@@ -248,10 +210,7 @@ def model_l(z, floor):
 
 
 def make_model(name, z, floor=None):
-    """Return model ``name`` (A, B, AC, BC, AC0 or L, any "_main" suffix ignored) at redshift ``z``.
-
-    Model L needs ``floor``, the sigma_smooth floor that build() takes from the library.
-    """
+    """Return model ``name`` (A, B, AC, BC, AC0 or L, "_main" suffix ignored) at redshift ``z``."""
     from prospect.models.sedmodel import HyperSpecModel, SpecModel
 
     base, _ = split_name(name)
@@ -430,11 +389,7 @@ def pin_to_core(counter, cores):
 
 
 def cached_pool(npool, gib_worker):
-    """Load the SSP cache, free speclib, then fork this node's pinned pool.
-
-    The population flags are those the cache was built with (2026-11-13_ssp_cache_c3k_er build.py).
-    Workers inherit the loaded slots and the cache key; their own sources keep the key (check).
-    """
+    """Load the SSP cache, free speclib, then fork this node's pinned pool."""
     import fsps_mem
 
     from hubersed.sps.ssp_cache import load_ssp_cache

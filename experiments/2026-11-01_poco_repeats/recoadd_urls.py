@@ -1,15 +1,9 @@
 """List the iron files the SV3 recoadds of the six poco_repeats targets need, with destinations.
 
-As 2026-10-18_candidate_recoadd/iron_urls.py. The exposures of each target come from EXP_FIBERMAP of
-its DR1 healpix coadd in the spender DATA folder on /work, and each exposure and petal needs the 20
-files of exposure_files there, plus the healpix spectra file for coadd_rows.py. The six targets are
-those of targets.txt and targets_quiescent2.txt and targets_quiescent3.txt with a pocoMC fit.
-
-COMMAND: on the stampede3 login node from the repository root,
-``<venv>/bin/python experiments/2026-11-01_poco_repeats/recoadd_urls.py``.
-OUTPUT: recoadd_urls.txt (one "url destination" pair per line, destinations relative to the
-Corral data folder) and recoadd_exposures.txt (TARGETID healpix night expid petal fiber tile) next
-to this script.
+As 2026-10-18_candidate_recoadd/iron_urls.py, for the fitted targets of targets.txt,
+targets_quiescent2.txt and targets_quiescent3.txt.
+COMMAND: ``<venv>/bin/python experiments/2026-11-01_poco_repeats/recoadd_urls.py``, on a login node.
+OUTPUT: recoadd_urls.txt and recoadd_exposures.txt next to this script.
 """
 
 import importlib.util

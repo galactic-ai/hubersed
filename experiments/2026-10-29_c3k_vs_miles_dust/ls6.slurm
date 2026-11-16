@@ -1,10 +1,10 @@
 #!/bin/bash
-# The ls6 (MILES build) steps of Hahn's tests, in one development job to stay within the queue's
+# The MILES build steps of this experiment's tests, in one development job to stay within the queue's
 # submit limit: MILES spectra at both best points (spectra.py --lib miles), then the MILES MAPs of
 # 2026-10-29_nodust_map_39633433328091196/fit.py with dust on and off (check, 7 starts each on one
 # core each, collect). MILES env as 2026-10-08_continuum_outlier/run.sh. A start killed by the
 # timeout saves nothing.
-# Submit from the repository root on ls6:
+# Submit from the repository root:
 #   sbatch experiments/2026-10-29_c3k_vs_miles_dust/ls6.slurm
 #SBATCH -J miles1029
 #SBATCH -p development

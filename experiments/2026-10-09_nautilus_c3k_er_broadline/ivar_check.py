@@ -1,31 +1,9 @@
 """Check the iron flux-calibration ivar of a target against the formula fixed in desispec.
 
-QUESTION: does the iron cframe ivar of this target follow the old desispec 0.56 formula, and how far
-off is it from the formula fixed in desispec PR 2422, with iron's own calibration ivar?
-
-desispec 0.56.2 (iron) apply_flux_calibration divides the flux by the calibration vector C before
-it computes the ivar, so Var(F') = 1/(ivar_F C^2) + F'^2/(ivar_C C^4). PR 2422 computes it from the
-uncalibrated flux, Var(F') = 1/(ivar_F C^2) + F'^2/(ivar_C C^2). The iron ivar_C is itself too
-small (PR 2496, an error floor left in the final variance solve), so the fixed formula with iron
-ivar_C is not the corrected ivar. This script only checks the reading and shows the size of each
-term.
-
-For each exposure and camera of this target it checks F/C against the cframe flux, the old formula
-against the cframe ivar, and the old formula inverted for ivar_F against the sframe ivar
-(sky-subtracted, before calibration). It then reports sigma_C / C and the inflation sqrt(Var_fixed /
-Var_iron) in bins of S/N.
-
-It was written for 39627770174637084 (exposures 87113 and 88269, petal 1), the default. --tid picks
-another target of targets.py. The cameras follow each exposure's petal.
-
-INPUTS: the iron cframe, sframe and fluxcalib files of the target's exposures and petal, under
-data/desi_iron_exposures/<night>/<expid>/. SEED: none.
-
-COMMAND: on an ls6 compute node from the repository root,
+Compares the iron cframe ivar with the desispec 0.56 and PR 2422 formulas, writes ivar_check.txt.
+Run from the repository root as
 ``.venv/bin/python experiments/2026-10-09_nautilus_c3k_er_broadline/ivar_check.py``, with
 ``--tid <targetid>`` for the others.
-
-OUTPUT: ivar_check.txt in the target's output folder of targets.py.
 """
 
 import argparse

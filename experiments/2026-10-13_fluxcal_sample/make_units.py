@@ -1,25 +1,8 @@
 """List the exposure-petals that hold our SV3 bright sample, with their calibration quality flags.
 
-QUESTION: which exposure-petals must the flux calibration rerun cover, and which of them cannot be
-recalibrated?
-
-Every SV3 bright exposure of iron (exposures-iron.fits) is matched to the sample TARGETIDs
-(data/all_target_ids.npy) through the FIBERQA table of its exposure-qa file. A petal is a unit if
-it holds at least one sample target. For each unit the script keeps the PETALQA values NSTDSTAR,
-STARRMS and NCFRAME, and counts the fibers whose QAFIBERSTATUS has BADPETALPOS (bit 25),
-BADPETALSTDSTAR (bit 27) or BADPETALFLUXCAL (bit 28) (desispec maskbits.py). These petal bits are
-not in the FIBERSTATUS of the coadd EXP_FIBERMAP (checked for exposure 85617 petal 2 in healpix
-26275), and they are not among the bits that drop an exposure from the coadd
-(fiberbitmasking.get_all_nonamp_fiberbitmask_val), so the coadds include such petals. With
-BADPETALSTDSTAR desispec falls back to a default calibration with 100% uncertainty.
-
-INPUTS: exposures-iron.fits and the exposure-qa files of iron (downloaded into --qa-dir if missing),
-data/all_target_ids.npy. SEED: none.
-
-COMMAND: from the repository root, ``uv run python experiments/2026-10-13_fluxcal_sample/make_units.py
+Writes units_all.csv in this folder. Run from the repository root as
+``uv run python experiments/2026-10-13_fluxcal_sample/make_units.py
 <exposures-iron.fits> --qa-dir <dir>``.
-
-OUTPUT: units_all.csv in this folder.
 """
 
 import argparse

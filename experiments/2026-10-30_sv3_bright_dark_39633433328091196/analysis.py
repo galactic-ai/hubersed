@@ -3,18 +3,14 @@
 QUESTION: is the blue excess of the SV3 bright spectrum (synthetic g 3.1 times the fibre g, against
 1.6 in r and z) also in the independent SV3 dark spectrum?
 HYPOTHESIS: none registered.
-INPUTS: SV3 bright DR1 coadd from hubersed.io.desi.load_spectrum (spender chunk files). SV3 dark DR1
-healpix coadd data/sv3_dark_coadds/coadd-sv3-dark-10231.fits and redrock-sv3-dark-10231.fits (iron,
-sha256 checked; 1 exposure, EXPID 88050, 921 s), put through the same spender step (spender
-DESI.prepare_spectra, with ivar-weighted b, r, z stitching onto the 7781 px grid, DESI mask and
-sky-line mask), with the spender norm undone as hubersed.io.desi.load_by_index does. Spender reads
-the redrock file at the coadd path with "coadd" replaced, so a copy sits in data/sv3_dark_redrocks/.
+INPUTS: hubersed.io.desi.load_spectrum (SV3 bright), data/sv3_dark_coadds/coadd-sv3-dark-10231.fits
+(SV3 dark) and redrock-sv3-dark-10231.fits in data/sv3_dark_redrocks/.
 SEED: none.
-COMMAND: from the repository root on the Mac,
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-30_sv3_bright_dark_39633433328091196/analysis.py``.
-RESULT: 2026-10-30, bright_dark.txt. Dark/bright median flux is 0.10 at observed 3600-4000 A, 0.26
-at 4000-4620, 0.55 at 4620-5500 and 0.79-0.87 redward: the bright spectrum's blue excess is not in
-the dark one. Assumptions: DR1 coadds as released, no recoadd, 51 px median filter.
+RESULT: 2026-10-30. Dark/bright median flux is 0.10 at observed 3600-4000 A, 0.26 at 4000-4620, 0.55
+at 4620-5500 and 0.79-0.87 redward. The blue excess of the bright spectrum is not in the dark one.
+Assumptions: DR1 coadds as released, no recoadd, 51 px median filter.
 FIGURES: results/2026-10-30_sv3_bright_dark_39633433328091196/bright_dark.png and bright_dark.txt.
 """
 

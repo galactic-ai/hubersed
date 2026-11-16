@@ -1,8 +1,7 @@
 """Rest-frame DR1 coadd spectra and cutouts of the six seed-robust follow-up outliers.
 
 The six are flagged by both flows in >= 15 of 20 seeds (survivors.txt) after the broad-line and
-redshift-edge groups are set aside. Pixels with ivar > 0, raw (grey) and 15 px median (black);
-dotted lines mark [OII], Hbeta, [OIII] 5007, Mgb, NaD and Halpha.
+redshift-edge groups are set aside.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_screen_all/robust6.py``.
 OUTPUT: results/2026-10-31_screen_all/robust6.png.
 """

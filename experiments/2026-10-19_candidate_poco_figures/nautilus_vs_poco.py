@@ -1,19 +1,18 @@
 """Compare the nautilus and pocoMC posteriors of the free variant of 39627770174637084.
 
-QUESTION: Do nautilus (#14, converged) and pocoMC agree on the free-variant posterior of 39627770174637084?
+QUESTION: Do nautilus (#14, converged) and pocoMC agree on the free-variant posterior of
+39627770174637084?
 HYPOTHESIS: None registered before this analysis.
-INPUTS: the nautilus .h5 of 2026-10-15_broadline_free_amplitude (job 3513585, copied from ls6 on 2026-10-21)
-and poco_<TID>_free_neff512_ls6/pmc_final.state. Both use the free variant (29 parameters, frac_nodust 0).
-The best point of each run is the highest ln L + ln prior among its 300 points of highest ln L. Styling follows
-2026-10-18_issue14_figures.
+INPUTS: the nautilus .h5 of 2026-10-15_broadline_free_amplitude and
+poco_<TID>_free_neff512_ls6/pmc_final.state.
 SEED: 0 for the SFH draws.
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-15_broadline_free_amplitude:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+COMMAND: from the repository root with the C3K_ER build,
+PYTHONPATH=<er_path>:experiments/2026-10-15_broadline_free_amplitude:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-19_candidate_poco_figures/nautilus_vs_poco.py
 RESULT: pending.
-FIGURES: nautilus_vs_poco_corner_sfh.png and nautilus_vs_poco_residuals.png, with nautilus_vs_poco_summary.txt,
-in results/2026-10-19_candidate_poco_figures/.
+FIGURES: nautilus_vs_poco_corner_sfh.png, nautilus_vs_poco_residuals.png and
+nautilus_vs_poco_summary.txt in results/2026-10-19_candidate_poco_figures/.
 """
 
 import numpy as np

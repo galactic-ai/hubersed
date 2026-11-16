@@ -2,7 +2,7 @@
 # Setup check of fit.py on one skx-dev node: SSP build of every slot, speclib free, pool sized from
 # the commit room, Cue built after the fork in the parent and in each worker, lnL parent == workers,
 # call time, one pocoMC batch over the whole pool and the commit room after it.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   STEP=<3|4|5> sbatch --export=ALL experiments/2026-11-07_emline_ladder_39627770174637084/check.slurm
 #SBATCH -J step5check
 #SBATCH -p skx-dev

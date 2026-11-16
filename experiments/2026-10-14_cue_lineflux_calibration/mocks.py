@@ -1,25 +1,8 @@
 """Line-flux mocks for the N/O and C/O prior test. Cue at known gas Z, with real galaxies' noise.
 
-The truth has gas-phase 12+log(O/H) in OH_GRID (gas_logz = value - 8.71, Cue's [O/H] before
-depletion), gas_logu in U_GRID, gas_lognH 2.0, av 0.5, the young-population ionizing spectrum at
-stellar Z -0.41 (ionspec.npz), and N/O and C/O on the Nicholls+17 relations (arXiv:1612.03546,
-abundances.tex:301-304, total abundances, so on Cue's total scale). These are
-gas_logno = log10(10^-0.852 + 10^gas_logz) and gas_logco = log10(10^-0.43 + 10^(gas_logz + 0.02)).
-Control mocks put N/O 0.3 dex above or below the relation at the CONTROL_OH values and U -2.5.
-
-For the noise of each truth, the N_DONOR galaxies of lineflux_table.fits whose observed log
-[NII]/Halpha is closest to the mock's give their fractional errors (E/F per line). A line missing in
-the donor is missing in the mock. The mock flux is the Cue flux plus Gaussian noise of that
-fractional error, plus Gaussian noise of Cue's own emulation error (line_frac_error), so the mocks
-are no closer to Cue than real data. E_<line> holds the measurement error only; fit.py adds the
-emulation error.
-Seed: (SEED, mock index).
-
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/mocks.py`` from
 the repository root.
-
-OUTPUT: mock_table.fits in results/2026-10-14_cue_lineflux_calibration/mocks/, in the
-lineflux_table.fits format (TARGETID, F_<line>, E_<line>) plus the truth and donor columns.
+OUTPUT: mock_table.fits in results/2026-10-14_cue_lineflux_calibration/mocks/.
 """
 
 import numpy as np

@@ -1,25 +1,10 @@
 """Does alf's metallicity move toward Prospector's when alf is forced solar-scaled?
 
-Run ``uv run python experiments/2026-08-25_compare_alf_solar_scaled/analysis.py``. It needs alf runs
-tagged ``quiescent`` (free abundances) and ``solarscaled`` (fit_type=2). Line numbers refer to
-alf commit 4ef7bb8.
-
-Prospector is scaled-solar. If the gap closes when alf is too, the abundance pattern drives
-the disagreement. If it stays, other differences do.
-
-This repeats a test from Beverage et al. 2025 (arXiv:2407.02556, section 5.4). For z = 1-3
-quiescent galaxies, Prospector metallicities scattered by 0.32 dex around those from alfα
-(their code based on alf) and sat 0.41 dex lower. Fitting Prospector without photometry, or
-with a single-burst SFH, did not remove the gap. Also forcing alfα solar-scaled improved the
-agreement but left large scatter. They found Prospector tracks alfα's [Fe/H] better than its
-total metallicity. Unlike their last test, Prospector here keeps a free SFH.
-
-With fit_type=2 alf fits only velz, sigma, logage and zH (alf_vars.f90:24,147) and skips
-every element response (getmodel.f90:278), so zH is a scaled-solar total metallicity. This
-needs the fork commit 4ef7bb8, otherwise every step fails the prior check.
-
-fit_type=2 reports a plain chi2, and fit_type=0 reports -2 ln L with jitter terms
-(func.f90:118-127). Only the solar-scaled chi2 is comparable to Prospector's.
+Prospector is scaled-solar. If the gap closes when alf is too, the abundance pattern drives the
+disagreement, otherwise other differences do. This repeats Beverage et al. 2025 (arXiv:2407.02556,
+section 5.4) with a free Prospector SFH. Inputs are alf runs tagged ``quiescent`` (free abundances)
+and ``solarscaled`` (fit_type=2, alf fork commit 4ef7bb8). Only the fit_type=2 chi2 compares with
+Prospector's. Run ``uv run python experiments/2026-08-25_compare_alf_solar_scaled/analysis.py``.
 """
 
 import argparse

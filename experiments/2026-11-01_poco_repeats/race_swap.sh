@@ -1,9 +1,9 @@
 #!/bin/bash
-# Keep whichever of two queued copies of a fit starts first (Nikhil, 2026-11-04). Each argument is
+# Keep whichever of two queued copies of a fit starts first. Each argument is
 # OLD:NEW:OLDPRED:NEWPRED, the job ids of the two fits and of the predict queued after each. When one
 # fit is RUNNING and the other still PENDING, cancel the pending fit and its predict. If both are
 # RUNNING, cancel NEW and its predict (it is still building, before any pocoMC state). Ends when every
-# pair is settled. Run on the stampede3 login node from the repository root:
+# pair is settled. Run on the login node from the repository root:
 #   nohup bash experiments/2026-11-01_poco_repeats/race_swap.sh OLD:NEW:OLDPRED:NEWPRED ... > <log> 2>&1 &
 state() { squeue -h -j "$1" -o %T 2>/dev/null; }
 PAIRS=("$@")

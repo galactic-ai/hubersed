@@ -1,24 +1,18 @@
-"""Photometric colours of 39633433328091196 against the C3K ER SV3 dark MAPs with and without dust (#17).
+"""Photometric colours of 39633433328091196 against C3K ER SV3 dark MAPs with and without dust (#17).
 
 QUESTION: do the Legacy Survey colours r-z, z-W1 and W1-W2 favour the C3K ER dark MAP with dust or
 the one without? Does the SV3 dark spectrum give the fiber photometry g-r and r-z?
 HYPOTHESIS: none registered.
-INPUTS: <TID>_map.npz of 2026-10-30_continuum_39633433328091196_dark_map (with dust) and of
-er_nodust/ in 2026-10-30_nodust_miles_39633433328091196_dark (without); SFH hyperparameters from
-hr_maxl.npz and the model of 2026-10-29_continuum_39633433328091196_map; theta_of and ab_mag of
-2026-10-30_uvj_models_39633433328091196/colours.py. Photometry from the METADATA of
-data/fastspec-iron-sv3-bright.fits (PHOTSYS N). BASS g, r and MzLS z from speclite v1.0.0 (filters/),
-WISE W1 and W2 from $SPS_HOME/data/allfilters.dat. dark_spectrum.npz of the dark map folder, and
-the SV3 bright DR1 coadd of load_spectrum as a control.
+INPUTS: <TID>_map.npz and dark_spectrum.npz of 2026-10-30_continuum_39633433328091196_dark_map,
+er_nodust/ of 2026-10-30_nodust_miles_39633433328091196_dark, hr_maxl.npz of
+2026-10-29_continuum_39633433328091196_map, 2026-10-30_uvj_models_39633433328091196/colours.py,
+data/fastspec-iron-sv3-bright.fits, filters/ and $SPS_HOME/data/allfilters.dat.
 SEED: none.
-COMMAND: from the repository root on the Mac, ``SPS_HOME=~/Astronomy_Research/fsps OMP_NUM_THREADS=1
+COMMAND: from the repository root, ``SPS_HOME=<fsps> OMP_NUM_THREADS=1
 uv run --no-sync python experiments/2026-10-30_photcolour_dark_39633433328091196/analysis.py``.
-RESULT: 2026-10-30, photcolour_dark.txt. The SV3 dark spectrum gives the fiber g-r within 0.02 and
-r-z within 0.04 mag; the bright control is 0.72 bluer in g-r. The model rows do not decide: on the
-dark spectrum's range the C3K_HR stand-in misses the dark colours by 0.03-0.06 mag, as large as the
-dust against no-dust gap (r-z 0.09, z-W1 0.14). Against total photometry r-z is -4.5 sigma with
-dust and -1.5 without; z-W1 lies between the models. Assumptions: C3K_HR with afe 0 for C3K ER,
-fiber spectrum against total photometry (observed fiber r-z 0.029 redder), MzLS z 90% inside DESI.
+RESULT: 2026-10-30. The dark spectrum gives the fiber g-r within 0.02 and r-z within 0.04 mag. The
+models do not decide. The C3K_HR stand-in misses by 0.03-0.06 mag, as large as the dust gap.
+Assumptions: C3K_HR with afe 0 for C3K ER, fiber against total photometry, MzLS z 90% inside DESI.
 FIGURES: none; table in results/2026-10-30_photcolour_dark_39633433328091196/photcolour_dark.txt.
 """
 

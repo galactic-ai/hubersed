@@ -1,11 +1,9 @@
 """Corner plots of the rmatrix fit from its _pred.npz, physical and gas parameters separately.
 
-Writes corner_rmatrix_phys.png and corner_rmatrix_gas.png in
-results/2026-10-13_nautilus_resolution_matrix/.
-
-COMMAND: ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-13_nautilus_resolution_matrix/corner_rmatrix.py`` from the repository root.
+Writes corner_rmatrix_phys.png and corner_rmatrix_gas.png. Run from the repository root as
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
+experiments/2026-10-13_nautilus_resolution_matrix/corner_rmatrix.py``.
 """
 
 import corner

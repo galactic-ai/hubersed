@@ -4,7 +4,7 @@
 # by timeout; then a resume run for RUN2 s. Sampler settings are the production ones, written to
 # poco_neff1024_devtest so production never resumes from them. Node Committed_AS is logged every
 # 5 min. Env as 2026-10-30_nodust_miles_39633433328091196_dark/map.slurm (C3K ER). Submit from the
-# repository root on stampede3:
+# repository root:
 #   sbatch experiments/2026-10-31_poco_c3k_er_dark_39633433328091196/test.slurm
 #SBATCH -J pocodev1031
 #SBATCH -p skx-dev

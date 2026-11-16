@@ -1,25 +1,8 @@
 """Split the line-window misfit of the converged ER fit into a flux part and a profile part.
 
-QUESTION: is the [OIII]5007 misfit of the #14 ER fit of 39627770174637084 (rms chi 3.0 in the
-analysis) a wrong total flux, which C/O and the other Cue parameters can change, or a wrong line
-shape, which they cannot?
-
-For each rest-frame window, on the fitted pixels and at the maximum likelihood spectrum, it gives
-
-- R = sum(data - model) dlam, its noise sqrt(sum unc^2) dlam, and R as a fraction of the model
-  line flux. The model line flux is the model minus a straight line through the median model in
-  two 6 A sidebands. For Balmer lines that baseline does not remove the stellar absorption, so the
-  fraction is a lower bound on the size of the line there; R itself does not depend on the baseline;
-- the window chi^2, and the chi^2 after the best single rescale a of the model line
-  (data - baseline = a (model - baseline)). The drop is the flux part, the rest the profile part;
-- the 16-84 percent range of the model line flux over the 100 posterior draws of predict.py.
-
-INPUTS: the ``_pred.npz`` of predict.py. SEED: none. No FSPS needed.
-
-Run from the repository root with
+Per window gives the flux residual R, the chi^2 before and after the best line rescale and the
+posterior line-flux range in line_flux_check.txt. Run from the repository root with
 ``uv run python experiments/2026-10-09_nautilus_c3k_er_broadline/line_flux_check.py``.
-
-OUTPUT: results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/line_flux_check.txt.
 """
 
 import numpy as np

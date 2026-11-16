@@ -1,27 +1,18 @@
-"""QUESTION: can the DESI spectra of 37084 and 26597 tell [alpha/Fe] = -0.2 ... +0.6 apart, given the
+"""Sensitivity of the split-45 fits of 37084 and 26597 to [alpha/Fe] at fixed theta.
+
+QUESTION: Can the DESI spectra of 37084 and 26597 tell [alpha/Fe] = -0.2 ... +0.6 apart, given the
 rest of the split-45 model?
-HYPOTHESIS: weakly at best. Both are young-light dominated, and the alpha-sensitive absorption (Mg b,
-Fe5270/5335) comes mostly from old stars. If chi2 at fixed theta barely changes, alpha is not worth a
-free parameter; if it changes a lot, the next step is a profile (re-optimize the other parameters).
-METHOD: take the max-L point of runs A (37084) and C (26597), both forbidden_broad="shared", from the
-2026-09-30 split-45 experiment. At each afe on the FSPS grid, predict the spectrum with everything else
-fixed and refit only the overall amplitude, analytically. The model spectrum is proportional to stellar
-mass, so this is the exact best logmass. Report chi2(afe) - chi2(afe=0) on all fitted pixels, on
-continuum pixels only (500 km/s around lines removed), and per rest-frame band. For scale, the same
-number for logzsol +-0.1 dex at afe=0. Fixed theta ignores degeneracies, so a large value here does
-not mean alpha is measurable.
-A second test is noise free ("Asimov"). It takes model(afe) at the max-L point as fake data with the
-real sigma, continuum pixels only, and fits it with afe = 0 models on a logzsol grid, each times a Legendre
-polynomial in wavelength of order 0 (amplitude only) or 5 (a smooth stand-in for dust and other
-broadband freedom; the real model has no calibration polynomial). The minimum chi2 over the grid is
-the Delta chi2 a real fit would have to detect that afe. Age, SFH and gas stay fixed, so it is still an
-upper bound. Line pixels are left out because their fluxes follow the gas parameters and recent SFR.
+HYPOTHESIS: Weakly at best (young-light dominated, while Mg b and Fe5270/5335 come mostly from old
+stars). Little chi2 change makes alpha not worth a free parameter, a big one calls for a profile.
+METHOD: chi2(afe) - chi2(afe=0) at the max-L points of A and C, amplitude refitted, with logzsol
++-0.1 dex for scale. A noise-free fit of model(afe) by afe = 0 models times Legendre order 0 or 5.
 INPUTS: results/2026-09-30_nautilus_c3k_broadline_split45/<tid>_broad_shared_split45_unmask_rest9000_seed0.{h5,json}
-ENVIRONMENT: ls6 only. FSPS built with -DAFE_FLAG=1 -mcmodel=medium (knowledge/_evidence/2026-10-01_afe_build),
-put first on PYTHONPATH, and SPS_HOME with the alpha C3K_HR spectra. See run.sh.
+ENVIRONMENT: FSPS built with -DAFE_FLAG=1 -mcmodel=medium first on PYTHONPATH, and SPS_HOME with the
+alpha C3K_HR spectra. See run.sh.
 SEED: none needed (no random draws).
 COMMAND: bash experiments/2026-10-02_afe_sensitivity/run.sh (inside an srun step on a compute node)
 RESULT: results/2026-10-02_afe_sensitivity/afe_sensitivity.txt
+Assumptions: theta, age, SFH and gas fixed, so both tests ignore degeneracies and are upper bounds.
 FIGURES: results/2026-10-02_afe_sensitivity/afe_sensitivity_<tid>.png (spectra in afe_spectra_<tid>.npz)
 """
 
@@ -85,10 +76,7 @@ def chi2_scaled(flux, unc, model, sel):
 
 
 def chi2_poly(data, model, unc, sel, x, order):
-    """Return the chi2 of ``data`` against ``model`` times the best Legendre polynomial of ``order``.
-
-    Order 0 is a single amplitude. ``x`` is wavelength scaled to [-1, 1] over the selected pixels.
-    """
+    """Return chi2 of ``data`` against ``model`` times the best Legendre polynomial of ``order``."""
     d, s = data[sel], unc[sel]
     design = np.polynomial.legendre.legvander(x[sel], order) * model[sel][:, None]
     coef, *_ = np.linalg.lstsq(design / s[:, None], d / s, rcond=None)

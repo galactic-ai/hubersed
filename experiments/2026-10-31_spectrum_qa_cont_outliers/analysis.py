@@ -1,29 +1,15 @@
 """Data-quality metrics of the 94 common continuum outliers against three control sets (#17).
 
-QUESTION: do the DR1 SV3 bright coadds of the 94 common continuum outliers disagree with their
-fiber photometry, come from brighter-sky exposures, or have mis-scaled ivar more often than
-control galaxies?
+QUESTION: do the DR1 SV3 bright coadds of the 94 outliers disagree with their fiber photometry,
+come from brighter-sky exposures, or have mis-scaled ivar more often than control galaxies?
 HYPOTHESIS: none registered.
-INPUTS: sample94.npz (sample.py), controls.npz (controls.py), zpix_flags.csv (flags.py),
-sv3_bright_exposures.csv (exposures.py), data/fastspec-iron-sv3-bright.fits, the DESIchunk1024
-pkl spectra.
-M1: dgr = -2.5 log10[(FLUX_SYNTH_G / FIBERFLUX_G) / (FLUX_SYNTH_R / FIBERFLUX_R)], drz the same
-for r and z. Negative means the spectrum is bluer than the photometry.
-M2: every exposure of the target's TILEID_LIST tiles; brightest and faintest sky g and their count.
-M3: per arm (observed < 5800, 5800-7600, > 7600 A), 1.4826 MAD of (flux - 51 px median filter)
-times sqrt(ivar) over pixels with ivar > 0. 1 means ivar matches the scatter.
+INPUTS: sample94.npz, controls.npz, zpix_flags.csv, sv3_bright_exposures.csv,
+data/fastspec-iron-sv3-bright.fits, the DESIchunk1024 pkl spectra.
 SEED: none.
-COMMAND: from the repository root on the Mac,
-``uv run --no-sync python experiments/2026-10-31_spectrum_qa_cont_outliers/analysis.py``.
-RESULT: 2026-10-31, qa_summary.txt. Outlier spectra are bluer than their fiber photometry: dgr
-median -0.131 [16th -0.404] against -0.014 [-0.075] (matched), -0.071 (cont10) and -0.082 (cont15)
-latent neighbours; drz -0.019 against +0.027. Brightest-exposure sky g has the same median (20.78)
-in all groups, with a brighter 16th percentile for outliers (19.32 against 19.74 matched). sigma(chi)
-is within 0.03 of the controls in every arm. With FIBERTOTFLUX, dgr_tot is -0.104 against +0.011
-(matched). COADD_FIBERSTATUS and ZWARN are 0 for all 94 (spender keeps only those). Spearman of dgr
-among the 94: sky_min rho +0.13 (p 0.21), pos_off -0.27 (p 0.010), pos_rms -0.26 (p 0.013),
-psf2fib +0.03 (p 0.78). Assumptions: tile-level sky (COADD_NUMEXP equals the tile count for 85 of
-94), unscreened controls, seed 0 flows, 8 correlation tests without correction.
+COMMAND: ``uv run --no-sync python experiments/2026-10-31_spectrum_qa_cont_outliers/analysis.py``.
+RESULT: 2026-10-31. Outliers are bluer than their photometry, dgr median -0.131 against -0.014
+(matched). Brightest-exposure sky g median 20.78 in all groups. sigma(chi) within 0.03 of controls.
+Assumptions: tile-level sky, unscreened controls, seed 0 flows, 8 correlation tests uncorrected.
 FIGURES: results/2026-10-31_spectrum_qa_cont_outliers/qa_summary.txt, qa_outliers.txt,
 qa_correlations.txt, qa_dist.png.
 """

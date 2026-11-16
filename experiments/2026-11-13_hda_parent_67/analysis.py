@@ -1,26 +1,14 @@
-"""Is the Balmer absorption of gallery105 figures 67, 71, 88 and 99 unusual for the 4000 A break in the parent?
+"""Is the Balmer absorption of gallery105 figures 67, 71, 88 and 99 unusual for its 4000 A break?
 
-QUESTION: 67 (39633136522363591, z 0.478) has HdA 7.0 +- 1.1 and HgA 6.6 +- 1.1 at Dn4000 1.53 with no
-emission. Where do these sit among parent galaxies with the same break strength and redshift?
+QUESTION: where do HdA and HgA of 67 (7.0 +- 1.1 and 6.6 +- 1.1, Dn4000 1.53, z 0.478) sit among
+parent galaxies with the same break strength and redshift?
 HYPOTHESIS: none registered. If 67 is an older post-starburst its HdA should sit in the upper tail.
-INPUTS: results/prescreened_sample_v1.npz (keep, the 104,990 parent); data/fastspec-iron-sv3-bright.fits
-(DN4000, Z, HALPHA_EW and its IVAR, OII EWs); DR1 SV3 bright coadds through load_by_index.
-Figure 71 is 39633149579232417, z 0.467, HdA 7.8 +- 1.0, HgA 2.1, Dn4000 1.37.
-METHOD: control = parent galaxies with FastSpecFit DN4000 in a 0.15-wide window at the target's
-break (67 [1.45, 1.60], 71 [1.30, 1.45], 88 [1.25, 1.40], 99 [1.12, 1.27]) and Z within 0.05 of the
-target, the target removed. HdA and HgA measured as gallery105 seed.py (lick_index copied unchanged,
-with Worthey & Ottaviani 1997 bands taken as air and moved to vacuum, mean form over good pixels,
-NaN below 25% good pixels, std over 200 noise draws). Reported for all controls and for those with
-no lines (FastSpecFit EW Halpha < 3 A where Halpha is on the spectrum, and EW [OII] 3726+3729 < 2.5 A).
+INPUTS: results/prescreened_sample_v1.npz, data/fastspec-iron-sv3-bright.fits, DR1 SV3 bright
+coadds through load_by_index.
 SEED: 0 (noise draws).
 COMMAND: ``uv run --no-sync python experiments/2026-11-13_hda_parent_67/analysis.py``.
-RESULT: 2026-11-13, hda_parent.txt. 182 controls (47 with no lines). 67's HdA 6.97 sits at the 90th
-percentile (87th of no-line controls; 19 controls >= 67, p95 7.50); its HgA 6.63 at the 99th (98th; 2
-controls >= 67, p95 4.39). The control spread (HdA p5-p95 -3.4 to 7.5) is mostly noise at this S/N.
-71 (298 controls, 23 with no lines): HdA 7.81 at the 91st percentile (23 controls >= 71), HgA 2.08 at
-the 71st (86 >= 71), so only HdA sits in the tail.
-88 (255 controls, 14 with no lines): HdA 6.30 at the 86th percentile of all, 50th of the no-line
-controls; HgA 5.22 at the 94th and 71st. Line-free galaxies at Dn4000 1.25-1.40 already have high HdA.
+RESULT: 2026-11-13, hda_parent.txt. 67's HdA 6.97 sits at the 90th percentile of 182 controls, HgA
+6.63 at the 99th. 71's HdA at the 91st, HgA at the 71st. 88's HdA at the 86th.
 Assumptions: FastSpecFit DN4000 matches the break the indices see; one SV3 coadd per galaxy.
 FIGURES: none (hda_parent.txt).
 """

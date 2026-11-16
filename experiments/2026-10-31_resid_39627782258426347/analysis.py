@@ -1,22 +1,14 @@
-"""Where the C3K max-likelihood residuals of 39627782258426347 (robust6 target 2, #17) are bad, and why.
+"""Where the C3K max-likelihood residuals of 39627782258426347 (robust6 target 2, #17) are bad.
 
 QUESTION: which wavelength ranges carry the excess chi2 of the pocoMC max-likelihood fit, and do
 they line up with arm joins, sky lines or stellar and nebular features?
 HYPOTHESIS: none registered.
-INPUTS: 2026-10-31_poco_robust6/<TID>/<TID>_poco_maxl.npz. Arm joins from the DR1 exposure grid
-(B 3600-5800, R 5760-7620, Z 7520-9824 A observed, 2026-10-31_lines_39627775706927918). Feature
-wavelengths are standard air values from memory, not checked against a line list.
+INPUTS: 2026-10-31_poco_robust6/<TID>/<TID>_poco_maxl.npz, arm joins of
+2026-10-31_lines_39627775706927918, feature air wavelengths from memory, not checked.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_resid_39627782258426347/analysis.py``.
-RESULT: chi2/N 1.083, excess chi2 453 spread over the spectrum; the two worst 25 A bins hold 153 of
-it: rest 6575-6600 (obs 7771-7801, chi2/N 4.5, mean chi +1.2, data above model) and rest 4100-4125
-(Hdelta, obs 4846-4875, chi2/N 3.1, mean chi -1.1, data below model). Per exposure
-(EXPID 88269, 87113, 87604; 87113 has BADAMPB and no B-arm data): [NII]6584 (obs ~7782) and
-[OII]3727 (obs ~4405) emission is in every exposure, so real; the fit has no nebular model. Halpha
-emission (obs ~7757) is in every exposure but not fitted: spender's skyline mask (OH 7752.8 and
-7762.1 A, sky-lines.txt) zeroes ~70% of 7740-7775 A; that mask removes 1941 of 7781 pixels in all.
-The Hdelta dip (obs ~4852-4856) is deeper than the model in both B-arm exposures.
-FastSpecFit: log [NII]/Ha -0.61, log [OIII]/Hb -0.55, below Kauffmann+03; EW Ha 7.9 A: star-forming.
+RESULT: chi2/N 1.083. The two worst 25 A bins, rest 6575-6600 and 4100-4125 (Hdelta), hold 153 of
+excess chi2 453. [NII]6584 and [OII]3727 emission is in every exposure; no nebular model is fitted.
 Assumptions: bins of 25 A rest with >= 10 good pixels; ivar dips mark sky lines.
 FIGURES: results/2026-10-31_resid_39627782258426347/ resid.txt, resid.png.
 """

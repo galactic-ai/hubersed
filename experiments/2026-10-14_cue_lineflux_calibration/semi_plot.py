@@ -1,13 +1,7 @@
 """Plot Cue semi-strong-line O/H against direct T_e O/H and against stellar mass.
 
-Left, Cue O/H of the semi fits (strong lines, [SIII]9069 and He I 5876, [OI] dropped) against direct
-T_e O/H for the galaxies whose direct value is kept, coloured by N2. Right, both against log M*
-with running medians in 0.5 dex mass bins, the mass-metallicity relation each method gives.
-
-INPUTS: semi/semi_compare.txt of semi.py compare. SEED: none.
-
+INPUTS: semi/semi_compare.txt of semi.py compare.
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/semi_plot.py``.
-
 OUTPUT: semi/semi_direct.png in results/2026-10-14_cue_lineflux_calibration/.
 """
 

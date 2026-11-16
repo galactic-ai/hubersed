@@ -1,35 +1,11 @@
 """MAP fits and n_H profiles of the rmatrix mask setup of map.py with [SII]6731 fitted.
 
-QUESTION: [SII]6731 sits on a spender sky-line mask, so the fits have no [SII] density diagnostic.
-Does fitting it move log n_H toward the [SII] value (log n_e about 2.4, 2026-10-14_sii_density.py)
-from the 1.12 of the rmatrix nautilus run?
-
-Same model, data and start as ``map.py rmatrix mask``, except load_data restores the pixels within
-+-6 A rest of [SII]6731 (14 pixels). Start 0 is map.py's start. Starts 1 to 5 are jittered as
-map_fit does (2% of each prior range, rng seed 0). Start 6 is start 0 with log n_H at the [SII]
-value, 2.4. One start per process.
-
-The starts end along the U-n_H ridge, so the profile action fixes log n_H at one PROFILE_NH value
-and fits the rest from the best unmasked start. -lnp then lacks the constant n_H prior term, so
-compare it only between profile points.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build, for k in 0 to 6,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+Runs starts 0 to 6 with [SII]6731 restored, then n_H profiles, their DROPS variants and the window
+split. Run from the repository root, for k in 0 to 6, as
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
 experiments/2026-10-13_nautilus_resolution_matrix/map_unmask.py run k [--maxfev N] [--masked]``,
-then ``... map_unmask.py report``. For the profile, ``... map_unmask.py profile --nh V`` for each
-V in PROFILE_NH, then report. ``... map_unmask.py windows`` splits the profile chi2 by line window.
-``--masked`` keeps [SII]6731 masked, as the control.
-
-The model over-predicts the auroral [OII]7320,7330 and [SIII]6312 lines, which hold n_H down. So
-``profile --nh V --drop D --k K`` repeats the profile with them masked (D in DROPS), from two starts,
-the unmasked profile point at V (K 0) and a 2% jitter of it (K 1, rng seed 1). Then
-``... map_unmask.py profiles`` compares the variants.
-
-OUTPUT: map_unmask/<unmask|masked>_start<k>.npz, map_unmask/profile_nH<V>.npz,
-map_unmask/profile_<D>_nH<V>_s<K>.npz, map_unmask.txt, map_unmask_profiles.txt,
-map_unmask_windows.txt and map_unmask_windows.png in
-results/2026-10-13_nautilus_resolution_matrix/.
+then ``... map_unmask.py report`` and the ``profile``, ``profiles`` and ``windows`` actions.
 """
 
 import argparse
@@ -103,10 +79,7 @@ RATIOS = {
 
 
 def build(unmask, fixed_nh=None, drop="none"):
-    """Return the model, observation, Cue source and map.py start point.
-
-    ``fixed_nh`` fixes gas_lognH at that value. ``drop`` masks the DROPS windows of that variant.
-    """
+    """Return the model, observation, Cue source and map.py start point."""
     d = np.load(START, allow_pickle=True)
     best = dict(zip([str(x) for x in d["labels"]], d["best"], strict=True))
     z, flux, unc, good = load_data(tuple(MISSING_LINES), ("[SII]6731",) if unmask else ())
@@ -166,11 +139,7 @@ def run(k, maxfev, unmask):
 
 
 def profile(nh, maxfev, drop="none", k=0):
-    """Fit with log n_H fixed at ``nh`` and save the result.
-
-    With drop "none" the start is the best unmasked start. Otherwise start 0 is the unmasked
-    profile point at ``nh`` and start 1 is a jitter of it.
-    """
+    """Fit with log n_H fixed at ``nh`` and save the result."""
     model, obs, cue, _ = build(True, fixed_nh=nh, drop=drop)
     if drop == "none":
         src = min(
@@ -216,11 +185,7 @@ def chi2(model, obs, cue, theta):
 
 
 def report():
-    """Write chi2, reduced chi2 and the gas parameters of every fit to map_unmask.txt.
-
-    d(chi2) is from the lowest chi2 in each table. A profile fit's theta gets its fixed n_H back,
-    so it is scored with the free model.
-    """
+    """Write chi2, reduced chi2 and the gas parameters of every fit to map_unmask.txt."""
     out = []
     head = f"{'chi2':>9} {'chi2_red':>9} {'d(chi2)':>8} {'-lnp':>11} {'nfev':>6} "
     head += " ".join(f"{g:>10}" for g in GAS)
@@ -260,11 +225,7 @@ def report():
 
 
 def profiles():
-    """Write the profile of each DROPS variant to map_unmask_profiles.txt.
-
-    chi2 is on each variant's own pixels, so d(chi2) is only compared within a variant. Each n_H
-    point keeps its lower-chi2 start, and "starts" is the chi2 gap between its two starts.
-    """
+    """Write the profile of each DROPS variant to map_unmask_profiles.txt."""
     model, _, cue, _ = build(True)
     lab = model.theta_labels()
     out = []
@@ -302,11 +263,7 @@ def profiles():
 
 
 def windows():
-    """Write the profile chi2 by line window and the model density ratios to map_unmask_windows.txt.
-
-    Each column is one profile point, with chi2 relative to the lowest-chi2 point. The data ratios
-    are EmFit (narrow plus outflow) for [SII] and FastSpecFit for [OII].
-    """
+    """Write the profile chi2 by line window and the model density ratios to map_unmask_windows.txt."""
     model, obs, cue, _ = build(True)
     lab = model.theta_labels()
     o = obs[0]
@@ -364,10 +321,7 @@ def windows():
 
 
 def plot_windows(o, rest, spectra, path):
-    """Plot the data and the profile models in the line windows, with chi below on -8 to 8.
-
-    Pixels that are not fitted are left empty. The legend gives each model's chi2 in the window.
-    """
+    """Plot the data and the profile models in the line windows, with chi below on -8 to 8."""
     use_apj_style()
     fig, ax = plt.subplots(
         2,

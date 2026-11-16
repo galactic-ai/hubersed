@@ -1,30 +1,16 @@
 """Do the screened outliers stay outliers in their other DESI DR1 spectra?
 
-QUESTION: For each screened old and new outlier (screened.npz), do its other DR1 coadds (main, SV1,
-SV3 dark ...) also pass the flag rule of its branch (full = 6 & 10 & 15, cont = cont10 & cont15)
-with the same flows? An outlier set by one bad exposure, fibre or sky should not repeat; one set by
-the galaxy should.
+QUESTION: do the screened old and new outliers (screened.npz) also pass their branch's flag rule
+in their other DR1 coadds, with the same flows?
 HYPOTHESIS: none stated before the run.
-METHOD: as experiments/2026-11-01_repeats92/analysis.py. Each SPARCL spectrum goes through spender's
-steps (mask or ivar <= 1e-6 to zero weight, sky-line mask, median at rest 5300-5850 A, own
-redshift), is encoded with each tag's encoder and scored with its flow (old flows for old lists,
-new for new). A repeat counts if its median per-pixel S/N > 3 (the parent cut) and its redshift
-is within 0.01 (1 + z) of the SV3 bright one. Each target is robust (flagged in every usable
-repeat), cleared (in none), mixed, or has no usable repeat. SPARCL SV3 bright spectra must
-reproduce the run log p.
-INPUTS: results/2026-11-10_data_quality_screen/{screened.npz, sparcl_spectra.npz}; flows of
-results/noised_cue_meanzero_wide_flow (old) and results/2026-11-09_mocks_v2_outliers/flows (new);
-encoders in data/checkpoints; gallery92 labels.
+INPUTS: results/2026-11-10_data_quality_screen/{screened.npz, sparcl_spectra.npz}, flows of
+results/noised_cue_meanzero_wide_flow and results/2026-11-09_mocks_v2_outliers/flows,
+data/checkpoints.
 SEED: none.
 COMMAND: ``uv run python experiments/2026-11-10_data_quality_screen/repeats.py``.
-RESULT: SPARCL SV3 bright reproduces the run (|d log p| median <= 0.002). New: full 88 -> robust
-16, cleared 5, no usable repeat 67; cont 81 -> robust 15, cleared 15, mixed 2, none 49. Old: full
-223 -> robust 51, cleared 11, mixed 1, none 160; cont 67 -> robust 8, cleared 10, mixed 1, none
-48. gallery92 (old cont): all 6 bad_sky/bad_data with a usable repeat clear; AGN 7 robust, 2
-cleared. Assumptions: a usable repeat needs median S/N > 3 and z within 0.01 (1 + z); main-survey
-coadds are shallower, so a faint real feature can clear. New outliers not in the old screened
-list (100): near-miss (some old flow of the branch flagged it) 67 -> robust 12, cleared 7, mixed 2,
-none 46; genuinely new 33 -> robust 2, cleared 5, none 26.
+RESULT: new full 88 are robust 16, cleared 5, no usable repeat 67. New cont 81 are robust 15,
+cleared 15, mixed 2, none 49. SPARCL SV3 bright reproduces the run (|d log p| median <= 0.002).
+Assumptions: usable repeats have S/N > 3 and z within 0.01 (1 + z); main coadds are shallower.
 FIGURES: none (repeats.txt, repeats.csv).
 """
 

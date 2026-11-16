@@ -1,13 +1,5 @@
 """Recompute the best fit of the 09-24 MILES + Cue run of 39627770174637084 with its own code.
 
-With the current lockfile the 09-24 max-L point gives chi2_red 3.42, not the 2.52 the run reported,
-and the model is 6.6% off in flux (median). The fit used fsps 0.4.7 (MILES), prospector 9aced93,
-cue d6068d2 (the line list before the NIST correction of 2026-09-27) and FSPS data 82a8735. This
-script runs in that environment and saves the max-L spectrum for 2026-10-18_issue14_figures.py.
-``--repo`` points PATHS at the current checkout for data/ and results/, read only.
-
-RESULT: 2026-10-18. chi2_red 2.517 (chi2 11130.5) on 4448 px, matching the 2.52 of 09-24.
-
 COMMAND: build the environment of hubersed d4fb8ef in a scratch folder. Write each file of
 ``git ls-tree -r --name-only d4fb8ef -- src pyproject.toml uv.lock README.md
 experiments/2026-09-24_nautilus_tauin`` with ``git show d4fb8ef:<file>`` into <old>, then
@@ -15,7 +7,9 @@ experiments/2026-09-24_nautilus_tauin`` with ``git show d4fb8ef:<file>`` into <o
 82a8735 (python-fsps 0.4.7's libfsps), without SPECTRA/C3K, doc and src, the same way into <sps>.
 Then from the repository root, ``SPS_HOME=<sps> <venv>/bin/python
 experiments/2026-10-18_issue14_figures/miles.py --repo .``.
-
+RESULT: 2026-10-18. chi2_red 2.517 (chi2 11130.5) on 4448 px, matching the 2.52 of 09-24.
+The current lockfile gives 3.42 at the same point, with the model 6.6% off in flux (median).
+Assumptions: 09-24 environment, fsps 0.4.7 (MILES), prospector 9aced93, cue d6068d2, FSPS 82a8735.
 OUTPUT: results/2026-10-18_issue14_figures/miles_0924.npz.
 """
 

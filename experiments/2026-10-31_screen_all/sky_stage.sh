@@ -1,6 +1,6 @@
 #!/bin/bash
 # Fetch the iron spectra files of sky_urls.txt to /scratch, skipping files already there. Run on the
-# stampede3 login node from the repository root:
+# login node from the repository root:
 #   bash experiments/2026-10-31_screen_all/sky_stage.sh
 set -euo pipefail
 HERE=experiments/2026-10-31_screen_all

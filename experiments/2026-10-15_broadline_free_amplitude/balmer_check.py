@@ -1,24 +1,16 @@
 """Check the Balmer decrement of the free-line fit of 39627770174637084 at the pocoMC best point.
 
 QUESTION: at n = 0 the mask refits put dust_ratio at 0. Is the model's Halpha/Hbeta right?
-
-Prints Cue's intrinsic Halpha/Hbeta, the model's attenuated ratio, the ratio of data minus model
-continuum in clean windows (Hbeta 4855-4870 A, Halpha 6555-6572 A), and the EmFit and FastSpecFit
-ratios. The narrow Balmer lines are tied to Cue and the broad ones share one ratio, so the model
-ratio is Cue's attenuated ratio.
-
-RESULT: 2026-10-17, balmer_check.txt. Cue intrinsic 2.804 (Case B 2.86), model 3.443, spectrum
-3.460, EmFit 3.551 +- 0.077, FastSpecFit 3.363 +- 0.028. The fit matches the decrement to 0.5%, so
-the grey slope comes from the continuum, not the lines.
-
-INPUTS: pmc_final.state of poco.py; results/2026-10-14_cue_lineflux_calibration/lineflux_table.fits.
+INPUTS: pmc_final.state of poco.py and
+results/2026-10-14_cue_lineflux_calibration/lineflux_table.fits.
 SEED: none.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+COMMAND: from the repository root with the C3K_ER build,
+``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:<er_path>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-15_broadline_free_amplitude/balmer_check.py --state <path>``.
-
+RESULT: 2026-10-17. Cue intrinsic 2.804 (Case B 2.86), model 3.443, spectrum 3.460, EmFit 3.551
++- 0.077, FastSpecFit 3.363 +- 0.028. Matched to 0.5%, so the grey slope comes from the continuum.
+Assumptions: spectrum ratio from data minus model continuum, Hbeta 4855-4870 A, Halpha 6555-6572 A.
 OUTPUT: balmer_check.txt next to the state file.
 """
 

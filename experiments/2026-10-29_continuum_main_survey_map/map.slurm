@@ -1,8 +1,8 @@
 #!/bin/bash
-# Multi-start continuum MAP on the main-survey spectrum, on one stampede3 icx node, as
+# Multi-start continuum MAP on the main-survey spectrum, on one icx node, as
 # 2026-10-28_continuum_c3k_er_rmatrix_map/map.slurm (7 starts, one core each, about 21.6 GiB per
 # start, collect at the end). A start killed by the timeout saves nothing.
-# Submit from the repository root on stampede3, after check.slurm wrote main_spectrum.npz and
+# Submit from the repository root, after check.slurm wrote main_spectrum.npz and
 # resolution_matrix.npz:
 #   sbatch experiments/2026-10-29_continuum_main_survey_map/map.slurm
 # On skx-dev (2 h, ~174 GiB commit limit, so the start-ups are spread 4 min apart and the outputs

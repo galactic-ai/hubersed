@@ -1,11 +1,6 @@
-"""Save the posterior and model spectra of one converged fit for analysis.py.
+"""Save the posterior and model spectra of one converged fit to <run>_pred.npz for analysis.py.
 
-FSPS fixes its library at compile time, so each run needs its own process. MILES runs need the
-MILES build first on PYTHONPATH, and alpha runs the AFE_FLAG build and its SPS_HOME, as in run.sh. The output is
-results/2026-10-08_continuum_outlier/<run>_pred.npz with the data the fit used, the posterior
-points that carry weight, the maximum likelihood spectrum and 100 weighted draws.
-
-Run from the repository root on a compute node with
+MILES and alpha runs need run.sh's FSPS builds. Run on a compute node from the repository root with
 ``uv run python experiments/2026-10-08_continuum_outlier/predict.py --tid 39633433328091196
 --lib c3k_hr --window full --nebular off``.
 """

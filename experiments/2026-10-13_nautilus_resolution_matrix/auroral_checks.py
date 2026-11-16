@@ -1,28 +1,10 @@
 """Line fluxes, attenuation and [SIII]9069 of the n_H profile points of map_unmask.py.
 
-QUESTION: the model over-predicts [OII]7320,7330 and [SIII]6312 (map_unmask_windows.txt). Is that
-a temperature problem of Cue, or does Prospector's attenuation curve differ from the one the data
-need between 3727 and 7325?
-
-Three checks at the profile points n_H 1.6 and 2.4 (profile_nH<V>.npz, [SII]6731 fitted). The line
-flux tables also give the max-L point of the rmatrix nautilus run (NAUTILUS, all 29 parameters
-free, [SII]6731 masked in that fit), the global best fit with nothing fixed.
-
-- observed line fluxes. The model's attenuated line fluxes against the FastSpecFit fluxes, each
-  divided by its own Halpha. No dust correction enters.
-- attenuation. Prospector's effective A(lambda) on the lines, from the fluxes with and without dust
-  (dust2 = 0, so dust1 = dust2 * dust_ratio is 0 too), against CCM89 (R_V 3.1) at the E(B-V) of
-  the FastSpecFit Balmer decrement for an intrinsic Halpha/Hbeta of 2.86.
-- [SIII]6312/9069, which depends on temperature and not on density. 9069 and 9532 are outside the
-  fitted range (rest < 9000 A), so this plots data and model there without fitting.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-13_nautilus_resolution_matrix/auroral_checks.py``
-
-OUTPUT: auroral_checks.txt and auroral_checks_siii.png in
-results/2026-10-13_nautilus_resolution_matrix/.
+Checks whether the [OII]7320,7330 and [SIII]6312 excess is a Cue temperature or an attenuation
+problem, and writes auroral_checks.txt and auroral_checks_siii.png. Run from the repository root as
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
+experiments/2026-10-13_nautilus_resolution_matrix/auroral_checks.py``.
 """
 
 import matplotlib.pyplot as plt

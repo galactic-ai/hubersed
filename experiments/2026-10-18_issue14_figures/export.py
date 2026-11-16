@@ -1,24 +1,10 @@
 """Export the data and both best fits of 39627770174637084 as npz and txt, for sharing.
 
-It writes one pair of files per fit, in the layout of the earlier outlier exports
-(emission_line_only_*.txt). They hold wave_obs, wave_rest, flux, unc, mask, model, medfilt9, chi,
-plus chi2, ndof, chi2_red, z, targetid and the best-fit theta.
-
-1. MILES + Cue, 2026-09-24_nautilus_tauin, on the DR1 coadd in the MILES window.
-   - Max-likelihood point from 2026-09-25_nautilus_tauin_c3k_hr/<TID>_MILES_plotdata.npz.
-   - Spectrum from miles_0924.npz (miles.py, the 09-24 environment; the current code is 6.6% off).
-2. UberSED, the pocoMC free_dust run of 2026-10-15_broadline_free_amplitude.
-   - The model is C3K ER, free-line broad components, Cue, resolution matrix and recoadd ivar.
-   - Highest-posterior particle and spectrum from analysis.py poco_row(), as in the #14 figures.
-Flux, unc, model and medfilt9 are in 1e-6 maggies. Pixels outside a fit's mask are NaN except the
-model. chi2_red = chi2 / (fitted pixels - free parameters).
-
 COMMAND: as analysis.py, ``PYTHONPATH=<er_path>:experiments/2026-10-15_broadline_free_amplitude:
-experiments/2026-10-13_nautilus_resolution_matrix SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync
+experiments/2026-10-13_nautilus_resolution_matrix SPS_HOME=<fsps> uv run --no-sync
 python experiments/2026-10-18_issue14_figures/export.py``.
-
-OUTPUT: results/2026-10-18_issue14_figures/export/emission_line_39627770174637084_{miles_cue,ubersed}
-.{npz,txt}.
+OUTPUT: emission_line_39627770174637084_{miles_cue,ubersed}.{npz,txt} in
+results/2026-10-18_issue14_figures/export/.
 """
 
 import importlib.util

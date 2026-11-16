@@ -1,16 +1,7 @@
 """Dn4000 and HdeltaA of one target's data and of each ladder step's max-likelihood model.
 
-QUESTION: does each step's best model reproduce the two age indices of its data? Both barely depend
-on dust, so they test age apart from the age-dust trade-off seen against FastSpecFit.
-Bands come from $SPS_HOME/data/allindices.dat, as 2026-10-29_continuum_recoadd/analysis.py:
-- Dn4000: mean F_nu over rest 4000-4100 A divided by that over 3850-3950 A (Balogh+1999).
-- HdeltaA: equivalent width in A over 4083.5-4122.25 A, against a straight line through the mean
-  F_lambda of 4041.6-4079.75 and 4128.5-4161.0 A (Worthey & Ottaviani 1997).
-Data and model are measured on the same fitted pixels of each step's own data, from the
-<step>_maxl.npz files that ladder_plot.py reads (degraded data for the MILES and C3K HR steps).
-A band needs 80 per cent of its pixels fitted. Errors are the 16-84 per cent range over 2000 draws
-of Gaussian noise with the stored uncertainties. Only the max-likelihood model is measured, not the
-posterior.
+Bands of $SPS_HOME/data/allindices.dat (Balogh+1999, Worthey & Ottaviani 1997), measured on the
+fitted pixels of each <step>_maxl.npz.
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_poco_repeats/index_check.py --tid <TID>``.
 OUTPUT: results/2026-11-01_poco_repeats/<TID>/index_check.txt.
 """

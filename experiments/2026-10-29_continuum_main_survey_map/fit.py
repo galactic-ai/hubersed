@@ -1,15 +1,9 @@
 """Continuum MAP of 39627757533007793 on its DR1 main-survey spectrum (issue #17).
 
-Changes from 2026-10-28_continuum_c3k_er_rmatrix_map (continuum, job 3655467): the data are the
-DR1 main-survey coadd (tile 23598, 1 exposure) with spender's mask (main_spectrum.npz of
-prepare.py) instead of the SV3 spender chunk, the resolution matrix is the main coadd's, and start 0
-is the SV3 continuum MAP best point. Model, priors, fixed SFH hyperparameters, rest 3320-9000 A,
-starts and the steps check, fit and collect are those of the 10-28 fit.py, which this file runs with
-those three things swapped.
-
-Run on a stampede3 compute node through check.slurm and
-map.slurm, for example ``<venv>/bin/python experiments/2026-10-29_continuum_main_survey_map/fit.py
-fit --start 0``.
+Changes from 2026-10-28_continuum_c3k_er_rmatrix_map are the DR1 main-survey coadd (tile 23598, 1
+exposure) with spender's mask (main_spectrum.npz), its resolution matrix and the SV3 MAP as start 0.
+COMMAND: on a compute node through check.slurm and map.slurm, for example
+``<venv>/bin/python experiments/2026-10-29_continuum_main_survey_map/fit.py fit --start 0``.
 """
 
 import importlib.util
@@ -36,11 +30,7 @@ SV3_MAP = PATHS["RESULTS"] / "2026-10-28_continuum_c3k_er_rmatrix_map" / f"{base
 
 
 def load_data():
-    """Return the redshift, the flux and uncertainty in maggies, and the fitted pixels.
-
-    The rules are those of the 10-28 load_data on the main spectrum. They are spender's positive
-    ivar, positive ivar in the matrix file, finite values and rest REST_MIN to REST_MAX.
-    """
+    """Return the redshift, the flux and uncertainty in maggies, and the fitted pixels."""
     d = np.load(OUT / "main_spectrum.npz")
     z = float(d["z"])
     wave = WAVE_OBS * u.AA

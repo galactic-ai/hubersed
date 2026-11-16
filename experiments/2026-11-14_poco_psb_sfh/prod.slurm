@@ -4,7 +4,7 @@
 # the newest state in results/2026-11-14_poco_psb_sfh/<TID>/<MODEL>/. Python stops TLIM s into the
 # job; an unfinished run then requeues itself, at most 5 times (REQUEUE=0 turns that off). As the
 # emline ladder prod.slurm. After check.slurm. Use GIB=10 for the Cue models. A finished fit is then
-# predicted in the same job (predict.py --model). Submit from $RUN on stampede3:
+# predicted in the same job (predict.py --model). Submit from $RUN:
 #   TID=<TARGETID> MODEL=<model> sbatch --export=ALL -J psb_<TID>_<MODEL> experiments/2026-11-14_poco_psb_sfh/prod.slurm
 #SBATCH -p spr
 #SBATCH -N 8

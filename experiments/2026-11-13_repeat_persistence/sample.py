@@ -1,12 +1,7 @@
 """Select cont-flow outliers above S/N 8 and a control matched in S/N and z.
 
-Outliers are DESI targets flagged by cont10 or cont15 (log p at or below the run threshold) with
-latent-cut median S/N > 8. The control is three times as many targets flagged by neither flow,
-drawn in cells of S/N (edges 8, 9, 10, 11, 12, 13, 15, 18, 22, 30, inf) and z (0.05 bins) with the
-outlier counts per cell, or all of the cell when it has fewer.
-INPUTS: results/2026-11-09_mocks_v2_outliers/flows/desi_outliers_flow_nsf_cont{10,15}latent_snr3.pt;
-data/dataset_z_snr.npz.
-SEED: 0 (numpy default_rng).
+Outliers are cont10 or cont15 flags with latent-cut S/N > 8. Controls are three times as many
+unflagged targets drawn in cells of S/N and z (0.05 bins), seed 0.
 COMMAND: ``uv run --no-sync python experiments/2026-11-13_repeat_persistence/sample.py``.
 OUTPUT: results/2026-11-13_repeat_persistence/targets.npz (outlier, control).
 """

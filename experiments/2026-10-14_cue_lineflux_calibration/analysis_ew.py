@@ -1,27 +1,15 @@
 """Does Cue's strong-line O/H depend on EW(Hbeta), as the 20-galaxy subset suggests?
 
-QUESTION: in the 20-galaxy subset, Cue O/H rises with mass for EW(Hbeta) > 20 A (Spearman +0.60, 12)
-and falls for EW <= 20 A (-0.48, 8), and the three galaxies stuck at low O/H with high N/O all have
-EW < 20 A. Does that hold for 80 galaxies stratified by EW and mass?
-
-HYPOTHESIS: at low EW, diffuse or evolved-star ionized gas that Cue does not model drives the fits
-to low U, high N/O and low O/H, with the held-out [OII]7325 over-predicted. Above some EW the fits
-give a rising MZR and 7325 near 1.
-
-INPUTS: lineflux_table.fits, subset_20.txt (subset.py) and subset_ew60.txt (subset_ew.py), and
-fits/<TARGETID>_strong_emfit_mu0.4_zs-0.41.npz (fit.py --lines strong, flat priors) in
-results/2026-10-14_cue_lineflux_calibration/. Cue O/H = gas_logz + 8.71, weighted median. A low-Z
-solution means O/H < 8.2 with gas_logno > 0. Held-out ratios use lines with S/N >= 3. chi2 per line
-is at the median model of the 200 posterior draws with the measurement and Cue emulation errors.
-Galaxies at z <= 0.01 are listed but left out of the statistics.
-
+QUESTION: in subset_20, Cue O/H rises with mass for EW(Hbeta) > 20 A (Spearman +0.60, 12) and falls
+for EW <= 20 A (-0.48, 8). Does that hold for 80 galaxies stratified by EW and mass?
+HYPOTHESIS: at low EW, diffuse or evolved-star ionized gas that Cue does not model drives fits to
+low U, high N/O, low O/H and over-predicted [OII]7325. Above some EW, a rising MZR and 7325 near 1.
+INPUTS: lineflux_table.fits, subset_20.txt, subset_ew60.txt and
+fits/<TARGETID>_strong_emfit_mu0.4_zs-0.41.npz in results/2026-10-14_cue_lineflux_calibration/.
 SEED: none.
-
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/analysis_ew.py``
 from the repository root.
-
 RESULT: not yet run.
-
 FIGURES: ew_compare.txt and ew_compare.png in results/2026-10-14_cue_lineflux_calibration/.
 """
 

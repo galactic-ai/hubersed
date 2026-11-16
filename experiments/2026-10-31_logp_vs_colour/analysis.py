@@ -4,12 +4,10 @@ QUESTION: does seed 0 continuum-flow log p fall as the spectrum's colour departs
 photometry, across the whole sample?
 HYPOTHESIS: none registered.
 INPUTS: stored log p of results/wide_flow_corrected/, data/fastspec-iron-sv3-bright.fits.
-dgr = -2.5 log10[(FLUX_SYNTH_G / FIBERTOTFLUX_G) / (FLUX_SYNTH_R / FIBERTOTFLUX_R)], drz likewise.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_logp_vs_colour/analysis.py``.
-RESULT: 2026-10-31. Flag rate rises steeply for dgr < 0 only (cont10 0.8% at 0 to 0.05, 15% at
--0.15 to -0.1, 25% at -0.25 to -0.2), in every z x SNR_B cell. dgr < -0.1 is 2.5% of all spectra,
-24% of cont10 flags and 39% of cont15 flags.
+RESULT: 2026-10-31. Flag rate rises steeply for dgr < 0 only, in every z x SNR_B cell. dgr < -0.1
+is 2.5% of all spectra, 24% of cont10 flags and 39% of cont15 flags.
 FIGURES: results/2026-10-31_logp_vs_colour/logp_colour.txt and logp_colour.png.
 """
 

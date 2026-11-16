@@ -2,15 +2,11 @@
 
 QUESTION: in how many galaxies of the sample can [OII]7320,7330, [SIII]6312 and [OIII]4363 pull on
 the gas temperature and n_H of a Cue fit, as they do in 39627770174637084?
-
-INPUTS: data/all_target_ids.npy (the spender sample) and the iron SV3 bright FastSpecFit VAC in
-data/. Star-forming means Halpha, Hbeta, [OIII]5007 and [NII]6584 at S/N >= 3 and below the
-Kauffmann+03 line. [OII]7320,7330 is the sum of both lines. A line with FLUX_IVAR 0 counts as not
-detected. SEED: none.
-
+INPUTS: data/all_target_ids.npy and the iron SV3 bright FastSpecFit VAC in data/.
+SEED: none.
 COMMAND: ``uv run python experiments/2026-10-14_auroral_snr_fraction/analysis.py`` from the repository root.
-
 RESULT: see results/2026-10-14_auroral_snr_fraction.txt.
+Assumptions: SF is S/N >= 3 in Ha, Hb, [OIII]5007, [NII]6584 below Kauffmann+03, FLUX_IVAR 0 undetected.
 """
 
 import numpy as np

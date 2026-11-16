@@ -1,19 +1,16 @@
 """Are the 92 canonical continuum outliers still outliers in their other DESI DR1 spectra (#17)?
 
-QUESTION: for each of the 92 (cont of results/prescreened_outliers_postsimbad.npz), do its other DR1
-coadds (main bright, main dark, SV3 dark, SV1) score as outliers in the seed 0 cont10 and cont15
-flows, and how do they differ from its SV3 bright coadd?
+QUESTION: do the other DR1 coadds (main bright, main dark, SV3 dark, SV1) of each of the 92 score as
+outliers in the seed 0 cont10 and cont15 flows, and how do they differ from its SV3 bright coadd?
 HYPOTHESIS: none registered. An outlier set by one bad exposure, fibre or sky should not repeat;
 one set by the galaxy (broad lines, real continuum) should.
-INPUTS: results/2026-11-01_repeats92/sparcl_spectra.npz (fetch.py), the DESIchunk1024 pkl spectra
-for the check, encoders and seed 0 flows as 2026-10-31_dark_latent_39633433328091196. Each SPARCL
-spectrum goes through spender's steps after the arm merge (mask or ivar <= 1e-6 to zero weight,
-skyline mask, median at rest 5300-5850 A) with its own redshift.
+INPUTS: cont of results/prescreened_outliers_postsimbad.npz, the DESIchunk1024 pkl spectra,
+results/2026-11-01_repeats92/sparcl_spectra.npz, encoders and seed 0 flows as
+2026-10-31_dark_latent_39633433328091196.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_repeats92/analysis.py``.
 RESULT: pending.
-FIGURES: results/2026-11-01_repeats92/ repeats.txt, check.txt and pairs/<NN>_<TARGETID>.png (flux, not
-normalised) for the targets with another spectrum.
+FIGURES: results/2026-11-01_repeats92/ repeats.txt, check.txt and pairs/<NN>_<TARGETID>.png.
 """
 
 # %%

@@ -1,52 +1,14 @@
 """Drop [SII] (and [OI]) from the Cue fits. Do they hold metal-rich galaxies on the low branch?
 
-QUESTION: forced onto the upper branch, Cue raises U, over-predicts [OIII] and [SII]6716 and
-under-predicts [OII]3727. [SII] could mislead a single Cue cloud for two reasons. Cue fixes S/O at
-solar (Li+24 arXiv:2405.04598 main.tex:91; a fixed S/O biases Cue O/H, Korhonen Cuestas+26
-arXiv:2609.22488 second_draft.tex:406-407), and [SII] and [OI] can carry emission from gas outside
-HII regions (Raesfeld+26 arXiv:2609.27081 p6-7 fit Cue without S, Ar and low-ionization lines and
-find ~50% excess in both). With the lines left out of the likelihood (still predicted), does Cue
-O/H move to the upper branch and follow N2 and mass? Held-out [SII] and [OI] under-predicted points
-to a low-ionization excess; [SII] over-predicted with [OI] fine points to S/O.
-
-Optional further arguments name extra lines to drop with [SII], for example ``OI6300`` (as
-Raesfeld+26 do), or ``nicholls`` for fit.py --prior nicholls (free fits only); files then get the
-suffix _<arguments>. Strong lines alone need an N/O-O/H or U-O/H relation to pick a branch
-(Korhonen Cuestas+26 second_draft.tex:441).
-
-``compare`` also sets Cue O/H with and without [SII] against direct T_e O/H for the subset_20
-galaxies kept by direct.py (direct_wild0.4_campbell_r2_subset_20.fits, KEEP).
-
-``jobs`` writes nosii/jobs.txt, one fit.py command per line. It holds free fits without [SII] for
-the 80 galaxies of subset_20.txt and subset_ew60.txt and the 10 of control/control_ids.txt, and fits
-forced to 12+log(O/H) >= forced.ZMIN_OH without [SII] for forced_ids.txt and the controls.
-``compare`` writes nosii/nosii_compare.txt. Per galaxy it gives O/H, U and N/O with and without
-[SII], the change of the best data log likelihood forced minus free without [SII], and model/data of
-the held-out [SII] and of [OIII]5007, [OII]3727 and [OI]6300. Then it gives Spearman rho of Cue O/H
-with N2 and log M* over galaxies at z > Z_MIN, and the median posterior weight above
-forced.ZMIN_OH for N2 > N2_MIN.
-
-Excess [OI] is computed as in Raesfeld+26 (p7, eq. 2), f = 1 - L_Cue / L_obs from the fit without
-[SII] (and [OI]), by Monte Carlo over N_MC draws of the observed flux (Gaussian error) and of the
-200 saved posterior predictions. It is reported only where the predicted log [OII]3727/[OIII]5007 is
-within 1 sigma of the observed (flux errors and prediction spread in quadrature), their cut for a
-fit that describes the HII regions.
-
+QUESTION: without [SII] (and [OI]) in the likelihood, does Cue O/H reach the upper branch and follow
+N2 and mass? Is held-out [SII] and [OI] low (low-ionization excess) or [SII] alone high (S/O)?
 SEED: SEED for the Monte Carlo.
-
-RESULT: 2026-10-15, fits on ls6 idev. Direct T_e O/H follows N2 (rho +0.85, 19 galaxies); Cue does
-not in any variant. Cue - direct median [16, 84], rho: all lines -0.08 [-0.49, +0.41], -0.39; no
-[SII] +0.46 [-0.18, +0.69], +0.25; no [SII] + Nicholls +0.33 [-0.20, +0.63], +0.32; no [SII] and
-[OI] +0.20 [-0.23, +0.58], +0.10. Without [SII] most galaxies go to the upper branch (metal-poor
-ones included, 8.3-8.6 at direct 7.4-8.1), and held-out [SII] on the upper branch is 1.4-2.6x the
-data. Without [SII] and [OI], held-out [OI] model/data is 0.58 (N2 <= -0.8) and 0.81 (N2 > -0.8),
-f_exc[OI] 0.42 and 0.22, the sign of Raesfeld+26; the [OII]/[OIII] cut passes 76 of 78, so it does
-not vet these fits. The low direct values may themselves be biased low (n_e at the floor).
-
+RESULT: 2026-10-15. Direct T_e O/H follows N2 (rho +0.85, 19). Cue does not in any variant. Without
+[SII] most galaxies go to the upper branch, and held-out [SII] there is 1.4-2.6x the data.
+Assumptions: the low direct values may themselves be biased low (n_e at the floor).
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/nosii.py jobs
-[OI6300]``; then each line of the job file from the repository root (ls6 idev); then ``nosii.py
+[OI6300]``; then each line of the job file from the repository root; then ``nosii.py
 compare [OI6300]``.
-
 OUTPUT: jobs[_<lines>].txt and nosii_compare[_<lines>].txt in
 results/2026-10-14_cue_lineflux_calibration/nosii/.
 """

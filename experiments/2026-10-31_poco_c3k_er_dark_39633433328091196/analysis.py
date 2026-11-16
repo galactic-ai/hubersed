@@ -1,33 +1,20 @@
 """Posterior dust of the pocoMC C3K ER fit of the SV3 dark spectrum of 39633433328091196 (#17).
 
-QUESTION: what are dust2, dust_index, A_V and E(B-V) once logzsol, afe, the SFH and its
-hyperparameters are marginalised? Does the posterior exclude dust2 = 0, and how does dust trade
-against logzsol and afe?
+QUESTION: what are dust2, dust_index, A_V and E(B-V) with all else marginalised? Does the posterior
+exclude dust2 = 0, and how does dust trade against logzsol and afe?
 HYPOTHESIS: none registered.
-INPUTS: pmc_final.state in poco_neff1024_forktest (iterations 1-21 from skx-dev job 3664872, the rest
-from spr job 3664976 after the resume), copied from stampede3. The model of fit.py for the prior
-transform (no FSPS). The dark MAP <TID>_map.npz of 2026-10-30_continuum_39633433328091196_dark_map.
-A_V = A(5500 A), E(B-V) = A(4400) - A(5500), from the diffuse KC13 curve as in
-2026-10-29_c3k_vs_miles_dust/analysis.py; the birth cloud is left out.
+INPUTS: pmc_final.state in poco_neff1024_forktest, the model of fit.py, <TID>_map.npz of
+2026-10-30_continuum_39633433328091196_dark_map, KC13 as 2026-10-29_c3k_vs_miles_dust/analysis.py.
 SEED: 0, for 20000 draws of the prior.
-COMMAND: from the repository root on the Mac,
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-31_poco_c3k_er_dark_39633433328091196/analysis.py``.
-RESULT: 2026-10-31, posterior.txt. ESS 4506, log Z 85365.236 +- 0.145. E(B-V) 0.124 (68% 0.114-0.136),
-A_V 0.530 (0.410-0.657), dust2 0.488 (0.378-0.606), dust_index +0.07 (-0.25 to +0.27, piled toward the
-+0.4 prior edge). dust2 = 0 is excluded: 0.5% quantile 0.26, P(A_V < 0.05) 0 of 5203 against 0.028 in
-the prior. A_V follows dust_index (r +0.92) and logmass (+0.89); E(B-V) is the tight quantity. Dust
-barely trades with logzsol (r +0.19) or afe (-0.33). The MAP sits low: E(B-V) 0.098 at the 0.3rd
-percentile, logzsol 0.148 at the 2.3rd. Assumptions: one dark exposure, C3K ER, #14 hyperparameter
-priors, dust_index prior edge at +0.4, monochromatic E(B-V), diffuse dust only. best_fit.png:
-max-likelihood sample chi2 4768.7 against the dark MAP's 4791.3 on 4538 px; the two models overlap.
-prior_edges.txt: tau_eq, sigma_dyn and tau_dyn reach their lower prior bounds, dust_index its upper
-one. The MAP's logsfr_ratios 2 and 3 lie beyond every posterior sample (pct 0.0 and 100.0),
-and 1, 4, 5 and 7 outside the 95% range (pct 97.7, 2.2, 98.0, 1.2).
+RESULT: 2026-10-31. E(B-V) 0.124 (68% 0.114-0.136), A_V 0.530 (0.410-0.657), dust2 0.488
+(0.378-0.606, 0.5% quantile 0.26), dust_index +0.07. Dust barely trades with logzsol or afe.
+Assumptions: one dark exposure, C3K ER, #14 hyperparameter priors, dust_index prior edge at +0.4,
+monochromatic E(B-V), diffuse dust only.
 FIGURES: results/2026-10-31_poco_c3k_er_dark_39633433328091196/ posterior.txt, attenuation.png,
-best_fit.png from <TID>_poco_maxl.npz of predict.py (max-likelihood sample), prior_edges.txt, and the
-corners corner.png (dust), corner_stars_dust.png, corner_sfh.png and corner_all_ssfr.png (with the
-sSFR posterior from 2000 draws, seed 0), all in the style of corner_sfh.py of 10-19, with axes over
-the central 99.8% of the posterior plus 5%, prior bounds dashed and no points marked.
+best_fit.png (<TID>_poco_maxl.npz of predict.py), prior_edges.txt, corner.png,
+corner_stars_dust.png, corner_sfh.png, corner_all_ssfr.png.
 """
 
 # %%
@@ -50,7 +37,7 @@ DARK = RES / "2026-10-30_continuum_39633433328091196_dark_map"
 N_PRIOR = 20000
 AV_CUT = 0.05  # mag, for prior and posterior mass below it
 # lnlike of the dark MAP point (hyperparameters fixed at the HR max-L) under this likelihood, from
-# the check step of fit.py on stampede3 (logs of jobs 3664748 and 3664872)
+# the check step of fit.py
 MAP_LNL = 85382.223465
 CORNER = ["dust2", "dust_index", "A_V", "E(B-V)", "logzsol", "afe"]
 TABLE = [
@@ -78,11 +65,7 @@ def load_sampler(path):
 
 
 def kc13_curve(lam, delta):
-    """Return the FSPS dust_type 4 curve, tau(lam) / tau_V, for rest ``lam`` in A.
-
-    It is the Calzetti curve over 4.05, plus a 2175 A Drude bump of strength 0.85 - 1.9 delta,
-    times (lam / 5500)^delta, as 2026-10-29_c3k_vs_miles_dust/analysis.py.
-    """
+    """Return the FSPS dust_type 4 curve, tau(lam) / tau_V, for rest ``lam`` in A."""
     lam = np.asarray(lam, float)
     delta = np.atleast_1d(np.asarray(delta, float))[:, None]
     x = 1e4 / lam

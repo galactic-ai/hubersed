@@ -1,9 +1,5 @@
-"""Add a sky-like blue excess to normal spectra and re-score them with both flows (#17).
+"""Add the SV3 bright-minus-dark excess of 39633433328091196 to normal spectra and re-score (#17).
 
-The excess is the smoothed SV3 bright minus scaled SV3 dark spectrum of 39633433328091196 (dark
-scaled to the bright median redward of 5500 A). Galaxies are those of inject.py. Each galaxy gets
-the excess scaled to give a target dgr through the BASS g and r curves, then spender's
-normalisation, encoding and scoring.
 COMMAND: ``uv run --no-sync python -u experiments/2026-10-31_logp_vs_colour/sky_inject.py``.
 OUTPUT: results/2026-10-31_logp_vs_colour/sky_inject.txt and sky_inject.png.
 RESULT: 2026-10-31. At injected dgr -0.1 / -0.2 / -0.3, 8.8 / 42.9 / 62.7% (cont10) and

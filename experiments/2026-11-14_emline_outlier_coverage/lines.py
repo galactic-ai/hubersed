@@ -1,18 +1,6 @@
 """Measure the same emission-line EWs on the 58 emission_line outliers and on every v2 mock.
 
-For analysis.py (plan ~/.claude/plans/emline_outliers_coverage_2026-11-14.md).
-INPUTS: experiments/2026-11-13_gallery105/review.tsv and results/2026-11-13_gallery105/
-gallery105.tsv (the 58 emission_line targets); DESI coadds through load_by_index (f_lambda, ivar);
-data/prospector_model/mocks_v2_500000.h5 (noiseless fluxes in maggies on the DESI grid, redshifts,
-failed).
-METHOD: rest-frame EW, emission positive, on the raw spectrum (lines and stellar absorption
-together, alike in data and mocks), as band width times the mean of (F - C) / C over good pixels
-of the main band, C the line between the sideband medians. Bands from Westfall et al. (2019,
-arXiv:1901.00856, emissionlines.tex l.43-64, vacuum) for [OII] 3727, Hbeta, [OIII]5008, Halpha,
-[NII]6585, [SII]6718+6733 (main 6711.3-6739.7). NaN when a band has under 25% good pixels. Mock
-maggies are turned to f_lambda by 1 / lambda^2 (the constant cancels). DESI EW errors propagate the
-main band pixel errors and the sideband median errors (1.253 sigma / sqrt(n)), continuum taken as
-exact otherwise.
+Raw-spectrum rest-frame EWs in Westfall et al. (2019) bands, for analysis.py.
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_emline_outlier_coverage/lines.py``.
 OUTPUT: results/2026-11-14_emline_outlier_coverage/{ew_desi.npz, ew_mocks.npz}.
 """
@@ -40,10 +28,7 @@ CHUNK = 5000
 
 
 def ew_batch(rest, flam, good, bands, err=None):
-    """Return the EWs (and errors when ``err`` is given) of a batch of spectra for one line.
-
-    ``rest``, ``flam``, ``good`` and ``err`` have shape (n, npix).
-    """
+    """Return the EWs (and errors if ``err`` is given) for one line of (n, npix) spectra."""
     (m0, m1), (b0, b1), (r0, r1) = bands
     inb = [(rest >= lo) & (rest <= hi) for lo, hi in bands]
     ok = np.ones(rest.shape[0], bool)

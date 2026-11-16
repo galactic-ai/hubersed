@@ -1,9 +1,7 @@
 """Save sky brightness, seeing and effective time of every exposure in the extract_<nn>.npz files.
 
-One query of desi_dr1.exposure on the Astro Data Lab TAP service, as
-2026-10-31_spectrum_qa_cont_outliers/exposures.py, for the EXPIDs of every extract_<nn>.npz.
-
-COMMAND: from the repository root on the Mac,
+One desi_dr1.exposure query on Astro Data Lab TAP, as 2026-10-31_spectrum_qa_cont_outliers.
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-11-13_exposures_gallery105/conditions.py``.
 OUTPUT: results/2026-11-13_exposures_gallery105/conditions.csv.
 """

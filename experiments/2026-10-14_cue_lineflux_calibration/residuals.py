@@ -1,20 +1,12 @@
 """Which lines Cue misses in the real galaxies, metal-rich against metal-poor, from existing fits.
 
-QUESTION: the mocks (analysis_mocks.py) show the strong lines separate Z and N/O within Cue, so the
-real metal-rich galaxies' low-Z, high-N/O, low-U solutions point to spectra Cue does not reproduce.
-Which lines does it miss in them?
-
-For each galaxy of subset_20.txt it reads fits/<TARGETID>_strong_emfit_mu0.4_zs-0.41.npz (flat
-priors). It gives the median over the 200 posterior draws of model/data for every line, and chi =
-(data - median model) / sqrt(err^2 + emulation error^2), with the emulation error from Cue's
-line_frac_error at the median model flux. A galaxy is metal-rich if observed N2 = log
-[NII]6584/Halpha > N2_CUT, metal-poor otherwise. Lines with S/N < 3 are left out.
-
+QUESTION: within Cue the strong lines separate Z and N/O (analysis_mocks.py). Which lines does Cue
+miss in the real metal-rich galaxies with low-Z, high-N/O, low-U solutions?
+INPUTS: subset_20.txt and fits/<TARGETID>_strong_emfit_mu0.4_zs-0.41.npz in
+results/2026-10-14_cue_lineflux_calibration/.
 SEED: none.
-
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/residuals.py``
 from the repository root.
-
 OUTPUT: residuals.txt in results/2026-10-14_cue_lineflux_calibration/.
 """
 

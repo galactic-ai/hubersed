@@ -1,35 +1,12 @@
 """MAP fits of 39627770174637084 with the resolution matrix and the median LSF, with and without line masks.
 
-QUESTION: with the row-weighted recoadd and the corrected ivar, how do the resolution-matrix model
-and the median-LSF control compare, and what changes when the emission lines missing from the Cue
-line list (H11, H12, He I 5016, He I 7281, Pa11 to Pa16) are masked at rest +-4 A?
-
-HYPOTHESIS: masking takes out pixels neither model can fit, so the chi2 of both drops by the
-missing-line excess (42.5% of the continuum excess in continuum_check.txt of the 10-09 folder)
-and the parameters that pushed against those pixels move. The line results of the 10-09 MAP test
-(Cue line fluxes up 7-17%, eline_sigma_forb off its floor with R) should not depend on the mask.
-
-Four runs from the ER max-L point of the 10-09 nautilus run (model_setup.py), each with the SFH
-hyperparameters sigma_reg, tau_eq, sigma_dyn and tau_dyn fixed at max-L and one Powell start
-(hubersed.fitting.map_fits.map_fit), as map_resolution.py in the 10-09 folder. They are rmatrix
-and median, each with and without the mask. With the mask sigma_smooth drops from about 31 to
-21 km/s. Two more mask settings find which masked pixels drive it. mask_noPa16 leaves Pa16 unmasked,
-whose window starts 0.47 A red of the Ca II 8500.36 A line (NIST, vacuum). mask_noH1112 leaves H11
-and H12 unmasked, which sit on the stellar H11 and H12 absorption. Neither moves sigma_smooth back,
-so mask_noPa1112 and mask_noHeI leave Pa11 and Pa12, or He I 5016 and 7281, unmasked.
-
-INPUTS: the 10-09 ``_pred.npz`` (start point), resolution_matrix_rows_ivar.npz and
-resolution_matrix.npz of the 10-09 folder, and the DESI spectrum as hubersed.io.desi reads it.
-SEED: none (one start, no jitter).
-
-COMMAND: from the repository root on the Mac with the C3K_ER build, one process per run,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+Runs rmatrix and median from the 10-09 ER max-L point with each mask setting. Expected chi2 to drop
+by the missing-line excess and the line results not to depend on the mask. Run from the repository
+root, one process per run, as
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
 experiments/2026-10-13_nautilus_resolution_matrix/map.py {rmatrix,median}
 {nomask,mask,mask_noPa16,mask_noH1112,mask_noPa1112,mask_noHeI} [--maxfev N]``, then ``... map.py report``.
-
-OUTPUT: map_<lsf>_<mask>.npz, map.txt and map_windows_<mask>.png in
-results/2026-10-13_nautilus_resolution_matrix/.
 """
 
 import argparse
@@ -151,11 +128,7 @@ def describe(model, obs, cue, theta, masked_good):
 
 
 def plot_windows(states, obs, z, masked_lines, path):
-    """Plot the data and each run's spectrum in the line windows, with chi below on -7 to 7.
-
-    The data are a line. Pixels that are not fitted are left empty, and the masked lines are
-    shaded.
-    """
+    """Plot the data and each run's spectrum in the line windows, with chi below on -7 to 7."""
     use_apj_style()
     o = obs[0]
     rest = o.wavelength / (1 + z)

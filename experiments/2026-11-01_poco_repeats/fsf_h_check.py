@@ -1,16 +1,7 @@
 """Check the h convention of FastSpecFit v3.0 distances, masses and absolute magnitudes.
 
-QUESTION: are FastSpecFit distances in Mpc/h used as Mpc (h = 1), and what h converts them?
-Two checks:
-1. The fiducial distance table of fastspecfit 3.1.5 (data/desi_fiducial_cosmology.dat, comoving
-   distance in Mpc/h) against astropy Planck18 comoving distances in Mpc. Their ratio is h.
-2. FastSpecFit sets ABSMAG = m_oband - dmod - KCORR (photometry.py:282) with m from the
-   dereddened Legacy Surveys flux (io.py:72-76). So m - ABSMAG01_SDSS_R - KCORR01_SDSS_R returns
-   dmod for the band it used. For each object the band (g, r, z, W1) closest to the h = 1 modulus
-   is taken, then compared with the h = 1 and Planck18 moduli.
-If dmod is the h = 1 one, the physical stellar mass is LOGMSTAR - 2 log10 h.
-INPUTS: data/fastspecfit_v3.0/fastspec-iron-sv3-bright.fits; the fastspecfit 3.1.5 table, path
-given with --table (tag 3.1.5 tarball, py/fastspecfit/data/).
+Compares the ABSMAG moduli of data/fastspecfit_v3.0/fastspec-iron-sv3-bright.fits with Planck18.
+--table is desi_fiducial_cosmology.dat of the fastspecfit 3.1.5 tarball (py/fastspecfit/data/).
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_poco_repeats/fsf_h_check.py --table <dat>``.
 OUTPUT: results/2026-11-01_poco_repeats/fsf_h_check.txt.
 """

@@ -13,7 +13,7 @@
 # and pool. With fit_fork.py the workers share about 15 GB of FSPS setup copy on write, and each
 # worker adds about 2.7 GB of its own. At pool 96 this fit reached 228 of the 250 GiB node in
 # exploration, JAX compiles in 7 workers failed with "LLVM ERROR: Unable to allocate section
-# memory!" and the pool hung (job 3502602), so the pool is 64.
+# memory!" and the pool hung, so the pool is 64.
 #SBATCH -p development
 #SBATCH -N 1
 #SBATCH -n 1

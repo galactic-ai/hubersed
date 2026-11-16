@@ -1,13 +1,13 @@
 """How much the DR1 coadd LSF width varies across parent targets.
 
-QUESTION: Is the effective LSF sigma of the DR1 coadd resolution matrix stable enough across
+QUESTION: is the effective LSF sigma of the DR1 coadd resolution matrix stable enough across
 targets that a ~10k random subset of real matrices covers the variation for the new mocks?
-HYPOTHESIS: The 5-95% quantiles of sigma per wavelength settle by a few hundred targets.
+HYPOTHESIS: the 5-95% quantiles of sigma per wavelength settle by a few hundred targets.
 INPUTS: results/2026-11-09_r_matrix_survey/survey.npz (survey.py run, 1,000 targets, seed 0).
 SEED: 0 for the subsamples.
 COMMAND: ``uv run python experiments/2026-11-09_r_matrix_survey/analysis.py``.
-RESULT: 1,000 of 1,000 found (job 3698233, run with -p spr). sigma 55 km/s (3700 A) to 24 (9500 A);
-(p95-p5)/p50 0.05-0.11. n=300 vs 1,000 within 1.5% (passes 2%), n=100 2.6% (fails).
+RESULT: sigma 55 km/s (3700 A) to 24 (9500 A), (p95-p5)/p50 0.05-0.11. n=300 vs 1,000 within 1.5%
+(passes 2%), n=100 2.6% (fails).
 Assumptions: second moment summarises R; tails beyond p5/p95 not checked.
 FIGURES: none (table only).
 """
@@ -18,7 +18,7 @@ import numpy as np
 from hubersed.paths import PATHS
 
 OUT = PATHS["RESULTS"] / "2026-11-09_r_matrix_survey"
-THRESH = 0.02  # max relative difference of the 5-95% quantiles, 300 vs 1,000 (Nikhil 11-09)
+THRESH = 0.02  # max relative difference of the 5-95% quantiles, 300 vs 1,000
 LAMS = (3700, 4300, 4861, 5007, 5500, 6563, 7500, 8500, 9500)
 
 d = np.load(OUT / "survey.npz")

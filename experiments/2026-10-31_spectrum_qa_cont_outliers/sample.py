@@ -1,16 +1,8 @@
 """Rebuild the 94 common continuum outliers from the seed 0 flows and the 2026-09-04 screen CSVs.
 
-The cuts and their order are those of the issue #10 table of 2026-09-04. A galaxy is a common
-outlier when both seed 0 continuum flows flag it. Then, in order, (1) it must be in the
-FastSpecFit VAC, (2) VAC z must lie in [0.01, 0.6] and |z_pipeline - z_VAC| / (1 + z_VAC) <= 0.01,
-(3) Gaia star, (4) SGA-2020 proximity, (5) SIMBAD AGN or star, (6a) Legacy PSF
-with fewer than 2 forbidden species, (6b) BPT AGN, (7) shred. Steps 3 to 7 read the flags of the
-*_v2.csv screens in results/. The code that wrote those CSVs and screened_outliers_v4.npz was a
-scratch script that no longer exists, so the result is checked against both the #10 counts and
-screened_outliers_v4.npz.
-
-COMMAND: from the repository root on the Mac,
-``uv run --no-sync python experiments/2026-10-31_spectrum_qa_cont_outliers/sample.py``.
+Applies the issue #10 cuts, in order, to galaxies both seed 0 continuum flows flag. The *_v2.csv
+screens have no surviving code, so counts are checked against #10 and screened_outliers_v4.npz.
+COMMAND: ``uv run --no-sync python experiments/2026-10-31_spectrum_qa_cont_outliers/sample.py``.
 OUTPUT: results/2026-10-31_spectrum_qa_cont_outliers/sample94.npz and sample94.txt.
 """
 

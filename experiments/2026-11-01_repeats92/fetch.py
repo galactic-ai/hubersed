@@ -1,14 +1,8 @@
 """Fetch every DESI DR1 coadd spectrum of the 92 canonical continuum outliers from SPARCL.
 
-Targets are cont of results/prescreened_outliers_postsimbad.npz. All DESI-DR1 SPARCL records of each
-TARGETID (every survey and program) are saved with flux, ivar and mask on the 7781 pixel DESI grid
-and their catalogue fields. sparclclient is not a project dependency, so this runs in its own uv
-environment and does not import hubersed.
-
 COMMAND: from the repository root,
 ``uv run --no-project --python 3.13 --with sparclclient --with "numpy>=2" --with "pandas>=2.2"
 python experiments/2026-11-01_repeats92/fetch.py``.
-
 OUTPUT: results/2026-11-01_repeats92/sparcl_spectra.npz.
 """
 

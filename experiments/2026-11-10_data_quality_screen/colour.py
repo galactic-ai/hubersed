@@ -1,24 +1,15 @@
 """Does the spectrum's colour disagree with the imaging colour for the gallery92 artifacts?
 
-QUESTION: Bad sky subtraction or flux calibration changes the spectrum's shape but not the imaging.
-Does Delta(g-r) = (g-r) synthesized from the observed spectrum minus (g-r) of the Legacy Survey
-fibre flux separate the gallery92 artifacts (bad_sky above all) from the physical classes, and how
-do the old and new candidates compare with a random control?
+QUESTION: does Delta(g-r), spectrum-synthesized minus Legacy Survey fibre (g-r), separate the
+gallery92 artifacts from the physical classes, and how do candidates compare with a control?
 HYPOTHESIS: none stated before the run.
-INPUTS: FLUX_SYNTH_{G,R,Z} ("synthesized from the observed spectrum") and METADATA FIBERFLUX_{G,R,Z}
-("fiber flux corrected for Galactic extinction") of data/fastspec-iron-sv3-bright.fits, in nmgy,
-definitions from the fastspecfit data model (read 2026-11-10); results/2026-11-10_data_quality_screen/
-targets.npz; gallery92 labels as analysis.py. The spectrum ends at 9824 A, short of the full z
-band, so r-z is secondary.
+INPUTS: FLUX_SYNTH_{G,R,Z} and FIBERFLUX_{G,R,Z} of data/fastspec-iron-sv3-bright.fits,
+results/2026-11-10_data_quality_screen/targets.npz, gallery92 labels.
 SEED: none.
 COMMAND: ``uv run python experiments/2026-11-10_data_quality_screen/colour.py``.
-RESULT: D(g-r) outside the control central 95% [-0.12, +0.18]: bad_sky 80%, bad_data 69%,
-physical 40%, control 5%. One-sided D(g-r) < -0.25 (spectrum much bluer than imaging): bad_sky 7/10,
-bad_data 5/13, star 7/10, AGN 4/24, emission_line 0/17, quiescent 5/7, control 0%, candidates 10%.
-D(r) and D(r-z) catch bad_data (D(r) 46%, physical 4%). On the new screened list the blue rule
-flags 5/20 repeat-cleared, 2/28 robust, 6/115 without a repeat. Assumptions: FIBERFLUX (imaging
-model in a 1.5'' fibre) and the spectrum see the same light; AGN variability and strong lines also
-shift colours; gallery92 'quiescent' may hold sky artifacts.
+RESULT: D(g-r) outside the control central 95% [-0.12, +0.18] in bad_sky 80%, bad_data 69%,
+physical 40%, control 5%. D(g-r) < -0.25 flags bad_sky 7/10, emission_line 0/17, control 0%.
+Assumptions: FIBERFLUX and spectrum see the same light. AGN variability, strong lines shift colours.
 FIGURES: none (colour.txt).
 """
 

@@ -1,38 +1,15 @@
 """Do the single exposures of gallery105 figures 05, 67 and 99 agree with their coadds?
 
-Adapted from 2026-11-05_exposures_39627770174637084/analysis.py to a list of targets. 99 (z 0.015)
-is flagged by both cont flows in its SV3 (7 exposures) and main (1) coadds, with a kNN distance
-beyond every same-z mock (2026-11-14_cont_z_coverage). It has a blue continuum peaking near
-4000-4300 A, a narrow Halpha spike and a noisy blue end. Are these in every exposure?
-QUESTION: in 05 (39627770317246630) the SV3 bright coadd (2 exposures) has negative flux below rest
-3400 A, a step near rest 4850 A (observed ~5845 A, near the b/r overlap), Dn4000 5.1 and D(g-r) 0.69,
-and its main bright coadd is not flagged (repeats.csv, cleared). Is one SV3 exposure bad, with bright
-sky, poor seeing, low efftime or a FIBERSTATUS flag? In 67 (39633136522363591) the only coadd (SV3
-bright, 3 exposures) has HdA 7.0 +- 1.1 and HgA 6.6 +- 1.1 at Dn4000 1.53 (90th and 99th percentile
-of the parent at that break, 2026-11-13_hda_parent_67). Is the Balmer absorption in every exposure?
+QUESTION: is one SV3 exposure of 05 bad (sky, seeing, efftime, FIBERSTATUS), and are the Balmer
+absorption of 67 and the blue continuum and Halpha spike of 99 in every exposure?
 HYPOTHESIS: none registered. Descriptive, no threshold.
-INPUTS: results/2026-11-13_exposures_gallery105/extract_<nn>.npz (extract.py, DR1 iron healpix files)
-and conditions.csv (conditions.py). Arms are joined ivar-weighted as spender does. Excess is the
-median of exposure minus reference coadd flux (1e-17 erg/s/cm2/A) over good pixels in each rest
-window, at the SV3 redrock redshift. The reference is the main coadd for 05 and the SV3 coadd for
-67 (its only one) and 99. For 67 and 99, HdA and HgA of each exposure and coadd as gallery105 seed.py
-(lick_index copied unchanged); for 99 also Dn4000 and EW(Halpha) with the functions of
-2026-11-13_psb_fraction_like_for_like/measure.py, loaded by path.
+INPUTS: results/2026-11-13_exposures_gallery105/extract_<nn>.npz (extract.py) and conditions.csv
+(conditions.py).
 SEED: 0 (index noise draws).
 COMMAND: ``uv run --no-sync python experiments/2026-11-13_exposures_gallery105/analysis.py``.
-RESULT: 2026-11-13, exposures_05.txt and exposures_67.txt (job 3715509). 05: two of four SV3 exposures
-have BADPOSITION and are not in the coadd; both used (tile 261, fibre 4277, 2021-04-30, sky g 19.7-19.8)
-show blue -3.3 and red +0.6 against the main coadd, so the defect is common to that night, not one
-exposure. 67: HdA 6.1, 4.9, 9.0 and HgA 6.3, 4.0, 7.0 in its three exposures (errors 1.6-3.0), excess
-against the coadd below 0.35 in every window, so the Balmer absorption is in every exposure.
-2026-11-14, exposures_99.txt (job 3720588): no FIBERSTATUS flags in 7 SV3 + 1 main exposures. Every
-exposure has Balmer absorption (HdA 3.4-10.8, errors 2-5; main 10.1 +- 2.5), weak Halpha emission
-(EW 2.0-7.3 A; main 4.4) and Dn4000 0.99-1.36. The four 2021-05-10 exposures (tile 103, efftime
-77-113 s, seeing 1.2-1.45") sit up to ~+1.2 above the SV3 coadd in the blue and peak windows, tilting
-to ~0 in the red; the other SV3 exposures and the main one (2022-03-15) sit 0.1-0.5 below. The flagged
-main coadd is a single good exposure with the same blue, Balmer-absorbed shape, so 99's flag is its
-spectrum, not one exposure. Assumptions: per-exposure flux calibration; SV3 coadd as the reference
-for 67 and 99.
+RESULT: 05's excess (blue -3.3, red +0.6) is in both used SV3 exposures of one night. 67 has HdA
+6.1, 4.9, 9.0 in its three exposures. 99 has HdA 3.4-10.8 in all 8, so its flag is its spectrum.
+Assumptions: per-exposure flux calibration; SV3 coadd as the reference for 67 and 99.
 FIGURES: results/2026-11-13_exposures_gallery105/ exposures_<nn>.txt, full_<nn>.png,
 zoom_<nn>_<window>.png.
 """
@@ -79,12 +56,10 @@ COADD_STYLE = {"main": dict(color="k", lw=1.0), "sv3": dict(color="0.45", lw=1.0
 def merge_arms(d, prefix, k=None):
     """Return flux, ivar and mask on the DESI grid, arms joined as spender does.
 
-    Copy of merge_arms in 2026-11-02_exposure_checks/analysis.py.
-
     Parameters
     ----------
     prefix : str
-        ``sv3`` or ``main`` for the exposure in row ``k``, ``coadd_sv3`` or ``coadd_main`` for a coadd.
+        ``sv3`` or ``main`` for exposure row ``k``, ``coadd_sv3`` or ``coadd_main`` for a coadd.
     """
     wave = DESI._wave_obs.numpy()
     flux, ivar = np.zeros(wave.size), np.zeros(wave.size)

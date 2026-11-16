@@ -1,25 +1,12 @@
 """MAP fit and profiles of the same-ion null test of the second-component fractions.
 
-Changed from fit.py of 2026-10-13_oiii_second_component: [O III] 4959 and 5007 and [N II] 6548 and
-6584 each get their own second-component fraction (same_ion.py). Data, pixels, mask, resolution
-matrix, Cue with C3K_ER and the SFH hyperparameters fixed at the 10-09 max-L are unchanged.
-
-Actions.
-
-- ``check`` sets every per-line fraction to its group value at the best F1 point and asserts that
-  the spectrum equals the F1 model's and the chi2 equals the saved F1 chi2.
-- ``run`` runs ``map_fit`` (Powell, one start) from that point and saves fit_run.npz.
-- ``rerun`` reruns ``map_fit`` from the best saved fit and saves fit_rerun<k>.npz.
-- ``profile NAME V [V ...]`` fixes the per-line fraction NAME at each value V, re-optimizes the
-  other per-line fractions, the line profile parameters and the gas parameters from the best fit
-  with every other parameter held there, and saves profile_<NAME>_<V>.npz.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build, at most two at once, with
-``P=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-13_oiii_second_component:experiments/2026-10-13_same_ion_null``,
-``PYTHONPATH=$P SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+Differs from fit.py of 2026-10-13_oiii_second_component in a separate second-component fraction for
+each of [O III] 4959 and 5007 and [N II] 6548 and 6584 (same_ion.py).
+Run from the repository root, at most two at once, with
+``P=<site with the C3K_ER fsps>:experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-13_oiii_second_component:experiments/2026-10-13_same_ion_null``,
+``PYTHONPATH=$P SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
 experiments/2026-10-13_same_ion_null/fit.py check``, then ``... run``, ``... rerun`` until it
 does not move, then ``... profile eline_fbroad_oiii5007 0.1 0.125 ...`` for each per-line fraction.
-
 OUTPUT: fit_*.npz and profile_*.npz in results/2026-10-13_same_ion_null/.
 """
 

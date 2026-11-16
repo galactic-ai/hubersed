@@ -2,26 +2,15 @@
 
 QUESTION: the pocoMC posterior puts dust_index on its 0.4 ceiling. Is it held there by the blue end,
 the red end, or the whole spectrum?
-
-Starts at the pocoMC best point (highest ln L + ln prior of the 300 particles with the highest ln L)
-and maximises ln L + model.prior_product over dust2, dust_ratio, dust_index, logmass, logzsol and
-logsfr_ratios_1-9. Gas, line and SFH hyperparameters stay fixed (|r| <= 0.1 with dust_index).
-Powell, then Nelder-Mead. The masks are none, rest < 3800 A, rest > 7600 A and both. For each, n
-free, n = 0 and n = -0.7.
-
-RESULT: 2026-10-17, mask_refit.txt. Neither end holds n up. n free is 0.365 to 0.394 for all masks.
-The cost of n = 0 is +21.7 (none), +21.3, +36.9 and +35.1 (both), and of n = -0.7 +131 to +153. With
-the red end masked, dust_ratio goes to 0 at n = 0. The grey slope comes from the 3800-7600 A
-continuum together with the emission lines. logmass falls 0.10-0.19 dex at n = 0 and 0.20-0.33 dex
-at n = -0.7.
-
-INPUTS: pmc_final.state of poco.py. SEED: none.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+INPUTS: pmc_final.state of poco.py.
+SEED: none.
+COMMAND: from the repository root with the C3K_ER build,
+``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:<er_path>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-15_broadline_free_amplitude/mask_refit.py --state <path>``.
-
+RESULT: 2026-10-17. Neither end holds n up. n free is 0.365 to 0.394 for all masks, and n = 0 costs
++21.7 (none), +21.3, +36.9 and +35.1 (both). The 3800-7600 A continuum and lines set the slope.
+Assumptions: gas, line and SFH hyperparameters fixed at the pocoMC best point (|r| <= 0.1 with n).
 OUTPUT: mask_refit.txt next to the state file.
 """
 

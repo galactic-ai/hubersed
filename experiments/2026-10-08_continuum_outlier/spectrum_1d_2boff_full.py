@@ -1,13 +1,8 @@
-"""Runs 1d (MILES, no degrading) and 2b-off (C3K HR, degraded) of 39627757533007793, whole spectrum.
+"""Runs 1d (MILES, undegraded) and 2b-off (C3K HR, degraded) of 39627757533007793, whole spectrum.
 
-Data are the DR1 coadd from load_spectrum on every unmasked pixel, with a 9 pixel median filter.
-Each max-L model and chi is drawn on the pixels its run fitted. Chi of 2b-off is on its degraded
-data with the original DESI uncertainty, as in analysis.py.
-
-COMMAND: from the repository root on the Mac,
-``uv run --no-sync python experiments/2026-10-08_continuum_outlier/spectrum_1d_2boff_full.py``.
-
-OUTPUT: results/2026-10-08_continuum_outlier/39627757533007793/spectrum_1d_2boff_full.png.
+Data are the DR1 coadd with a 9 pixel median filter. Models and chi are on each run's fitted pixels.
+COMMAND: ``uv run --no-sync python experiments/2026-10-08_continuum_outlier/spectrum_1d_2boff_full.py``
+OUTPUT: results/2026-10-08_continuum_outlier/39627757533007793/spectrum_1d_2boff_full.png
 """
 
 # %%

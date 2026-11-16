@@ -1,18 +1,8 @@
 """Effective LSF width of the DR1 coadd resolution matrix for random parent targets.
 
-Changed from the previous experiment: resolution_check.py (2026-10-09) merged one target's matrix
-over the arms. This does the same merge for 1,000 random targets of the 104,990 parent and keeps
-the effective sigma of every row.
-
-``select`` (on the Mac) draws the targets from results/prescreened_sample_v1.npz with seed 0 and
-writes targets.txt (TARGETID, HEALPIX from data/fastspec-iron-sv3-bright.fits). ``run`` (on a
-stampede3 compute node) reads each target's B/R/Z_RESOLUTION from the DR1 coadd on /work, merges
-the arms with each column weighted by the unmasked ivar of its pixel (desispec coadd_cameras, as
-resolution_check.save_matrix), and stores per row the normalised second moment in km/s.
-
-COMMAND: on the Mac, ``uv run python experiments/2026-11-09_r_matrix_survey/survey.py select``.
-On stampede3, ``sbatch experiments/2026-11-09_r_matrix_survey/survey.slurm``.
-
+Arm-merged R of 1,000 random targets of the 104,990 parent, as resolution_check.py (2026-10-09).
+COMMAND: ``uv run python experiments/2026-11-09_r_matrix_survey/survey.py select``.
+Submit with ``sbatch experiments/2026-11-09_r_matrix_survey/survey.slurm``.
 OUTPUT: targets.txt next to this file; results/2026-11-09_r_matrix_survey/survey.npz.
 """
 
@@ -48,11 +38,7 @@ def select():
 
 
 def merged_matrix(h, idx, wave):
-    """Return the banded matrix of one target merged over the arms.
-
-    Each column is weighted by the unmasked ivar of its pixel, as in
-    resolution_check.save_matrix of 2026-10-09_nautilus_c3k_er_broadline.
-    """
+    """Return the banded matrix of one target merged over the arms, weighted by unmasked ivar."""
     res = {b: np.asarray(h[f"{b.upper()}_RESOLUTION"].data[idx], float) for b in "brz"}
     ndiag = max(r.shape[0] for r in res.values())
     rdata = np.zeros((ndiag, wave.size))

@@ -1,23 +1,15 @@
 """Which data-quality checks catch the gallery92 artifacts, and how often each fires per group.
 
-QUESTION: Do fibre QA bits, exposure conditions and Gaia neighbours within 5 arcsec separate the
-hand-labelled gallery92 artifacts (bad_sky, bad_data, star, fibre_2675) from the physical classes
-(AGN, emission_line, quiescent, composite)? How often does each check fire for the old and new
-candidates and for a random control?
+QUESTION: do fibre QA bits, exposure conditions and Gaia neighbours within 5 arcsec separate the
+gallery92 artifacts from the physical classes, and how often does each fire per group?
 HYPOTHESIS: none stated before the run.
-INPUTS: results/2026-11-10_data_quality_screen/{targets.npz, ztile.fits, exposure.fits,
-gaia5.fits} (fetch.py); data/iron_tileqa/<tile>/tile-qa-*.fits (QAFIBERSTATUS per tile and
-target); results/2026-11-01_gallery92/<class>/ (hand labels, the PNG names hold the TARGETID).
-Fibre bits from desispec maskbits.py (main branch, read 2026-11-10); bits 0, 1, 3 are information.
+INPUTS: results/2026-11-10_data_quality_screen/{targets.npz, ztile.fits, exposure.fits, gaia5.fits}
+(fetch.py), data/iron_tileqa/<tile>/tile-qa-*.fits, results/2026-11-01_gallery92/<class>/.
 SEED: none.
 COMMAND: ``uv run python experiments/2026-11-10_data_quality_screen/analysis.py``.
-RESULT: Gaia star within 5 arcsec (parallax/err > 5 or pm > 3 mas/yr) separates: G < 20 catches
-15/38 gallery artifacts (all 10 stars, 5/13 bad_data) and loses 2/53 physical (1 AGN, 1 emission
-line); G < 18 catches 12/38 and loses 0/53; control 1% / 0.4%. Fibre QA bits (coadd fiberstatus,
-tile-QA QAFIBERSTATUS) fire at similar rates in every group (LOWEFFTIME 17-26%). Worst-exposure
-conditions barely separate (sky g < 20: artifacts 42%, physical 34%, control 19%) and catch no
-bad_sky case. Assumption: gallery92 labels (91 continuum outliers) stand for artifacts in both
-branches.
+RESULT: a Gaia star within 5 arcsec separates. G < 20 catches 15/38 artifacts and loses 2/53
+physical, G < 18 catches 12/38 and loses 0/53. Fibre QA bits and conditions barely separate.
+Assumptions: gallery92 labels (91 continuum outliers) stand for artifacts in both branches.
 FIGURES: none (analysis.txt).
 """
 

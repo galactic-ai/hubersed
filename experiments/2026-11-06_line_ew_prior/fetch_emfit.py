@@ -1,13 +1,9 @@
 """Save the EmFit line fluxes of every DR1 SV3 bright spectrum from the Astro Data Lab.
 
-Synchronous queries of desi_dr1.emfit (Pucha+2026) for survey sv3, program bright, in HEALPix
-chunks, each checked against its row count, since sync returns only 2000 rows without TOP. Columns
-are TARGETID, redshift, and the flux of each component (narrow _n, outflow _out, broad Balmer _b)
-of Hbeta, [OIII]4959,5007, [NII]6548,6583, Halpha and [SII]6716,6731, in 1e-17 erg/s/cm2.
-
-COMMAND: from the repository root on the Mac,
+Queries desi_dr1.emfit in HEALPix chunks. Chunks in emfit_chunks/ let a rerun resume.
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-11-06_line_ew_prior/fetch_emfit.py``.
-OUTPUT: results/2026-11-06_line_ew_prior/emfit_sv3_bright.fits; chunks in emfit_chunks/ let a rerun resume.
+OUTPUT: results/2026-11-06_line_ew_prior/emfit_sv3_bright.fits.
 """
 
 import warnings

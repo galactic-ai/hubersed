@@ -1,15 +1,9 @@
 """Save every bright exposure and coadd of gallery105 figures 05, 67 and 99 from their healpix files.
 
-Adapted from 2026-11-05_exposures_39627770174637084/extract.py (itself as
-2026-11-02_exposure_checks/extract.py) to a list of targets. These are 05 (39627770317246630,
-healpix 25944, SV3 and main bright), 67 (39633136522363591, healpix 9841, SV3 bright only) and 99
-(39633421919584782, healpix 11231, SV3 and main bright). For each target and survey it saves the
-FIBERMAP columns, the per-arm flux, ivar and mask of every exposure from the spectra file, and the
-target's row of the coadd file. Run with the DESI environment.
+As 2026-11-05_exposures_39627770174637084/extract.py for healpix 25944, 9841 and 11231. Run with
+the DESI environment.
 COMMAND: ``$DESIPY extract.py <spectra dir> <out dir>`` through extract.slurm.
-OUTPUT: <out dir>/extract_<nn>.npz. Keys are <survey>_<column> for the exposures,
-<survey>_<arm>_<flux|ivar|mask> for the exposures and coadd_<survey>_<arm>_<flux|ivar|mask> for the
-coadds.
+OUTPUT: <out dir>/extract_<nn>.npz, keys <survey>_<column>, <survey>_<arm>_<flux|ivar|mask>, coadd_.
 """
 
 import sys

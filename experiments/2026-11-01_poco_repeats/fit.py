@@ -1,18 +1,8 @@
 """pocoMC fit of the C3K ER continuum model to one repeat-robust outlier of targets.txt (#17).
 
-Same as 2026-10-31_poco_quiescent/fit.py, for 39627836721463943 and 39633413535171842, which stay
-outliers in their other DR1 spectra (2026-11-01_repeats92; Dn4000 1.42 and 1.31, so not in the
-quiescent set; the 39633413535171842 fit was cancelled, a Gaia star sits 1.5 arcsec away), and for
-the quiescent 39632961871548329 and 39633416978694809 (targets_quiescent2.txt) and
-39633332836764152, 39633399748495657, 39633419142956044 (targets_quiescent3.txt). Changes from
-2026-10-31_poco_c3k_er_dark_39633433328091196/fit.py, loaded by path:
-the data are the target's SV3 bright DR1 coadd (load_spectrum) with its DR1 resolution matrix
-(resolution_matrix.py), the output folder is results/2026-11-01_poco_repeats/<TARGETID>/, the check
-step has no MAP to compare with, and a resumed state keeps this output folder (load_state also
-restores output_dir, a bug noted in handoff_2026-10-31_poco_dark_39633433328091196.md). Model, priors
-and sampler settings are those of that fit: continuum only, C3K ER, free afe and SFH hyperparameters,
-rest 3320 to 9000 A, n_effective 1024, n_active 512.
-COMMAND: on stampede3 through prep.slurm (check) and prod.slurm (runfork), for example
+As 2026-10-31_poco_quiescent/fit.py, for the two repeats92 outliers of targets.txt and the quiescent
+targets_quiescent2.txt and targets_quiescent3.txt, output in results/2026-11-01_poco_repeats/.
+COMMAND: through prep.slurm (check) and prod.slurm (runfork), for example
 ``ibrun <venv>/bin/python experiments/2026-11-01_poco_repeats/fit.py runfork --tid <TARGETID>``.
 """
 

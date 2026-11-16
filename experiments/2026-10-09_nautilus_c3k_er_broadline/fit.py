@@ -1,21 +1,13 @@
 """Helpers and the nautilus run for the 2026-10-09_nautilus_c3k_er_broadline experiment.
 
-Same model, priors and sampler settings as 2026-09-30_nautilus_c3k_broadline_split45, with two
-changes:
+SUPERSEDED BY: experiments/2026-10-10_nautilus_c3k_er_cotie_split.
+Same fit with three model changes, among them a soft C/O tie to O/H.
 
-- the stellar library is C3K_ER (R = 10000 at rest 3300.5-10000 A) instead of C3K_HR. ER is
-  sharper than DESI everywhere, so the data are no longer degraded. The model is smoothed to the
-  DESI resolution, and prospect subtracts the 12.7 km/s library resolution in quadrature.
-  Fitted pixels are at rest 3320 A or redder, away from the R = 200 part of ER below 3300.5 A;
-- the inverse variance is used as the pipeline gives it, so spender's skyline mask stays on in the
-  [OI] and [SII] windows (no SPARCL unmasking).
-
-FSPS comes from the C3K_ER build with AFE_FLAG (build_er_fsps.sh in 2026-10-09_c3k_er), put
-first on PYTHONPATH, with SPS_HOME holding the ER spectra. [alpha/Fe] stays at 0 here.
-
-Run from the repository root on an ls6 compute node with
-``PYTHONPATH=/work/11006/nikhilgaruda/ls6/research/fsps_builds/c3k_er_afe/fsps_site
-SPS_HOME=/work/11006/nikhilgaruda/ls6/research/sps_home_er uv run --no-sync python
+Differs from 2026-09-30_nautilus_c3k_broadline_split45 in the C3K_ER library instead of C3K_HR
+(data not degraded, rest 3320 A or redder) and the pipeline ivar with spender's skyline mask on.
+Run from the repository root with
+``PYTHONPATH=<site with the C3K_ER AFE_FLAG fsps>
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
 experiments/2026-10-09_nautilus_c3k_er_broadline/fit.py --tid 39627770174637084
 --forbidden-broad shared --pool 10 --n-batch 480``. ``--check-only`` runs the setup checks and
 exits without sampling.
@@ -53,25 +45,7 @@ N_EFF = 2000
 
 
 def load_data(tid, rest_max=9000.0):
-    """Load one DESI spectrum in maggies at the DESI resolution.
-
-    Parameters
-    ----------
-    tid : int
-        DESI TARGETID.
-    rest_max : float
-        Reddest rest-frame wavelength fitted, in Angstrom.
-
-    Returns
-    -------
-    z : float
-        Redshift.
-    flux, unc : np.ndarray
-        Flux and uncertainty in maggies on ``WAVE_OBS``. Pixels outside ``good`` have infinite
-        uncertainty.
-    good : np.ndarray of bool
-        Pixels with a positive inverse variance, at rest ``REST_MIN`` to ``rest_max``.
-    """
+    """Load one DESI spectrum in maggies at the DESI resolution."""
     s = load_spectrum(tid)
     z = float(s.redshift.value)
     flux = to_maggies(WAVE_OBS * u.AA, s.flux).value
@@ -85,24 +59,10 @@ def load_data(tid, rest_max=9000.0):
 def make_params(z, forbidden_broad, sigma_split):
     """Build the parameter specification of the two-component line model.
 
-    tau_in is fixed at the age of the universe at ``z``. sigma_dyn, tau_dyn, sigma_reg and
-    tau_eq get log-uniform priors. The broad-line parameters, the forbidden-line width and the
-    forbidden broad fraction come from ``broadline.add_broad_params``. Every other parameter keeps
-    the bounds of the v2 MAP fits.
-
     Parameters
     ----------
-    z : float
-        Redshift.
-    forbidden_broad : {"free", "shared"}
-        See ``broadline.add_broad_params``.
     sigma_split : float
         Upper bound of the narrow widths and lower bound of the broad width, in km/s.
-
-    Returns
-    -------
-    dict
-        The parameter specification.
     """
     cont_model, cont_tmpl = build_continuum_model(z)
     _, tmpl = build_full_cue_model(cont_tmpl, cont_model.theta, cont_model)
@@ -133,20 +93,7 @@ def make_model(z, forbidden_broad, sigma_split):
 
 
 def make_obs(flux, unc, mask):
-    """Wrap a spectrum as a prospect observation at the DESI resolution.
-
-    Parameters
-    ----------
-    flux, unc : np.ndarray
-        Flux and uncertainty in maggies on ``WAVE_OBS``.
-    mask : np.ndarray of bool
-        Pixels to fit.
-
-    Returns
-    -------
-    list
-        The prospect observations.
-    """
+    """Wrap a spectrum as a prospect observation at the DESI resolution."""
     return build_obs(spec=flux, unc=unc, mask=mask, resolution=RES, wavelength=WAVE_OBS)
 
 
@@ -154,48 +101,13 @@ _STATE = {}
 
 
 def loglike(theta, tid, forbidden_broad, sigma_split, rest_max=9000.0):
-    """Return the log likelihood of ``theta`` for one galaxy.
-
-    Each process builds its own model, observation and Cue source on its first call and keeps
-    them in ``_STATE``. Pool workers cannot receive them from the main process, because the Cue
-    emulator cannot be pickled and JAX is not fork safe, so the pool uses spawn. The run settings
-    are arguments, not module constants, because spawned workers re-import this file.
-
-    Parameters
-    ----------
-    theta : np.ndarray
-        Free parameters in the order of ``make_model(...).theta_labels()``.
-    tid : int
-        DESI TARGETID.
-    forbidden_broad : {"free", "shared"}
-        See ``make_params``.
-    sigma_split : float
-        See ``make_params``.
-    rest_max : float
-        Reddest rest-frame wavelength fitted, see ``load_data``.
-
-    Returns
-    -------
-    float
-        The log likelihood, with the prior left to the sampler.
-    """
+    """Return the log likelihood of ``theta`` for one galaxy."""
     model, obs, cue = process_state(tid, forbidden_broad, sigma_split, rest_max)
     return lnprobfn(theta, model=model, observations=obs, sps=cue, nested=True)
 
 
 def process_state(tid, forbidden_broad, sigma_split, rest_max):
-    """Return this process's model, observation and Cue source, building them on the first call.
-
-    Parameters
-    ----------
-    tid, forbidden_broad, sigma_split, rest_max
-        See ``loglike``.
-
-    Returns
-    -------
-    tuple
-        The model, the observation list and the Cue source.
-    """
+    """Return this process's model, observation and Cue source, building them on the first call."""
     key = (tid, forbidden_broad, sigma_split, rest_max)
     if key not in _STATE:
         z, flux, unc, good = load_data(tid, rest_max)
@@ -205,25 +117,7 @@ def process_state(tid, forbidden_broad, sigma_split, rest_max):
 
 
 def check_setup(args, z, flux, unc, good, model, resuming):
-    """Check the library, the resolution margin and the likelihood, and print the setup.
-
-    The broadline self-check is skipped when ``resuming`` is true. It passed when that run started.
-
-    Parameters
-    ----------
-    args : argparse.Namespace
-        The command-line options, see ``parse_args``.
-    z : float
-        Redshift.
-    flux, unc : np.ndarray
-        Observed flux and uncertainty, see ``load_data``.
-    good : np.ndarray
-        Mask of fitted pixels.
-    model : broadline.TwoCompLineModel
-        The model from ``make_model``.
-    resuming : bool
-        Whether a checkpoint for this run exists.
-    """
+    """Check the library, the resolution margin and the likelihood, and print the setup."""
     tid, fb, split, rest_max = args.tid, args.forbidden_broad, args.sigma_split, args.rest_max
     cue = get_sps(zero_library_resolution=False)["cue"]
     assert cue.ssp.libraries[1] in ("c3k_er", b"c3k_er"), cue.ssp.libraries
@@ -257,18 +151,15 @@ def main(args, pool=None):
 
     Parameters
     ----------
-    args : argparse.Namespace
-        The command-line options, see ``parse_args``.
     pool : multiprocessing.pool.Pool or None
-        Pool for nautilus. None makes a pool of ``args.pool`` workers with the global start
-        method, which ``__main__`` sets to spawn. ``fit_fork.py`` passes a forked one.
+        None makes a pool of ``args.pool`` workers. ``fit_fork.py`` passes a forked one.
     """
     tid, fb, split, rest_max = args.tid, args.forbidden_broad, args.sigma_split, args.rest_max
     z, flux, unc, good = load_data(tid, rest_max)
     model = make_model(z, fb, split)
     stem = f"{tid}_er_broad_{fb}_split{split:g}_rest{rest_max:g}_seed0"
     # check_setup passed when the run started, and each pool worker builds its own Cue, so a run
-    # that resumes a checkpoint skips it and the main process's Cue build (10 min on ls6)
+    # that resumes a checkpoint skips it and the main process's Cue build (10 min)
     resuming = (args.out / f"{stem}.h5").exists()
     if resuming and not args.check_only:
         print("resuming a checkpoint, setup checks skipped")
@@ -317,13 +208,7 @@ def main(args, pool=None):
 
 
 def parse_args():
-    """Parse the command-line options.
-
-    Returns
-    -------
-    argparse.Namespace
-        The options. ``fit_fork.py`` takes the same ones.
-    """
+    """Parse the command-line options."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tid", type=int, default=39627770174637084)
     parser.add_argument("--forbidden-broad", choices=["free", "shared"], required=True)

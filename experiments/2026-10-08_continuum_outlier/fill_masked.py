@@ -1,12 +1,8 @@
 """Rescore continuum outlier candidates after filling the pixels the training loss ignores.
 
-The spender encoder sees the whole stored spectrum, while the loss gives zero weight to masked
-pixels, where the flux can be zero or a sky residual. Here each zero-weight pixel is replaced by
-a linear interpolation of its weighted neighbours, the spectrum is encoded again, and both cont
-flows score it. The controls are the unflagged analogues of screen_candidates.py.
-
-Run from the repository root with
-``uv run python experiments/2026-10-08_continuum_outlier/fill_masked.py``.
+Zero-weight pixels are linearly interpolated from weighted neighbours, re-encoded and scored by both
+cont flows. The controls are the unflagged analogues of screen_candidates.py.
+Run ``uv run python experiments/2026-10-08_continuum_outlier/fill_masked.py``.
 """
 
 import numpy as np

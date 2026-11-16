@@ -1,18 +1,9 @@
-"""Overlaid pocoMC posteriors of one target's model ladder steps, in the four corners of analysis.py.
+"""Overlaid pocoMC posteriors of one target's ladder steps, in the four corners of analysis.py.
 
-The runs are the ladder steps with a pocoMC posterior: MILES, C3K HR, C3K HR + afe (fit_ladder.py)
-and C3K ER + afe + R matrix on the DR1 coadd (fit.py), and on the recoadd once it exists. Each
-step's model is rebuilt without FSPS for its prior transform, with
-2026-10-08_continuum_outlier/fit.py make_model for the first three and the fit.py model for the
-R-matrix steps. A_V, E(B-V), quantiles and prior ranges are those of analysis.py. A parameter a run
-does not have (afe in MILES and C3K HR, where afe is absent or fixed at 0) is left out of that run. With afe free logzsol is [Fe/H],
-without it [Z/H] (10-08 fit.py make_model), so logzsol differs in meaning across the runs.
-Contours at 39.3 and 86.5 per cent, unfilled, one colour per run as ladder_plot.py; dashed lines
-mark prior bounds inside the plotted range.
+With afe free logzsol is [Fe/H], without it [Z/H], so it differs in meaning across the runs.
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_poco_repeats/ladder_corner.py --tid <TARGETID>``.
-OUTPUT: results/2026-11-01_poco_repeats/<TARGETID>/ladder_corner.png, ladder_corner_stars_dust.png,
-ladder_corner_sfh.png, ladder_corner_all_ssfr.png, and ladder_posterior.txt (16, 50 and 84 per
-cent quantiles of every parameter of every run).
+OUTPUT: results/2026-11-01_poco_repeats/<TARGETID>/ ladder_corner.png, ladder_corner_stars_dust.png,
+ladder_corner_sfh.png, ladder_corner_all_ssfr.png, ladder_posterior.txt.
 """
 
 # %%

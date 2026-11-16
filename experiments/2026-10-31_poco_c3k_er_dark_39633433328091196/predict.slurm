@@ -1,6 +1,6 @@
 #!/bin/bash
 # Spectrum of the max-likelihood pocoMC sample (predict.py), one process on one skx-dev node.
-# Env as test.slurm. Submit from the repository root on stampede3:
+# Env as test.slurm. Submit from the repository root:
 #   sbatch experiments/2026-10-31_poco_c3k_er_dark_39633433328091196/predict.slurm
 #SBATCH -J pocopred1031
 #SBATCH -p skx-dev

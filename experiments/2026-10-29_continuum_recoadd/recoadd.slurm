@@ -1,9 +1,9 @@
 #!/bin/bash
-# Recoadd the continuum outlier 39627757533007793 (SV3 and main) on stampede3, as
-# experiments/2026-10-18_candidate_recoadd/recoadd.slurm did for the line outliers on ls6.
+# Recoadd the continuum outlier 39627757533007793 (SV3 and main), as
+# experiments/2026-10-18_candidate_recoadd/recoadd.slurm did for the line outliers.
 #
 # 1. Rerun the four 2026-10-09 scripts for the #14 reference 39627770174637084 into its own folder
-#    (RECOADD_OUT) and compare with the ls6 outputs (compare_reference.py). The comparison is
+#    (RECOADD_OUT) and compare with the reference outputs (compare_reference.py). The comparison is
 #    reported and does not stop the job; the first line of coadd_rows.txt names the input path,
 #    which differs here.
 # 2. Run them for 39627757533007793, SV3 (RECOADD_SURVEY=sv3) and main (RECOADD_SURVEY=main).
@@ -11,7 +11,7 @@
 # Compute nodes do not mount Corral, so the iron spectra and exposure files are read from the
 # copies in $SCR (staged on the login node first). Each target folder gets the DR1
 # resolution_matrix.npz that coadd_rows.py checks its column-weighted rebuild against.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch experiments/2026-10-29_continuum_recoadd/recoadd.slurm
 #SBATCH -J recoadd1029
 #SBATCH -p skx-dev

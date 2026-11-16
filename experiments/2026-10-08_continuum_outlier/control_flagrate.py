@@ -1,12 +1,8 @@
 """How often the continuum flows flag DESI galaxies like 39627757533007793.
 
-Analogues share its Dn4000, stellar mass and redshift in the FastSpecFit catalogue. If they are
-rarely flagged, being massive and quiescent does not explain the flag. The flows are the
-corrected [OII] runs in results/wide_flow_corrected/, which exist only on the Mac. The catalogue
-is the same file on the Mac and on ls6 (md5 ae54e69f, checked 2026-10-08).
-
-Run from the repository root with
-``uv run python experiments/2026-10-08_continuum_outlier/control_flagrate.py``.
+Analogues share its Dn4000, stellar mass and redshift in FastSpecFit. If they are rarely flagged,
+being massive and quiescent does not explain the flag. The flows are the corrected [OII] runs.
+Run ``uv run python experiments/2026-10-08_continuum_outlier/control_flagrate.py``.
 """
 
 import numpy as np

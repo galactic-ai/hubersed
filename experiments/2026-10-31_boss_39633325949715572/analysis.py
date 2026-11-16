@@ -1,33 +1,18 @@
 """DESI SV3 and SDSS BOSS spectra of 39633325949715572, robust6 target 6 (#17), in one panel.
 
 QUESTION: is the wide bump near rest 6400-6600 A of the single DESI exposure also in an independent
-spectrum? DR1 has no other DESI spectrum (desi_dr1.zpix has sv3/bright only, 1 exposure, 295 s).
+spectrum? DR1 has no other DESI spectrum.
 HYPOTHESIS: none registered.
-INPUTS: DESI SV3 bright coadd via load_spectrum (spender chunk, as the fits use); SDSS BOSS
-plate 6793, MJD 56430, fiber 154 (z 0.266657, sciencePrimary), fetched with astroquery.sdss.
+INPUTS: DESI SV3 bright coadd via load_spectrum, SDSS BOSS plate 6793, MJD 56430, fiber 154 via
+astroquery.sdss, cframes in data/iron_exposures/00085210/ and <TID>_neighbours.npz.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_boss_39633325949715572/analysis.py``.
-RESULT: the bump is in DESI only. Median flux at rest 6450-6600 over the sidebands (6200-6350,
-6700-6850) is 1.46 in DESI and 1.04 in BOSS. The spectra agree below ~4400 A rest; redder, DESI
-falls below BOSS and is noisy past ~7000 A, a colour change a grey aperture offset cannot make.
-Assumptions: no rescaling between the fibres; median filters run over unmasked pixels only, so
-they bridge masked gaps.
-Same-petal check (neighbours.py, neighbours.txt): the z-arm ratio at observed 8106-8360 A over
-the sidebands is > 1.4 for 8 of 11 target fibres on EXPID 85210 petal 6 (median 2.00), and for 0 of
-306 fibres on other petals of that exposure and 0 of 3807 in other exposures (medians 1.02). The
-bump belongs to petal 6 of exposure 85210, not to the galaxy. The petal neighbours span z 0.08-1.18
-and include a star (ratio 1.29), so no shared rest-frame feature; 39633325945524065 has 2.06 there
-and 1.00, 1.06 in two other exposures (neighbour_checks.txt). Hardware against sky subtraction or
-calibration on that petal is not separated here.
-Whole petal (petal_excess.txt, cframes z6 and z5 of EXPID 85210): on z6 the excess swings with fibre
-number, positive near fibres 3100-3190, 3300-3420 and 3450-3500 and negative near 3000-3050 and
-3200-3300, and the 45 sky fibres follow the same curve (16-84% -4.1 to 1.7); on z5 sky fibres sit at
-0 (16-84% -0.06 to 0.04). So the excess is in the sky-subtracted z6 frame, not in the objects.
-DESI tile QA (tile_qa_313.txt): petal 6 ZSKYCHI2PDF 8.556 and ZSKYTHRURMS 0.0595 (other petals
-0.945-0.993 and 0.0069-0.0114), tile VALID False; fibre 3332 has QAFIBERSTATUS 32768 (LOWEFFTIME).
+RESULT: the bump is in DESI only (ratio 1.46, BOSS 1.04). It belongs to petal 6 of EXPID 85210, not
+the galaxy (8 of 11 target fibres > 1.4, 0 of 306 on other petals), in the sky-subtracted z6 frame.
+Assumptions: no fibre rescaling, median filters bridge masked gaps, petal cause not separated.
 FIGURES: results/2026-10-31_boss_39633325949715572/ boss_spectrum.npz, desi_boss.png,
-neighbours.txt, neighbours.png, neighbour_checks.txt, petal_excess.txt, petal_excess.png, tile_qa_313.txt
-(cframes cached in data/iron_exposures/00085210/; <TID>_neighbours.npz of neighbours.slurm).
+neighbours.txt, neighbours.png, neighbour_checks.txt, petal_excess.txt, petal_excess.png and
+tile_qa_313.txt.
 """
 
 # %%

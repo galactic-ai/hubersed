@@ -1,8 +1,8 @@
 #!/bin/bash
 # Dust-free SSP grids from the C3K ER (c3k_er_afe_v3) and MILES (miles_ls6) FSPS builds, both with
-# SPS_HOME sps_home_er, which holds both libraries. One process at a time on one stampede3 skx-dev
+# SPS_HOME sps_home_er, which holds both libraries. One process at a time on one skx-dev
 # node.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch experiments/2026-10-29_c3k_vs_miles_ssp/ssp_s3.slurm
 #SBATCH -J ssp_s3
 #SBATCH -p skx-dev

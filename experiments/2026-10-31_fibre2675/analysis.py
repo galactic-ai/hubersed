@@ -1,21 +1,15 @@
 """Are galaxies observed on fibre 2675 (petal 5) flagged by the continuum flows more often (#17)?
 
-QUESTION: 5 of the 36 follow-up outliers sit on fibre 2675 (2026-10-31_quiescent_qa, fibres_all.txt).
-Is the outlier rate, or the log p distribution, of all sample galaxies on that fibre different from
-other fibres?
+QUESTION: is the outlier rate, or the log p distribution, of all sample galaxies on fibre 2675
+different from other fibres?
 HYPOTHESIS: none registered.
-INPUTS: iron tiles-iron.csv and the tile-qa FIBERQA (TARGETID, FIBER) of every sv3/bright tile, cached
-in data/iron_tileqa/; log p and thresholds of results/wide_flow_corrected/
-desi_outliers_flow_nsf_cont{10,15}latent_snr3.pt (seed 0), as 2026-10-31_logp_vs_colour/analysis.py.
-A galaxy counts for a fibre if any of its sv3/bright tiles put it there.
+INPUTS: tiles-iron.csv and sv3/bright tile-qa FIBERQA in data/iron_tileqa/; log p and thresholds
+of results/wide_flow_corrected/desi_outliers_flow_nsf_cont{10,15}latent_snr3.pt (seed 0).
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_fibre2675/analysis.py``.
-RESULT: fibre 2675 holds 48 sample galaxies, 7 both-flow outliers (14.6% against 0.45% overall);
-binomial P 2.2e-9, 9.9e-6 after 4452 fibres; its median cont10 log p is -8.06 against -4.57
-(Mann-Whitney p 1.8e-7), so the whole fibre scores low, not only its outliers. Neighbour 2676: 2/45,
-median -6.81; 2666: 1/46, -4.70. Rank 2 of 4452 fibres (rank 1 is 2 of 10).
-Assumptions: fibre 2675 was picked after seeing the outliers (look-elsewhere only through the 4452
-factor); seed-0 flows; a galaxy counts for every fibre it was observed on.
+RESULT: fibre 2675 has 7 both-flow outliers in 48 (14.6% against 0.45%), binomial P 9.9e-6 after
+4452 fibres. Its median cont10 log p is -8.06 against -4.57, so the whole fibre scores low.
+Assumptions: fibre chosen after seeing the outliers; seed-0 flows; galaxies count on every fibre.
 FIGURES: results/2026-10-31_fibre2675/ fibre_rates.txt, fibre_rates.png.
 """
 

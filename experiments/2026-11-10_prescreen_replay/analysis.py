@@ -1,18 +1,15 @@
 """Where the Tang et al. star-forming galaxies leave our parent sample.
 
-QUESTION: Of the 1,199 DESI x COSMOS2020 star-forming galaxies of Tang et al. (arXiv:2611.02580;
-z < 0.25, Halpha S/N > 5, below the Kewley+01 line), how many are in our parent
-(prescreened_sample_v1.npz, 104,990), and which step removes the rest?
+QUESTION: of the 1,199 DESI x COSMOS2020 star-forming galaxies of Tang et al. (arXiv:2611.02580),
+how many are in our parent (prescreened_sample_v1.npz, 104,990), and which step removes the rest?
 HYPOTHESIS: none stated before the check.
 INPUTS: prescreen_steps.npz (replay.py), tang_zpix.fits (fetch.py), tang_desi_targetid.txt
 (from the authors), data/fastspec-iron-sv3-bright.fits.
 SEED: none.
 COMMAND: ``uv run python experiments/2026-11-10_prescreen_replay/analysis.py``.
-RESULT: 503 of 1,199 have an SV3 bright spectrum (the rest are on special, SV1, SV3 dark and main
-tiles); 281 are in the parent. Of the 222 others, 210 fail the latent S/N > 3 cut (median per-pixel
-S/N 1.5-2.9 for p5-p95, median 2.3), 2 are not in the 254,976-spectrum dataset, and the prescreen
-removes 10 (SGA 3, BPT AGN 4, shred 3). Assumption: the S/N in dataset_z_snr.npz is the latent cut
-S/N (they agree to 0.002 at the threshold; its writer is not found).
+RESULT: 503 of 1,199 have an SV3 bright spectrum and 281 are in the parent. Of the other 222, 210
+fail the latent S/N > 3 cut, 2 are not in the dataset and the prescreen removes 10.
+Assumptions: the dataset_z_snr.npz S/N is the latent cut S/N (they agree to 0.002 at the threshold).
 FIGURES: none (table only).
 """
 

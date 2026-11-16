@@ -1,18 +1,16 @@
-"""Mgb, Fe5270 and Fe5335 of the SV3 dark spectrum of 39633433328091196 against the C3K ER dark MAPs (#17).
+"""Mgb, Fe5270 and Fe5335 of the SV3 dark spectrum of 39633433328091196 against C3K ER dark MAPs (#17).
 
 QUESTION: do Mgb, Fe5270 and Fe5335, which dust barely moves, favour the C3K ER dark MAP with dust
 (logzsol 0.15) or the one without (logzsol 0.48)?
 HYPOTHESIS: none registered.
-INPUTS: <TID>_map.npz of 2026-10-30_continuum_39633433328091196_dark_map (with dust) and of
-er_nodust/ in 2026-10-30_nodust_miles_39633433328091196_dark (without). Bands from
-$SPS_HOME/data/allindices.dat, air to vacuum with _airtovac. Dust check with prospect fake_fsps.attenuate.
+INPUTS: <TID>_map.npz of 2026-10-30_continuum_39633433328091196_dark_map and of er_nodust/ in
+2026-10-30_nodust_miles_39633433328091196_dark. Bands from $SPS_HOME/data/allindices.dat.
 SEED: 0, for 500 noise draws of the data.
-COMMAND: from the repository root on the Mac, ``SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync
+COMMAND: from the repository root, ``SPS_HOME=<fsps> uv run --no-sync
 python experiments/2026-10-30_lick_dark_39633433328091196/analysis.py``.
-RESULT: 2026-10-30, lick_dark.txt. Inconclusive. Data sigma is 0.43-0.83 A and both MAPs are within
-1.1 sigma on all three (Mgb +0.61 dust, -0.14 no dust; Fe5335 -0.80, -1.09). The two models differ
-by at most 0.62 A (Mgb). Dust alone moves each index by at most 0.001 A. Assumptions: fitted pixels
-only (Mgb red band 7 of 27, Fe5270 feature 35 of 70), one dark exposure ivar, MAPs also differ in SFH and afe.
+RESULT: 2026-10-30, inconclusive. Data sigma 0.43-0.83 A, both MAPs within 1.1 sigma on all three
+(Mgb +0.61 dust, -0.14 no dust; Fe5335 -0.80, -1.09). The models differ by at most 0.62 A (Mgb).
+Assumptions: fitted pixels only, one dark exposure ivar, MAPs also differ in SFH and afe.
 FIGURES: none; table in results/2026-10-30_lick_dark_39633433328091196/lick_dark.txt.
 """
 
@@ -62,11 +60,7 @@ def lick_bands(names):
 
 
 def equivalent_width(rest, f, bands, good):
-    """Return the equivalent width in A of ``f`` over the fitted pixels of the feature band.
-
-    As in 2026-10-29_continuum_39633433328091196_map. The continuum is the line through the mean
-    flux of the fitted pixels of the blue and red bands at their mean wavelengths.
-    """
+    """Return the equivalent width in A of ``f`` over the fitted pixels of the feature band."""
     feat, blue, red = bands
     pts = []
     for lo, hi in (blue, red):

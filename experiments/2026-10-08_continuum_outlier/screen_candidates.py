@@ -1,43 +1,8 @@
 """Screen continuum flow outliers for observed-frame and rest-frame causes.
 
-Each candidate is compared with a median template of unflagged DESI galaxies matched in
-redshift, Dn4000 and stellar mass. The residual is summed in observed-frame zones (arms,
-telluric bands, sky lines, masked pixels) and in rest-frame index bands. Each zone is then
-replaced by the template plus noise, the spectrum is re-encoded and rescored by the flows,
-and the change in log p shows which zone drives the flag.
-
-The encoder input is the chunk spectrum as stored, which spender already divided by its
-median over rest 5300-5850 A. Templates are built from the stored encoder inputs in the
-cont10 latent file, so they share that normalisation. The flow scores standardised latents,
-(latent - scaler_mean) / scaler_scale, with the scaler saved next to the flow state.
-
-A self-test runs first. It re-encodes 11 chunk spectra and requires the stored log p to be
-reproduced within 0.1 for every flow that has an encoder on disk. The script stops if it
-fails. A flow without an encoder checkpoint is skipped and every call is then provisional.
-
-Classification rule, fixed before the run. For a zone, frac is the mean log p gain from
-replacing it, divided by the gap from the candidate's log p to the threshold. frac of 1
-means the galaxy crosses back above the threshold. The groups are OBS_ALL (all
-observed-frame zones), REST_ALL (the stellar index bands, without Halpha), HALPHA (rest
-6548-6578 A, where emission and absorption both sit) and TILT (the candidate divided by its
-quadratic ratio to the template). A group with frac of at least 0.7 is a hit. One hit gives
-its class. Two or more give the class of the largest when it leads the next by at least 0.3,
-and diffuse otherwise. No hit gives diffuse. If the full template does not cross the
-threshold the template is not a valid inlier and the class is "unreliable template". A call
-is firm only when both flows ran and agree.
-
-Control null, added after the first look at one candidate and before the full table. Three
-unflagged analogues per candidate get the same zone replacements against a template of the
-other analogues. In the null-adjusted class (class_null, call_null) a group counts only when
-the candidate's gain also exceeds the 95th percentile of the control gains for that group.
-This guards against a zone that raises log p for any galaxy, for example because the template
-is smoother than real data there. Halpha was moved out of REST_ALL into its own group at the
-same time, after the first run showed Halpha mean chi2 of 27 to 114 in some candidates, so that
-an emission mismatch is not counted as a stellar feature.
-
-Run from the repository root with
-``uv run --no-sync python experiments/2026-10-08_continuum_outlier/screen_candidates.py``.
-Outputs go to results/2026-10-08_continuum_outlier/screen/. SEED is 0.
+Each zone of a candidate is replaced by a template of matched unflagged analogues plus noise and
+rescored. The class rule was fixed before the run and the control null added after one look.
+Run ``uv run --no-sync python experiments/2026-10-08_continuum_outlier/screen_candidates.py``.
 """
 
 import csv
@@ -108,15 +73,7 @@ HIT, LEAD = 0.7, 0.3
 
 
 def load_scorers():
-    """Load the flows, their thresholds, stored scores and encoders.
-
-    Returns
-    -------
-    dict
-        Keyed by flow name. Each value holds ``flow``, ``mu``, ``sc``, ``thr``, ``lp``
-        (stored log p by TARGETID), ``out`` (flagged TARGETIDs) and ``enc`` (the spender
-        model, or None when its checkpoint is not on disk).
-    """
+    """Return per-flow dicts of flow, mu, sc, thr, lp, out and enc (None without a checkpoint)."""
     inst = desi.DESI()
     res = {}
     for name, ckpt in FLOWS.items():
@@ -150,22 +107,7 @@ def load_scorers():
 
 
 def score(s, specs, batch=256):
-    """Encode normalised spectra and return their log p under one flow.
-
-    Parameters
-    ----------
-    s : dict
-        One entry of ``load_scorers``. Its encoder must not be None.
-    specs : np.ndarray
-        Encoder inputs, shape (N, 7781).
-    batch : int
-        Spectra per encoder call.
-
-    Returns
-    -------
-    np.ndarray
-        Log p of each spectrum.
-    """
+    """Return the log p of encoder inputs ``specs`` (N, 7781) under one ``load_scorers`` entry."""
     out = []
     with torch.no_grad():
         for i in range(0, len(specs), batch):
@@ -176,18 +118,7 @@ def score(s, specs, batch=256):
 
 
 def load_chunk_rows(tids):
-    """Read the stored encoder input, weights and redshift of each TARGETID from the chunks.
-
-    Parameters
-    ----------
-    tids : list of int
-        TARGETIDs.
-
-    Returns
-    -------
-    dict
-        TARGETID to (spec, w, z) as float64 arrays and a float.
-    """
+    """Return TARGETID to (spec, w, z) of the stored encoder inputs in the chunks."""
     gi = tids_to_indices(np.asarray(tids, np.int64))
     out = {}
     for c in np.unique(gi // 1024):
@@ -206,28 +137,7 @@ def load_chunk_rows(tids):
 
 
 def self_test(scorers, h5tid):
-    """Re-encode 11 chunk spectra and compare with the stored log p.
-
-    The known case 39627757533007793 is always included, with five flagged and five
-    unflagged cont10 galaxies drawn with SEED.
-
-    Parameters
-    ----------
-    scorers : dict
-        Output of ``load_scorers``.
-    h5tid : np.ndarray
-        TARGETIDs of the scored DESI sample.
-
-    Returns
-    -------
-    list of dict
-        One row per galaxy and flow with the stored and recomputed log p.
-
-    Raises
-    ------
-    SystemExit
-        If any available flow misses by 0.1 or more.
-    """
+    """Re-encode 11 chunk spectra, return the log p rows and exit on a miss of 0.1 or more."""
     rng = np.random.default_rng(SEED)
     s10 = scorers["cont10"]
     lp10 = np.array([s10["lp"][t] for t in h5tid])
@@ -291,10 +201,7 @@ def read_candidates():
 
 
 def load_vac(tids):
-    """Return LOGMSTAR and DN4000 from the FastSpecFit VAC for the given TARGETIDs.
-
-    Rows with nonpositive DN4000_IVAR or nonfinite values get NaN.
-    """
+    """Return LOGMSTAR and DN4000 from the FastSpecFit VAC, NaN for bad DN4000_IVAR or values."""
     with fits.open(VAC, memmap=True) as h:
         d = h["FASTSPEC"].data
         t = np.asarray(d["TARGETID"], np.int64)
@@ -310,19 +217,7 @@ def load_vac(tids):
 
 
 def pick_analogues(i, pool, z, m, dn):
-    """Choose analogues of sample row i from the unflagged pool.
-
-    Analogues are within WIN in z, Dn4000 and LOGMSTAR. If fewer than NMIN match, the window
-    grows by 1.5 and then 2. If more than NMAX match, the NMAX nearest in scaled distance are
-    kept.
-
-    Returns
-    -------
-    sel : np.ndarray
-        Sample rows of the analogues, nearest first.
-    grow : float
-        Window factor used.
-    """
+    """Return the analogue rows of sample row i, nearest first, and the window factor used."""
     dz = (z[pool] - z[i]) / WIN["z"]
     dd = (dn[pool] - dn[i]) / WIN["dn"]
     dm = (m[pool] - m[i]) / WIN["m"]
@@ -347,24 +242,7 @@ def read_h5_specs(h5, rows):
 
 
 def build_template(specs, zs, zc):
-    """Median of analogue spectra moved to the candidate redshift on the observed grid.
-
-    Parameters
-    ----------
-    specs : np.ndarray
-        Analogue encoder inputs, shape (N, 7781).
-    zs : np.ndarray
-        Analogue redshifts.
-    zc : float
-        Candidate redshift.
-
-    Returns
-    -------
-    t : np.ndarray
-        Median template, NaN where no analogue covers the pixel.
-    sig : np.ndarray
-        Error of the median, 1.2533 times the MAD scatter over sqrt(n).
-    """
+    """Return the median template of the analogues at redshift ``zc`` and its error."""
     stack = np.full(specs.shape, np.nan)
     for k, (f, za) in enumerate(zip(specs, zs, strict=True)):
         f = np.where(f == 0, np.nan, f)
@@ -379,10 +257,7 @@ def build_template(specs, zs, zc):
 
 
 def zones_for(z, w):
-    """Return boolean pixel masks of every zone for a galaxy at redshift z with weights w.
-
-    The masked zone is w = 0 outside the spender sky mask. The encoder still sees those pixels.
-    """
+    """Return boolean pixel masks of every zone for a galaxy at redshift z with weights w."""
     sky = np.genfromtxt(
         Path(desi.__file__).parent / "sky-lines.txt",
         names=["wavelength", "intensity", "name", "status"],
@@ -413,21 +288,7 @@ def zones_for(z, w):
 
 
 def residuals(c, w, t, sig):
-    """Scale the template to the candidate and form the normalised residual.
-
-    Returns
-    -------
-    a : float
-        Weighted least squares scale of the template.
-    chi : np.ndarray
-        (c - a t) / sqrt(sigma_c^2 + a^2 sig^2). sigma_c is interpolated over w = 0 pixels.
-    good : np.ndarray
-        Pixels with w > 0 and a finite template.
-    sc : np.ndarray
-        Candidate noise with the interpolation filled in.
-    poly : np.ndarray
-        Quadratic fit to c / (a t) over the grid.
-    """
+    """Return the template scale, chi, good pixels, filled noise and quadratic ratio fit."""
     fin = np.isfinite(t)
     good = (w > 0) & fin
     a = np.sum(w[good] * c[good] * t[good]) / np.sum(w[good] * t[good] ** 2)
@@ -445,11 +306,7 @@ def residuals(c, w, t, sig):
 
 
 def zone_stats(chi, good, w, zn):
-    """Chi2 share and mean chi2 of each zone.
-
-    The two zones dominated by w = 0 pixels (sky_spender and masked) use the interpolated
-    noise and are reported against the good-pixel total plus their own chi2.
-    """
+    """Return the chi2 share and mean chi2 of each zone."""
     fin = np.isfinite(chi)
     tot = np.sum(chi[good] ** 2)
     out = {}
@@ -481,22 +338,7 @@ def zone_stats(chi, good, w, zn):
 
 
 def artifact_stats(c, t_s, sc):
-    """Count zero-flux pixels and find the largest sky-pixel deviation from the template.
-
-    Parameters
-    ----------
-    c : np.ndarray
-        Encoder input.
-    t_s : np.ndarray
-        Scaled template.
-    sc : np.ndarray
-        Noise with interpolation over w = 0 pixels.
-
-    Returns
-    -------
-    dict
-        ``n_zero_flux`` and ``sky_spike``, the largest abs(c - t_s) / sc over spender sky pixels.
-    """
+    """Return the zero-flux pixel count and the largest sky-pixel deviation from the template."""
     m = SKY_SPENDER & np.isfinite(t_s)
     return {
         "n_zero_flux": int((c == 0).sum()),
@@ -505,23 +347,7 @@ def artifact_stats(c, t_s, sc):
 
 
 def occlusion_inputs(c, t_s, sc, poly, zn, rng, ndraw=NDRAW, keep_only=True):
-    """Build the occluded encoder inputs for one candidate.
-
-    Parameters
-    ----------
-    ndraw : int
-        Noise draws for the template pixels.
-    keep_only : bool
-        Also build the complement inputs, candidate inside the zone and template outside.
-
-    Returns
-    -------
-    specs : np.ndarray
-        All inputs, stacked.
-    keys : list of (str, str)
-        (zone, mode) of each input. Modes are ``replace``, ``keep_only``, ``full``,
-        ``full_nonoise`` and ``detilt``.
-    """
+    """Return the occluded encoder inputs of one candidate and their (zone, mode) keys."""
     fin = np.isfinite(t_s)
     specs, keys = [], []
     for _ in range(ndraw):
@@ -567,22 +393,7 @@ def classify(fr):
 
 
 def classify_null(fr, dl, null95):
-    """Apply the fixed rule, counting a group only if its gain also beats the control null.
-
-    Parameters
-    ----------
-    fr : dict
-        Zone to frac for one flow.
-    dl : dict
-        Zone to delta log p for one flow.
-    null95 : dict
-        Zone to the 95th percentile of delta log p over the control galaxies.
-
-    Returns
-    -------
-    str
-        Class name.
-    """
+    """Apply the fixed rule to ``fr`` and ``dl``, counting a group only if it beats ``null95``."""
     fr2 = dict(fr)
     for k in ("OBS_ALL", "REST_ALL", "TILT", "Halpha"):
         if not dl.get(k, -np.inf) > null95.get(k, np.inf):
@@ -591,13 +402,7 @@ def classify_null(fr, dl, null95):
 
 
 def control_occlusion(cc, ttc, tsc, cw, cz, scorers, active, rng):
-    """Delta log p of every zone replacement for one unflagged control galaxy.
-
-    Returns
-    -------
-    dict
-        Flow name to dict of zone to delta log p, with four noise draws.
-    """
+    """Return flow to zone to delta log p for one unflagged control, with four noise draws."""
     a, _, _, csc, cpoly = residuals(cc, cw, ttc, tsc)
     czn = zones_for(cz, cw)
     specs, keys = occlusion_inputs(cc, a * ttc, csc, cpoly, czn, rng, ndraw=4, keep_only=False)
@@ -615,15 +420,7 @@ def control_occlusion(cc, ttc, tsc, cw, cz, scorers, active, rng):
 
 
 def plot_candidate(tid, z, c, w, t_s, chi, good, zn, occ, thr0, path):
-    """Save the residual and occlusion figure of one candidate.
-
-    Parameters
-    ----------
-    occ : dict
-        Flow name to dict of zone to mean delta log p (replace mode).
-    thr0 : dict
-        Flow name to the gap from the candidate's log p to the threshold.
-    """
+    """Save the residual and occlusion figure of one candidate from ``occ`` and ``thr0``."""
     fig, ax = plt.subplots(3, 1, figsize=(12, 10), gridspec_kw={"height_ratios": [1.2, 1, 1.4]})
     b = 8
     nb = WAVE.size // b

@@ -1,9 +1,9 @@
 #!/bin/bash
 # Follow-up 3: C3K ER MAP of 39633433328091196 with rest 3850-4450 and 4600-4750 A masked (fit.py
-# --lib er --mask features), dust on or off by DUST (default off), on one stampede3 icx node: check,
+# --lib er --mask features), dust on or off by DUST (default off), on one icx node: check,
 # 7 starts on one core each, collect. Env and start layout as
 # 2026-10-29_continuum_39633433328091196_map/map.slurm. A start killed by the timeout saves nothing.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch --export=ALL,DUST=on experiments/2026-10-29_nodust_map_39633433328091196/er_mask.slurm
 #   sbatch --export=ALL,DUST=off experiments/2026-10-29_nodust_map_39633433328091196/er_mask.slurm
 #SBATCH -J er_mask

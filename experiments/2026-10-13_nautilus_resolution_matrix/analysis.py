@@ -1,31 +1,24 @@
 """Compare the posteriors of three nautilus fits of 39627770174637084.
 
-QUESTION: how do the posteriors move from HR split 45 (09-30) to ER (10-09) to rmatrix (this
-folder, with target R, corrected ivar and missing-line mask)? Same 29 parameters and priors. The
-pixel counts differ (5621, 5597, 5530).
+SUPERSEDED BY: experiments/2026-10-15_broadline_free_amplitude.
+Same fit with the free-amplitude line model of hubersed.sps.free_lines.
 
-HYPOTHESIS: from the MAP runs, rmatrix has wider lines than ER (eline_sigma_forb ~22 km/s,
-eline_sigma ~25 km/s), lower dust_ratio (~0.37 vs 0.46), sigma_smooth ~21 km/s. SFH barely moves.
-
-INPUTS: the HR and ER _pred.npz, and the rmatrix _pred.npz of predict.py (or its .h5 if the npz is
-missing). Points more than e^-30 below the heaviest are dropped. SEED: none.
-
-COMMAND: from the repository root on the Mac
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+QUESTION: How do the posteriors move from HR split 45 (09-30) to ER (10-09) to rmatrix (this folder,
+target R, corrected ivar, missing-line mask)? Same 29 parameters and priors.
+HYPOTHESIS: from the MAP runs, rmatrix has wider lines than ER (eline_sigma_forb ~22 km/s, eline_sigma
+~25 km/s), lower dust_ratio (~0.37 vs 0.46) and sigma_smooth ~21 km/s. SFH barely moves.
+INPUTS: the HR and ER _pred.npz, and the rmatrix _pred.npz of predict.py (or its .h5).
+SEED: none.
+COMMAND: from the repository root
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
 experiments/2026-10-13_nautilus_resolution_matrix/analysis.py``.
-
-RESULT: rmatrix final state after link 3509799, unconverged (N_eff 511 at 11.6M calls, flat since
-~7M). Accepted as stable (Nikhil 2026-10-14): all medians within 0.08 rmatrix half widths of the
-3509798 snapshot (at most 0.15 ER half widths), widths within 0.96-1.09. Lines as expected
-(eline_sigma_forb 22.3, eline_sigma 24.9, dust_ratio 0.39). Not as expected: sigma_smooth 31, and
-the SFH moves (logzsol -0.61 to -0.41, logmass 8.78 to 8.69). Gas logU -2.54 to -2.05. Snapshot
-outputs are in snap_3509798/ of the results folder. The gas logU and n_H are not
-robust: Cue's single cloud is too hot here ([SIII]6312/9069 +45% at max-L, auroral_checks.py),
-and n_H is set by [OII]7320,7330, not by the [SII] density (map_unmask.py).
-
-FIGURES: compare_posteriors.txt (median, 16-84%, shift from ER in ER half widths) and
-corner_{lines,dust_gas,stars,phys,gas_lines}.png in results/2026-10-13_nautilus_resolution_matrix/.
+RESULT: rmatrix unconverged (N_eff 511 at 11.6M calls) but accepted as stable, medians within 0.08
+half widths of an earlier snapshot. eline_sigma_forb 22.3, eline_sigma 24.9, dust_ratio 0.39 as
+expected. sigma_smooth 31 and the SFH (logzsol -0.61 to -0.41, logmass 8.78 to 8.69) were not.
+Assumptions: gas logU (-2.54 to -2.05) and n_H are not robust, Cue is too hot ([SIII]6312/9069 +45%).
+FIGURES: compare_posteriors.txt and corner_{lines,dust_gas,stars,phys,gas_lines}.png in
+results/2026-10-13_nautilus_resolution_matrix/.
 """
 
 # %%
@@ -117,11 +110,7 @@ def from_pred(path):
 
 
 def from_checkpoint(model, name):
-    """Return the posterior points, weights and labels of a checkpoint of fit.py.
-
-    The fit gave nautilus the identity prior, so the checkpoint holds unit-cube points. They are
-    read with the identity and only the kept ones go through ``model.prior_transform``.
-    """
+    """Return the posterior points, weights and labels of a checkpoint of fit.py."""
     s = Sampler(
         lambda x: x,
         lambda x: 0.0,

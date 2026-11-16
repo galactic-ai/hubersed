@@ -5,7 +5,7 @@
 # results/ links to the shared clone's results/, since the shared clone holds older versions.
 # Inputs come from /scratch (stage_recoadd.sh first). The target's DR1 resolution_matrix.npz goes
 # into the output folder, for coadd_rows.py to check its column-weighted rebuild against.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   TID=<TARGETID> SRC=<copy> sbatch --export=ALL -J rec_<TID> experiments/2026-11-01_poco_repeats/recoadd.slurm
 #SBATCH -p skx-dev
 #SBATCH -N 1

@@ -1,8 +1,8 @@
 #!/bin/bash
 # Fetch the iron files of recoadd_urls.txt to Corral (skipping files already there), then copy them
 # to /scratch, since compute nodes do not mount Corral. As 2026-10-30_recoadd_39633433328091196/stage.sh.
-# Run on the stampede3 login node from the repository root:
-#   nohup bash experiments/2026-11-01_poco_repeats/stage_recoadd.sh > /scratch/11006/nikhilgaruda/logs/stage_recoadd.log 2>&1 &
+# Run on the login node from the repository root:
+#   nohup bash experiments/2026-11-01_poco_repeats/stage_recoadd.sh > <log> 2>&1 &
 set -euo pipefail
 HERE=experiments/2026-11-01_poco_repeats
 C=/corral/utexas/AST25023/nikhilgaruda/hubersed/data

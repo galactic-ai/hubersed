@@ -1,14 +1,9 @@
-"""Merge Nikhil's visual labels into gallery105.tsv and cross-check them with the measured columns.
+"""Merge the visual labels into gallery105.tsv and cross-check them with the measured columns.
 
-QUESTION: How do the visual classes of the 105 compare with the FastSpecFit line class, HdA and the
+QUESTION: how do the visual classes of the 105 compare with the FastSpecFit line class, HdA and the
 Goto-like flag of seed.py?
 HYPOTHESIS: none registered.
-INPUTS: visual_labels.txt (by eye from the gallery105 figures, verbatim, one line per figure
-number); results/2026-11-13_gallery105/gallery105.tsv (seed.py, run that first).
-METHOD: visual_text keeps each label verbatim. visual_class is the first keyword in the text among
-psb, agn, quiescent, emission and data error (bad_data), or unsure when none appears. visual_sure
-is False when the text has a "?". visual_image collects blend ("two galaxies"), crowded ("crowd" or
-"star") and diffuse. These rules are mechanical; edit visual_class by hand where they misread.
+INPUTS: visual_labels.txt; results/2026-11-13_gallery105/gallery105.tsv (seed.py, run that first).
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-13_gallery105/collect.py``.
 RESULT: pending.

@@ -1,10 +1,10 @@
 #!/bin/bash
-# Test of this experiment on one stampede3 skx-dev node, as
+# Test of this experiment on one skx-dev node, as
 # 2026-10-28_continuum_c3k_er_rmatrix_map/test.slurm: save the resolution matrix, check the setup
 # and time warm calls (fit.py check), then a short start-0 MAP and its collect step with tag
-# _test. One process at a time. hr_maxl.npz (hypers.py, made on the Mac) must be in the results
+# _test. One process at a time. hr_maxl.npz (hypers.py) must be in the results
 # folder first.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch experiments/2026-10-29_continuum_39633433328091196_map/test.slurm
 #SBATCH -J c4test1029
 #SBATCH -p skx-dev

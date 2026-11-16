@@ -1,4 +1,4 @@
-"""List the screened outliers whose coadd includes a bright-sky exposure, and their iron spectra files.
+"""List screened outliers whose coadd has a bright-sky exposure, and their iron spectra files.
 
 Targets are screened94.npz members with COADD_NUMEXP >= 2 and a tile exposure with sky g < 21
 (qa_outliers.txt columns numexp and sky_min).

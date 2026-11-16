@@ -1,29 +1,15 @@
 """Strong-line N/O-O/H relation of our parent sample, as a model-free reference.
 
-QUESTION: Do DESI SV3 bright star-forming galaxies follow the N/O-O/H relation, with N/O scatter
-tied to M*, as González-Koda+26 find for SDSS (arXiv:2611.09330)? This is the reference that
-Cue posteriors under a flat, independent gas_logno prior must reproduce (plan
-~/.claude/plans/no_oh_population_test_plan.md).
+QUESTION: do DESI SV3 bright star-forming galaxies follow the N/O-O/H relation, with N/O scatter
+tied to M*, as González-Koda+26 find for SDSS (arXiv:2611.09330)?
 HYPOTHESIS: none stated before the run.
-INPUTS: data/fastspec-iron-sv3-bright.fits (fluxes, LOGMSTAR); prescreen_steps.npz from
-2026-11-10_prescreen_replay (step 0 parent, step 1 removed by latent S/N <= 3).
-METHOD: as González-Koda+26. S/N > 3 (flux * sqrt(ivar)) for [OII]3726+29, Hbeta, [OIII]5007,
-Halpha, [NII]6584; star-forming below Kauffmann+03 eq. 1 (astro-ph/0304239 l.334); Balmer
-decrement, case B 2.86, Cardelli R_V = 3.1 (extinction.ccm89), drop A_V < 0. N/O from N2O2 with
-Florido+22 eq. fit1 (arXiv:2203.17021 l.265, valid -1.74 < N2O2 < 0.62). O/H from R23 and O32
-with M91 as given in Mallery+07 (arXiv:0706.0238 l.456-490, branch rule included). Residual
-xi_N/O from a cubic spline through medians in 12 equal O/H bins, above the 1st O/H percentile;
-Spearman rho of xi_N/O with the same residual of log M*.
+INPUTS: data/fastspec-iron-sv3-bright.fits; prescreen_steps.npz from 2026-11-10_prescreen_replay.
 SEED: none.
 COMMAND: ``uv run python experiments/2026-11-10_no_oh_reference/analysis.py``.
-RESULT: parent 24,125 of 104,990 pass all cuts (32,641 have the five lines at S/N > 3); S/N <= 3
-set 34,064 of 140,230. Both follow a plateau (log N/O ~ -1.4 below 12+log(O/H) ~ 8.3) then a
-rise to -0.65 at 9.0; xi_N/O std 0.057 (parent), 0.072 dex (S/N <= 3); Spearman(xi_N/O, dlogM*)
-0.52 and 0.50 (González-Koda+26: ~0.42). Assumptions: N/O and O/H share [OII] and the branch
-choice uses N2O2, so part of the tightness is by construction; fastspecfit fluxes are
-Galactic-extinction corrected (Nikhil 11-10); 1.5" fibres at z up to 0.6 cover far more of each
-galaxy than the SDSS 3" fibres at z < 0.05.
-FIGURES: no_oh_plane.png (N/O vs O/H density, binned medians, parent and S/N <= 3 panels).
+RESULT: 24,125 of 104,990 parent pass all cuts. log N/O ~ -1.4 below 12+log(O/H) ~ 8.3, rising to
+-0.65 at 9.0. xi_N/O std 0.057 dex, Spearman(xi_N/O, dlogM*) 0.52 (González-Koda+26 ~0.42).
+Assumptions: N/O and O/H share [OII] and N2O2; 1.5" fibres cover more of each galaxy than SDSS 3".
+FIGURES: no_oh_plane.png.
 """
 
 # %%

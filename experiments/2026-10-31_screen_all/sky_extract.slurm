@@ -1,6 +1,6 @@
 #!/bin/bash
 # Unzip the sky_urls.txt files in parallel and extract the sky_targets.txt galaxies (sky_extract.py),
-# after sky_stage.sh. Submit from the repository root on stampede3:
+# after sky_stage.sh. Submit from the repository root:
 #   sbatch experiments/2026-10-31_screen_all/sky_extract.slurm
 #SBATCH -J skyext1031
 #SBATCH -p skx-dev

@@ -1,17 +1,14 @@
-"""pocoMC posteriors and best fits of the follow-up batch targets (#17), as 2026-10-31_poco_robust6.
+"""pocoMC posteriors and best fits of follow-up batch targets (#17), as 2026-10-31_poco_robust6.
 
 QUESTION: what do C3K ER continuum fits give for the two outliers that repeat in other DR1 spectra
 (2026-11-01_repeats92), and where do the max-likelihood models miss the data?
 HYPOTHESIS: none registered.
-INPUTS: <TARGETID>/poco_neff1024/pmc_final.state and <TARGETID>_poco_maxl.npz (predict.py) for each
-target, copied from stampede3; the model of fit.py for the prior transform (no FSPS). A_V and E(B-V)
-from the diffuse KC13 curve as in 2026-10-31_poco_c3k_er_dark_39633433328091196/analysis.py, whose
-corner style and plots this repeats without the MAP.
+INPUTS: <TARGETID>/poco_neff1024/pmc_final.state and <TARGETID>_poco_maxl.npz (predict.py), the
+model of fit.py, KC13 as 2026-10-31_poco_c3k_er_dark_39633433328091196/analysis.py.
 SEED: 0, for 20000 prior draws and 2000 sSFR draws.
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_poco_repeats/analysis.py --tid <TARGETID>``.
-RESULT: 2026-11-02, six fits (25, 40, 78, 71, 75, 79): ESS 4129 to 4583, max-likelihood chi2/N 0.989
-to 1.086, logzsol -0.41 to +0.09, afe +0.01 to +0.36 (posterior.txt). dust_index, sigma_dyn, tau_eq
-and tau_dyn press on prior bounds in all six (prior_edges.txt); 79 has chi > 4 near rest 6563 A.
+RESULT: 2026-11-02, six fits (25, 40, 78, 71, 75, 79). Max-likelihood chi2/N 0.989 to 1.086,
+logzsol -0.41 to +0.09, afe +0.01 to +0.36; dust_index, sigma_dyn, tau_eq, tau_dyn at prior bounds.
 Assumptions: continuum-only C3K ER model, SV3 bright DR1 coadd, the #14 SFH hyperparameter priors.
 FIGURES: results/2026-11-01_poco_repeats/<TARGETID>/ posterior.txt, prior_edges.txt, best_fit.png,
 corner.png, corner_stars_dust.png, corner_sfh.png, corner_all_ssfr.png.

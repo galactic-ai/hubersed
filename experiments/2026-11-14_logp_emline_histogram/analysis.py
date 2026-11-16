@@ -1,29 +1,18 @@
 """Where do the 58 emission_line outliers sit in the log p of flows 6, 10 and 15?
 
-QUESTION: Against all DESI and the held-out mocks, how far below the flag threshold are the 58
+QUESTION: against all DESI and the held-out mocks, how far below the flag threshold are the 58
 gallery105 emission_line outliers in each full flow, and where do the 12 cont-only ones sit?
-HYPOTHESIS: none registered. Plan ~/.claude/plans/logp_hist_and_effective_volume_2026-11-14.md.
-The 58 were picked by these flags, so the 46 full-branch ones are below threshold by construction.
-INPUTS: results/2026-11-09_mocks_v2_outliers/flows (flow_nsf_<tag>latent.pt, desi_outliers_flow_nsf_
-<tag>latent_snr3.pt), the mock and DESI latent files named there, and
-results/2026-11-14_emline_outlier_coverage/coverage.csv (the 58, branch).
-METHOD: mock log p recomputed with the saved flow and scaler; held-out mocks are the first tenth of
-the default_rng(0) permutation (get_outliers_flow.py). The checks first require the recomputed log
-p of the 58 within 1e-3 of the saved log_p_desi (float32 rounding), and the recomputed 0.1%
-quantile of all mock log p within 1e-3 of the saved threshold. Percentiles are the share of DESI
-or held-out mocks with log p at or below the value.
+HYPOTHESIS: none registered. The 58 were picked by these flags, so the 46 full-branch ones are
+below threshold by construction.
+INPUTS: results/2026-11-09_mocks_v2_outliers/flows (flow_nsf_<tag>latent.pt,
+desi_outliers_flow_nsf_<tag>latent_snr3.pt),
+results/2026-11-14_emline_outlier_coverage/coverage.csv.
 SEED: none (the split uses the flows' seed 0).
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_logp_emline_histogram/analysis.py``.
-RESULT: 2026-11-14, logp.txt, logp.csv. Checks pass (max |diff| 3.0e-4, thresholds exact). The 46
-full ones sit just below threshold, not far out: median log p -18.8/-21.3/-28.5 against threshold
--15.0/-19.1/-25.0 (flows 6/10/15), held-out mock percentile 0.08-0.11%, DESI 0.4-0.9%; lowest
--51.9 (flow 6). The 12 cont ones sit in the full-flow mock bulk (1/0/5 below threshold, mock
-percentile 0.3-0.8%). DESI below threshold 1.65/0.64/1.75% against held-out mocks 0.13/0.12/0.15%:
-the DESI low-log-p tail is heavier than the mock one. Assumptions: saved flows and seed-0 split;
-flow log p is least reliable in its own tail.
-FIGURES: logp_hist.png. One row, flows 6, 10, 15. Density histograms (log y, full range, 100 shared
-bins) of all DESI and held-out mocks, saved threshold dashed, the 58 as ticks at the panel bottom
-coloured by branch (full 46, cont 12).
+RESULT: 2026-11-14, logp.txt, logp.csv. The 46 full ones sit just below threshold, at held-out mock
+percentile 0.08-0.11%. DESI below threshold 1.65/0.64/1.75% against mocks 0.13/0.12/0.15%.
+Assumptions: saved flows and seed-0 split; flow log p is least reliable in its own tail.
+FIGURES: logp_hist.png.
 """
 
 import matplotlib

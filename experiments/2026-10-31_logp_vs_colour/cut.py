@@ -1,7 +1,5 @@
-"""Count the seed 0 continuum-flow flags that a blue spectrum-minus-photometry colour cut removes (#17).
+"""Count seed 0 continuum-flow flags removed by a blue spectrum-minus-photometry colour cut (#17).
 
-dgr uses FIBERTOTFLUX as analysis.py. A spectrum fails the cut when dgr is below it. Cuts are fixed
-values and percentiles of dgr over all S/N > 3 spectra in the VAC.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_logp_vs_colour/cut.py``.
 OUTPUT: results/2026-10-31_logp_vs_colour/cut.txt.
 RESULT: 2026-10-31. dgr < -0.1 removes 2.5% of spectra, 20% of cont10 and 22% of cont15 flags,

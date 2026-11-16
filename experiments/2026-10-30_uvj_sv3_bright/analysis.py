@@ -2,16 +2,14 @@
 
 QUESTION: where does the continuum outlier 39633433328091196 sit on the rest-frame UVJ diagram?
 HYPOTHESIS: none registered.
-INPUTS: data/cigale_dr1/cigale_sv3_bright.npz of extract.py (DR1 CIGALE VAC v1.2, UV and VJ
-in AB mag) and Z from the METADATA of data/fastspec-iron-sv3-bright.fits. Boxes from Muzzin+13
-(arXiv:1303.4409, ms.tex:128-133, 0 < z < 1 branch) and Whitaker+12 as quoted by Fumagalli+14
-(arXiv:1308.4132, ms.tex:155).
+INPUTS: data/cigale_dr1/cigale_sv3_bright.npz of extract.py, data/fastspec-iron-sv3-bright.fits.
+Boxes of Muzzin+13 (arXiv:1303.4409) and Whitaker+12 as quoted by Fumagalli+14 (arXiv:1308.4132).
 SEED: none.
-COMMAND: from the repository root on the Mac,
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-30_uvj_sv3_bright/analysis.py``.
-RESULT: 2026-10-30, uvj.txt. 250351 galaxies; 95922 in the Muzzin+13 box, 108732 in Whitaker+12.
-39633433328091196 (CIGALE row from sv3/dark) U-V 2.151, V-J 1.279, inside both. Assumptions:
-CIGALE photometric SED colours; one CIGALE row per TARGETID, 19% of rows (47086) not from sv3/bright.
+RESULT: 2026-10-30. 250351 galaxies, 95922 in the Muzzin+13 box, 108732 in Whitaker+12.
+39633433328091196 (CIGALE row from sv3/dark) has U-V 2.151, V-J 1.279, inside both.
+Assumptions: CIGALE SED colours, one row per TARGETID, 19% of rows (47086) not from sv3/bright.
 FIGURES: results/2026-10-30_uvj_sv3_bright/uvj.png and uvj.txt.
 """
 

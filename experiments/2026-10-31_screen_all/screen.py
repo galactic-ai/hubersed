@@ -1,16 +1,15 @@
-"""Data-driven data-quality screen of the S/N > 3 spectra and its effect on the continuum outliers (#17).
+"""Data-driven quality screen of the S/N > 3 spectra and its effect on the continuum outliers (#17).
 
-QUESTION: how many flow flags, common outliers and members of the 94 fail a colour or neighbour screen
-with thresholds set by the whole sample?
+QUESTION: how many flow flags, common outliers and members of the 94 fail a colour or neighbour
+screen with thresholds set by the whole sample?
 HYPOTHESIS: none registered.
 INPUTS: fracflux.csv (fracflux.py), seed 0 flags (results/wide_flow_corrected), FastSpecFit VAC,
-sample94.npz. Colour fails below the 1st percentile of dgr (FLUX_SYNTH against FIBERTOTFLUX, as
-2026-10-31_logp_vs_colour/analysis.py); neighbour fails above the 99th percentile of fracflux_g.
-Missing values pass. The #10 cuts are filters, so screening the 94 equals screening the 512 first.
+sample94.npz.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_screen_all/screen.py``.
-RESULT: 2026-10-31. Thresholds dgr < -0.146 and fracflux_g > 1.332. The screen removes 1.8% of
-spectra, 15.6% of cont10 and 21.1% of cont15 flags, 102 of the 512 and 46 of the 94 (48 pass).
+RESULT: 2026-10-31. Thresholds dgr < -0.146 (1st percentile) and fracflux_g > 1.332 (99th). The
+screen removes 1.8% of spectra, 15.6% of cont10 and 21.1% of cont15 flags, 46 of the 94 (48 pass).
+Assumptions: missing values pass.
 FIGURES: results/2026-10-31_screen_all/screen.txt and screened94.npz.
 """
 

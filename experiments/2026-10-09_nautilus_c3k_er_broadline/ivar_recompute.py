@@ -1,31 +1,9 @@
 """Recompute the calibrated ivar of a target with the desispec fixes and recoadd it.
 
-QUESTION: with the corrected flux-calibration variance, do the exposures of this target agree
-within their errors at high S/N, and what are the coadded flux and ivar to fit?
-
-For each exposure and camera the calibrated variance is recomputed with the formula of
-desispec PR 2422, Var(F') = 1/(ivar_F C^2) + F^2/(ivar_C C^4), with F the sky-subtracted,
-flat-fielded flux before calibration (iron sframe), C the iron calibration vector and ivar_C from
-fluxcal_rerun.py with PRs 2496, 2827 and 2452 (patched). The iron formula, with the calibrated flux
-in place of F, is checked against the iron cframe ivar first. Flux, mask and resolution matrix are
-iron's (cframe). The exposures are then coadded per arm with the row weights of desispec PR 2377
-(coadd_rows.py) and merged over the arms. The repeat test of coadd_rows.py is rerun with the new
-ivars on the first two exposures.
-
-It was written for 39627770174637084 (exposures 87113 and 88269, petal 1), the default. --tid picks
-another target of targets.py. The cameras follow each exposure's petal. With three or more
-exposures the coadd masks cosmics as PR 2377 does (coadd_rows.pr2377_cosmics), on the new ivars.
-
-INPUTS: iron sframe, cframe and fluxcalib files of the target's exposures and petal under
-data/desi_iron_exposures/<night>/<expid>/, the patched fluxcalib files of fluxcal_rerun.py, and
-resolution_matrix_rows.npz of coadd_rows.py for the comparison. SEED: none.
-
-COMMAND: on an ls6 compute node from the repository root,
+Uses the PR 2422 formula with the patched ivar_C of fluxcal_rerun.py and the PR 2377 row weights,
+and writes ivar_recompute.txt and resolution_matrix_rows_ivar.npz. Run from the repository root as
 ``.venv/bin/python experiments/2026-10-09_nautilus_c3k_er_broadline/ivar_recompute.py``, with
 ``--tid <targetid>`` for the others.
-
-OUTPUT: ivar_recompute.txt and resolution_matrix_rows_ivar.npz (keys as resolution_matrix_rows.npz)
-in the target's output folder of targets.py.
 """
 
 import argparse

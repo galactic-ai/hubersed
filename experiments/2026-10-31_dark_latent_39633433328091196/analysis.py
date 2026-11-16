@@ -3,20 +3,16 @@
 QUESTION: do the cont10 and cont15 latents and flow log p of the continuum outlier move when its SV3
 dark coadd, which has no sky excess, is encoded instead of the SV3 bright coadd?
 HYPOTHESIS: none registered.
-INPUTS: bright spectrum from its DESIchunk1024 pkl (the spectra the DESI latents were made from).
-Dark spectrum from data/sv3_dark_coadds/coadd-sv3-dark-10231.fits through spender
-DESI.prepare_spectra, as 2026-10-30_sv3_bright_dark_39633433328091196. Encoders
-data/checkpoints/spender_desi_cont_{10,15}latent_zmax.pt. Seed 0 flows
-results/noised_cue_meanzero_wide_flow/flow_nsf_cont{10,15}latent.pt and their outlier files.
-Stored latents data/latents/spender_spec_cont{10,15}latent_snr3.h5.
+INPUTS: bright DESIchunk1024 pkl, data/sv3_dark_coadds/coadd-sv3-dark-10231.fits,
+data/checkpoints/spender_desi_cont_{10,15}latent_zmax.pt, seed 0 flows
+results/noised_cue_meanzero_wide_flow/flow_nsf_cont{10,15}latent.pt and their outlier files,
+data/latents/spender_spec_cont{10,15}latent_snr3.h5.
 SEED: none.
-COMMAND: from the repository root on the Mac,
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-31_dark_latent_39633433328091196/analysis.py``.
-RESULT: 2026-10-31, dark_latent.txt. The dark spectrum is not an outlier in either flow. log p goes
-from -22.11 to -4.15 in cont10 (threshold -15.72, DESI percentile 0.8 to 55.7) and from -70.19 to
--4.87 in cont15 (threshold -25.24, percentile 0.04 to 6.8). Latent shift norm 3.0 (cont10) and 4.0
-(cont15) mock scaler units. Median S/N is 5.06 bright and 5.64 dark. Assumptions: seed 0 flows only,
-one dark exposure, Mac CPU encoding (cont15 log p tolerance 0.05).
+RESULT: 2026-10-31. The dark spectrum is not an outlier in either flow. Bright to dark, log p is
+-22.11 to -4.15 in cont10 (threshold -15.72) and -70.19 to -4.87 in cont15 (threshold -25.24).
+Assumptions: seed 0 flows only, one dark exposure, CPU encoding (cont15 log p tolerance 0.05).
 FIGURES: results/2026-10-31_dark_latent_39633433328091196/dark_latent.png and dark_latent.txt.
 """
 
@@ -42,8 +38,8 @@ OUT = PATHS["RESULTS"] / "2026-10-31_dark_latent_39633433328091196"
 OUT.mkdir(parents=True, exist_ok=True)
 TAGS = ("cont10", "cont15")
 # The check stops the script when a re-encoded or rescored bright value differs by more than this.
-# The cont15 latent file differs from a Mac CPU encode by 1e-4 to 6e-4 for every galaxy checked,
-# probably GPU arithmetic, so its log p tolerance is 0.05 (Nikhil, 2026-10-31).
+# The cont15 latent file differs from a CPU encode by 1e-4 to 6e-4 for every galaxy checked,
+# probably GPU arithmetic, so its log p tolerance is 0.05.
 TOL_LATENT = 1e-3
 TOL_LOGP = {"cont10": 1e-2, "cont15": 5e-2}
 

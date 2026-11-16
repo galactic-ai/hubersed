@@ -1,16 +1,9 @@
 """Draft data-quality rule for the 94 and exposure-cleaned rescoring of the 18 (#17).
 
-R1: dgr (FIBERTOTFLUX) < -0.146, the 1st percentile of all S/N > 3 spectra (cut.py).
-R2: Legacy DR9 Tractor fracflux_g > 1 (ls_dr9.tractor on Data Lab, by LS_ID).
-R3: for the 18 of exp_targets.txt, coadd only exposures with sky g >= 21, as spender would see it
-(ivar-weighted per arm, arms joined on spender's grid, sky-line pixels at zero weight, median
-normalised at rest 5300-5850 A), then encode and score with both seed 0 flows. The same coadd of
-all exposures is the check against the stored log p.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_logp_vs_colour/rule.py``.
 OUTPUT: results/2026-10-31_logp_vs_colour/rule.txt.
-RESULT: 2026-10-31. Of the 94, R1 fails 42, R2 15, either 46. The all-exposure coadd reproduces
-the stored log p (17 of 18 within 0.02). Without sky g < 21 exposures, 5 of 18 stop being common
-outliers, among them 39633433328091196 (cont15 -70.2 to -10.3).
+RESULT: 2026-10-31. Of the 94, R1 (dgr < -0.146) fails 42, R2 (fracflux_g > 1) 15, either 46.
+Without sky g < 21 exposures, 5 of 18 stop being common outliers, among them 39633433328091196.
 """
 
 # %%

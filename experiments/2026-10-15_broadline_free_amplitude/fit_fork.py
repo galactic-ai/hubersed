@@ -1,13 +1,7 @@
 """Run fit.py with forked pool workers that share one FSPS setup and one set of SSPs.
 
-The main process builds every SSP slot the fit can reach (StellarPopulation.build_ssps, python-fsps
-dc3e41e), then forks the pool. Workers share them copy on write, about 1 GiB each instead of 15 GiB
-(job 3500970). The fork comes before JAX starts, since JAX is not fork safe. Each worker is pinned
-to one core, so XLA stays under the 16384-thread user limit on ls6 (job 3500937).
-
-Copied from 2026-10-13_nautilus_resolution_matrix. It imports this folder's fit.py and takes the
-same options, with the same PYTHONPATH and SPS_HOME, for example
-``.venv/bin/python experiments/2026-10-15_broadline_free_amplitude/fit_fork.py
+Copied from 2026-10-13_nautilus_resolution_matrix. Takes fit.py's options, PYTHONPATH and SPS_HOME.
+COMMAND: ``.venv/bin/python experiments/2026-10-15_broadline_free_amplitude/fit_fork.py
 --variant free --pool 64 --n-batch 960``.
 """
 
@@ -23,9 +17,6 @@ import fsps
 
 def prebuild_ssps(sp):
     """Build every SSP slot a fit at afe 0 can reach, in parallel helper processes.
-
-    At afe 0 FSPS uses afe slots 2 and 3 with AFE_FLAG and slot 1 without it
-    (``compute_zdep`` in fsps.f90).
 
     Parameters
     ----------

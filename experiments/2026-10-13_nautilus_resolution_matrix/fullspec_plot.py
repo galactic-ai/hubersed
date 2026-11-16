@@ -1,19 +1,9 @@
 """Plot the full spectrum of 39627770174637084 with the 10-09 ER max-L and the masked rmatrix MAP.
 
-The DESI data and both models on top, then the chi of the 10-09 ER nautilus max-L point (iron
-coadd and ivar, median LSF), then the chi of the 10-13 MAP with this target's resolution matrix and the
-missing-line mask (row-weighted recoadd, corrected ivar). Each chi uses its own data and errors.
-Pixels that a fit does not use are left empty, and the masked lines are shaded.
-
-INPUTS: the 10-09 ``_pred.npz`` (data, mask and max-L spectrum) and map_rmatrix_mask.npz of map.py.
-SEED: none.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+Writes fullspec_er_vs_rmatrix_mask.png. Run from the repository root as
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
 experiments/2026-10-13_nautilus_resolution_matrix/fullspec_plot.py``.
-
-OUTPUT: fullspec_er_vs_rmatrix_mask.png in results/2026-10-13_nautilus_resolution_matrix/.
 """
 
 import matplotlib.pyplot as plt

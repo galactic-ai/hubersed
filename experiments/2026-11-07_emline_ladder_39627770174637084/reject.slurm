@@ -1,7 +1,7 @@
 #!/bin/bash
 # reject.py on one skx-dev node: why step 5 rejects some prior draws. SSP build, speclib free and
 # pool as fit.py check; 1024 draws through step 5 predict with the exception kept.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch experiments/2026-11-07_emline_ladder_39627770174637084/reject.slurm
 #SBATCH -J step5reject
 #SBATCH -p skx-dev

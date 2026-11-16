@@ -1,11 +1,11 @@
 #!/bin/bash
-# Test fit_fork.py on ls6 before the er1009_shared chain uses it. Copies the chain's live checkpoint
+# Test fit_fork.py before the er1009_shared chain uses it. Copies the chain's live checkpoint
 # into a scratch folder, resumes the copy there with a forked pool of POOL workers for TIMEOUT s,
 # and logs every 2 min the memory of each process (Rss, Pss and private from smaps_rollup), the
 # node's used memory and the latest sampler row. It writes no CONVERGED marker and never writes
 # the live checkpoint. Submit with, for example,
 #   sbatch -J forktest --export=ALL,POOL=48 experiments/2026-10-09_nautilus_c3k_er_broadline/test_fork.slurm
-# Output goes to /work/11006/nikhilgaruda/ls6/research/forktest_<job id>/ (fit.log and mem.log).
+# Output goes to forktest_<job id>/ (fit.log and mem.log).
 #SBATCH -p development
 #SBATCH -N 1
 #SBATCH -n 1

@@ -1,36 +1,17 @@
 """At fixed S/N, does the DESI flow outlier rate depend on flux calibration quality?
 
-QUESTION: Within each S/N bin, does the outlier rate of each flow rise with the predicted
-calibration error f of the petals a target was observed on, and fall with the number of tiles?
-Plan in ~/.claude/plans/calib_injection_2026-11-13.md.
-HYPOTHESIS: if missing calibration distortions drive the high-S/N excess, the rate in the top
-quartile of f exceeds the bottom quartile by more than 3 sigma in the S/N 8-15 and > 15 bins of
-cont10 and cont15. If the excess is a model offset, the rate is flat in f.
-INPUTS: data/iron_tileqa/<tile>/tile-qa-*.fits (latest file per tile; FIBERQA TARGETID, PETAL_LOC,
-EFFTIME_SPEC, QAFIBERSTATUS; PETALQA NSTDSTAR, STARRMS) for the 214 SV3 bright tiles of
-data/iron_tiles/tiles-iron.csv; results/2026-11-09_mocks_v2_outliers/flows/desi_outliers_flow_nsf_
-<tag>latent_snr3.pt; data/dataset_z_snr.npz (the latent-cut S/N).
-METHOD: f per tile-petal from the r-camera fit of results/2026-10-13_fluxcal_sample/all/
-summarise_f.txt l.24, f = -0.0159 + 0.1209 / sqrt(NSTDSTAR) + 0.0582 STARRMS (NSTDSTAR 0 set to 1).
-Per target, over the tiles it was observed on (QAFIBERSTATUS 0 rows first, all rows when none),
-f_coadd = sqrt(mean(f^2) / n_tiles). Quartiles of f_coadd over the scored parent. Errors
-sqrt(r (1 - r) / N). In the matched check, within each S/N bin, the 3+ tile rate is reweighted to
-the 1-tile mix over cells of z (0.1 bins), log M* and Dn4000 (FastSpecFit LOGMSTAR and Dn4000 of
-2026-11-13_psb_fraction_like_for_like indices_desi.npz) and S/N quartile; cells without both
-groups are dropped (coverage given).
+QUESTION: within each S/N bin, does each flow's outlier rate rise with the predicted calibration
+error f of the target's petals, and fall with the number of tiles?
+HYPOTHESIS: if calibration distortions drive the high-S/N excess, Q4 of f exceeds Q1 by > 3 sigma in
+the S/N 8-15 and > 15 bins of cont10 and cont15. If the excess is a model offset, the rate is flat.
+INPUTS: data/iron_tileqa/<tile>/tile-qa-*.fits, data/iron_tiles/tiles-iron.csv,
+results/2026-11-09_mocks_v2_outliers/flows/desi_outliers_flow_nsf_<tag>latent_snr3.pt,
+data/dataset_z_snr.npz.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-13_calib_outlier_dependence/analysis.py``.
-RESULT: 2026-11-13, dependence.txt. Q4 minus Q1 of f: cont10 S/N 8-15 +1.9% (3.5 sigma), > 15
-+4.3% (2.9 sigma); cont15 8-15 +0.2% (0.6 sigma), > 15 +2.7% (2.7 sigma). The 3 sigma rule holds
-in one of four cells, so not met. Tile count matters more: above S/N 15, 1 tile vs 3+ tiles is
-cont10 15.7 vs 9.3%, cont15 8.0 vs 2.8%, at equal median S/N; at S/N 3-5 there is no difference.
-3+ tile targets still sit far above the mocks' 0.1%. Matched check: 1-tile targets are at lower z,
-higher log M* and Dn4000 (S/N > 15 medians z 0.084 vs 0.116, Dn4000 1.90 vs 1.82). Reweighted, the
-1-tile excess shrinks to cont10 16.0 vs 11.8 +- 1.6% (S/N > 15) and 7.2 vs 5.4 +- 0.6% (8-15),
-cont15 8.1 vs 6.0 +- 1.2% and 2.2 vs 1.2 +- 0.4%: 1.7-2.7 sigma each, same sign; the full-spectrum
-flows show no consistent sign. Assumptions: f from a fit to the r camera, tile-qa NSTDSTAR per tile
-not per exposure, tiles independent, cells of z, log M*, Dn4000 and S/N remove the population
-difference.
+RESULT: 2026-11-13, dependence.txt. Q4 minus Q1 passes 3 sigma in one of four cells, so not met.
+Above S/N 15, 1 vs 3+ tiles is cont10 15.7 vs 9.3%, matched 16.0 vs 11.8 +- 1.6%.
+Assumptions: f from an r-camera fit; NSTDSTAR per tile; tiles independent; matching cells suffice.
 FIGURES: none (dependence.txt).
 """
 

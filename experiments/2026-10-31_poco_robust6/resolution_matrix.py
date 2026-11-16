@@ -1,9 +1,7 @@
 """Save the DR1 resolution matrix of one target of targets.txt.
 
-As 2026-10-29_continuum_39633433328091196_map/resolution_matrix.py, for --tid. The healpix comes from
-targets.txt, the coadd from the spender DATA folder on /work. The saved flux and ivar must equal
-load_spectrum's on the good pixels. SPEC_DATA names the folder with the staged spender files.
-COMMAND: on a stampede3 compute node, through prep.slurm,
+As 2026-10-29_continuum_39633433328091196_map/resolution_matrix.py, for --tid.
+COMMAND: on a compute node, through prep.slurm,
 ``<venv>/bin/python experiments/2026-10-31_poco_robust6/resolution_matrix.py --tid <TARGETID>``.
 OUTPUT: results/2026-10-31_poco_robust6/<TARGETID>/resolution_matrix.npz.
 """

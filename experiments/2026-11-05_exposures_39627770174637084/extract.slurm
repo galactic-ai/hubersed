@@ -1,6 +1,6 @@
 #!/bin/bash
 # Unzip the spectra files of urls.txt and extract 39627770174637084 (extract.py), after stage.sh.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch experiments/2026-11-05_exposures_39627770174637084/extract.slurm
 #SBATCH -J exp084
 #SBATCH -p skx-dev

@@ -1,13 +1,6 @@
 """Save the max-L point of the C3K_HR afefree nautilus run of 39633433328091196.
 
-fit.py fixes the SFH hyperparameters there and starts from it. The checkpoint is
-results/2026-10-08_continuum_outlier/39633433328091196_c3k_hr_full_neboff_afefree_seed0.h5
-(window full, nebular off, degraded data, afe free). It is read as predict.py does. The
-likelihood is never called, and the unit-cube point with the largest log L goes through the
-prior transform of the 10-08 make_model. The likelihood at that point is not recomputed, since
-that needs the C3K_HR AFE build.
-
-COMMAND: from the repository root on the Mac,
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-29_continuum_39633433328091196_map/hypers.py``.
 OUTPUT: results/2026-10-29_continuum_39633433328091196_map/hr_maxl.npz.
 """

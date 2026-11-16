@@ -1,33 +1,16 @@
 """Post-starburst fractions of the DESI parent and the v2 mocks with the same cuts and measurements.
 
-QUESTION: In matched redshift bins (and above log M* 10.6), what fraction of DESI parent galaxies and
-of v2 mocks (noised as the flows saw them, and noiseless) passes the same spectral PSB cuts?
-HYPOTHESIS: none registered. The mock SFH census (2026-11-13_mock_psb_coverage sfh.py) found 0.13% of
-mocks PSB-like at every redshift, while Rowlands et al. (2018, arXiv:1707.07989, l.296) find 0.06-0.2%
-at z < 0.35 rising to 2-3% at z ~ 0.7.
-INPUTS: results/2026-11-13_psb_fraction_like_for_like/indices_{desi,noised,rebuilt}.npz (measure.py).
-METHOD: every sample is first cut to median per-pixel S/N > 3, the parent cut and the cut of the mocks
-the flows saw (post_mac.sh, get_latent_space.py --snr_min 3). Cuts are on the raw indices of
-measure.py, emission positive.
-- Goto (2007, arXiv:0801.1106, ea5_astroph.tex l.333, with EW(Hdelta) replaced by HdA) is HdA > 5 A,
-  EW([OII]) < 2.5 A, and EW(Halpha) < 3 A where Halpha is measured (z < ~0.48).
-- Leung et al. (2024, arXiv:2309.16626, l.200) is HdA > 3 A, W(Halpha) < 10 A and
-  log W(Halpha) < 0.23 HdA - 0.46 (W <= 0 passes), only where Halpha is measured.
-Fractions per z bin of 0.1 from 0 to 0.6, all masses and log M* >= 10.6 (DESI FastSpecFit LOGMSTAR,
-mocks logmass, the mass formed), and median per-pixel S/N > 8 as Leung et al. require (l.198-200; DESI
-S/N from data/dataset_z_snr.npz, the latent-cut S/N; mocks from measure.py snr; noiseless mocks
-count as above); errors sqrt(f (1 - f) / N).
-Assumptions: raw indices keep emission infill and absorption under the lines, alike in data and mocks;
-the cuts were calibrated on other surveys; mock mass formed exceeds stellar mass.
+QUESTION: in matched redshift bins (and above log M* 10.6), what fraction of DESI parent galaxies
+and of v2 mocks (noised and noiseless) passes the same spectral PSB cuts?
+HYPOTHESIS: none registered. The mock SFH census found 0.13% of mocks PSB-like, Rowlands et al.
+(2018, arXiv:1707.07989) 0.06-0.2% at z < 0.35 rising to 2-3% at z ~ 0.7.
+INPUTS: results/2026-11-13_psb_fraction_like_for_like/indices_{desi,noised,rebuilt}.npz
+(measure.py).
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-13_psb_fraction_like_for_like/analysis.py``.
 RESULT: 2026-11-14, fractions.txt. At z < 0.3 and S/N > 8, Goto passes 1.6-5.9% of noised mocks,
-1.5-2.0% of noiseless rebuilt mocks and 0.2-0.8% of DESI; Leung 6.0-6.6%, 6.3-7.7% and 2.5-2.8%.
-Noise raises the mock Goto fraction but not Leung; noiseless mocks still pass both cuts 2-10x more
-than DESI, far above the 0.13% PSB-like SFHs (sfh.py), so the cuts do not trace the mock SFH.
-Mock fractions barely change with S/N cut or mass. DESI above z 0.4 has under 15 spectra at
-S/N > 8. Assumptions: raw indices, mock mass formed, Goto without Halpha above z ~ 0.48; rebuilt
-is a random 20,000 of all 500,000 mocks, the noised set is cut at S/N > 3.
+1.5-2.0% of noiseless and 0.2-0.8% of DESI, so the cuts do not trace the mock SFH.
+Assumptions: raw indices, mock mass formed, no Halpha in Goto above z ~ 0.48, 20,000 random rebuilt.
 FIGURES: none (fractions.txt).
 """
 

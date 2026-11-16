@@ -1,14 +1,11 @@
 """Continuum MAP of the continuum outlier 39633433328091196 with C3K_ER, free afe and its R matrix.
 
-Changes from 2026-10-28_continuum_c3k_er_rmatrix_map (39627757533007793): the target is
-39633433328091196 (z 0.392, rank 4 of 2026-10-21_continuum_outlier_snr), its DR1 SV3 coadd and
-its DR1 resolution matrix (resolution_matrix.py, healpix 10231). The fixed SFH hyperparameters
-and start 0 are the max-L point of its own C3K_HR afefree nautilus run, which had nebular
-emission off (hypers.py, hr_maxl.npz), where 10-28 used the nebular-on run. Model, priors, rest
-window 3320 to 9000 A, starts and the steps check, fit and collect are those of the 10-28
-fit.py, which this file runs with target, matrix, output folder and start swapped. No Cue.
+SUPERSEDED BY: experiments/2026-10-30_continuum_39633433328091196_dark_map.
+Same MAP on the SV3 dark coadd, since the bright coadd has blue sky residual.
 
-Run on a stampede3 compute node through test.slurm or map.slurm, for example
+Changes from 2026-10-28_continuum_c3k_er_rmatrix_map are the target 39633433328091196, its DR1 SV3
+coadd and resolution matrix, and fixed SFH hyperparameters and start 0 at hr_maxl.npz (nebular off).
+COMMAND: on a compute node through test.slurm or map.slurm, for example
 ``<venv>/bin/python experiments/2026-10-29_continuum_39633433328091196_map/fit.py fit --start 0``.
 """
 

@@ -1,18 +1,15 @@
 """C3K ER against MILES dust-free SSP continua at the same age and metallicity.
 
-QUESTION: is the C3K continuum bowed against MILES at fixed age and metallicity, by the amount the
-fits of 39633433328091196 imply (C3K best model about 6% fainter at rest 3400 A and 4% at 7000 A,
-relative to V; 2026-10-29_continuum_39633433328091196_map/reddening.py)?
+QUESTION: is the C3K continuum bowed against MILES at fixed age and metallicity, as the fits of
+39633433328091196 imply (best C3K model ~6% fainter at rest 3400 A, 4% at 7000 A, relative to V)?
 HYPOTHESIS: none registered.
-INPUTS: ssp_c3k_er.npz and ssp_miles.npz of ssp.py (stampede3 job in ssp_s3.slurm), copied to
-the Mac.
+INPUTS: ssp_c3k_er.npz and ssp_miles.npz of ssp.py.
 SEED: none.
-COMMAND: from the repository root on the Mac,
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-29_c3k_vs_miles_ssp/analysis.py``.
-RESULT: 2026-10-29, ratio.txt. Same MIST, IMF and SPS_HOME: the continuum agrees within ~2-3% at
-4500-7000 A; old ages at logzsol 0 differ in the Ca H&K bin (0.85), G band and Fe4383 (0.91-0.93)
-and C2 4668 (1.04). Above the MILES cap (+0.3) the H&K bin falls to 0.76. Assumptions: scaled-solar
-SSPs, 100 A bin means across different library resolutions, normalised at 5500 A.
+RESULT: 2026-10-29. Continuum within ~2-3% at 4500-7000 A. At logzsol 0, old ages differ in Ca H&K
+(0.85), G band and Fe4383 (0.91-0.93) and C2 4668 (1.04). Above the MILES cap (+0.3) H&K is 0.76.
+Assumptions: scaled-solar SSPs, 100 A bin means across library resolutions, normalised at 5500 A.
 FIGURES: results/2026-10-29_c3k_vs_miles_ssp/ratio.png and ratio.txt.
 """
 

@@ -1,23 +1,13 @@
 """Ionizing spectrum of an assumed young population for the line-flux Cue fits, against the pipeline's.
 
-QUESTION: the line-flux fits have no continuum, so Cue's ionizing spectrum comes from an assumed
-young population of constant SFR for 10 Myr (the pipeline's young/old split, dust_tesc) at fixed
-stellar Z. How far are its 7 Cue ionizing parameters from those the full-spectrum pipeline used at
-the rmatrix nautilus max-L of 39627770174637084 (old_csp_lines.txt), and how much does that move
-the line ratios at the same gas parameters?
-
-The population is built with the pipeline's FSPS object and settings (C3K_ER build, the model's
-imf_type and other FSPS parameters), with sfh 1, const 1, tage 0.01 Gyr. The young CSP of FSPS is
-fitted with cuejax fit_4loglinear_ionparam, as prospect does. Line ratios use Cue at the max-L gas
-parameters for three stellar Z, -0.41 (the target's fitted logzsol), 0.0 and -0.75. SEED: none.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+QUESTION: how far are the 7 Cue ionizing parameters of a 10 Myr constant-SFR young population from
+those of the pipeline at the rmatrix max-L of 39627770174637084, and how much do line ratios move?
+SEED: none.
+COMMAND: from the repository root with the C3K_ER build,
+``PYTHONPATH=<er_path>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-14_cue_lineflux_calibration/ionspec.py``
-
-OUTPUT: ionspec.txt, and ionspec.npz (zstar, the 7 ionizing parameters per zstar, their keys) for
-fit.py, in results/2026-10-14_cue_lineflux_calibration/.
+OUTPUT: ionspec.txt and ionspec.npz in results/2026-10-14_cue_lineflux_calibration/.
 """
 
 import jax.numpy as jnp

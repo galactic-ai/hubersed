@@ -2,14 +2,12 @@
 
 QUESTION: which screened outliers stop being outliers when exposures with sky g < 21 are dropped?
 HYPOTHESIS: none registered.
-INPUTS: results/2026-10-31_screen_all/exposures/<TARGETID>.npz (sky_extract.py), exposure sky from
-the QA experiment's sv3_bright_exposures.csv, seed 0 flows and encoders. The coadd follows
-spender's steps as 2026-10-31_logp_vs_colour/rule.py; the all-exposure coadd is the check.
+INPUTS: results/2026-10-31_screen_all/exposures/<TARGETID>.npz, sv3_bright_exposures.csv of the QA
+experiment, seed 0 flows and encoders; coadd as 2026-10-31_logp_vs_colour/rule.py.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_screen_all/sky_rescore.py``.
-RESULT: 2026-10-31. Of 20, 12 are no longer common outliers (5 clear in both flows, 7 in one,
-some at the threshold), 7 stay, 1 has no clean exposure. All-exposure coadds match the stored log
-p within 1.7.
+RESULT: 2026-10-31. Of 20, 12 are no longer common outliers (5 clear in both flows, 7 in one),
+7 stay, 1 has no clean exposure.
 FIGURES: results/2026-10-31_screen_all/sky_rescore.txt.
 """
 

@@ -1,40 +1,10 @@
 """Fit simple line profiles to the strong lines of the ER max-L model to find the core misfit.
 
-QUESTION: are the line-core residuals of the ER fit of 39627770174637084 at [OIII]5007,
-[OIII]4959, Halpha and Hbeta caused by an instrumental line spread that is too broad, by a line
-shape that two Gaussians per line cannot represent, or by velocity offsets of the line centres?
-
-The model adds each line as a Gaussian sampled at the pixel centres, with the intrinsic width
-added in quadrature to the DESI instrumental sigma at the line (prospect
-SpecModel.cache_eline_parameters, and TwoCompLineModel._profile_widths in
-hubersed.sps.broadline). This script builds the same profiles.
-
-The background under each line is the max-L model minus that line's own model contribution. It
-holds the stellar and nebular continuum and the wings of the neighbouring lines. The line
-contributions come from the fixed-line spectrum prospect caches in predict_spec. On data minus
-background, with the pixel uncertainties and the fitted pixels of each rest-frame window, the
-script fits
-
-- A, one Gaussian with free flux, velocity and intrinsic sigma;
-- B, one Gaussian with intrinsic sigma 10 km/s and a free scale s on the instrumental sigma;
-- C1, two Gaussians with one centre and free fluxes and intrinsic sigmas;
-- C2, two Gaussians with separate free centres;
-- C1s, as C1 but with the narrow intrinsic sigma fixed at 10 km/s and a free scale s on the
-  instrumental sigma of both components. This one is B with the broad wings added.
-
-Velocities are relative to the centre of the max-L model's narrow component of the line.
-
-INPUTS: the ``_pred.npz`` of predict.py (data, fitted pixels, max-L point and spectrum). SEED:
-none (deterministic least squares from fixed starts).
-
-COMMAND: from the repository root on the Mac with the C3K_ER build (no AFE_FLAG), as jacobian.py,
+Fits A, B, C1, C2 and C1s to data minus background at [OIII]5007, [OIII]4959, Halpha and Hbeta,
+and writes profile_check.txt and profile_check.png. Run from the repository root as
 ``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-09_nautilus_c3k_er_broadline
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-09_nautilus_c3k_er_broadline/profile_check.py``. Building the Cue source takes
-a few minutes.
-
-OUTPUT: profile_check.txt and profile_check.png in
-results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/.
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
+experiments/2026-10-09_nautilus_c3k_er_broadline/profile_check.py``.
 """
 
 import matplotlib.pyplot as plt
@@ -65,20 +35,13 @@ WINDOWS = {
 def model_lines(best, sp_best):
     """Return the max-L spectrum and each window line's contribution, centre and instrument.
 
-    Parameters
-    ----------
-    best : np.ndarray
-        The max-L parameter vector.
-    sp_best : np.ndarray
-        The max-L spectrum stored by predict.py, used as a check.
-
     Returns
     -------
     pred : np.ndarray
         The max-L spectrum in maggies on the full grid.
     lines : dict
-        For each window, a tuple of the line's model spectrum on the full grid, the observed
-        centre of its narrow component in Angstrom and the instrumental sigma in km/s.
+        For each window, the line's model spectrum on the full grid, the observed centre of its
+        narrow component in Angstrom and the instrumental sigma in km/s.
     """
     model, obs, sps = process_state(TID, FB, SPLIT, REST_MAX)
     pred = model.predict(best, observations=obs, sps=sps)[0][0]
@@ -100,11 +63,7 @@ def model_lines(best, sp_best):
 
 
 def profile(wave, grid, mu, sigma):
-    """Return a unit-flux Gaussian line sampled at ``wave``, as prospect builds it.
-
-    The Gaussian is in velocity with the d(v)/d(nu) factor of prospect's get_eline_gaussians,
-    and it is normalized by its trapezoid integral on the full pixel grid ``grid``.
-    """
+    """Return a unit-flux Gaussian line sampled at ``wave``, as prospect builds it."""
 
     def g(w):
         return np.exp(-0.5 * (C_KMS * (w / mu - 1) / sigma) ** 2) * (w / mu) ** 2
@@ -113,11 +72,7 @@ def profile(wave, grid, mu, sigma):
 
 
 def fit_kinds(w, grid, mu0, inst, f0):
-    """Return the profile function, start points and bounds of each fit.
-
-    Parameters are fluxes in maggies Angstrom, velocities in km/s, intrinsic sigmas in km/s and
-    scales of the instrumental sigma.
-    """
+    """Return the profile function, start points and bounds of each fit."""
 
     def p(f, v, sigma):
         return f * profile(w, grid, mu0 * (1 + v / C_KMS), sigma)
@@ -161,14 +116,7 @@ def fit_kinds(w, grid, mu0, inst, f0):
 
 
 def fit_window(w, y, e, grid, mu0, inst, f0):
-    """Fit every profile of ``fit_kinds`` to one window and keep the best start of each.
-
-    Returns
-    -------
-    dict
-        For each fit, the best parameters, their 1 sigma errors from the column-scaled Jacobian
-        (a parameter at a bound gets a meaningless error), the chi^2 and the fitted profile.
-    """
+    """Fit every profile of ``fit_kinds`` to one window and keep the best start of each."""
     out = {}
     for kind, (f, starts, bounds) in fit_kinds(w, grid, mu0, inst, f0).items():
         best = None

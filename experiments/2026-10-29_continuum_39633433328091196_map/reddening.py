@@ -1,11 +1,6 @@
 """Attenuation that the ER MAP and MILES max-L dust parameters of 39633433328091196 imply.
 
-FSPS dust_type 4 (Kriek and Conroy 2013) with dust1 = 0, so only the diffuse screen acts. A_lambda is
--2.5 log10 of the ratio of a 10 Gyr solar SSP with and without dust2, read at 4400 and 5500 A. The
-SSP only carries the curve, so its age and metallicity do not matter.
-
-COMMAND: from the repository root on the Mac,
-``SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+COMMAND: from the repository root, ``SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-29_continuum_39633433328091196_map/reddening.py``.
 OUTPUT: printed.
 """

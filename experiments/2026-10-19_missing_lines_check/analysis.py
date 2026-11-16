@@ -1,25 +1,17 @@
 """Find emission lines in the fitted range that are seen in the data but neither in Cue nor masked.
 
 QUESTION: Which emission lines in the fitted range are neither in Cue's line list nor masked, and
-seen in the data? MISSING_LINES (model_setup.py) was picked by hand in the #14 continuum check of
-2026-10-12, and 39633278973513279 shows spikes at Paschen and O I positions it does not cover.
+seen in the data?
 HYPOTHESIS: None registered before this analysis.
-METHOD: candidates are the H I Balmer and Paschen series for n = 11 to 30 (Rydberg formula, vacuum,
-no fine structure), the pyneb He I recombination labels (air, rounded to 1 A), the pyneb forbidden
-lines of common ions (air) with at least 1% of the ion's strongest emissivity in the fitted range
-at 1e4 K and 100 cm^-3, and O I 7774 and 8446 (air, from memory). Air values go to vacuum with
-_airtovac. Candidates within 4 A of a Cue line or a MISSING_LINES entry are dropped. Each one is
-scored on the pocoMC best point of each target by S = sum(chi) / sqrt(n) over the fitted pixels
-within 3 A rest. A blind search then lists runs of chi smoothed over 3 pixels above 4 that are not
-within 4 A of a Cue line, a MISSING_LINES entry or a candidate.
 INPUTS: pmc_final.state of the free_dust runs of 39627770174637084, 39633278973513279 and
 39633001071509599 in results/2026-10-15_broadline_free_amplitude/.
 SEED: none.
-COMMAND: from the repository root on the Mac with the C3K_ER build, once per target,
-FIT_TID=<TID> PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-15_broadline_free_amplitude:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+COMMAND: from the repository root with the C3K_ER build, once per target,
+FIT_TID=<TID> PYTHONPATH=<er_path>:experiments/2026-10-15_broadline_free_amplitude:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-19_missing_lines_check/analysis.py
 RESULT: see <TID>.txt.
+Assumptions: a 4 A match window to Cue and MISSING_LINES lines. O I 7774 and 8446 come from memory.
 FIGURES: none. <TID>.txt in results/2026-10-19_missing_lines_check/.
 """
 

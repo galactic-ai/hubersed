@@ -1,7 +1,6 @@
 """List the blue outliers for the single-exposure check and the iron spectra files they need (#17).
 
-Targets are the 94 (sample94.npz) with dgr < -0.3 (FIBERTOTFLUX, qa_outliers.txt column dgr_tot)
-and COADD_NUMEXP >= 2.
+Targets are the 94 (sample94.npz) with dgr_tot < -0.3 (qa_outliers.txt) and COADD_NUMEXP >= 2.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_logp_vs_colour/exp_select.py``.
 OUTPUT: exp_targets.txt and exp_urls.txt next to this script.
 """

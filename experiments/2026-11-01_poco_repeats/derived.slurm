@@ -1,7 +1,7 @@
 #!/bin/bash
 # derived.py fsps for one target, run by run in turn on one node, each run with the FSPS build and
 # SPS_HOME of its fit (ladder.slurm, prod.slurm). RUNS lists the runs, N the draws per kind (all if
-# unset), BUILD the SSP build helpers. Submit from the repository root on stampede3, after the
+# unset), BUILD the SSP build helpers. Submit from the repository root, after the
 # draws_<RUN>.npz files are in results/2026-11-01_poco_repeats/<TID>/derived/:
 #   TID=<TARGETID> RUNS="miles c3k_hr_afe dr1" N=50 BUILD=8 sbatch --export=ALL \
 #       experiments/2026-11-01_poco_repeats/derived.slurm

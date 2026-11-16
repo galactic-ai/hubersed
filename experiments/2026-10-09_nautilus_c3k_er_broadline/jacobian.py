@@ -1,34 +1,10 @@
 """Local Jacobian of the converged ER model at its maximum likelihood point.
 
-QUESTION: which pixels and which emission lines set each of the 29 parameters of the #14 ER fit
-of 39627770174637084, and how do the Cue line fluxes respond to each parameter?
-
-Two products, both from central differences of the model at the maximum likelihood point
-``best`` of predict.py.
-
-- the pixel Jacobian dm/dtheta on the fitted pixels. It gives the Fisher matrix
-  F = J^T diag(1/unc^2) J, the Fisher widths of each parameter (marginal and conditional) next to
-  the posterior widths, and the share of each parameter's Fisher information that comes from
-  each rest-frame window;
-- the line Jacobian d log10 L / dtheta of the dust-attenuated Cue line luminosities that
-  prospect stores in ``model._eline_lum``, for the lines inside the fitted range.
-
-Each step is half the weighted posterior standard deviation, one-sided where a step would leave
-the prior. The Fisher numbers are local and linear. They ignore the prior and the curvature, so
-they are a guide to where information comes from, not a replacement for the posterior.
-
-INPUTS: the ``_pred.npz`` of predict.py (copied from ls6) and the same data, model and build as
-the fit. SEED: none (deterministic).
-
-COMMAND: from the repository root on the Mac with the C3K_ER build (no AFE_FLAG, [alpha/Fe] is 0
-in the fit),
+Writes the pixel and line Jacobians to jacobian.npz, jacobian_fisher.txt and jacobian_lines.txt.
+Run from the repository root as
 ``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-09_nautilus_c3k_er_broadline
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-09_nautilus_c3k_er_broadline/jacobian.py``. At ``best`` it gives lnL
-101547.9788 against 101547.9693 on ls6.
-
-OUTPUTS: results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/jacobian.npz,
-jacobian_fisher.txt and jacobian_lines.txt.
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
+experiments/2026-10-09_nautilus_c3k_er_broadline/jacobian.py``.
 """
 
 import numpy as np

@@ -1,29 +1,15 @@
 """FIRST, NVSS and LoTSS DR3 sources near selected gallery105 figures, and their MEx placement.
 
-Targets (TARGETS) are 16, 18, 22, 41, 42, 74, 77, 78, 82, 86, 89 and 102.
-
-QUESTION: Is 16 a radio source (BL Lac test)? Where does 18 sit on the mass-excitation diagram? Is
-the extended LoTSS DR3 emission seen at 22 a catalogued source at the galaxy?
+QUESTION: is 16 a radio source (BL Lac test), where does 18 sit on the mass-excitation diagram, and
+is the extended LoTSS DR3 emission seen at 22 a catalogued source at the galaxy?
 HYPOTHESIS: none registered.
-INPUTS: HEASARC TAP tables first and nvss, and the ASTRON TAP table lotss_dr3.main_sources (144 MHz,
-6 arcsec; LoTSS DR3, A&A 707, A198), all queried live; data/fastspec-iron-sv3-bright.fits
-(RA, DEC, LOGMSTAR, OIII_5007_FLUX, HBETA_FLUX of the SV3 bright coadd).
-METHOD: cone of 60 arcsec. MEx curves of Juneau et al. (2014, arXiv:1403.6832, ms_arxiv.tex
-l.451-471), with y = log([OIII]5007/Hbeta) and x = log M*. Above the upper curve is MEx-AGN, below
-the lower is MEx-SF. Applied only when [OIII]5007 and Hbeta both have FastSpecFit flux S/N >= 3
-(J11 uses S/N > 3; J14 also allows an Hbeta upper limit, not used here).
-L144 = 4 pi D_L^2 S (1 + z)^(-alpha - 1), with S_nu ~ nu^alpha, alpha = -0.7 assumed, Planck18.
-Radio excess as Best et al. (2023, arXiv:2305.05782, lofar_sfagn_final.tex l.1827-1829, 1845-1848,
-1865-1875) is log L150 > 22.24 + 1.08 log SFR + 0.7, with SFR floored at 0.01 Msun/yr. SFR is
-FastSpecFit SFR, not their consensus SED SFR (100 Myr, Chabrier); L144 is used as L150 (about
-0.01 dex apart). Every source within 60 arcsec is listed and run through the excess test at the
-target's redshift; only a source within a few arcsec of the galaxy belongs to it (74's sources at
-42-50 arcsec do not).
-Assumptions: FastSpecFit LOGMSTAR on the IMF of the J14 masses (J14 states Chabrier;
-FastSpecFit IMF not checked here); J14 states no upper mass limit for its cubics.
+INPUTS: HEASARC TAP tables first and nvss, ASTRON TAP table lotss_dr3.main_sources (queried live),
+data/fastspec-iron-sv3-bright.fits.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-13_agn_check_16_18/radio.py``.
 RESULT: pending.
+Assumptions: FastSpecFit LOGMSTAR on the J14 (Chabrier) IMF, not checked; J14 cubics have no upper
+mass limit.
 FIGURES: none (radio.txt).
 """
 

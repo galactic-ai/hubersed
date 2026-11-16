@@ -1,15 +1,12 @@
-"""Corner plots and the SFH of run A (37084, C3K_HR, forbidden broad shared, split 45 km/s), for slides.
+"""Corner plots and SFH of run A (37084, C3K_HR, forbidden broad shared, split 45 km/s) for slides.
 
-QUESTION: what do the posteriors of run A look like without the 09-26 run drawn over them?
+QUESTION: What do the posteriors of run A look like without the 09-26 run drawn over them?
 INPUTS: results/2026-09-30_nautilus_c3k_broadline_split45/39627770174637084_broad_shared_split45_unmask_rest9000_seed0.h5
 and the .json next to it.
 SEED: 0, for the 2000 weighted posterior draws of the SFH.
 COMMAND: uv run python experiments/2026-09-30_nautilus_c3k_broadline_split45/corner_a.py
 FIGURES: corner_phys_A_39627770174637084.png, corner_sfh_A_39627770174637084.png,
 corner_lines_A_39627770174637084.png and sfh_A_39627770174637084.png in the same results folder.
-
-The parameter groups are those of the 2026-10-10 C/O tie analysis. Fonts are large so the figures
-can go on a slide. Dashed lines mark prior edges inside an axis.
 """
 
 import importlib.util
@@ -60,11 +57,7 @@ def wquantile(x, w, q):
 
 
 def read_posterior(path, model):
-    """Return the physical posterior points and their normalized weights from a checkpoint.
-
-    The fit gave nautilus the identity prior, so the checkpoint holds unit cube points. Points
-    more than e^-30 below the heaviest one are dropped, as in the predict scripts.
-    """
+    """Return physical points and normalized weights, dropping those e^-30 below the heaviest."""
     s = Sampler(
         lambda x: x, lambda x: 0.0, n_dim=model.ndim, n_live=1000, filepath=str(path), resume=True
     )

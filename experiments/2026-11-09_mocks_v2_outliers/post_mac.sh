@@ -1,5 +1,5 @@
 #!/bin/bash
-# The four post.slurm steps on the Mac (stampede3 skx-dev drained 2026-11-10): merge, noise (cpu),
+# The four post.slurm steps on a Mac: merge, noise (cpu),
 # encode (five encoders, mps), flows (five, cpu). Same settings as post.slurm. Run from the
 # repository root: bash experiments/2026-11-09_mocks_v2_outliers/post_mac.sh [step ...]
 # with steps from merge noise encode flows (default all four, in order).

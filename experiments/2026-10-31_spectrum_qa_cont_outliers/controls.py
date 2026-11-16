@@ -1,16 +1,7 @@
 """Pick three control sets of 10 galaxies per outlier for the 94 common continuum outliers.
 
-The pool is the S/N > 3 DESI spectra of the latent files that neither seed 0 continuum flow flags,
-that are in the FastSpecFit VAC, and that pass the redshift cuts of sample.py (VAC z in
-[0.01, 0.6], |z_pipeline - z_VAC| / (1 + z_VAC) <= 0.01). The Gaia, SGA, SIMBAD, PSF, BPT and
-shred screens are not applied to the pool.
-
-The matched set is nearest in (VAC z, r fiber magnitude, SNR_B), each standardised over the pool.
-The cont10 and cont15 sets are nearest in that flow's latent space, scaled by its mock scaler.
-Within a set no galaxy is used twice. Outliers take their neighbours in TARGETID order.
-
-COMMAND: from the repository root on the Mac,
-``uv run --no-sync python experiments/2026-10-31_spectrum_qa_cont_outliers/controls.py``.
+The matched set is nearest in (VAC z, r fiber magnitude, SNR_B), cont10 and cont15 in latent space.
+COMMAND: ``uv run --no-sync python experiments/2026-10-31_spectrum_qa_cont_outliers/controls.py``.
 OUTPUT: results/2026-10-31_spectrum_qa_cont_outliers/controls.npz.
 """
 

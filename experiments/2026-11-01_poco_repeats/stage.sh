@@ -1,6 +1,6 @@
 #!/bin/bash
 # Copy the spender chunk files of targets.txt (TARGETID, healpix, chunk) from Corral to /scratch,
-# where load_spectrum reads them under SPEC_DATA. Run on the stampede3 login node from the
+# where load_spectrum reads them under SPEC_DATA. Run on the login node from the
 # repository root: bash experiments/2026-11-01_poco_repeats/stage.sh
 set -euo pipefail
 C=/corral/utexas/AST25023/nikhilgaruda/hubersed/data/desi_spectra

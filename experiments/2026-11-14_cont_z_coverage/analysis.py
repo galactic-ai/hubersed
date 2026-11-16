@@ -1,36 +1,17 @@
 """Is the rise of cont flags with redshift a mock coverage effect, and why is 99 flagged?
 
-QUESTION: (1) Are the cont flows' training mocks past both cont thresholds as often at z 0.45-0.60 as
-DESI is (thin flow density there), or do high-z mocks score normally while DESI does not? (2) Is
+QUESTION: (1) are training mocks at z 0.45-0.60 past both cont thresholds as often as DESI? (2) Is
 gallery105 99 (z 0.015) flagged because mocks are sparse near its z, or for a reason of its own?
-HYPOTHESIS: none registered. Plan ~/.claude/plans/z_coverage_and_99_2026-11-14.md. Held-out
-mocks at z 0.45-0.60 flagged at >= 5x their overall 0.1% means thin coverage; within 2x while DESI is
-20x+ means a DESI-mock difference at high z. For 99, under 20 mocks within |z - 0.015| <= 0.01, or
-its kNN distance above the 99.9 percentile of same-z held-out mocks while those mocks are not
-flagged, means coverage; else specific to 99.
-INPUTS: results/2026-11-09_mocks_v2_outliers/flows (flow_nsf_cont{10,15}latent.pt; desi_outliers_flow_
-nsf_cont{10,15}latent_snr3.pt for DESI log p, thresholds and the latent files), data/dataset_z_snr.npz
-(DESI z and median S/N, the latent-cut definition as the mocks' snr_med, 2026-11-13_mock_noise_snr_check),
-results/prescreened_sample_v1.npz (keep).
-METHOD: mock log p recomputed with the saved flows; held-out mocks are the first tenth of the
-default_rng(0) permutation. Flag = at or below both saved cont thresholds; held-out mocks are flagged
-in both flows on the same rows (mock files share target_ids, checked). Per z bin (0.05, plus 0-0.03)
-it gives counts, median S/N, flagged share with binomial error and median cont10 log p, for
-held-out mocks and DESI (prescreen keep); then z >= 0.45 split in S/N bins 3-4, 4-5, 5-8, >= 8.
-For 99, the mean Euclidean distance to the 10 nearest training mocks in each standardised cont
-latent, against held-out mocks within |z - 0.015| <= 0.01.
+HYPOTHESIS: held-out mocks at z 0.45-0.60 flagged >= 5x their overall 0.1% means thin coverage,
+within 2x while DESI is 20x+ a DESI-mock difference. 99 is coverage if under 20 mocks lie within
+|z - 0.015| <= 0.01 or its kNN distance tops the same-z held-out p99.9 (those unflagged).
+INPUTS: results/2026-11-09_mocks_v2_outliers/flows, data/dataset_z_snr.npz,
+results/prescreened_sample_v1.npz.
 SEED: none (the split uses the flows' seed 0).
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_cont_z_coverage/analysis.py``.
-RESULT: 2026-11-14, coverage.txt. Not coverage: no held-out mock is flagged in any z bin (0 of 2,065
-at z 0.45-0.60; median cont10 log p -5.4 to -6.8 vs -4.0 to -5.0 below z 0.45), while DESI rises to
-2.5, 5.5 and 14% at z 0.45-0.50, 0.50-0.55, 0.55-0.60 (median log p -12.4 to -16.0). At z >= 0.45 and
-matched S/N 3-4, mocks 0% (N 385) vs DESI 2.5 +- 0.6%; DESI rises with S/N there (6, 19, 40%). So high-z
-DESI differs from the mocks at the same z and S/N. DESI at z < 0.03 is also high (0.66 +- 0.27%). 99:
-10,023 mocks within z +- 0.01, none flagged, so not sparse sampling; its kNN distance is beyond every
-same-z held-out mock (2.40 vs p99.9 1.49 in cont10; 3.68 vs 2.12 in cont15). The plan's 99 rule calls
-that coverage, but it does not separate a mock gap from a peculiar spectrum; what makes 99 differ is
-not tested. Assumptions: held-out tenth only; joint flag of both flows; cause of the DESI-mock high-z
-difference not tested.
+RESULT: 2026-11-14, coverage.txt. Not coverage. 0 of 2,065 held-out mocks at z 0.45-0.60 flagged,
+DESI up to 14%. 99's kNN distance exceeds every same-z held-out mock's (2.40 vs p99.9 1.49, cont10).
+Assumptions: held-out tenth only; joint flag of both flows; high-z DESI-mock gap not explained.
 FIGURES: none (coverage.txt).
 """
 

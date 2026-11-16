@@ -1,31 +1,7 @@
-"""Figures of the deep dive on one quiescent target: metallicity, dust and mass, SFH prior, summary.
+"""Deep-dive figures of one quiescent target (metallicity, dust and mass, SFH prior, summary).
 
-QUESTION: how do the ladder runs compare with each other, with the DR1 VACs, with the spectrum's
-own Halpha and Dn4000, and with literature scaling relations at the target's sigma?
-Figures:
-1. fig_metallicity_plane: [Fe/H] against [alpha/Fe] for the afe runs; solar-scaled runs at
-   afe = 0. Grey lines of constant log Z/Zsun come from MIST2 (mist2_zh.py). Literature points are
-   at sigma 140 and 155 km/s, put on this plane through the same MIST2 relation:
-   - Thomas+2010 (arXiv:0912.0259) Eqs. 1-2;
-   - McDermid+2015 (arXiv:1501.03723) Table "Line fit parameters", rows Re/2 and Re;
-   - Conroy+2014 (arXiv:1303.6629) Table 2, stacks log sigma 2.14 and 2.23, [Fe/H] and [Mg/Fe].
-2. fig_dust_mass: overlaid corner of A_V, dust_index and logmass, as ladder_corner.py.
-3. fig_sfh_prior: log sigma_dyn against logsfr_ratios_1-3 for the DR1 and recoadd posteriors,
-   with the prior draws of derived.py in grey.
-4. fig_summary, one panel per quantity:
-   - stellar mass: ours (spectrum aperture and scaled to total by the r-band flux ratio of
-     photometry_check.py), FastSpecFit v3.0 (raw and h-corrected with h_eff of fsf_h_check.txt),
-     CIGALE;
-   - sigma;
-   - A_V, with the Dias-Garcia+2019 (arXiv:1802.06813) median range for quiescent galaxies;
-   - total metallicity, with the relations above;
-   - age, with literature z = 0 ages minus the Planck18 lookback time;
-   - SFR, with the EmFit Halpha upper limit through Kennicutt & Evans 2012 (log C = 41.27,
-     Table 1, Kroupa IMF) and the Planck18 luminosity distance.
-5. fig_checks: Dn4000 and g-r of data, models and FastSpecFit (index_check.py, photometry_check.py).
 Literature numbers are hard-coded from the TeX locations named in the code; VAC numbers are read
-from vac_rows.txt. Our numbers come from the same posteriors and draws as ladder_corner.py and
-derived.py.
+from vac_rows.txt.
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_poco_repeats/paper_figures.py --tid <TID>``.
 OUTPUT: results/2026-11-01_poco_repeats/<TID>/paper/fig_*.png.
 """

@@ -1,14 +1,13 @@
-"""MILES against C3K ER + afe + R matrix continuum MAPs on the SV3 recoadd of 39627757533007793 (#17).
+"""MILES against C3K ER + afe + R matrix MAPs on the SV3 recoadd of 39627757533007793 (#17).
 
-QUESTION: on the same recoadded SV3 data and errors, inside the MILES window, does the C3K ER + afe +
-R matrix MAP fit better than the MILES MAP (no degrading, median LSF)?
+QUESTION: on the same recoadded SV3 data and errors, inside the MILES window, does the C3K ER + afe
++ R matrix MAP fit better than the MILES MAP (no degrading, median LSF)?
 HYPOTHESIS: none registered.
-INPUTS: <TID>_map.npz of results/2026-11-01_miles_recoadd_map (fit.py collect) and of
-2026-10-29_continuum_recoadd/sv3, copied from stampede3. Feature bands from
-$SPS_HOME/data/allindices.dat.
+INPUTS: <TID>_map.npz of results/2026-11-01_miles_recoadd_map and 2026-10-29_continuum_recoadd/sv3,
+feature bands from $SPS_HOME/data/allindices.dat.
 SEED: none.
-COMMAND: from the repository root on the Mac,
-``SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+COMMAND: from the repository root,
+``SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-11-01_miles_recoadd_map/analysis.py``.
 RESULT: pending.
 FIGURES: results/2026-11-01_miles_recoadd_map/miles_vs_er.png and miles_vs_er.txt.

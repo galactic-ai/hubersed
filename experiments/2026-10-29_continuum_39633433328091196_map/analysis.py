@@ -1,21 +1,21 @@
 """Residuals of the C3K ER + afe + R matrix continuum MAP of 39633433328091196 (issue #17).
 
+SUPERSEDED BY: experiments/2026-10-30_continuum_39633433328091196_dark_map.
+Same MAP on the SV3 dark coadd, since the bright coadd has blue sky residual.
+
 QUESTION: where in rest wavelength do the MILES, C3K HR + afe and C3K ER + afe + R matrix
 continuum fits of 39633433328091196 leave residuals?
 HYPOTHESIS: none registered.
-INPUTS: <TID>_map.npz of fit.py collect (icx job 3657895) and hr_maxl.npz of hypers.py, both in
-this experiment's results folder, copied from stampede3. The 10-08 max-L spectra
-<TID>_miles_miles_neboff_nodeg_pred.npz (md5 equal to the /work copy, 2026-10-29) and
-<TID>_c3k_hr_full_neboff_afefree_pred.npz (not made yet) in results/2026-10-08_continuum_outlier/.
-Index bands from $SPS_HOME/data/allindices.dat.
+INPUTS: <TID>_map.npz and hr_maxl.npz in results/2026-10-29_continuum_39633433328091196_map/,
+<TID>_miles_miles_neboff_nodeg_pred.npz and <TID>_c3k_hr_full_neboff_afefree_pred.npz in
+results/2026-10-08_continuum_outlier/, and $SPS_HOME/data/allindices.dat.
 SEED: none.
-COMMAND: from the repository root on the Mac,
-``SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+COMMAND: from the repository root,
+``SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-29_continuum_39633433328091196_map/analysis.py``.
-RESULT: 2026-10-29, map_summary.txt, map_ew.txt. ER MAP (job 3657895) chi2/(N-16) 1.117 on 4561 px,
-MILES max-L chi2/(N-19) 1.127 on 4070 px; 500 A bins 1.03-1.25 for both. Band EWs agree with the
-data within ~1 sigma (largest: Fe5335 +0.87 +- 0.75 A, NaD ER -0.56 +- 0.51 A). The HR afefree row is
-empty (its pred was never made). Assumptions: one MAP and one max-L, DR1 coadd ivar.
+RESULT: 2026-10-29, map_summary.txt, map_ew.txt. ER MAP chi2/(N-16) 1.117 on 4561 px, MILES max-L
+chi2/(N-19) 1.127 on 4070 px. Band EWs agree with the data within ~1 sigma. HR afefree row empty.
+Assumptions: one MAP and one max-L, DR1 coadd ivar.
 FIGURES: results/2026-10-29_continuum_39633433328091196_map/residuals.png, zoom_features.png,
 map_summary.txt and map_ew.txt.
 """
@@ -77,11 +77,7 @@ def chi(d):
 
 
 def index_bands():
-    """Return each index's shaded rest-frame spans (feature, or Dn4000's two bands).
-
-    As index_bands of 2026-10-28_continuum_c3k_er_rmatrix_map/analysis.py, from
-    $SPS_HOME/data/allindices.dat.
-    """
+    """Return each index's shaded rest-frame spans (feature, or Dn4000's two bands)."""
     table = np.genfromtxt(
         Path(os.environ["SPS_HOME"]) / "data" / "allindices.dat",
         dtype=None,
@@ -220,12 +216,7 @@ def lick_bands(names):
 
 
 def equivalent_width(rest, f, bands, good):
-    """Return the equivalent width in A of ``f`` over the fitted pixels of the feature band.
-
-    The continuum is the line through the mean flux of the fitted pixels of the blue and red
-    bands at their mean wavelengths. Pixels count whole and masked pixels add nothing, so data
-    and model on the same pixels compare directly.
-    """
+    """Return the equivalent width in A of ``f`` over the fitted pixels of the feature band."""
     feat, blue, red = bands
     pts = []
     for lo, hi in (blue, red):

@@ -3,17 +3,13 @@
 QUESTION: which of the five are AGN, sky artefacts or clean continuum targets for a pocoMC fit?
 HYPOTHESIS: none registered. The visual calls are 1 crowded, 2 AGN, 3 emission-line, 4 to check
 and 5 fit-ready.
-INPUTS: FastSpecFit iron sv3 bright; spender chunk coadds (load_spectrum); spender sky-lines.txt;
-DR1 single exposures of 39627770254327945 from 2026-10-31_screen_all/sky_extract.py
-(results/2026-10-31_screen_all/exposures/).
+INPUTS: FastSpecFit iron sv3 bright, spender chunk coadds, spender sky-lines.txt and
+results/2026-10-31_screen_all/exposures/ of 2026-10-31_screen_all/sky_extract.py.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_batch1_scrutiny/analysis.py``.
-RESULT: 01, 02, 04 have broad Balmer lines (Hbeta sigma 744, 634, 652 km/s, S/N 18-24; 02 also broad
-Halpha S/N 116; 01 MgII sigma 686) and are AGN. 03: [OIII]5007 sits on the OH 7775.5 A line, but
-[OIII]4959 (S/N 32) holds the 1:3 ratio (42.8 vs 125.7), so the lines are real; [OIII]/Hbeta 9.7 with
-Halpha out of range. 05: narrow lines in all 3 exposures, log [NII]/Ha -0.91 and [OIII]/Hb 0.48, below
-Kauffmann+03 (star-forming); B-arm exposures sit at 1.31, 0.73 and 1.01 of the coadd.
-Assumptions: FastSpecFit 2.5.1 fluxes; rest wavelengths from memory.
+RESULT: 01, 02 and 04 are AGN (broad Hbeta, sigma 744, 634, 652 km/s). 03 has real [OIII] on the OH
+7775.5 A line ([OIII]4959 holds 1:3). 05 is star-forming, with narrow lines in all 3 exposures.
+Assumptions: FastSpecFit 2.5.1 fluxes, rest wavelengths from memory.
 FIGURES: results/2026-10-31_batch1_scrutiny/ lines.txt, sky_03.txt, exposures_05.png.
 """
 

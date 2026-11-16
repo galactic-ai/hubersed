@@ -1,12 +1,8 @@
 """Run 1d of 39627757533007793 (MILES, MILES window, no degrading) over the whole DESI spectrum.
 
-Data are the DR1 coadd from load_spectrum on every unmasked pixel, with a 9 pixel median filter.
-The max-L model and chi are drawn on the pixels run 1d fitted.
-
-COMMAND: from the repository root on the Mac,
-``uv run --no-sync python experiments/2026-10-08_continuum_outlier/spectrum_1d_full.py``.
-
-OUTPUT: results/2026-10-08_continuum_outlier/39627757533007793/spectrum_1d_full.png.
+Data are the DR1 coadd with a 9 pixel median filter. Model and chi are on the pixels run 1d fitted.
+COMMAND: ``uv run --no-sync python experiments/2026-10-08_continuum_outlier/spectrum_1d_full.py``
+OUTPUT: results/2026-10-08_continuum_outlier/39627757533007793/spectrum_1d_full.png
 """
 
 # %%

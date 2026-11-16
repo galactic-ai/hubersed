@@ -3,16 +3,14 @@
 QUESTION: do the dust, metallicity and afe of the C3K ER MAP change when the SV3 bright spectrum
 (sky residual in the blue) is replaced by the SV3 dark one?
 HYPOTHESIS: none registered.
-INPUTS: <TID>_map.npz of fit.py collect (spr job 3662995, 4 starts) in this experiment's results
-folder, copied from stampede3, and the SV3 bright ER MAP of
-2026-10-29_continuum_39633433328091196_map (icx job 3657895, 7 starts).
+INPUTS: <TID>_map.npz of fit.py collect in this experiment's results folder, and the SV3 bright ER
+MAP of 2026-10-29_continuum_39633433328091196_map.
 SEED: none.
-COMMAND: from the repository root on the Mac,
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-30_continuum_39633433328091196_dark_map/analysis.py``.
-RESULT: 2026-10-30, dark_vs_bright.txt. Dark chi2/(N-16) 1.060 (bright 1.117), lower in every rest
-bin. afe -0.125 -> +0.164, dust_index 0.400 (ceiling) -> 0.067, dust2 0.413 -> 0.390, logzsol 0.194 ->
-0.148, log M 11.461 -> 11.477, sigma 316 -> 287 km/s. Assumptions: MAP from 4 starts (spread
-delta ln p 0-12.7), SFH hyperparameters fixed at the bright C3K_HR max-L, 1 dark exposure.
+RESULT: 2026-10-30. Dark chi2/(N-16) 1.060 (bright 1.117). Bright to dark, afe -0.125 to +0.164,
+dust_index 0.400 (ceiling) to 0.067, dust2 0.413 to 0.390, logzsol 0.194 to 0.148.
+Assumptions: 4 starts (delta ln p 0-12.7), bright C3K_HR max-L SFH hyperparameters, 1 dark exposure.
 FIGURES: results/2026-10-30_continuum_39633433328091196_dark_map/dark_vs_bright.png and .txt.
 """
 

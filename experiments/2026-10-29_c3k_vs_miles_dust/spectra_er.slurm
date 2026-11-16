@@ -1,8 +1,8 @@
 #!/bin/bash
 # C3K ER model spectra of 39633433328091196 at the MILES and C3K ER best points (spectra.py --lib
-# er), on one stampede3 skx-dev node, one process. Env as
+# er), on one skx-dev node, one process. Env as
 # 2026-10-29_continuum_39633433328091196_map/map.slurm.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch experiments/2026-10-29_c3k_vs_miles_dust/spectra_er.slurm
 #SBATCH -J specer1029
 #SBATCH -p skx-dev

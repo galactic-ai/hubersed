@@ -1,34 +1,16 @@
 """Profile the free_dust fit of 39627770174637084 along the dust slope.
 
-QUESTION: the free_dust pocoMC posterior piles up at the dust_index floor of -2.5 and gains 29 in
-ln L over the free run. Does the fit keep gaining below -2.5, or is the ridge flat from a physical
-slope downward, so that the pile-up at the floor is prior volume?
-
-Starts at the free_dust pocoMC best point (highest ln L + ln prior of the 300 particles with the
-highest ln L). It then widens the dust_index prior to TopHat(-4, 1.5) in this process, so that
-lnprobfn accepts slopes outside -2.5 to 0.4. The prior stays flat, so ln L is unchanged, and all
-rows share one prior constant. At each fixed dust_index it maximises ln L + model.prior_product
-over dust2, dust_ratio, frac_nodust, logmass, logzsol and logsfr_ratios_1-9, as mask_refit.py
-does. Gas, line and SFH hyperparameters stay fixed. The n-free rows show where the ridge peaks.
-Each slope starts from the previous one, moving away from the free-n refit in both directions. A
-last row refits n free with frac_nodust fixed at 0, the free model with the wider dust_ratio prior.
-
-RESULT: 2026-10-18, ridge_profile.txt. No optimum inside -4 to 0.4. ln L rises steadily as n falls,
-and the free-n refit stops at the -4 floor. Delta chi2 against n = -4 is +84.4 at 0.4, +80.9 at 0,
-+58.9 at -0.7, +48.9 at -1, +24.0 at -2, +15.0 at -2.5 and +3.3 at -3.5. The gain per 0.5 in n
-shrinks below -2.5 (6.7, 5.0, 3.1). frac_nodust grows from 0.20 at n = 0.4 to 0.78 at n = -4.
-logmass is 8.61-8.62 for n <= -1.5 and rises to 8.73 at 0 and 8.81 at 0.4. n free with frac_nodust
-0 gives n 0.24 at +90.6. So any lower bound on n sets where the posterior sits, and with it A_V and
-mass. These are local refits with gas and SFH hyperparameters fixed. The pipeline errors understate
-the noise on these scales, so the chi2 differences overstate significance.
-
-INPUTS: pmc_final.state of the free_dust poco.py run. SEED: none.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+QUESTION: free_dust piles up at the dust_index floor of -2.5. Does ln L keep rising below -2.5,
+or is the ridge flat below a physical slope, so that the pile-up at the floor is prior volume?
+INPUTS: pmc_final.state of the free_dust poco.py run.
+SEED: none.
+COMMAND: from the repository root with the C3K_ER build,
+``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:<er_path>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-15_broadline_free_amplitude/ridge_profile.py --state <path>``.
-
+RESULT: 2026-10-18. No optimum inside -4 to 0.4, ln L rises as n falls. Delta chi2 against n = -4 is
++84.4 at 0.4, +80.9 at 0, +15.0 at -2.5. Any lower bound on n sets the posterior, A_V and mass.
+Assumptions: local refits with gas and SFH hyperparameters fixed. Pipeline errors understate noise.
 OUTPUT: ridge_profile.txt next to the state file.
 """
 

@@ -1,35 +1,13 @@
 """MAP fits of injected mocks of 39627770174637084, to measure the bias the line model causes.
 
-What changed from 2026-10-13_nautilus_resolution_matrix/map.py: the data are replaced by noiseless
-mocks (mocks.py) plus Gaussian noise with the corrected uncertainties, and each mock is fitted
-with three line models from three starts. The pipeline, pixels, mask, priors, optimizer (map_fit,
-one Powell start per call, maxfev 40000) and the SFH hyperparameters fixed at the 10-09 max-L are
-those of map.py rmatrix mask.
-
-Jobs. A job is (scenario, noise seed, fit model, start).
-
-- scenario S0, S1, S2, S3 of injection.py.
-- noise seed -1 is the noiseless mock. Seed s >= 0 adds noise drawn with
-  numpy.random.default_rng(NOISE_BASE + s), the same in every scenario.
-- fit model shared, free or none (injection.make_fit_params).
-- start truth (the truth point), maxl (the 10-09 max-L point, map.py's start) or jitter (truth
-  jittered with injection.jitter_start, seed JITTER_BASE + s). A free forbidden fraction starts at
-  the start's eline_fbroad.
-
-Workers claim jobs in order with an exclusive lock file, so any number can run at once and a
-restart skips jobs already done. S0 and S1 come first in the job list.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build, after mocks.py, start N
-workers (6 were used) with
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-13_broadline_injection/fit.py run --seeds -1 0 1 2 3 4``
-once per worker, and ``... fit.py status`` to count done jobs. ``--scenarios``, ``--models`` and
-``--starts`` limit the jobs. ``--unmask "[SII]6731"`` also fits the pixels model_setup.UNMASK_LINES
-restores and writes to separate folders (the 2026-10-14 run used S0 S1 S3, shared, truth maxl).
-
-OUTPUT: fits/<scenario>_<seed>_<model>_<start>.npz in results/2026-10-13_broadline_injection/, or
-fits_unmask_<lines>/ with ``--unmask``.
+Differs from 2026-10-13_nautilus_resolution_matrix/map.py (rmatrix mask) in fitting noiseless mocks
+plus noise, each with three line models (shared, free, none) from three starts (truth, maxl, jitter).
+Run from the repository root after mocks.py, once per worker, with
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
+experiments/2026-10-13_broadline_injection/fit.py run --seeds -1 0 1 2 3 4``,
+and ``... fit.py status`` to count done jobs.
+OUTPUT: fits/<scenario>_<seed>_<model>_<start>.npz in results/2026-10-13_broadline_injection/.
 """
 
 import argparse

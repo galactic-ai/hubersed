@@ -1,16 +1,8 @@
 """Models, start points and line windows of the [O III] second-component MAP fits.
 
-The data, observation, Cue source and SFH hyperparameters are those of the rmatrix mask run of
-experiments/2026-10-13_nautilus_resolution_matrix/map.py (imported from there). Only the line
-profile parameters differ. ``add_broad_params`` is called again on that run's parameters with
-the split forbidden widths, a free low-ionization second-component fraction and the new
-high-ionization fraction ``eline_fbroad_forb_hi``. The second call overwrites every key the first
-one added, so the only new keys are ``eline_sigma_forb_hi`` and ``eline_fbroad_forb_hi``.
-
-- F0 has ``eline_fbroad_forb_hi`` fixed at 0. [O III], [Ne III], [Ar IV], [Ne IV] and He II are one
-  Gaussian of width ``eline_sigma_forb_hi``.
-- F1 has ``eline_fbroad_forb_hi`` free. The high-ionization second component shares the width
-  ``eline_sigma_broad`` and shift ``eline_vbroad`` of the other lines' second component.
+Builds on the rmatrix mask run of experiments/2026-10-13_nautilus_resolution_matrix/map.py, adding
+``eline_sigma_forb_hi`` and ``eline_fbroad_forb_hi``. F0 fixes ``eline_fbroad_forb_hi`` at 0, F1
+frees it with the shared second-component width and shift.
 """
 
 import numpy as np
@@ -26,8 +18,8 @@ OUT = PATHS["RESULTS"] / "2026-10-13_oiii_second_component"
 SHARED = RM_OUT / "map_rmatrix_mask.npz"
 SPLIT = 45.0
 FITS = {"F0": 0.0, "F1": "free"}
-# EmFit DR1 [O III] 5007 single-Gaussian sigma of this target, in km/s, from
-# knowledge/summary_emfit_oiii_treatment.md (UberSED notes). Used only as a start value.
+# EmFit DR1 [O III] 5007 single-Gaussian sigma of this target, in km/s.
+# Used only as a start value.
 EMFIT_OIII_SIGMA = 17.3
 LINE_PROFILE = (
     "eline_sigma",
@@ -100,10 +92,7 @@ def make_fit_params(z, fit):
 
 
 def build(fit):
-    """Return the model, observation list and Cue source of ``fit``.
-
-    ``fit`` is F0, F1 or shared. The shared model is the rmatrix mask model of map.py.
-    """
+    """Return the model, observation list and Cue source of ``fit`` (F0, F1 or shared)."""
     z, flux, unc, good = load_data(MASKS["mask"])
     if fit == "shared":
         params = make_params(z)
@@ -122,32 +111,14 @@ def shared_map():
 
 
 def moment_width(p):
-    """Return the sigma of one Gaussian with the variance of the shared non-Balmer profile.
-
-    The shared profile is (1 - f) G(sigma_forb) + f G(sigma_broad, shifted by v_broad), all
-    intrinsic, with f = eline_fbroad.
-    """
+    """Return the sigma of one Gaussian with the variance of the shared non-Balmer profile."""
     f, s_n = p["eline_fbroad"], p["eline_sigma_forb"]
     s_b, v = p["eline_sigma_broad"], p["eline_vbroad"]
     return float(np.sqrt((1 - f) * s_n**2 + f * s_b**2 + f * (1 - f) * v**2))
 
 
 def starts(fit, model):
-    """Return the named start points of ``fit`` as parameter vectors of ``model``.
-
-    Every start is the shared MAP mapped onto the new parameters, with ``eline_fbroad_forb``
-    equal to ``eline_fbroad`` and ``eline_sigma_forb_hi`` equal to ``eline_sigma_forb``, so the
-    low-ionization lines start with the shared profile. Then
-
-    - F0 A, as mapped.
-    - F0 B, ``eline_sigma_forb_hi`` set to ``moment_width``, the single Gaussian with the variance
-      of the shared [O III] profile, capped below the prior edge.
-    - F1 A0, high-ionization fraction 0.
-    - F1 A1, high-ionization fraction equal to ``eline_fbroad``. This is the shared MAP itself.
-    - F1 B, high-ionization fraction 0.35 with ``eline_sigma_forb_hi`` at EmFit's 17.3 km/s, a
-      narrow core with a large second component, on the other side of the width and fraction
-      degeneracy from F0 B.
-    """
+    """Return the named start points of ``fit`` as parameter vectors of ``model``."""
     p, _ = shared_map()
     p = dict(p, eline_fbroad_forb=p["eline_fbroad"], eline_sigma_forb_hi=p["eline_sigma_forb"])
     labels = model.theta_labels()
@@ -168,17 +139,7 @@ def starts(fit, model):
 
 
 def chi2_parts(model, obs, cue, theta):
-    """Return the spectrum, the chi2 in total and per window, and the fitted pixel counts.
-
-    Returns
-    -------
-    spec : np.ndarray
-        Model spectrum at ``theta``.
-    parts : dict
-        chi2 over all fitted pixels ("all"), in each of ``WINDOWS``, and outside every window.
-    npix : dict
-        Fitted and total pixels of each window.
-    """
+    """Return the spectrum, the chi2 in total and per window, and the fitted pixel counts."""
     spec = model.predict(theta, observations=obs, sps=cue)[0][0]
     o = obs[0]
     rest = o.wavelength / (1 + float(np.atleast_1d(model.params["zred"])[0]))

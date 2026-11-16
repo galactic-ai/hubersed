@@ -1,8 +1,8 @@
 #!/bin/bash
-# Multi-start continuum MAP on the recoadded spectrum of 39627757533007793, on one stampede3 icx
+# Multi-start continuum MAP on the recoadded spectrum of 39627757533007793, on one icx
 # node, as 2026-10-29_continuum_main_survey_map/map.slurm (7 starts, one core each, collect at the
 # end). RECOADD_SURVEY (sv3 or main) picks the spectrum. A start killed by the timeout saves nothing.
-# Submit from the repository root on stampede3, after recoadd.slurm:
+# Submit from the repository root, after recoadd.slurm:
 #   sbatch --export=ALL,RECOADD_SURVEY=sv3 experiments/2026-10-29_continuum_recoadd/map.slurm
 #   sbatch --export=ALL,RECOADD_SURVEY=main experiments/2026-10-29_continuum_recoadd/map.slurm
 #SBATCH -J recoadd1029map

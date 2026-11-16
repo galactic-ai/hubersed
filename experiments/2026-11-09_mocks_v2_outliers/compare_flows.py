@@ -1,27 +1,16 @@
 """Compare the v2-mock flows with the old Cue-mock flows that gave the 310, per encoder.
 
-QUESTION: Why does the 15-latent flow flag more DESI galaxies with the v2 mocks (2,006 vs 788) while
+QUESTION: why does the 15-latent flow flag more DESI galaxies with the v2 mocks (2,006 vs 788) while
 6- and 10-latent flag fewer, and which galaxies does only the 15-latent flow flag?
 HYPOTHESIS: none stated before the run.
-INPUTS: results/2026-11-09_mocks_v2_outliers/flows/ (new, post_mac.sh), results/
-noised_cue_meanzero_wide_flow/ (old, the 310 run), data/latents/ (DESI and v2 mock latents),
-data/fastspec-iron-sv3-bright.fits, data/dataset_z_snr.npz, results/prescreened_sample_v1.npz.
+INPUTS: results/2026-11-09_mocks_v2_outliers/flows/, results/noised_cue_meanzero_wide_flow/,
+data/latents/, data/fastspec-iron-sv3-bright.fits, data/dataset_z_snr.npz,
+results/prescreened_sample_v1.npz.
 SEED: none (flows are loaded, not retrained).
 COMMAND: ``uv run python experiments/2026-11-09_mocks_v2_outliers/compare_flows.py``.
-RESULT: 6/10/15 flag 1,894/733/2,006 (old 2,480/1,779/788). The new 15-latent flags (1,771 with
-fastspec rows) are low-mass (log M* 8.6), low-z (0.06) star-forming dwarfs with moderate EW(Ha) 45 A
-and narrow lines: EmFit Ha sigma median 26 km/s (all scored: 90). The v2 mock eline_sigma prior,
-TopHat(10, 450), has median 230 and only 5% below 32 km/s, so narrow-line dwarfs sit in thin mock
-space; 5% of DESI fall below log p -20.3 vs ~0.3% of mocks. Assumption: EmFit sigma (flag 0) stands
-for the line width the encoder sees. cont10: 3,105 flagged (old 2,667); 61% of DESI below the
-v2 mock p5 log p (old mocks 28%; full encoders 17-23%), so typical DESI continua sit off the mock
-bulk. Their 10 nearest mocks have dust2 1.35 vs prior median 0.68 (+1.1 sd), dust_index -1.85 vs
--1.05 (-1.0 sd), logzsol -0.62 vs -1.05 (+0.5 sd): DESI is redder and more metal-rich than most
-mocks (dust2 ClippedNormal(0.3, 1, 0, 4), logzsol U(-2.5, 0.5)). Not checked: whether a
-continuum-shape mismatch (C3K ER, smoothing outside rest 3320-9000 A) adds to this.
-Flag rule (6&10&15)|(cont10&cont15) after the prescreen: new 205 (full 100, cont 111, both 6) vs
-old 345 (the 310 after SIMBAD); 93 in both, 112 new only; 76 of the 310 still flagged. SIMBAD not
-yet run on the new set.
+RESULT: 6/10/15 flag 1,894/733/2,006 (old 2,480/1,779/788). New 15-latent flags are low-mass dwarfs
+with EmFit Ha sigma median 26 km/s, and only 5% of the v2 eline_sigma prior is below 32 km/s.
+Assumptions: EmFit sigma (flag 0) stands for the line width the encoder sees.
 FIGURES: none (tables in compare_flows.txt).
 """
 
@@ -117,7 +106,7 @@ for t in out:
         f"DESI below the mock p5 {np.mean(ld < np.percentile(lm, 5)):.3f}"
     )
 
-# The old cont10 mock latents are still on the Mac (noised_cue_meanzero_wide), so cont10 has a
+# The old cont10 mock latents are still local only (noised_cue_meanzero_wide), so cont10 has a
 # baseline; the old 6/10/15 mock latents are on TACC only (mac_cleanup_2026-11-10.md).
 lm, ld = mock_logp("cont10", OLD), out["cont10"][0]["log_p_desi"]
 lines.append(

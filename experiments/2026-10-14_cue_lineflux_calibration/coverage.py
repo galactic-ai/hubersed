@@ -1,27 +1,12 @@
 """Coverage of direct T_e O/H by the Cue posteriors for each line choice.
 
 QUESTION: dropping [SII] and [OI] widens the Cue O/H posteriors. Do they then contain direct T_e
-O/H more often, that is, are they less biased in the sense of coverage?
-
-INPUTS: the saved fit posteriors in results/2026-10-14_cue_lineflux_calibration/fits/ (weighted
-nautilus points, read with forced.load) and the direct T_e tables of direct.py r2 (KEEP rows).
-The nosii variants use the subset_20 direct table, the semi variant the semi direct table; on the
-semi galaxies the all-lines fits that exist are compared on the same galaxies. No new fits.
-
-For each variant it writes N, the fraction with direct O/H inside the Cue 16-84 interval, the
-fraction with |Cue - direct| (medians) within the two half widths in quadrature, the fractions with
-direct below 16 and above 84, and the median Cue 16-84 width. For Gaussian, calibrated posteriors
-the first two are about 0.68. A bimodal posterior has a wide 16-84 interval that can contain direct
-without much posterior mass near it.
-
-RESULT: 2026-10-15. Subset_20 (19): direct inside the Cue 16-84 interval 0.05 with all lines
-(width 0.08 dex), 0.16 without [SII], 0.05 with the Nicholls prior, 0.47 without [SII] and [OI]
-(width 0.37, direct then mostly below Cue). Semi (433): 0.06, width 0.06; for direct >= 8.4 (153)
-0.00, direct above Cue in all, Cue - direct -0.47. Dropping [SII] and [OI] mostly widens the
-posteriors; coverage stays below 0.68.
-
+O/H more often?
+INPUTS: results/2026-10-14_cue_lineflux_calibration/fits/ and the direct T_e tables of direct.py r2.
+RESULT: 2026-10-15. Subset_20 (19), direct inside Cue 16-84 is 0.05 with all lines, 0.16 without
+[SII], 0.05 with Nicholls, 0.47 without [SII] and [OI]. Semi (433) 0.06, direct >= 8.4 (153) 0.00.
+Assumptions: Gaussian, calibrated posteriors give about 0.68. A bimodal one can overstate coverage.
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/coverage.py``
-
 OUTPUT: results/2026-10-14_cue_lineflux_calibration/nosii/coverage.txt
 """
 

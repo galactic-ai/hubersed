@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run or resume one fit of this experiment on an ls6 compute node, for example as a step in
+# Run or resume one fit of this experiment on a compute node, for example as a step in
 # another job of ours:
 #   srun --jobid=<job> --overlap -p development -A AST25022 -t 02:00:00 -N1 -n1 \
 #       bash experiments/2026-10-08_continuum_outlier/run.sh 39627757533007793 miles miles on 24 \
@@ -10,7 +10,7 @@
 # Keep TIMEOUT below the time the job has left, so nautilus saves before the step is killed.
 # MILES runs use the MILES build of python-fsps, made by build_miles_fsps.sh, put first on PYTHONPATH.
 # Alpha runs use the AFE_FLAG build (-mcmodel=medium) and an SPS_HOME that also holds the alpha
-# spectra, both of 2026-10-02 (knowledge/_evidence/2026-10-01_afe_build/README.md).
+# spectra, both of 2026-10-02.
 set -euo pipefail
 TID=$1 LIB=$2 WINDOW=$3 NEB=$4 POOL=$5 CORES=$6 TIMEOUT=$7 DEG=${8:-on} AFE=${9:-none}
 REPO=/work/11006/nikhilgaruda/ls6/research/hubersed

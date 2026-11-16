@@ -1,15 +1,8 @@
 """pocoMC fit of the C3K ER continuum model to one follow-up outlier of targets.txt (#17).
 
-Same as 2026-10-31_poco_robust6/fit.py, for the follow-up batches of targets.txt (quiescent set:
-39633301257850206, the one not on fibres 2666-2676). Changes from
-2026-10-31_poco_c3k_er_dark_39633433328091196/fit.py, loaded by path:
-the data are the target's SV3 bright DR1 coadd (load_spectrum) with its DR1 resolution matrix
-(resolution_matrix.py), the output folder is results/2026-10-31_poco_quiescent/<TARGETID>/, the check
-step has no MAP to compare with, and a resumed state keeps this output folder (load_state also
-restores output_dir, a bug noted in handoff_2026-10-31_poco_dark_39633433328091196.md). Model, priors
-and sampler settings are those of that fit: continuum only, C3K ER, free afe and SFH hyperparameters,
-rest 3320 to 9000 A, n_effective 1024, n_active 512.
-COMMAND: on stampede3 through prep.slurm (check) and prod.slurm (runfork), for example
+As 2026-10-31_poco_robust6/fit.py, for the follow-up batches of targets.txt (quiescent set
+39633301257850206, the one not on fibres 2666-2676), output in results/2026-10-31_poco_quiescent/.
+COMMAND: through prep.slurm (check) and prod.slurm (runfork), for example
 ``ibrun <venv>/bin/python experiments/2026-10-31_poco_quiescent/fit.py runfork --tid <TARGETID>``.
 """
 

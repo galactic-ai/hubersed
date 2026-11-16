@@ -1,28 +1,11 @@
 """Literature quantities of one target for the five ladder runs, from posterior and prior draws.
 
-QUESTION: what stellar mass, ages, formation times, recent sSFR and D, metallicity and sigma
-does each ladder run give, and how far are they from their priors?
-The quantities follow the papers in UberSED knowledge/discussion_2026-11-04_deep_dive_metrics.md.
-- Stellar mass: formed (logmass) and surviving (logmass + log10 of the FSPS surviving fraction).
-- t_age: formed-mass-weighted lookback age (Tacchella+2022).
-- t50 and t95: lookback times when 50 and 95 per cent of the mass had formed (Suess+2022,
-  Slob+2024), also as redshift.
-- Light-weighted age: the FSPS compute_light_ages spectrum averaged over rest 5580 to 6820 A
-  (Suess+2022).
-- SFR over the last 100 Myr over surviving mass, and SFR over 10 Myr for the CIGALE comparison.
-- D = sSFR_100 t_H with the mass formed (Tacchella+2022, quiescent below 1/20, transitioning
-  1/20 to 1/3), and the share of draws in each class. Quenching times are not computed, since on
-  our bins they follow the 1-10 Myr bins (Suess+2022 on bin-set quenching times).
-- Metallicity: [Fe/H] and [alpha/Fe] of the afe runs, log Z/Zsun of all (ladder_hist.mist2_logz).
-- sigma_smooth: the stellar velocity dispersion; instrumental resolution is handled separately.
-Draws: 1000 weighted posterior resamples (seed 0) and 1000 prior draws through the model's
-prior_transform (seed 1), which draws logsfr_ratios from the Gaussian set by the hyperparameters.
-Ages of the universe use Planck18 (hubersed.sps.utils.universe_age_gyr), as the age bins do.
-COMMAND: ``uv run --no-sync python experiments/2026-11-01_poco_repeats/derived.py draws --tid <TID>``
-on the laptop. Then, on stampede3, derived.slurm runs ``derived.py fsps --tid <TID> --run <RUN>``
-once per run with that run's build. Then ``derived.py table --tid <TID>`` on the laptop.
-OUTPUT: draws_<RUN>.npz, fsps_<RUN>.npz and derived.txt in
-results/2026-11-01_poco_repeats/<TID>/derived/.
+Mass, t_age, t50, t95, light-weighted age, sSFR, D, metallicity and sigma_smooth after
+Tacchella+2022, Suess+2022 and Slob+2024, from 1000 posterior and 1000 prior draws (seeds 0 and 1).
+COMMAND: ``uv run --no-sync python experiments/2026-11-01_poco_repeats/derived.py draws --tid <TID>``.
+Then derived.slurm runs ``derived.py fsps --tid <TID> --run <RUN>`` once per run with that run's
+build. Then ``derived.py table --tid <TID>``.
+OUTPUT: results/2026-11-01_poco_repeats/<TID>/derived/ draws_<RUN>.npz, fsps_<RUN>.npz, derived.txt.
 """
 
 # %%
@@ -136,7 +119,7 @@ def draws(tid):
 
 
 def commit_room_gib():
-    """Return CommitLimit minus Committed_AS of this node in GiB (strict overcommit on TACC)."""
+    """Return CommitLimit minus Committed_AS of this node in GiB (strict overcommit)."""
     with open("/proc/meminfo") as f:
         kb = {line.split(":")[0]: int(line.split()[1]) for line in f}
     return (kb["CommitLimit"] - kb["Committed_AS"]) / 2**20
@@ -145,9 +128,12 @@ def commit_room_gib():
 def fsps(tid, key, n=None, build=0):
     """Write the FSPS surviving fraction and light-weighted ages of the draws of run ``key``.
 
-    With ``n`` only the first n draws of each kind run, written to a probe file, for timing. With
-    ``build`` the C3K builds make all their SSP slots first, with at most that many helpers, each
-    charged ~15 GiB of commit as in fit.py (GIB_HELPER); MILES has no build_ssps.
+    Parameters
+    ----------
+    n : int, optional
+        Run only the first n draws of each kind, written to a probe file, for timing.
+    build : int
+        If nonzero, build every C3K SSP slot first with at most this many helpers.
     """
     if key == "dr1":
         poco = load("quiescent_fit", HERE / "fit.py").load_poco(tid)

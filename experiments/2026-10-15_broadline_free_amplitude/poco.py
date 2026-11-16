@@ -1,23 +1,14 @@
 """Run pocoMC on the free-line fit of 39627770174637084.
 
-QUESTION: nautilus had not left exploration after 2.7M calls (freeline2, 2026-10-16). Does pocoMC
-(arXiv:2207.05652, pocomc 1.2.6) reach the posterior faster, and does it resume from a saved state?
-
-Same model, data, priors and likelihood as fit.py. pocoMC samples the unit cube and the likelihood
-applies model.prior_transform. The pool forks after the SSP build, as in fit_fork.py. With ``--mpi``
-each node runs one MPI rank with its own pool, and rank 0 splits each batch over the ranks.
-
-RESULT: ls6 free_dust, job 3517041, 2 nodes x 128 workers, 1024/512, cap 300, 2026-10-17. Beta
-reached 1 at iteration 62 after 4 segments (~7 h, 5.78M calls), with ESS steady at ~1020. The cap
-bound in 5 of iterations 27-33 and in all of 43-60 as eff fell to ~0.25. The first resume reproduced
-iteration 33 exactly. Final log Z and posterior pending. Mac test runs: poco_run2.log,
-poco_run3_resume.log.
-
-COMMAND: on ls6 through poco.slurm. On the Mac, from the repository root,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-15_broadline_free_amplitude
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+QUESTION: nautilus had not left exploration after 2.7M calls. Does pocoMC (arXiv:2207.05652, pocomc
+1.2.6) reach the posterior faster, and does it resume from a saved state?
+COMMAND: through poco.slurm, or from the repository root,
+``PYTHONPATH=<er_path>:experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-15_broadline_free_amplitude
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-15_broadline_free_amplitude/poco.py --pool 8``.
-
+RESULT: 2026-10-17, free_dust, 2 nodes x 128 workers, 1024/512, cap 300. Beta hit 1 at iteration
+62 (~7 h, 5.78M calls), ESS steady at ~1020. The first resume reproduced iteration 33 exactly.
+Assumptions: the step cap bound in iterations 43-60 (eff ~0.25). Final log Z and posterior pending.
 OUTPUT: poco_<TID>_<variant>_neff<n>/pmc_<iteration>.state in
 results/2026-10-15_broadline_free_amplitude/.
 """
@@ -133,7 +124,7 @@ def main():
     parser.add_argument("--mpi", action="store_true", help="one MPI rank per node, see NodePool")
     args = parser.parse_args()
     init = None
-    if hasattr(fsps.StellarPopulation, "build_ssps"):  # the ls6 fork; older builds skip the share
+    if hasattr(fsps.StellarPopulation, "build_ssps"):  # the fork; older builds skip the share
         t = time.time()
         prebuild_ssps(fsps.StellarPopulation(zcontinuous=1))
         print(f"FSPS setup and SSPs {time.time() - t:.0f} s", flush=True)

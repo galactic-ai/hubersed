@@ -1,14 +1,8 @@
 """The C3K ER + afe MAP of 39627757533007793 with the median DESI LSF and with its R matrix.
 
-Both models are the 2026-10-28 MAP best point (SV3 DR1 coadd, native data). sp_best is the median
-LSF prediction of predict_median_lsf.py there, and sp_best_rmatrix is the MAP's own R matrix model. Data
-are the DR1 coadd from load_spectrum on every unmasked pixel, with a 9 pixel median filter. Models
-and chi are drawn on the fitted pixels.
-
-COMMAND: from the repository root on the Mac,
-``uv run --no-sync python experiments/2026-10-08_continuum_outlier/spectrum_er_lsf_rmatrix_full.py``.
-
-OUTPUT: results/2026-10-08_continuum_outlier/39627757533007793/spectrum_er_lsf_rmatrix_full.png.
+Both use the 2026-10-28 MAP best point. sp_best is from predict_median_lsf.py there.
+COMMAND: ``uv run --no-sync python experiments/2026-10-08_continuum_outlier/spectrum_er_lsf_rmatrix_full.py``
+OUTPUT: results/2026-10-08_continuum_outlier/39627757533007793/spectrum_er_lsf_rmatrix_full.png
 """
 
 # %%

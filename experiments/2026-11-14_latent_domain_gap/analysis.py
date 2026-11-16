@@ -1,27 +1,18 @@
 """Do DESI galaxies and v2 mocks mix in each flow's latent space, or sit apart?
 
-QUESTION: The flow-15 UMAP of 2026-11-14_emline_outlier_coverage (figure.py) shows mocks and DESI
-as separate islands. In the standardised latent space of each flow, what fraction of the k nearest
-neighbours of a DESI galaxy are mocks, and of a mock are DESI, with and without matching the mocks
-to DESI in S/N and z?
+QUESTION: in each flow's standardised latent space, what fraction of the k nearest neighbours of a
+DESI galaxy are mocks, and of a mock are DESI, with and without S/N and z matching?
 HYPOTHESIS: none registered. With equal numbers and full mixing the other-set fraction is about 0.5;
 fully separate sets give 0.
-INPUTS: data/latents/mocks_v2/prospector_noise_spec_cuev2_<tag>latent_snr3.h5 (latents, snr_med,
-zs), data/latents/spender_spec_<tag>latent_snr3.h5, data/dataset_z_snr.npz (DESI S/N), the flow
-scalers (results/2026-11-09_mocks_v2_outliers/flows/flow_nsf_<tag>latent.pt), and
-results/2026-11-14_emline_outlier_coverage/coverage.csv (the 58).
-METHOD: N = 20,000 random DESI and 20,000 training mocks (the flows' seed-0 split), standardised
-with the flow scaler; k = 15 Euclidean neighbours in the pooled set, self excluded. The matched set
-has mocks drawn to the DESI counts in cells of S/N (edges 3, 4, 5, 6, 8, 10, 15, 25, inf) and z
-(0.05). The 58 are queried against the same pool.
+INPUTS: data/latents/mocks_v2/prospector_noise_spec_cuev2_<tag>latent_snr3.h5,
+data/latents/spender_spec_<tag>latent_snr3.h5, data/dataset_z_snr.npz,
+results/2026-11-09_mocks_v2_outliers/flows/flow_nsf_<tag>latent.pt,
+results/2026-11-14_emline_outlier_coverage/coverage.csv.
 SEED: 0.
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_latent_domain_gap/analysis.py``.
-RESULT: 2026-11-14, mixing.txt. DESI and mocks barely mix in any flow: mean other-set fraction of
-neighbours 0.003-0.016 for DESI and 0.008-0.026 for mocks (median 0 in all), against about 0.5 for
-full mixing. Matching mocks to DESI in S/N and z changes nothing (0.003-0.016). The 58 have mock
-fractions 0.000-0.014. A kNN classifier would tell DESI from mocks almost perfectly in every
-flow. Assumptions: Euclidean k = 15 in the flow-standardised space; 20,000 of each; cause not
-tested (preprocessing, noise or mask texture, or physics).
+RESULT: 2026-11-14, mixing.txt. DESI and mocks barely mix in any flow. Mean other-set fraction
+0.003-0.016 for DESI and 0.008-0.026 for mocks against 0.5, unchanged by S/N and z matching.
+Assumptions: Euclidean k = 15 in the flow-standardised space; 20,000 of each; cause not tested.
 FIGURES: none (mixing.txt).
 """
 

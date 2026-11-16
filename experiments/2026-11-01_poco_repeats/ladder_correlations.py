@@ -1,14 +1,6 @@
 """Weighted posterior correlations of selected parameter pairs in each ladder run of one target.
 
-QUESTION: which degeneracies does each run show, to choose the corner-plot subsets for the paper?
-Pairs:
-- age-dust-metallicity: dust2, dust_index, logzsol, afe, and logsfr_ratios_9, which sets how much
-  mass sits in the oldest bin;
-- the SFH prior: sigma_dyn against the youngest ratios;
-- mass: logmass against dust2 and logzsol.
-Coefficients are the weighted Pearson r of the pocoMC samples (weights normalised), from the same
-posteriors as ladder_corner.py. A pair is skipped for a run that lacks one of its parameters.
-It also reports the share of weight with sigma_dyn below 0.05, the lower mode seen in the DR1 run.
+Weighted Pearson r of the ladder_corner.py posteriors, and the weight share with sigma_dyn < 0.05.
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_poco_repeats/ladder_correlations.py --tid <TID>``.
 OUTPUT: results/2026-11-01_poco_repeats/<TID>/ladder_correlations.txt.
 """

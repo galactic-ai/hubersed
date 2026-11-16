@@ -1,9 +1,5 @@
-"""Physics follow-up list of the screened outliers with sky status, properties and seed agreement (#17).
+"""Physics follow-up list of screened outliers with sky status, properties and seed counts (#17).
 
-INPUTS: screened94.npz (screen.py), sky_rescore.txt, qa_outliers.txt (numexp, sky_min), FastSpecFit
-VAC, 20-seed flow ensembles (results/flow_ensemble, copied from /work). The status is "sky cleared"
-when dropping sky g < 21 exposures ends the common flag; the rest stay on the list. Seeds counts the
-ensemble seeds where both flows flag the target (log p at or below that seed's threshold).
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_screen_all/survivors.py``.
 OUTPUT: results/2026-10-31_screen_all/survivors.txt and survivors.png.
 RESULT: 2026-10-31. 36 of the 48 screened outliers stay on the list; 11 are flagged by both flows

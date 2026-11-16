@@ -4,7 +4,7 @@
 # Output poco_neff1024. It resumes from the newest state there. If the folder has no state and
 # SEED_STATE names one (for example the last state of the skx-dev test poco_neff1024_forktest), that
 # file is copied in first and its name and sha256 are logged. A job that ends before convergence
-# is continued by submitting this script again. Submit from the repository root on stampede3:
+# is continued by submitting this script again. Submit from the repository root:
 #   SEED_STATE=<state file> sbatch --export=ALL experiments/2026-10-31_poco_c3k_er_dark_39633433328091196/prod.slurm
 #SBATCH -J pocoprod1031
 #SBATCH -p spr

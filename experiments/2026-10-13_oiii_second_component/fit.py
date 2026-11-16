@@ -1,31 +1,13 @@
 """MAP fits of 39627770174637084 with a separate second-component fraction for [O III].
 
-Changed from map_fbfree.py of 2026-10-13_nautilus_resolution_matrix: the high-ionization lines
-([O III], [Ne III], [Ar IV], [Ne IV], He II) get their own narrow width ``eline_sigma_forb_hi``
-and their own second-component fraction ``eline_fbroad_forb_hi`` (fixed at 0 in F0, free in F1).
-The other non-Balmer lines keep ``eline_sigma_forb`` and a free ``eline_fbroad_forb``. The data,
-pixels, missing-line mask, resolution matrix, Cue with C3K_ER and the SFH hyperparameters fixed at
-the 10-09 max-L are those of the rmatrix mask run of map.py there (see oiii_setup.py).
-
-Actions.
-
-- ``run FIT START [START ...]`` runs ``map_fit`` (Powell, one start, no jitter) from each named
-  start of ``oiii_setup.starts`` and saves fit_<FIT>_<START>.npz.
-- ``rerun FIT`` reruns ``map_fit`` from the best saved point of FIT, to check that Powell did not
-  stop early, and saves fit_<FIT>_rerun<k>.npz.
-- ``profile {hi,lo} V [V ...]`` fixes ``eline_fbroad_forb_hi`` (hi) or ``eline_fbroad_forb``
-  (lo) at each value V, re-optimizes the other line profile parameters (``oiii_setup.LINE_PROFILE``
-  and ``eline_fbroad_forb_hi``) and the gas parameters (``GAS``) from the best F1 point with every
-  other parameter held there, and saves profile_<hi|lo>_<V>.npz. The objective is -ln p minus the
-  best F1 value, so Powell's relative tolerance acts on a number of order chi2 differences.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build, at most two at once,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-13_oiii_second_component
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+Differs from map_fbfree.py of 2026-10-13_nautilus_resolution_matrix in giving the high-ionization
+lines their own ``eline_sigma_forb_hi`` and ``eline_fbroad_forb_hi`` (fixed at 0 in F0, free in F1).
+Run from the repository root, at most two at once, with
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-13_oiii_second_component
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
 experiments/2026-10-13_oiii_second_component/fit.py run F0 A B`` and ``... run F1 A0 A1 B``, then
 ``... rerun F0`` and ``... rerun F1`` until the rerun does not move, then
-``... profile hi 0 0.05 0.1 ...`` and ``... profile lo 0 0.05 0.1 ...``. analysis.py reads the outputs.
-
+``... profile hi 0 0.05 0.1 ...`` and ``... profile lo 0 0.05 0.1 ...``.
 OUTPUT: fit_*.npz and profile_*.npz in results/2026-10-13_oiii_second_component/.
 """
 
@@ -108,10 +90,7 @@ PROFILED = {"hi": "eline_fbroad_forb_hi", "lo": "eline_fbroad_forb"}
 
 
 def profile(which, values, maxfev):
-    """Fix one second-component fraction at each value and re-optimize the profile and gas.
-
-    ``which`` is hi (``eline_fbroad_forb_hi``) or lo (``eline_fbroad_forb``).
-    """
+    """Fix one second-component fraction at each value and re-optimize the profile and gas."""
     model, obs, cue = build("F1")
     name, r = best_saved("F1")
     labels = model.theta_labels()

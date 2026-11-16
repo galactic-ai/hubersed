@@ -1,13 +1,7 @@
-"""VAC values of one target: FastSpecFit v3.0 (and v2.1), CIGALE DR1 v1.2 and EmFit DR1.
+"""VAC values of one target from FastSpecFit v3.0 (and v2.1), CIGALE DR1 v1.2 and EmFit DR1.
 
-Definitions and units are in UberSED knowledge/vac_reference_fastspecfit_cigale_emfit.md:
-- FastSpecFit LOGMSTAR is the surviving mass at h = 1, total aperture.
-- FastSpecFit AGE is weighted by mass formed over 5 fixed bins, and its SFR covers 0-30 Myr.
-- A_V = 1.086 TAUV.
-- CIGALE LOGM comes from photometry only; its LOGSFR is averaged over 10 Myr.
-- EmFit fluxes are in 1e-17 erg/s/cm2; an undetected component is 0 with flag -1.
-Uncertainties are 1/sqrt(ivar) for FastSpecFit (Monte Carlo, NMONTE 10) and the catalogue errors
-for CIGALE and EmFit. EmFit is queried from desi_dr1.emfit on Astro Data Lab.
+FastSpecFit LOGMSTAR is the surviving mass at h = 1, total aperture. A_V = 1.086 TAUV. EmFit is
+queried from desi_dr1.emfit on Astro Data Lab.
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_poco_repeats/vac_rows.py --tid <TID>``.
 OUTPUT: results/2026-11-01_poco_repeats/<TID>/vac_rows.txt.
 """

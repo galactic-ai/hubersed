@@ -1,6 +1,6 @@
 #!/bin/bash
 # Unzip the targets.txt spectra files and extract the targets (extract.py), after stage.sh, as
-# 2026-10-31_screen_all/sky_extract.slurm. Submit from the repository root on stampede3:
+# 2026-10-31_screen_all/sky_extract.slurm. Submit from the repository root:
 #   sbatch experiments/2026-10-31_lines_39627775706927918/extract.slurm
 #SBATCH -J lineext1031
 #SBATCH -p skx-dev

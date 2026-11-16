@@ -1,10 +1,7 @@
-"""Fibres around 1309 in exposure 90226. Is the star in 39627781742528421's spectrum a neighbour's light?
+"""Is the star in 39627781742528421's spectrum (fibre 1309, exposure 90226) a neighbour's light?
 
-In 90226 (tile 76, petal 2) the spectrum of 39627781742528421 (fibre 1309) is ~10x brighter than
-in its other exposures and shows z = 0 stellar lines. This saves the per-arm flux of fibres 1300 to
-1318 from the calibrated frames, with their TARGETID, OBJTYPE and median flux, and the correlation
-of each fibre's flux with fibre 1309's after removing 1309's median from both.
-COMMAND: on stampede3, with the cframes in <dir>,
+Saves per-arm cframe flux of fibres 1300 to 1318 and each fibre's flux correlation with 1309's.
+COMMAND: with the cframes in <dir>,
 ``<venv>/bin/python experiments/2026-11-02_exposure_checks/neighbours_90226.py <dir> <out.npz>``.
 OUTPUT: <out.npz> and a printed table.
 """

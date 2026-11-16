@@ -1,18 +1,10 @@
 """Plot data, model and residuals at the chi2 minimum of each n_H profile variant of map_unmask.py.
 
-One full-spectrum figure and one line-window figure per variant in DROPS. Each uses the lowest chi2
-profile point of that variant on its own pixels, scored with n_H put back as in map_unmask.py
-profiles. [SII]6731 is fitted in all of them. Pixels a variant masks are shaded, and their
-residuals are drawn in grey with the same model. A line-window figure of the rmatrix nautilus
-max-L point (from its _pred.npz, [SII]6731 masked) is made the same way for comparison.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+Writes map_unmask_spectrum_<variant>.png, lines_<variant>.png and lines_nautilus.png.
+Run from the repository root as
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
 experiments/2026-10-13_nautilus_resolution_matrix/map_unmask_spectrum.py``.
-
-OUTPUT: map_unmask_spectrum_<variant>.png, lines_<variant>.png and lines_nautilus.png in
-results/2026-10-13_nautilus_resolution_matrix/.
 """
 
 import astropy.units as u
@@ -59,11 +51,7 @@ def best_point(drop, lab, chi2_of):
 
 
 def line_windows(rest, data, model, chi, chi_grey, fit, title, color, path):
-    """Draw data and model (top) and residuals (bottom) in each of LINE_WINDOWS.
-
-    ``chi`` is drawn on the fitted pixels in ``color``, ``chi_grey`` in grey, and pixels not in
-    ``fit`` are shaded. Each panel gives the chi2 of its fitted and grey pixels.
-    """
+    """Draw data and model (top) and residuals (bottom) in each of LINE_WINDOWS."""
     n = len(LINE_WINDOWS)
     fig, ax = plt.subplots(
         2, n, figsize=(2.6 * n, 5), sharex="col", gridspec_kw={"height_ratios": [2, 1]}

@@ -1,27 +1,7 @@
 """Build the line-flux table of the Cue calibration sample from the EmFit and FastSpecFit VACs.
 
-The sample is the spender SV3 sample (data/all_target_ids.npy) in the iron SV3 bright FastSpecFit
-VAC. It is star-forming (Halpha, Hbeta, [OIII]5007, [NII]6584 at S/N >= 3, below Kauffmann+03, as in
-2026-10-14_auroral_snr_fraction.py), with [OII]7320+7330 at S/N >= 5 and an EmFit row from the same
-sv3/bright spectrum (desi_dr1.emfit on Astro Data Lab TAP).
-
-Fluxes are in 1e-17 erg/s/cm2 and not dust-corrected.
-
-- EmFit totals for HB, HA, OIII5007, NII6584, SII6716 and SII6731, the sum of the narrow, outflow
-  and broad components EmFit fits. Errors are the component errors in quadrature.
-- FastSpecFit Gaussian fluxes for OII3727 (3726 + 3729, the split is not used), NEIII3869, HG,
-  OI6300, SIII6312, OIII4363, OII7325 (7320 + 7330), SIII9069 and HEI5876. Errors from FLUX_IVAR.
-  A line with FLUX_IVAR 0 gets NaN ([SIII]9069 is beyond the DESI range above z ~0.08).
-- FSF_<line> holds FastSpecFit Gaussian fluxes of the six EmFit lines, for the FastSpecFit-only run.
-
-[OIII]4959 and [NII]6548 are left out, since their ratio to the strong line is fixed by atomic
-physics. It also saves Z, LOGMSTAR, the FastSpecFit rest-frame HBETA_EW (A) as EW_HB, the EmFit
-flags prob_broad, ha_b_sigma, oiii_dbl_flag and sii_dbl_flag, and WIDE_BROAD (prob_broad >= 80 and
-ha_b_sigma > 500 km/s).
-
 COMMAND: ``uv run python experiments/2026-10-14_cue_lineflux_calibration/data.py`` from the
 repository root. It queries Astro Data Lab.
-
 OUTPUT: lineflux_table.fits in results/2026-10-14_cue_lineflux_calibration/.
 """
 

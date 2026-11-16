@@ -1,13 +1,13 @@
 #!/bin/bash
-# The MILES steps of Hahn's tests on one stampede3 icx node, in place of ls6.slurm: check the
+# The MILES steps of this experiment's tests on one icx node, in place of ls6.slurm: check the
 # MILES build (log L at the 10-08 max-L must match), MILES spectra at both best points
 # (spectra.py --lib miles), then the MILES MAPs of 2026-10-29_nodust_map_39633433328091196/fit.py
 # with dust on and off (7 starts each, one core each) and collect.
-# FSPS is the ls6 MILES build of 2026-10-08_continuum_outlier/build_miles_fsps.sh, its fsps_site
-# copied from ls6 /scratch to fsps_builds/miles_ls6 on /work (2026-10-29). SPS_HOME is sps_home_er,
+# FSPS is the MILES build of 2026-10-08_continuum_outlier/build_miles_fsps.sh, its fsps_site
+# copied to fsps_builds/miles_ls6 (2026-10-29). SPS_HOME is sps_home_er,
 # which holds the MILES spectra; the check step tests that it reproduces the 10-08 run.
 # A start killed by the timeout saves nothing.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch experiments/2026-10-29_c3k_vs_miles_dust/miles_s3.slurm
 #SBATCH -J miles_s3
 #SBATCH -p icx

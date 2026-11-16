@@ -1,28 +1,8 @@
 """Split the likelihood gradient on the railed parameters of the ER fit by rest-frame window.
 
-QUESTION: which line windows push gas_logco to its ceiling (and dust_index to its ceiling and
-eline_sigma_forb to its floor) in the #14 ER fit of 39627770174637084?
-
-At the maximum likelihood point the gradient g_i = sum J_i (data - model) / unc^2 of a railed
-parameter i is the slope of the profile likelihood, if the free parameters are at their optimum
-(their gradients near zero, checked here). Two splits over windows.
-
-- raw, the sum of J_i (data - model) / unc^2 over each window;
-- residualized, J_i minus its projection on the other parameters' Jacobians,
-  J_i - J_o F_oo^-1 F_oi, so the split shows only the part of the pull that no other parameter
-  can take over. The SFH ratios and hyperparameters are held fixed in the projection (the SFH
-  directions are nearly degenerate without the prior).
-
-Gradients are shown times the Fisher width of the parameter (sigma_cond = F_ii^-1/2), so 1 means a
-pull of one local sigma. Local and linear; uses jacobian.npz from jacobian.py and the maximum
-likelihood spectrum from predict.py.
-
-INPUTS: jacobian.npz and the ``_pred.npz``. SEED: none. No FSPS needed.
-
+Gives the raw and residualized splits in units of the Fisher width in rail_gradient.txt.
 Run from the repository root with
 ``uv run python experiments/2026-10-09_nautilus_c3k_er_broadline/rail_gradient.py``.
-
-OUTPUT: results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/rail_gradient.txt.
 """
 
 import numpy as np

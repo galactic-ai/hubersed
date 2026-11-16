@@ -1,28 +1,16 @@
 """Do the non-physical mock input differences cause the DESI-mock separation in latent space?
 
-QUESTION: inputs.py found the mock encoder inputs noiseless at the sky-line mask (25% of pixels),
-one pixel short, and almost without DESI's exact-zero masked pixels. If 20,000 mocks are fixed
-for these and re-encoded, does their neighbour mixing with DESI rise from ~0.01 toward 0.5?
-HYPOTHESIS: none registered beyond the plan, where a large rise means preprocessing drives the
-separation.
-INPUTS: data/prospector_model/noised_cuev2/DESIcuev2_<k>.pkl (spec, ivar, z, mock index, norm;
-row = index mod 1024 of file index // 1024, make_prospector_noisy_sed.py); data/prospector_model/
-mocks_v2_500000.h5 (last pixel); data/latents/mocks_v2/prospector_noise_spec_cuev2_<tag>latent_snr3.h5
-(stored mock latents, the S/N > 3 set); data/latents/spender_spec_<tag>latent_snr3.h5 (DESI latents
-and specs); data/dataset_z_snr.npz; encoders in data/checkpoints and flow scalers as analysis.py.
-METHOD: 20,000 random mocks of the S/N > 3 set. In the null check the pickled spectra re-encoded
-must give the stored latents. Arm 1 adds noise at sky-mask pixels with sigma interpolated (in
-pixel index) from the non-masked pixels of the same spectrum (sigma = 1/sqrt(ivar)). Arm 2 is arm
-1 plus the 7781st pixel (noiseless flux / norm plus noise with the last sigma), plus the
-exact-zero pixels of a random DESI encoder input copied as zeros. Mixing as analysis.py (k = 15,
-same 20,000 DESI).
+QUESTION: if 20,000 mocks get noise at the sky-line mask, the missing pixel and DESI-like zero
+pixels, does their neighbour mixing with DESI rise from ~0.01 toward 0.5?
+HYPOTHESIS: none registered. A large rise means preprocessing drives the separation.
+INPUTS: data/prospector_model/noised_cuev2/DESIcuev2_<k>.pkl, data/dataset_z_snr.npz,
+data/prospector_model/mocks_v2_500000.h5, data/latents/spender_spec_<tag>latent_snr3.h5,
+data/latents/mocks_v2/prospector_noise_spec_cuev2_<tag>latent_snr3.h5, data/checkpoints.
 SEED: 0 (samples), 1 (noise and zero patterns).
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_latent_domain_gap/fix.py``.
-RESULT: 2026-11-14, fix.txt. Null passes in every flow (re-encoded = stored, max 0.0000). The
-fixes barely change mixing: DESI other-set fraction stored 0.003-0.013, arm 1 0.005-0.015, arm 2
-0.005-0.017 (mocks 0.009-0.021 to 0.013-0.025). The sky-mask noise, last pixel and zero pixels do
-not cause the separation. Assumptions: sigma at sky pixels interpolated, so DESI's larger sky-line
-noise and residuals are not reproduced; zero patterns from random DESI spectra.
+RESULT: 2026-11-14, fix.txt. The fixes barely change mixing. DESI other-set fraction stored
+0.003-0.013, arm 1 0.005-0.015, arm 2 0.005-0.017.
+Assumptions: interpolated sky-pixel sigma (no DESI sky-line excess); zero patterns from random DESI.
 FIGURES: none (fix.txt).
 """
 

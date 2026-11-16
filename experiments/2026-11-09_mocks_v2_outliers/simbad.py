@@ -1,25 +1,15 @@
 """SIMBAD step for the v2-mock outliers and the comparison with the 310.
 
-QUESTION: After the SIMBAD screen, how many v2-mock candidates remain, and which of the 310 (by
+QUESTION: after the SIMBAD screen, how many v2-mock candidates remain, and which of the 310 (by
 branch, source class and fit classification) do they keep or drop?
 HYPOTHESIS: none stated before the run.
-METHOD: as the 310 run (claude-backup jobs/a3ef5882/tmp/recount.py and simbad_posthoc.py). Flags of
-the five flows are intersected with the prescreened parent (results/prescreened_sample_v1.npz),
-full = 6 & 10 & 15, cont = cont10 & cont15. A candidate is dropped if its nearest SIMBAD object
-within SEP_MAX has an AGN or star type (or a dC spectral type). Rules copied from
-scripts/simbad_screen.py (commit 9781230). Answers cached in results/simbad_screen_v2.csv are
-reused; new targets are queried and cached in results/2026-11-09_mocks_v2_outliers/simbad_new.csv.
-The old flows must give exactly the 310.
-INPUTS: results/noised_cue_meanzero_wide_flow/ (old), results/2026-11-09_mocks_v2_outliers/flows/
-(new), data/fastspec-iron-sv3-bright.fits (RA, DEC), results/map_fits_outliers310_v2/
-classification_v2.csv.
+INPUTS: results/noised_cue_meanzero_wide_flow/, results/2026-11-09_mocks_v2_outliers/flows/,
+data/fastspec-iron-sv3-bright.fits, results/map_fits_outliers310_v2/classification_v2.csv.
 SEED: none.
 COMMAND: ``uv run python experiments/2026-11-09_mocks_v2_outliers/simbad.py`` (queries SIMBAD).
-RESULT: old flows reproduce the 310 (345 candidates, 35 dropped). New: 205 candidates, 112 queried
-(Harvard mirror), 181 after SIMBAD (full 92, cont 94, both 5). Of the 310: 76 kept, 234 dropped;
-105 new. Kept by fit class: broad-line AGN 7/8 (all broad-line AGN classes 12/21), refit-clean
-47/225, high-EW starburst (Ha tension) 6/43. Assumption: SIMBAD answers cached from the 2026-09
-run are still valid; first row of each cone as in the old run.
+RESULT: old flows reproduce the 310. New, 205 candidates and 181 after SIMBAD (full 92, cont 94,
+both 5). Of the 310, 76 kept and 234 dropped; 105 new.
+Assumptions: SIMBAD answers cached from the 2026-09 run are still valid; first row of each cone.
 FIGURES: none (simbad.txt, postsimbad_v2.npz).
 """
 

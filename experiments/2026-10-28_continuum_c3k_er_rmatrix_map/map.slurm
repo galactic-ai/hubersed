@@ -1,12 +1,12 @@
 #!/bin/bash
-# Multi-start MAP of this experiment on one stampede3 icx node (80 cores, 256 GB). Starts
+# Multi-start MAP of this experiment on one icx node (80 cores, 256 GB). Starts
 # 0..NSTART-1 run at once, each pinned to one core, spread over the node. Each process peaks at
-# 21.6 GiB (test.slurm, job 3655311), so 7 starts need about 151 GiB. A warm call takes 0.048 s,
+# 21.6 GiB (test.slurm), so 7 starts need about 151 GiB. A warm call takes 0.048 s,
 # but 2000 Powell calls took 1043 s there, since FSPS (zcontinuous=1) builds each SSP slot of
 # metallicity and afe the first time logzsol or afe moves into it (fsps.f90 lines 244-258 of
 # the c3k_er_afe_v3 source). The wall time is set long for that. A start killed by the timeout
 # saves nothing. The collect step then keeps the best start.
-# Submit from the repository root on stampede3, after test.slurm wrote resolution_matrix.npz:
+# Submit from the repository root, after test.slurm wrote resolution_matrix.npz:
 #   sbatch experiments/2026-10-28_continuum_c3k_er_rmatrix_map/map.slurm
 # With Cue nebular emission (needs the continuum MAP's <TID>_map.npz for start 0):
 #   sbatch --export=ALL,NEB=on experiments/2026-10-28_continuum_c3k_er_rmatrix_map/map.slurm

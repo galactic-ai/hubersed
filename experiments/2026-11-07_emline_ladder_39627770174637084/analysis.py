@@ -1,26 +1,18 @@
 """Figures and tables of the emission-line ladder of 39627770174637084.
 
-QUESTION: how do the fit and the posterior change along the ladder (1 MILES, 2 C3K HR, 3 C3K ER with
-a Gaussian LSF, 4 with the own R, 5 with free weak and broad line columns, 6 as 5 on the recoadd,
-7-8 as 5-6 with broad widths as a ratio of the narrow width)?
-HYPOTHESIS: none fixed; steps 3, 4 and 5 share pixels and compare by chi2 and log Z, steps 1 and 2
-fit other pixels and are shown, not compared.
+QUESTION: how do the fit and the posterior change along ladder steps 1-8 (MILES, C3K HR, C3K ER with
+Gaussian LSF, own R, free line columns, recoadd, ratio broad widths)?
+HYPOTHESIS: none fixed. Steps 3, 4 and 5 share pixels and compare by chi2 and log Z.
 INPUTS: results/2026-11-07_emline_ladder_39627770174637084/<STEM>/predict.npz (fit.py predict),
-<STEM>.h5 (fit.py run) and pmc_final.state (log Z), copied from stampede3. Missing steps are marked
-"not run yet". Figures reuse the model ladder of 2026-11-01_poco_repeats/ladder_plot.py (cutout and
-fibre circle imported from it, emission lines marked instead of its index bands) and the line
-windows of 2026-10-18_issue14_figures windows_figure (windows of
-2026-10-15_broadline_free_amplitude/map.py).
+<STEM>.h5 (fit.py run) and pmc_final.state.
 SEED: none here (posterior draws in fit.py predict, seed 0).
-COMMAND: ``SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+COMMAND: ``SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-11-07_emline_ladder_39627770174637084/analysis.py``.
-RESULT: max-likelihood chi2 / 5597 px: step 5 8277.7 (1.48), 6 7418.6 (1.33); with ratio broad
-widths 7 6791.8 (1.21), 8 6383.6 (1.14); log Z 101724.31 +- 0.55 (7), 101805.56 +- 0.28 (8).
-Windows chi2/N, step 8: Halpha+[NII] 2.1, [OIII]5007 4.2, Hbeta 1.6 (step 6: 13.3, 8.2, 2.5). The
-figures show steps 1-4 and 7, 8 under the labels of 5, 6 (Nikhil 11-10). Assumption: steps 6 and
-8 fit the recoadd, so they differ from 5 and 7 in the data, not only the model.
+RESULT: max-likelihood chi2 / 5597 px is 8277.7 (step 5), 7418.6 (6), 6791.8 (7), 6383.6 (8).
+log Z 101724.31 +- 0.55 (7), 101805.56 +- 0.28 (8).
+Assumptions: steps 6 and 8 fit the recoadd, so they differ from 5 and 7 in the data too.
 FIGURES: ladder.png, windows.png, ladder_table.txt, step5_line_ew.txt in
-results/2026-11-07_emline_ladder_39627770174637084/.
+results/2026-11-07_emline_ladder_39627770174637084/. Steps 7, 8 carry the labels of 5, 6.
 """
 
 # %%
@@ -52,7 +44,7 @@ STEPS = {  # step: (stem, label, colour); colours of the 11-01 ladder (steps 5, 
     7: ("step7_dr1_rmatrix_cols_ratio_neff1024", "7 as 5, ratio widths", "#7570b3"),
     8: ("step8_recoadd_rmatrix_cols_ratio_neff1024", "8 as 6, ratio widths", "#e7298a"),
 }
-# the figures show steps 1-4 and, as 5 and 6, the ratio-width reruns 7 and 8 (Nikhil 11-10);
+# the figures show steps 1-4 and, as 5 and 6, the ratio-width reruns 7 and 8;
 # the tables keep all steps
 FIG_STEPS = {s: STEPS[s] for s in (1, 2, 3, 4)} | {
     7: (STEPS[7][0], STEPS[5][1], STEPS[5][2]),

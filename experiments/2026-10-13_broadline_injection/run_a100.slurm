@@ -11,7 +11,7 @@
 # Run the injection-mock fits (fit.py) on one whole node of our own, adding workers in chunks.
 #
 # The workers do not share one SSP build: each fit.py process builds its own C3K_ER SSP set at
-# startup, about 3.7 GB per process on the Mac. Starting them all at once ran a node out of memory
+# startup, about 3.7 GB per process. Starting them all at once ran a node out of memory
 # on 2026-10-13. So workers start CHUNK at a time. After each chunk has built (WAIT s), the peak
 # memory of the largest worker (VmHWM) is read, and the next chunk starts only if CHUNK times that
 # peak plus MARGIN_GIB still fits in MemAvailable, up to MAXW workers. A guard kills the newest
@@ -24,7 +24,7 @@
 # Environment as the 2026-10-13_nautilus_resolution_matrix chain.slurm: c3k_er_afe_v3 build,
 # sps_home_er, one thread per process, the venv's python.
 #
-# Submit from the ls6 repo root:
+# Submit from the repo root:
 #   sbatch experiments/2026-10-13_broadline_injection/run_a100.slurm
 set -u
 REPO=/work/11006/nikhilgaruda/ls6/research/hubersed

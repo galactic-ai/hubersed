@@ -1,19 +1,15 @@
 """Numerical checks of the integrated likelihood for a bounded equivalent-width line prior.
 
-QUESTION: does the closed form of UberSED knowledge/free_line_prior_derivation_2026-11-06.md
-(section 5, the flat-prior result minus sum ln(W c) plus ln P_B) equal brute-force integration of
-the likelihood over the prior box, including a line whose amplitude sits within about one standard
-deviation of its upper bound, and does the Jacobian term hold when integrating over EW directly?
-HYPOTHESIS: agreement to 1e-4 in ln L with the exact P_B; the diagonal P_B fails for weak,
+QUESTION: does the closed form (flat-prior result minus sum ln(W c) plus ln P_B) equal brute-force
+integration over the prior box, also near a bound and over EW?
+HYPOTHESIS: agreement to 1e-4 in ln L with the exact P_B. The diagonal P_B fails for weak,
 correlated lines.
-INPUTS: none. Toy model with 200 pixels, sigma 0.3, two unit-width lines at -0.6 and +0.6, amplitude
-correlation -0.70, continuum c = (2, 2.5) and EW limits W = (3, 3), so bounds b = (6, 7.5).
+INPUTS: none. Toy model, 200 pixels, sigma 0.3, two lines with amplitude correlation -0.70.
 SEED: numpy default_rng 1 for the box cases, 2 for the EW cases.
 COMMAND: ``uv run --no-sync python experiments/2026-11-07_line_prior_check/analysis.py``.
-RESULT: 2026-11-07, checks.txt. The closed form with the exact P_B equals brute force to five
-decimals in all cases, including a_hat 5.980 +- 0.100 below the bound 6 (ln P_B = -0.543); the
-diagonal P_B is off by 0.337 when both correlated lines are near zero; the EW-space integrals equal
-the closed form for c = (2, 2.5) and (0.7, 4). Assumptions: toy model, two correlated lines.
+RESULT: 2026-11-07, checks.txt. The closed form with exact P_B equals brute force to five decimals
+in all cases. The diagonal P_B is off by 0.337 when both correlated lines are near zero.
+Assumptions: toy model, two correlated lines.
 FIGURES: results/2026-11-07_line_prior_check/checks.txt.
 """
 

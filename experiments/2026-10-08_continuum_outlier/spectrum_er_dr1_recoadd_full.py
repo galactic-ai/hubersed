@@ -1,15 +1,8 @@
 """C3K ER + afe + R matrix MAPs of 39627757533007793 on the SV3 DR1 coadd and on the SV3 recoadd.
 
-Models are the best points of 2026-10-28_continuum_c3k_er_rmatrix_map (DR1) and
-2026-10-29_continuum_recoadd/sv3 (PR 2377 recoadd). Data drawn are the DR1 coadd from load_spectrum
-on every unmasked pixel, with a 9 pixel median filter. Each model and chi is drawn on the pixels its
-fit used, and each chi is on that fit's own flux and uncertainty (recoadd flux and ivar for the
-recoadd).
-
-COMMAND: from the repository root on the Mac,
-``uv run --no-sync python experiments/2026-10-08_continuum_outlier/spectrum_er_dr1_recoadd_full.py``.
-
-OUTPUT: results/2026-10-08_continuum_outlier/39627757533007793/spectrum_er_dr1_recoadd_full.png.
+Models from 2026-10-28_continuum_c3k_er_rmatrix_map and 2026-10-29_continuum_recoadd/sv3 (PR 2377).
+COMMAND: ``uv run --no-sync python experiments/2026-10-08_continuum_outlier/spectrum_er_dr1_recoadd_full.py``
+OUTPUT: results/2026-10-08_continuum_outlier/39627757533007793/spectrum_er_dr1_recoadd_full.png
 """
 
 # %%

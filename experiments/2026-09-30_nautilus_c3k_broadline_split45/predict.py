@@ -1,19 +1,8 @@
 """Save the posterior and model spectra of a converged HR split 45 fit, as the ER predict.py does.
 
-The output is results/2026-09-30_nautilus_c3k_broadline_split45/<stem>_pred.npz with the data the
-fit used, the posterior points that carry weight, the maximum likelihood spectrum, the same point
-with the broad component switched off (eline_fbroad = 0), and 100 weighted draws. The keys match
-the ER ``_pred.npz`` of experiments/2026-10-09_nautilus_c3k_er_broadline/predict.py.
-
-The fit gave nautilus the identity prior, so the checkpoint holds unit cube points. They are read
-with the identity here and only the kept ones go through model.prior_transform.
-
-The data are those of the fit. They are degraded to C3K_HR with the original uncertainty kept, and
-the SPARCL sky pixels are unmasked unless ``--keep-sky-mask`` is given.
-
-Run from the repository root with the default C3K_HR build. The command for run A of 37084 is
-``SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-09-30_nautilus_c3k_broadline_split45/predict.py --forbidden-broad shared``.
+Output is results/2026-09-30_nautilus_c3k_broadline_split45/<stem>_pred.npz with the ER keys. For
+run A of 37084, with SPS_HOME at the default C3K_HR build, run from the repository root
+``uv run --no-sync python experiments/2026-09-30_nautilus_c3k_broadline_split45/predict.py --forbidden-broad shared``.
 """
 
 import argparse

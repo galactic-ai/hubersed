@@ -3,7 +3,7 @@
 # after the SSP build and the speclib free; rank 0 also runs pocoMC. Resumes from the newest state in
 # results/2026-11-07_emline_ladder_39627770174637084/<STEM>/. Python stops TLIM s into the job; an
 # unfinished run then requeues itself, at most 5 times (REQUEUE=0 turns that off).
-# GIB is the commit budget per worker (Cue included). Submit from the repository root on stampede3:
+# GIB is the commit budget per worker (Cue included). Submit from the repository root:
 #   STEP=<3|4|5> sbatch --export=ALL [--dependency=afterok:<check job>] experiments/2026-11-07_emline_ladder_39627770174637084/prod.slurm
 #SBATCH -J step5prod
 #SBATCH -p spr

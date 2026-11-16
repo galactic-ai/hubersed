@@ -1,9 +1,9 @@
 #!/bin/bash
 # Why did forked pool workers die after fsps_mem.free_speclib on 2026-10-21? Runs the 10-21
-# test_free_speclib.py (on /work only, uncommitted) with POOL workers (default 4), PYTHONFAULTHANDLER=1 so a worker
+# test_free_speclib.py (uncommitted) with POOL workers (default 4), PYTHONFAULTHANDLER=1 so a worker
 # that gets a fatal signal prints its Python stack, output not piped, and a process and
 # Committed_AS log every 30 s. FIT_TID is the 10-21 default target, whose spender files are staged.
-# A hung Pool.map is ended by timeout after TLIM s. Submit from the repository root on stampede3:
+# A hung Pool.map is ended by timeout after TLIM s. Submit from the repository root:
 #   sbatch experiments/2026-10-31_free_speclib_debug/debug.slurm
 #SBATCH -J speclibdbg
 #SBATCH -p skx-dev

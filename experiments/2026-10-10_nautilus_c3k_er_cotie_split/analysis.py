@@ -1,19 +1,20 @@
-"""QUESTION: How does the converged C/O tie fit of 39627770174637084 differ from the ER fit of the
-same data, in evidence, posteriors, SFH and line-window misfits?
+"""Comparison of the converged C/O tie fit of 39627770174637084 with the ER fit of the same data.
+
+QUESTION: How does the converged C/O tie fit differ from the ER fit of the same data, in evidence,
+posteriors, SFH and line-window misfits?
 HYPOTHESIS: None registered before this analysis.
-INPUTS: results/2026-10-10_nautilus_c3k_er_cotie_split/<stem>_pred.npz from predict.py, with
-<stem> = 39627770174637084_er_cotie_split_broad_shared_split45_rest9000_seed0, and the ER run's
+INPUTS: results/2026-10-10_nautilus_c3k_er_cotie_split/<stem>_pred.npz, with <stem> =
+39627770174637084_er_cotie_split_broad_shared_split45_rest9000_seed0, and
 results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084_er_broad_shared_split45_rest9000_seed0_pred.npz.
-Both fits used the same flux, uncertainty and fitted pixels (asserted below), so log Z and chi2
-compare directly. The vacuum wavelengths behind the extra windows are from
-cuejax/data/cue_emlines_info.dat.
 SEED: 0 for the SFH draws here, 0 for the 100 spectrum draws in predict.py.
-COMMAND: from the repository root, on the Mac or an ls6 compute node,
+COMMAND: from the repository root,
 uv run python experiments/2026-10-10_nautilus_c3k_er_cotie_split/analysis.py
 RESULT: see analysis_summary.txt next to the figures.
-FIGURES: results/2026-10-10_nautilus_c3k_er_cotie_split/39627770174637084/. analysis_summary.txt,
-params_table.txt, line_flux_table.txt, corner_phys.png, corner_sfh.png, corner_lines.png (C/O tie
-filled, ER contours), sfh.png and line_windows.png.
+Assumptions: both fits used the same flux, uncertainty and fitted pixels (asserted), so log Z and
+chi2 compare directly. The extra window wavelengths are from cuejax/data/cue_emlines_info.dat.
+FIGURES: results/2026-10-10_nautilus_c3k_er_cotie_split/39627770174637084/ analysis_summary.txt,
+params_table.txt, line_flux_table.txt, corner_phys.png, corner_sfh.png, corner_lines.png, sfh.png
+and line_windows.png.
 """
 
 # %%
@@ -134,11 +135,7 @@ def column(d, lab):
 
 
 def prior_range(m, lab):
-    """Prior edges of a free scalar parameter, NaN otherwise.
-
-    gas_logco gets the edges of Cue's grid, where the ER prior ends and co_from_oh clips.
-    A Normal prior has no edges.
-    """
+    """Prior edges of a free scalar parameter, NaN otherwise."""
     if lab == "gas_logco":
         return np.array(CUE_LOGCO_RANGE)
     c = m.config_dict.get(lab, {})
@@ -299,12 +296,7 @@ flux, unc, good = er["flux"], er["unc"], er["good"]
 
 
 def window_stats(d, a, b):
-    """Misfit of one rest-frame window at the max-L spectrum of run d, None without a baseline.
-
-    R is the integrated data minus model, F the model line flux above the sideband baseline,
-    scale the best single rescale of the model line, flux_pct the share of the window chi2 that
-    rescale removes, and draw_sd half the 16-84% range of F over the posterior draws, over F.
-    """
+    """Misfit of one rest-frame window at the max-L spectrum of run d, None without a baseline."""
     m = good & (rest >= a) & (rest < b)
     model = d["sp_best"]
     base = lfc.baseline(rest, model, good, a, b)

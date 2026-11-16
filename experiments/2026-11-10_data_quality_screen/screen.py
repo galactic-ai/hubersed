@@ -1,22 +1,14 @@
 """Apply the data-quality screen to the old and new candidates and recount through SIMBAD.
 
-The screen drops a candidate with a Gaia DR3 star within 5 arcsec brighter than G = 20
-(parallax/error > 5 or proper motion > 3 mas/yr), or observed on fibre 2675 or 2676 in any SV3
-bright tile (the gallery92 fibre_2675 class, the petal-5 z-arm step on 2676).
-SIMBAD flags as experiments/2026-11-09_mocks_v2_outliers/simbad.py (cache results/
-simbad_screen_v2.csv and results/2026-11-09_mocks_v2_outliers/simbad_new.csv; every candidate is
-in one of them). Flow flags are per galaxy, so screening after flagging equals screening first.
-INPUTS: results/2026-11-10_data_quality_screen/{targets.npz, ztile.fits, gaia5.fits};
-data/iron_tileqa (FIBER per tile and target); results/2026-11-01_gallery92 (labels);
+Drops a candidate with a Gaia DR3 star (G < 20) within 5 arcsec or on fibre 2675 or 2676.
+INPUTS: results/2026-11-10_data_quality_screen/{targets.npz, ztile.fits, gaia5.fits},
+data/iron_tileqa, results/2026-11-01_gallery92,
 results/map_fits_outliers310_v2/classification_v2.csv.
 COMMAND: ``uv run python experiments/2026-11-10_data_quality_screen/screen.py``.
 OUTPUT: results/2026-11-10_data_quality_screen/{screened.npz, screen.txt}.
-RESULT: of the 2,457 targets, 50 have a Gaia star (G < 20) within 5 arcsec and 12 used fibre
-2675/2676 (control 4/2000). Old: 310 after SIMBAD -> 279 after the screen (full 223, cont 67, both
-11; 23 star, 8 fibre). New: 181 -> 165 (full 88, cont 81, both 4; 15 star, 1 fibre); 66 also in the
-old screened list. gallery92 labels left: old bad_sky 10, bad_data 7; new bad_sky 5, bad_data 2 (all
-stars and fibre_2675 gone). Assumption: the 5 arcsec star rule and the two fibres stand for the
-catalogue-detectable artifacts; sky and exposure problems need repeats.
+RESULT: the old 310 after SIMBAD drop to 279 (23 star, 8 fibre), the new 181 to 165 (15 star,
+1 fibre).
+Assumptions: the 5 arcsec star rule and the two fibres stand for the catalogue-detectable artifacts.
 """
 
 # %%

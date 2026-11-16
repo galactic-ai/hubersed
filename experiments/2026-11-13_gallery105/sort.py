@@ -1,15 +1,11 @@
 """Copy each reviewed gallery105 figure into a folder named after its review class, and summarise.
 
-Classes come from review.tsv (one row per reviewed figure). Figures are copied, not moved, so
-seed.py still finds all 105 at the top level. The script only adds copies; when a class changes it
-lists the old copy for removal by hand.
+Copies only. When a class changes it lists the old copy for removal by hand.
 INPUTS: review.tsv; results/2026-11-13_gallery105/<NN>_<TARGETID>.png (analysis.py).
 COMMAND: ``uv run --no-sync python experiments/2026-11-13_gallery105/sort.py``.
-OUTPUT: results/2026-11-13_gallery105/<review_class>/<NN>_<TARGETID>.png and review_summary.txt (class by
-branch, figure lists, unsure counts, PSB redshifts, EmFit Halpha sigma of full-branch emission-line galaxies).
-RESULT: 2026-11-13, all 105 reviewed: emission_line 58, psb 24, agn 10, bad_data 5, quiescent 5,
-star 2, composite 1. Every psb is in the cont branch; 46 of 49 full-branch targets are emission-line
-galaxies with median EmFit Halpha sigma ~26 km/s.
+OUTPUT: results/2026-11-13_gallery105/<review_class>/<NN>_<TARGETID>.png and review_summary.txt.
+RESULT: 2026-11-13, all 105 reviewed. emission_line 58, psb 24, agn 10, bad_data 5, quiescent 5,
+star 2, composite 1. Every psb is in the cont branch, 46 of 49 full-branch are emission-line.
 """
 
 import shutil

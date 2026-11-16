@@ -1,27 +1,13 @@
 """MAP of the continuum outlier 39627757533007793 with C3K_ER, free afe and its resolution matrix.
 
-Changes from 2026-10-08_continuum_outlier run c3k_hr_full_nebon_afefree: the library is C3K_ER
-(R = 10000 at rest 3300.5-10000 A) instead of C3K_HR, the data are not degraded, the line spread
-is the target's DR1 resolution matrix (ResolutionMatrixModel, as 2026-10-21_continuum_poco), the
-model is the stellar continuum only (no Cue, no broad lines), the fitted pixels are rest 3320 to
-9000 A, and the fit is a MAP instead of nautilus. sigma_reg, tau_eq, sigma_dyn and tau_dyn are
-fixed at the max-L point of the afefree run, and start 0 is that point. The other priors are those
-of the 10-08 run.
+SUPERSEDED BY: experiments/2026-10-29_continuum_recoadd.
+Same MAP on the recoadded spectrum with flux-calibration ivar.
 
-``--nebular on`` adds Cue nebular emission (build_full_cue_model, no broad lines), with the Cue
-priors of the 10-08 run. Its start 0 is the continuum MAP best point (<TID>_map.npz) for the
-stellar parameters and the afefree max-L for the gas parameters and eline_sigma. Its outputs carry
-the tag _cue. The resolution matrix is the same, including its zero columns at ivar 0 pixels.
-
-``check`` builds the model, checks the setup and times warm likelihood calls. ``fit --start K``
-runs start K of ``--n-starts`` (start 0 unjittered, the others jittered by ``--jitter``
-times each prior range, seed 0) and saves map_s<K>.npz. ``collect`` keeps the lowest -lnp and saves
-<TID>_map.npz for analysis.py, with a parameter table in map.txt.
-
-FSPS must be the C3K_ER build with AFE_FLAG first on PYTHONPATH, with SPS_HOME holding the ER
-spectra. SPEC_DATA can name a folder with the staged spender files. Run on a stampede3 compute
-node through test.slurm or map.slurm, for example ``<venv>/bin/python
+Changes from 2026-10-08_continuum_outlier run c3k_hr_full_nebon_afefree are C3K_ER, undegraded data,
+the DR1 resolution matrix, continuum only, rest 3320-9000 A, SFH hyperparameters fixed at its max-L.
+COMMAND: on a compute node through test.slurm or map.slurm, for example ``<venv>/bin/python
 experiments/2026-10-28_continuum_c3k_er_rmatrix_map/fit.py fit --start 0 --maxfev 150000``.
+OUTPUT: map_s<K>.npz, <TID>_map.npz and map.txt.
 """
 
 import argparse
@@ -60,19 +46,7 @@ if os.environ.get("SPEC_DATA"):
 
 
 def load_data():
-    """Return the redshift, the flux and uncertainty in maggies, and the fitted pixels.
-
-    Returns
-    -------
-    z : float
-        Redshift.
-    flux, unc : np.ndarray
-        Flux and its uncertainty in maggies on ``WAVE_OBS``. Unfitted pixels have zero flux and
-        infinite uncertainty.
-    good : np.ndarray of bool
-        Unmasked pixels with positive ivar in the coadd and the matrix file, at rest REST_MIN to
-        REST_MAX.
-    """
+    """Return the redshift, the flux and uncertainty in maggies, and the fitted pixels."""
     s = load_spectrum(TID)
     z = float(s.redshift.value)
     wave = WAVE_OBS * u.AA
@@ -103,11 +77,7 @@ def hr_best():
 
 
 def make_model(z, nebular=False):
-    """Return the model with free afe and the SFH hyperparameters fixed at the HR max-L.
-
-    Without ``nebular`` it is the stellar continuum only. With it, Cue nebular emission is added
-    as in 2026-10-08_continuum_outlier/fit.py.
-    """
+    """Return the model with free afe and the SFH hyperparameters fixed at the HR max-L."""
     best = hr_best()
     cont_model, t = build_continuum_model(z)
     if nebular:
@@ -132,11 +102,7 @@ def make_obs(flux, unc, good):
 
 
 def get_sps(nebular=False):
-    """Return the source, checked to be C3K_ER with five afe slots.
-
-    With ``nebular`` it is the Cue source of map_fits.get_sps, as in
-    2026-10-13_nautilus_resolution_matrix, with the library resolution kept.
-    """
+    """Return the source, checked to be C3K_ER with five afe slots."""
     import fsps
 
     sps = (
@@ -150,11 +116,7 @@ def get_sps(nebular=False):
 
 
 def start_values(nebular):
-    """Return start 0 as a dict of label to value.
-
-    Without ``nebular`` it is the HR max-L. With it, the continuum MAP best point overrides the
-    HR max-L for the parameters it has.
-    """
+    """Return start 0 as a dict of label to value."""
     best = hr_best()
     if nebular:
         m = np.load(OUT / f"{TID}_map.npz")
@@ -261,10 +223,7 @@ def fit(start, n_starts, jitter, maxfev, tag, nebular=False):
 
 
 def collect(n_starts, tag, nebular=False):
-    """Keep the start with the lowest -lnp, save its spectrum and write map.txt.
-
-    A start with no output file (for example killed by the time limit) is listed as missing.
-    """
+    """Keep the start with the lowest -lnp, save its spectrum and write map.txt."""
     paths = {k: OUT / f"map_s{k}{tag}.npz" for k in range(n_starts)}
     missing = [k for k, p in paths.items() if not p.exists()]
     runs = {k: np.load(p) for k, p in paths.items() if p.exists()}

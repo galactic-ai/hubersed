@@ -1,47 +1,9 @@
 """Compare the exact corrected per-exposure variance with fractional floor models on VALIDATE units.
 
-QUESTION: does the floor Var = 1/ivar_iron + (f F')^2, with f from the 10 wavelength bins of
-F_PATCH_BINS, reproduce the exact corrected variance of every sample fiber, per exposure and
-camera, at all S/N and at the camera edges?
-
-HYPOTHESIS: sigma_floor / sigma_exact stays within a few percent everywhere. The largest errors
-are in b, at high S/N and at the blue end, where f changes fastest with wavelength and the dropped
-iron calibration term is largest.
-
-Iron (desispec 0.56.2 apply_flux_calibration) gives Var_iron = 1/(ivar_F C^2) + F'^2 /
-(ivar_C,old C^4), with F' the calibrated flux. The corrected variance (PR 2422 formula, ivar_C,new
-from the rerun with PRs 2496, 2827 and 2452) is Var_new = 1/(ivar_F C^2) + F'^2 / (ivar_C,new C^2).
-So Var_exact = 1/ivar_iron - F'^2 / (ivar_C,old C^4) + F'^2 / (ivar_C,new C^2). The models are
-the proposed floor with f interpolated linearly between the bin centres of F_PATCH_BINS and flat
-beyond them, a scalar f per exposure-petal-camera (column F of f_table), the binned f with the
-iron term subtracted (binning error only), and the exact f with the iron term kept (double count
-only). The bare iron variance is listed for scale.
-
-For each unit and camera the script reads the iron, unpatched and patched fluxcalib from the
-unit folder that fluxcal_sample.py leaves without --discard, and the iron cframe, which it
-downloads from the public S3 copy of DR1 and checks against the iron sha256sum file. It checks
-that the unpatched rerun equals iron, that the patched C equals iron C, that the cframe was
-calibrated with this fluxcalib on the same wavelength grid and fibers, that ivar_iron is zero
-wherever iron zeroes it, and that 1/ivar_iron less the iron calibration term stays positive. It
-also recomputes the 10 bins from the patched file and compares them with the stored F_PATCH_BINS.
-It does not rebuild the cframe from the frame, since the cframe step also rejects cosmics and
-corrects fiber crosstalk. Half of the units are anchors from five exposures, so the summary is
-repeated for the stratified units alone.
-
-With --make-units it writes validate_units.csv instead. These are the VALIDATE rows of
-fluxcal_candidates_500.csv with the units_all.csv columns, less units that are BADPETALSTDSTAR or
-not ok in f_table.
-
-INPUTS: validate_units.csv, the unit folders of fluxcal_sample.py run with name validate,
-fibers_part0.fits, fibers_part1.fits and f_table.fits of the run all, and the iron cframes.
-SEED: none.
-
-COMMAND: on an ls6 compute node after fluxcal_sample.py, see validate.slurm. To remake the unit
-list, from the repository root, ``uv run python
+Expected sigma_floor / sigma_exact within a few percent, worst in b at high S/N and the blue end.
+Writes validate_floor.txt and validate_floor_fibers.fits. Run after fluxcal_sample.py with
+validate.slurm. To remake the unit list, from the repository root, ``uv run python
 experiments/2026-10-13_fluxcal_sample/validate_floor.py --make-units``.
-
-OUTPUT: validate_floor.txt and validate_floor_fibers.fits (fibers and cameras HDUs) in
-results/2026-10-13_fluxcal_sample/validate/.
 """
 
 import argparse
@@ -192,10 +154,7 @@ def get_cframes(units, unit_root, cframe_root, cameras, streams, log):
 
 
 def bin_f(wave, C, ivc, nbin=NBIN):
-    """Return the binned f = sigma_C / C of every fiber, as fluxcal_sample.py computes it.
-
-    Edges are equal in wavelength over the fluxcalib grid. The last pixel is in no bin.
-    """
+    """Return the binned f = sigma_C / C of every fiber, as fluxcal_sample.py computes it."""
     ok = (C > 0) & (ivc > 0)
     fp = np.full(C.shape, np.nan)
     fp[ok] = 1 / (C[ok] * np.sqrt(ivc[ok]))
@@ -222,10 +181,7 @@ def interp_f(wave, fbins):
 
 
 def variances(flux, ivar, C, ivc_old, ivc_new, f_interp, f_scalar):
-    """Return the exact variance, the model variances, both calibration terms and the good mask.
-
-    All arrays share one shape (pixels, or fibers by pixels). Bad pixels get inf variance.
-    """
+    """Return the exact variance, the model variances, both calibration terms and the good mask."""
     ok = (ivar > 0) & (C > 0) & (ivc_old > 0) & (ivc_new > 0)
     vi = np.where(ok, 1 / np.where(ok, ivar, 1), np.inf)
     iron_term = np.where(ok, flux**2 / np.where(ok, ivc_old * C**4, 1), 0.0)

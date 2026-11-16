@@ -2,12 +2,9 @@
 
 QUESTION: what density does the measured [SII] doublet imply, compared with the Cue log n_H of our
 fits (HR 2.03, ER 1.39, rmatrix 1.12)?
-
-INPUTS: the EmFit row in UberSED knowledge/_evidence/2026-09-30_kin_vs_ion/emfit_rows_2obj.csv
-(narrow plus outflow fluxes) and the iron SV3 bright FastSpecFit VAC in data/. SEED: 0 (error draws).
-
+INPUTS: the EmFit row and the iron SV3 bright FastSpecFit VAC in data/.
+SEED: 0 (error draws).
 COMMAND: ``uv run python experiments/2026-10-14_sii_density/analysis.py`` from the repository root.
-
 RESULT: see results/2026-10-14_sii_density.txt.
 """
 

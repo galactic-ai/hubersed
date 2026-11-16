@@ -2,7 +2,7 @@
 # Run fit.py collect on its own skx-dev node, for example while map.slurm still runs some starts.
 # collect skips starts with no output yet and lists them as missing. A later collect overwrites
 # the files.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch --export=ALL,NEB=on experiments/2026-10-28_continuum_c3k_er_rmatrix_map/collect.slurm
 #SBATCH -J er1028col
 #SBATCH -p skx-dev

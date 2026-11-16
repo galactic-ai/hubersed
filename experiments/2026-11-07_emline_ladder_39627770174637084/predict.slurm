@@ -1,7 +1,7 @@
 #!/bin/bash
 # fit.py predict on one skx-dev node: max-likelihood model, 100 posterior draws and chi of one
 # finished step, with that step's FSPS build. Writes results/<exp>/<STEM>/predict.npz.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   STEP=<3|4|5> sbatch --export=ALL experiments/2026-11-07_emline_ladder_39627770174637084/predict.slurm
 #SBATCH -J ladpredict
 #SBATCH -p skx-dev

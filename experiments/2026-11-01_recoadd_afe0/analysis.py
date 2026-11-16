@@ -3,12 +3,11 @@
 QUESTION: on the recoadded SV3 and main spectra, how much does the C3K ER + R matrix MAP improve
 with free afe over afe fixed at 0, in total and in the Mgb, Fe5270 and Fe5335 feature bands?
 HYPOTHESIS: none registered.
-INPUTS: <TID>_map.npz of 2026-10-29_continuum_recoadd/<survey> (afe free) and of
-results/2026-11-01_recoadd_afe0/<survey> (afe = 0, fit.py collect), copied from stampede3. Feature
-bands from $SPS_HOME/data/allindices.dat.
+INPUTS: <TID>_map.npz of 2026-10-29_continuum_recoadd/<survey> (afe free) and
+results/2026-11-01_recoadd_afe0/<survey> (afe = 0), bands of $SPS_HOME/data/allindices.dat.
 SEED: none.
-COMMAND: from the repository root on the Mac,
-``SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+COMMAND: from the repository root,
+``SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-11-01_recoadd_afe0/analysis.py``.
 RESULT: pending.
 FIGURES: results/2026-11-01_recoadd_afe0/<survey>_afe_free_vs_zero.png, zoom_5100_5400.png,

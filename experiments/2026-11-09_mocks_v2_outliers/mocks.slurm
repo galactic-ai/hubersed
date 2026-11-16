@@ -1,7 +1,7 @@
 #!/bin/bash
 # mocks.py on one node: ACTION=rbank merges the survey R matrices; ACTION=run writes mocks START to
-# STOP with the C3K ER build (pilot: START=0 STOP=1000). Submit from the repository root on
-# stampede3, for example:
+# STOP with the C3K ER build (pilot: START=0 STOP=1000). Submit from the repository root,
+# for example:
 #   ACTION=rbank sbatch --export=ALL -p skx -t 00:30:00 experiments/2026-11-09_mocks_v2_outliers/mocks.slurm
 #   ACTION=run START=0 STOP=1000 sbatch --export=ALL experiments/2026-11-09_mocks_v2_outliers/mocks.slurm
 # Full run 2026-11-09: 25 jobs of 20,000 (START=0,20000,...,480000), GIB=8, -t 02:30:00 on spr.

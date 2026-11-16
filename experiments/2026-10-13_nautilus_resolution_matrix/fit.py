@@ -1,29 +1,13 @@
 """Nautilus run of 39627770174637084 with its DESI resolution matrix and the corrected ivar.
 
-Same model, priors, library and sampler settings as 2026-10-09_nautilus_c3k_er_broadline (C3K_ER,
-Cue broadline model, forbidden broad fraction shared, split 45 km/s, rest 3320-9000 A, n_live 1000,
-n_eff 2000), with two changes, both from model_setup.py:
+SUPERSEDED BY: experiments/2026-10-15_broadline_free_amplitude.
+Same fit with the free-amplitude line model of hubersed.sps.free_lines.
 
-- the data are the row-weighted recoadd with the corrected calibration ivar
-  (resolution_matrix_rows_ivar.npz of the 10-09 folder) instead of the DR1 coadd. The fitted
-  pixels are those of the 10-09 fit where the recoadded ivar is positive;
-- the line spread is the target's own resolution matrix (``--lsf rmatrix``,
-  ResolutionMatrixModel) instead of the median Gaussian LSF. ``--lsf median`` runs the control.
-
-``--mask mask``, the default, also masks the lines missing from the Cue line list (H11, H12,
-He I 5016, He I 7281, Pa11 to Pa16) at rest +-4 A. This is the setup of the rmatrix mask MAP of
-map.py. ``--mask nomask`` keeps those pixels.
-
-The setup check builds the model from the same make_params as the 10-09 run and requires the same
-29 parameter labels, so the posteriors can be compared. If map.py's ``map_<lsf>_<mask>.npz`` is in
-the output folder, it also prints the chi2 at that MAP point (SFH hyperparameters at the 10-09
-max-L), which should equal the value in map.txt.
-
-FSPS comes from the C3K_ER build with AFE_FLAG, put first on PYTHONPATH, with SPS_HOME holding the
-ER spectra. Run from the repository root on an ls6 compute node through chain.slurm (fit_fork.py,
-c3k_er_afe_v3), or directly with
-``PYTHONPATH=/work/11006/nikhilgaruda/ls6/research/fsps_builds/c3k_er_afe_v3/fsps_site
-SPS_HOME=/work/11006/nikhilgaruda/ls6/research/sps_home_er .venv/bin/python
+Differs from 2026-10-09_nautilus_c3k_er_broadline in the row-weighted recoadd with the corrected ivar
+as data, the target's own resolution matrix (``--lsf rmatrix``) and the missing-line mask (``--mask``).
+Run from the repository root through chain.slurm (fit_fork.py, c3k_er_afe_v3), or directly with
+``PYTHONPATH=<site with the C3K_ER AFE_FLAG fsps>
+SPS_HOME=<SPS_HOME with the ER spectra> .venv/bin/python
 experiments/2026-10-13_nautilus_resolution_matrix/fit.py --pool 10 --n-batch 480``.
 ``--check-only`` runs the setup checks and exits without sampling.
 """
@@ -76,20 +60,12 @@ _STATE = {}
 def process_state(lsf, mask):
     """Return this process's model, observation and Cue source, building them on the first call.
 
-    Pool workers cannot receive them from the main process, because the Cue emulator cannot be
-    pickled and JAX is not fork safe, so each process builds its own, as in the 10-09 fit.
-
     Parameters
     ----------
     lsf : {"rmatrix", "median"}
         Line spread, see ``model_setup.make_model``.
     mask : {"nomask", "mask"}
         Key of ``MASKS``.
-
-    Returns
-    -------
-    tuple
-        The model, the observation list and the Cue source.
     """
     key = (lsf, mask)
     if key not in _STATE:
@@ -113,13 +89,7 @@ def chi2_at(model, obs, cue, theta):
 
 
 def check_setup(args):
-    """Check the labels, the likelihood and the MAP chi2, and print the setup.
-
-    Parameters
-    ----------
-    args : argparse.Namespace
-        The command-line options, see ``parse_args``.
-    """
+    """Check the labels, the likelihood and the MAP chi2, and print the setup."""
     model, obs, cue = process_state(args.lsf, args.mask)
     labels = list(model.theta_labels())
     er = json.loads((ER_RESULTS / f"{ER_STEM}.json").read_text())
@@ -159,11 +129,8 @@ def main(args, pool=None):
 
     Parameters
     ----------
-    args : argparse.Namespace
-        The command-line options, see ``parse_args``.
     pool : multiprocessing.pool.Pool or None
-        Pool for nautilus. None makes a pool of ``args.pool`` workers with the global start
-        method, which ``__main__`` sets to spawn. ``fit_fork.py`` passes a forked one.
+        None makes a pool of ``args.pool`` workers. ``fit_fork.py`` passes a forked one.
     """
     name = stem(args.lsf, args.mask)
     # the checks passed when the run started, and each pool worker builds its own Cue, so a run
@@ -232,13 +199,7 @@ def main(args, pool=None):
 
 
 def parse_args():
-    """Parse the command-line options.
-
-    Returns
-    -------
-    argparse.Namespace
-        The options. ``fit_fork.py`` takes the same ones.
-    """
+    """Parse the command-line options."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--lsf", choices=["rmatrix", "median"], default="rmatrix")
     parser.add_argument("--mask", choices=list(MASKS), default="mask")

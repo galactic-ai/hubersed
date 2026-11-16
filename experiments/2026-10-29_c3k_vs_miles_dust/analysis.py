@@ -1,29 +1,19 @@
-"""MILES against C3K dust for 39633433328091196, C. Hahn's four tests (issue #17).
+"""MILES against C3K dust for 39633433328091196, four tests (issue #17).
 
-QUESTION: (1, 2) at the same parameters, how do the MILES and C3K ER models differ? (3) how do
-the attenuation curves of the MILES and C3K ER best points compare? (4) are dust2 and stellar
-mass degenerate?
+QUESTION: (1, 2) how do MILES and C3K ER models differ at the same parameters? (3) how do their best
+points' attenuation curves compare? (4) are dust2 and stellar mass degenerate?
 HYPOTHESIS: none registered.
-INPUTS: (3) the best points of the C3K ER MAP (icx job 3657895), the 10-08 MILES nautilus max-L
-(until the MILES MAP of 2026-10-29_nodust_map_39633433328091196 exists) and the C3K ER MAP of the
-SV3 dark spectrum (2026-10-30_continuum_39633433328091196_dark_map, spr job 3662995). (4) the
-weighted posterior points of the 10-08 nautilus runs miles_miles_neboff_nodeg,
-c3k_hr_full_neboff_afezero and c3k_hr_full_neboff (pred npz, md5 of the MILES one equal to /work;
-the two HR ones copied from /work 2026-10-29), and the c3k_hr_full_neboff_afefree checkpoint (no
-pred npz; points read as in hypers.py). (1, 2) spectra_er.npz and spectra_miles.npz of spectra.py,
-when copied.
+INPUTS: <TID>_map.npz of 2026-10-29_continuum_39633433328091196_map and
+2026-10-30_continuum_39633433328091196_dark_map, the 10-08 runs miles_miles_neboff_nodeg,
+c3k_hr_full_neboff_afezero, c3k_hr_full_neboff and c3k_hr_full_neboff_afefree, spectra_<lib>.npz.
 SEED: none.
-COMMAND: from the repository root on the Mac,
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-29_c3k_vs_miles_dust/analysis.py``.
-RESULT: 2026-10-29, degeneracy.txt and the spectra figures. Each library fits as well at its own
-point (chi2 4569 C3K ER, 4564 MILES on 4070 common px) but not at the other's (+2315, +5572). C3K HR
-posteriors: dust2 and log M correlate (r +0.78 afe free to +0.93 afe 0), A_V 0.37-0.40, E(B-V)
-0.069-0.086; MILES: A_V 0.06, E(B-V) 0.046, no correlation. Assumptions: 10-08 nautilus posteriors
-(HR on degraded data, SFH hyperparameters free); the MILES point is its max-L. 2026-10-30: the C3K
-ER MAP of the SV3 dark spectrum has A_V 0.423, E(B-V) 0.098, dust_index +0.07 (bright: 0.447, 0.064,
-+0.40); all of these fits but the dark one use the sky-contaminated SV3 bright coadd.
-FIGURES: results/2026-10-29_c3k_vs_miles_dust/curves.png, degeneracy.png, degeneracy.txt and,
-once the spectra exist, spectra.png.
+RESULT: 2026-10-29. Own-point chi2 4569 (C3K ER) and 4564 (MILES) on 4070 px, +2315 and +5572 at
+the other's. C3K HR r(dust2, log M) +0.78 to +0.93, A_V 0.37-0.40. MILES A_V 0.06, uncorrelated.
+Assumptions: HR on degraded data, free SFH hyperparameters, MILES max-L, SV3 bright coadd with sky.
+FIGURES: results/2026-10-29_c3k_vs_miles_dust/curves.png, degeneracy.png, degeneracy.txt and
+spectra.png.
 """
 
 # %%
@@ -56,11 +46,7 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 
 def kc13_curve(lam, delta):
-    """Return the FSPS dust_type 4 curve, tau(lam) / tau_V, for rest ``lam`` in A.
-
-    As attn_curve.f90:133-154 of the python-fsps fork in uv.lock, the Calzetti curve over 4.05,
-    plus a 2175 A Drude bump of strength 0.85 - 1.9 delta, times (lam / 5500)^delta.
-    """
+    """Return the FSPS dust_type 4 curve, tau(lam) / tau_V, for rest ``lam`` in A."""
     lam = np.asarray(lam, float)
     delta = np.atleast_1d(np.asarray(delta, float))[:, None]
     x = 1e4 / lam
@@ -141,12 +127,7 @@ post = {}
 
 
 def read_posterior(path):
-    """Return the labels, weighted points, log weights and N_eff of a 10-08 nautilus run.
-
-    A pred npz holds them. For a checkpoint without one (afefree), the points that carry weight
-    go through the prior transform of the 10-08 make_model, as in
-    2026-10-29_continuum_39633433328091196_map/hypers.py; the likelihood is never called.
-    """
+    """Return the labels, weighted points, log weights and N_eff of a 10-08 nautilus run."""
     if path.suffix == ".npz":
         d = np.load(path)
         return [str(x) for x in d["labels"]], d["points"], d["log_w"], float(d["n_eff"])
@@ -317,7 +298,7 @@ comparison_figure(
 )
 
 
-# %% test 2: MILES and C3K ER models at the C3K ER MAP point (icx job 3657895). C3K ER at its own
+# %% test 2: MILES and C3K ER models at the C3K ER MAP point. C3K ER at its own
 # point is its saved best spectrum; MILES there is spectra_miles.npz (afe dropped, the ER fixed SFH
 # hyperparameters). Each chi is on that library's own data.
 s_mi = np.load(OUT / "spectra_miles.npz")

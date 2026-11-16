@@ -1,12 +1,9 @@
 """Build the C3K ER SSP slots once, save them with hubersed.sps.ssp_cache, and check a reload.
 
-The population is set up as the ladder's node_pool sets it before the fork (2026-11-07_emline_ladder
-fit.py, with zcontinuous=1, sfh=0, and add_igm_absorption, add_dust_emission, add_neb_emission and
-nebemlineinspec False as NebStepBasis sets them), so the cache key matches the pools that will load
-it. ``build`` builds every slot with build_ssps and saves them with a reference spectrum (tage
-1 Gyr, logzsol 0). ``check`` runs in a new process, loads the cache and compares that spectrum
-exactly.
-COMMAND: ``python build.py build <cache.npz>`` then ``python build.py check <cache.npz>`` (build.slurm).
+Population set as the ladder's node_pool sets it before the fork, so the cache key matches.
+``build`` saves every slot and a reference spectrum, ``check`` reloads it in a new process.
+COMMAND: through build.slurm, ``python build.py build <cache.npz>`` then
+``python build.py check <cache.npz>``.
 OUTPUT: <cache.npz> and <cache>_ref.npz.
 """
 
@@ -16,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 
-GIB_HELPER, GIB_MARGIN = 15.0, 10.0  # as the ladder's node_pool (10-31 job 3664748)
+GIB_HELPER, GIB_MARGIN = 15.0, 10.0  # as the ladder's node_pool (10-31)
 
 
 def population():

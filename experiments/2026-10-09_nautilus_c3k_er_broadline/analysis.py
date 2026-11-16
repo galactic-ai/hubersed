@@ -1,18 +1,23 @@
-"""QUESTION: What does the converged C3K_ER broadline fit of 39627770174637084 look like, and how do
-its posteriors differ from the C3K_HR split45 fit of the same object with the same model?
+"""Figures and tables of the converged C3K_ER broadline fit of 39627770174637084.
+
+SUPERSEDED BY: experiments/2026-10-10_nautilus_c3k_er_cotie_split.
+Same fit with three model changes, among them a soft C/O tie to O/H.
+
+QUESTION: What does the converged C3K_ER fit look like, and how do its posteriors differ from the
+C3K_HR split45 fit of the same object with the same model?
 HYPOTHESIS: None registered before this analysis.
-INPUTS: results/2026-10-09_nautilus_c3k_er_broadline/<stem>_pred.npz from predict.py, with
-<stem> = 39627770174637084_er_broad_shared_split45_rest9000_seed0. For comparison the checkpoint
+INPUTS: results/2026-10-09_nautilus_c3k_er_broadline/<stem>_pred.npz of predict.py, with <stem> =
+39627770174637084_er_broad_shared_split45_rest9000_seed0, and the HR checkpoint
 results/2026-09-30_nautilus_c3k_broadline_split45/39627770174637084_broad_shared_split45_unmask_rest9000_seed0.h5.
-The HR run fitted different data (degraded to C3K_HR plus 10 km/s, [OI]/[SII] sky pixels unmasked),
-so only posteriors are compared, not log Z or chi2.
 SEED: 0 for the SFH draws here, 0 for the 100 spectrum draws in predict.py.
-COMMAND: on an ls6 compute node, after predict.py,
+COMMAND: after predict.py,
 .venv/bin/python experiments/2026-10-09_nautilus_c3k_er_broadline/analysis.py
 RESULT: see analysis_summary.txt next to the figures.
-FIGURES: results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/. params_table.txt,
-analysis_summary.txt, corner_phys.png, corner_sfh.png, corner_lines.png (ER filled, HR grey),
-sfh.png (ER band, HR median), spectrum.png, spectrum_zoom.png and line_windows.png.
+Assumptions: the HR run fitted different data (degraded to C3K_HR plus 10 km/s, [OI]/[SII] sky
+pixels unmasked), so only posteriors are compared, not log Z or chi2.
+FIGURES: results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/ params_table.txt,
+analysis_summary.txt, corner_phys.png, corner_sfh.png, corner_lines.png, sfh.png, spectrum.png,
+spectrum_zoom.png and line_windows.png.
 """
 
 # %%

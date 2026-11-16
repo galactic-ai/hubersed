@@ -1,31 +1,16 @@
 """Which continuum shape does the steep dust slope fit in the free_dust fit of 39627770174637084?
 
-QUESTION: ridge_profile.py found ln L rising steadily as dust_index falls to -4, with Delta chi2
-+80.9 at n = 0 against n = -4. Is the gain a broad colour, a step near one wavelength, or local
-features?
-
-Refits n = -4 and n = 0 from the free_dust pocoMC best point, as ridge_profile.py does, with the
-dust_index prior widened to TopHat(-4, 1.5). Splits the chi2 difference into 200 A rest bins for
-continuum and line pixels. Gives per bin the n = 0 to n = -4 continuum ratio and the median data
-to model ratio of each fit.
-
-RESULT: 2026-10-18, ridge_shape.txt and .png. Response is 1, so no calibration term. ln L at
-n = -4 matches ridge_profile (101084.74 against 101084.89). The direct n = 0 refit lands 1.8 lower
-than the stepped one, so Delta chi2 is 84.0 here against 80.9. The gain is continuum (+87.3), not
-lines (-3.4). The two continua differ by a smooth wave of 1-3%, not a step. n = 0 over n = -4 is
-0.97 below 3800 A, 0.985-0.995 at 3800-4800 A, 1.011 at 5000-5800 A, 0.99 at 6600-7600 A and
-1.015 at 8600-9000 A. The largest part is 5000-5800 A (+36.6), where n = 0 leaves data/model
-0.982. Then 7400-7800 A (+17.5), 4600-4800 A (+12.0) and 8800-9000 A (+11.1). n = 0 does better
-at 4000-4200 A (-14.8) and 5800-6000 A (-14.2). Neither fit matches below 3800 A, where data/model
-is 1.04-1.07 for n = -4 and 1.07-1.085 for n = 0.
-
-INPUTS: pmc_final.state of the free_dust poco.py run. SEED: none.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+QUESTION: ln L rises as dust_index falls to -4 (ridge_profile.py, Delta chi2 +80.9 at n = 0). Is the
+gain a broad colour, a step near one wavelength, or local features?
+INPUTS: pmc_final.state of the free_dust poco.py run.
+SEED: none.
+COMMAND: from the repository root with the C3K_ER build,
+``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:<er_path>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-15_broadline_free_amplitude/ridge_shape.py --state <path>``.
-
+RESULT: 2026-10-18. Delta chi2 84.0, continuum +87.3 and lines -3.4. The two continua differ by a
+smooth 1-3% wave, not a step. The largest part is 5000-5800 A (+36.6), then 7400-7800 A (+17.5).
+Assumptions: no calibration term. The direct n = 0 refit lands 1.8 lower than the stepped one.
 OUTPUT: ridge_shape.txt, ridge_shape.npz and ridge_shape.png next to the state file.
 """
 

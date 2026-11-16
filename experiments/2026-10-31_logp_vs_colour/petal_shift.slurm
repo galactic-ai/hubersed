@@ -1,6 +1,6 @@
 #!/bin/bash
 # Per-exposure colour shift by tile, petal and exposure over the unzipped spectra (petal_shift.py).
-# Run after exp_extract.slurm. Submit from the repository root on stampede3:
+# Run after exp_extract.slurm. Submit from the repository root:
 #   sbatch experiments/2026-10-31_logp_vs_colour/petal_shift.slurm
 #SBATCH -J petal1031
 #SBATCH -p skx-dev

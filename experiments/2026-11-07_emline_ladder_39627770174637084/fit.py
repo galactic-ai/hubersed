@@ -1,29 +1,11 @@
 """Ladder steps 3-8 of 39627770174637084 (``--step``, default 5). Step 5 is described here.
 
-Steps 7 and 8 (2026-11-10) are steps 5 and 6 with the broad widths set as a ratio of the narrow
-width, r ~ TopHat(1.2, 40), and the narrow width TopHat(10, 450) km/s (add_line_params widths
-"ratio", bounds from 2026-11-10_line_width_split), instead of the 250 km/s split.
+Step 5 is step 4 plus free weak-ion lines and broad H, [OII], [OIII], [NII], [SII], [OI], uniform
+in EW up to W. Steps 7-8 are 5-6 with width ratio TopHat(1.2, 40) and narrow TopHat(10, 450) km/s.
 
-Step 3 fits Cue narrow lines with one width and the median DESI Gaussian LSF (map_fits.LSF). Step 4
-is 3 with the own DR1 R instead. Step 5 is 4 with the free line columns below. Same data, pixels,
-priors and sampler in all three. Steps 3 and 4 keep Cue's eline_sigma prior TopHat(10, 250).
-
-Changed from step 4 (ladder plan): weak ions ([SII], [OI], [ArIII], auroral, [NeIII], [SIII])
-replace their Cue lines with free amplitudes, and H, [OII], [OIII], [NII], [SII], [OI] get free
-broad components, all under a uniform prior in equivalent width up to W (ion_limits.json of
-2026-11-06_line_ew_prior), marginalized by prospect (line_columns). Narrow width TopHat(10, 250),
-broad widths TopHat(250, 800), broad offset TopHat(-300, 300) km/s. Data: DR1 coadd from
-load_spectrum (spender mask), rest 3320-9000 A, own R from the 10-09 resolution_matrix.npz. C3K ER
-with AFE_FLAG at afe 0; sigma_smooth floor = library resolution.
-
-pocoMC through prospect's fit_model with likelihood_builder=build, so each pool worker builds the
-data, model and Cue once (Cue cannot be pickled). The pool forks after the FSPS setup and SSP build
-and before JAX starts; workers are pinned to one core. With ``--mpi`` each node runs one rank with
-its own pool and rank 0 splits each batch (NodePool of 2026-10-15 poco.py).
-
-COMMAND: on the Mac, from the repository root,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-15_broadline_free_amplitude
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+COMMAND: from the repository root,
+``PYTHONPATH=<C3K_ER fsps site>:experiments/2026-10-15_broadline_free_amplitude
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-11-07_emline_ladder_39627770174637084/fit.py check --pool 2``.
 Use ``run`` instead of ``check`` for the fit.
 
@@ -89,15 +71,10 @@ if os.environ.get("SPEC_DATA"):  # staged spender files; Corral is not mounted o
 def load_data(recoadd=False):
     """Return the redshift, flux and uncertainty in maggies, fitted pixels and the R matrix.
 
-    Pixels outside ``good`` have zero flux and infinite uncertainty.
-
     Parameters
     ----------
     recoadd : bool
-        False takes flux and ivar from load_spectrum, checked equal to the DR1 npz flux on the
-        fitted pixels, with the DR1 R. True (step 6) takes flux, ivar and R from the recoadd npz on
-        the DR1 fitted pixels where its ivar is positive, as 2026-10-13 model_setup, without its
-        missing-line masks.
+        False takes load_spectrum and the DR1 R, True (step 6) the recoadd npz flux, ivar and R.
     """
     s = load_spectrum(TID)
     z = float(s.redshift.value)
@@ -130,9 +107,9 @@ def make_params(z, cue, lines=True, floor=None, afe_zero=False, widths="ratio"):
     lines : bool
         Add the line widths and broad offset (add_line_params).
     floor : float, optional
-        The sigma_smooth prior floor, by default the library resolution over rest 3320-9000 A.
+        The sigma_smooth prior floor, default the library resolution over rest 3320-9000 A.
     afe_zero : bool
-        Add afe fixed at 0, as the 11-01 c3k_hr step.
+        Add afe fixed at 0.
     widths : str
         "split" for steps 5-6, "ratio" for steps 7-8 and the mocks.
     """
@@ -166,13 +143,7 @@ def f08():
 
 
 def build_library_step(step):
-    """Return ([observation], model, cue) of step 1 (MILES) or 2 (C3K HR), with 10-08's data code.
-
-    Step 1 uses the MILES rest window 3601.8-7400.8 A, data not degraded, library resolution zeroed
-    (10-08 make_sps), median DESI LSF and sigma_smooth floor 10 km/s (as 09-24). Step 2 uses the
-    whole DESI range in the C3K HR window, data degraded to C3K HR + 10 km/s where DESI is sharper,
-    afe fixed at 0 and sigma_smooth floor = C3K HR resolution over its window.
-    """
+    """Return ([observation], model, cue) of step 1 (MILES) or 2 (C3K HR), with 10-08's data code."""
     from prospect.models.sedmodel import HyperSpecModel
 
     m = f08()
@@ -287,11 +258,7 @@ _PREDICT = {}
 
 
 def predict_one(theta, step):
-    """Return the model spectrum at ``theta`` and, for step 5, the free-column EWs in Angstrom.
-
-    The EW of a column is its truncated-mean amplitude (box prior respected) times W / upper.
-    Columns without fitted pixels get NaN.
-    """
+    """Return the model spectrum at ``theta`` and, for step 5, the free-column EWs in Angstrom."""
     from prospect.models import line_marginalisation as lm
 
     if step not in _PREDICT:
@@ -314,10 +281,7 @@ def predict_one(theta, step):
 
 
 def predict(pool, step):
-    """Write predict.npz with data, the max-likelihood model, percentiles of 100 posterior draws, chi.
-
-    Draws are taken by weight from the step's .h5 (seed 0). Step 5 also gets the free-column EWs.
-    """
+    """Write predict.npz with data, max-likelihood model, percentiles of 100 posterior draws and chi."""
     from prospect.io.read_results import results_from
 
     folder = OUT / STEMS[step]
@@ -393,8 +357,8 @@ def run(pool, step):
     write_hdf5(str(folder / f"{STEMS[step]}.h5"), run_params, model, observations, sampling, None)
 
 
-GIB_HELPER = 15.0  # commit of one build_ssps helper (10-31 job 3664748)
-GIB_WORKER = 8.0  # commit of one worker after the free: 5.44 GiB without Cue (job 3664817) + Cue
+GIB_HELPER = 15.0  # commit of one build_ssps helper (10-31)
+GIB_WORKER = 8.0  # commit of one worker after the free: 5.44 GiB without Cue + Cue
 GIB_MARGIN = 8.0  # commit left free on each node
 TORCH_THREADS = 16  # pocoMC's flow runs in the parent; it keeps this many cores, workers the rest
 
@@ -426,13 +390,7 @@ def parent_pool(ctx, npool, cores):
 
 
 def node_pool(npool, gib_worker=GIB_WORKER, free=True):
-    """Return this node's forked pool, after the SSP build and the speclib free on TACC builds.
-
-    Stampede3 forbids memory overcommit, so each fork is charged all of its parent's private
-    memory. On the TACC FSPS build the parent builds every SSP slot with the flags Cue's source
-    uses, frees speclib (fsps_mem of 2026-10-31_poco_c3k_er_dark), and sizes the pool from the
-    node's commit room when ``npool`` is 0. Cue is built only after the fork, in each process.
-    """
+    """Return this node's forked pool, after the SSP build and the speclib free on TACC builds."""
     ctx = mp.get_context("fork")
     if not hasattr(fsps.StellarPopulation, "build_ssps"):  # no prebuild: macOS or an older build
         assert not jax_backend_started(), "the JAX backend started before the fork"

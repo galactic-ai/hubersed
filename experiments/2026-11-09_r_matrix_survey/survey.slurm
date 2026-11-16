@@ -1,6 +1,6 @@
 #!/bin/bash
 # survey.py run on one skx-dev node: merged DR1 coadd R and row sigma for the targets in
-# targets.txt. Submit from the repository root on stampede3:
+# targets.txt. Submit from the repository root:
 #   sbatch experiments/2026-11-09_r_matrix_survey/survey.slurm
 #SBATCH -J rsurvey
 #SBATCH -p skx-dev

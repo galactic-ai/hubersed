@@ -2,16 +2,12 @@
 
 QUESTION: what do the 92 canonical common continuum outliers look like, spectrum and image?
 HYPOTHESIS: none registered; a visual look.
-INPUTS: cont of results/prescreened_outliers_postsimbad.npz (the canonical 92, outlier log Addendum
-5); DR1 coadds from the DESIchunk1024 pkl through load_by_index; RA and DEC from the METADATA of
-data/fastspec-iron-sv3-bright.fits; 96 px ls-dr9 cutouts at 0.262''/px from the Legacy Survey
-viewer, reused from results/2026-10-31_logp_vs_colour/cutouts/ when there, else downloaded to
-results/2026-11-01_gallery92/cutouts/.
+INPUTS: cont of results/prescreened_outliers_postsimbad.npz, the DESIchunk1024 pkl coadds,
+data/fastspec-iron-sv3-bright.fits, ls-dr9 cutouts of results/2026-10-31_logp_vs_colour/cutouts/.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_gallery92/analysis.py``.
 RESULT: figures only.
-FIGURES: results/2026-11-01_gallery92/<NN>_<TARGETID>.png, rest-frame pixels with ivar > 0 (grey)
-and their 9 px median filter (black), in the npz order.
+FIGURES: results/2026-11-01_gallery92/<NN>_<TARGETID>.png and results/2026-11-01_gallery92/cutouts/.
 """
 
 import io

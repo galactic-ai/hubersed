@@ -1,15 +1,9 @@
 """Plot the full spectrum of 39627770174637084 with the model A and free-line MAP fits.
 
-The data and both MAP spectra in DESI units, then the chi of each. The legend gives the reduced chi2
-over the fitted pixels. Unused pixels are empty and the lines missing from Cue are shaded.
-
-INPUTS: map_A.npz and map_free.npz of map.py. SEED: none.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+COMMAND: from the repository root with the C3K_ER build,
+``PYTHONPATH=<er_path>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-15_broadline_free_amplitude/fullspec.py``.
-
 OUTPUT: fullspec_A_free.png in results/2026-10-15_broadline_free_amplitude/.
 """
 

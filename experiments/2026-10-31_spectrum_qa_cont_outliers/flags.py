@@ -1,11 +1,7 @@
-"""Save the DR1 SV3 bright redshift-catalogue flags and fiber diagnostics of the outliers and controls.
+"""Save the DR1 SV3 bright redshift-catalogue flags and fiber diagnostics of outliers and controls.
 
-Queries desi_dr1.zpix on the Astro Data Lab TAP service for the 94 outliers and the three control
-sets of controls.npz, 200 TARGETIDs per query. Per-exposure FIBERSTATUS bits are not in these
-tables. COADD_FIBERSTATUS keeps only the bits set in every exposure.
-
-COMMAND: from the repository root on the Mac,
-``uv run --no-sync python experiments/2026-10-31_spectrum_qa_cont_outliers/flags.py``.
+Queries desi_dr1.zpix on the Astro Data Lab TAP service for the 94 outliers and controls.npz.
+COMMAND: ``uv run --no-sync python experiments/2026-10-31_spectrum_qa_cont_outliers/flags.py``.
 OUTPUT: results/2026-10-31_spectrum_qa_cont_outliers/zpix_flags.csv.
 """
 

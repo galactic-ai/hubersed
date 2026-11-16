@@ -1,8 +1,8 @@
 #!/bin/bash
-# Run ladder.slurm predicts inside the allocation of a running job (Nikhil, 2026-11-04), at most
+# Run ladder.slurm predicts inside the allocation of a running job, at most
 # MAXPAR at a time, each through srun --overlap on its own core. Arguments: the job id, then
 # TARGETID:STEP pairs. A predict still running when that job ends is killed with it. Run on the
-# stampede3 login node from the repository root:
+# login node from the repository root:
 #   nohup bash experiments/2026-11-01_poco_repeats/predict_in_job.sh JOB TID:STEP ... > <log> 2>&1 &
 JOB=$1
 shift

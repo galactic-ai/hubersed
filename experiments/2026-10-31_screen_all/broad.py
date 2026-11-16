@@ -1,6 +1,5 @@
 """FastSpecFit broad Halpha and Hbeta of the 36 follow-up outliers (survivors.txt).
 
-The #10 cuts screen AGN with narrow-line BPT and SIMBAD only. This lists the broad components.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_screen_all/broad.py``.
 OUTPUT: results/2026-10-31_screen_all/broad.txt.
 RESULT: 2026-10-31. 6 of 36 have broad Halpha with S/N 28-116 and sigma 533-1557 km/s; two more at

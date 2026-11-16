@@ -1,18 +1,14 @@
-"""Where the C3K max-likelihood residuals of 39633123121563924 (robust6 target 3, #17) are bad, and why.
+"""Where the C3K max-likelihood residuals of 39633123121563924 (robust6 target 3, #17) are bad.
 
 QUESTION: which wavelength ranges carry the excess chi2 of the pocoMC max-likelihood fit, and do
 they line up with arm joins, sky lines or stellar and nebular features?
 HYPOTHESIS: none registered.
-INPUTS: 2026-10-31_poco_robust6/<TID>/<TID>_poco_maxl.npz. Arm joins from the DR1 exposure grid
-(B 3600-5800, R 5760-7620, Z 7520-9824 A observed, 2026-10-31_lines_39627775706927918). Feature
-wavelengths are standard air values from memory, not checked against a line list.
+INPUTS: 2026-10-31_poco_robust6/<TID>/<TID>_poco_maxl.npz, arm joins of
+2026-10-31_lines_39627775706927918, feature air wavelengths from memory, not checked.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_resid_39633123121563924/analysis.py``.
-RESULT: excess chi2 sits at Halpha+[NII]6584 (rest 6550-6600, chi2/N 18.6 at [NII]) and [OIII]
-4959, 5007 (chi2/N 17.9); all four lines are in every one of the 4 exposures (EXPID 86986, 87714,
-87828, 87932, three tiles), so they are real; exposures sit at 0.92-1.13 of the coadd. FastSpecFit:
-log [NII]/Ha -0.05, log [OIII]/Hb 0.98 (Hbeta S/N 3.2), above Kewley+01 (0.01): an AGN by BPT,
-missed by the S/N > 5 BPT screen. The fit has no nebular model.
+RESULT: excess chi2 sits at Halpha+[NII]6584 (chi2/N 18.6 at [NII]) and [OIII] 4959, 5007 (17.9),
+all in every exposure. FastSpecFit puts it above Kewley+01, an AGN missed by the S/N > 5 BPT screen.
 Assumptions: FastSpecFit 2.5.1 fluxes; bins of 25 A rest with >= 10 good pixels.
 FIGURES: results/2026-10-31_resid_39633123121563924/ resid.txt, resid.png, worst_bins_exposures.png,
 exposure_ratio.png.

@@ -1,8 +1,8 @@
 #!/bin/bash
-# Multi-start continuum MAP of the SV3 dark spectrum of 39633433328091196 on one stampede3 icx node, as
+# Multi-start continuum MAP of the SV3 dark spectrum of 39633433328091196 on one icx node, as
 # 2026-10-29_continuum_recoadd/map.slurm (7 starts, one core each, collect at the end). Continuum
 # only. A start killed by the timeout saves nothing.
-# Submit from the repository root on stampede3, after copying dark_spectrum.npz and resolution_matrix.npz from the Mac:
+# Submit from the repository root, after copying dark_spectrum.npz and resolution_matrix.npz:
 #   sbatch experiments/2026-10-30_continuum_39633433328091196_dark_map/map.slurm
 #SBATCH -J darkmap1030
 #SBATCH -p icx

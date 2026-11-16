@@ -6,7 +6,7 @@
 # TARGETS names the target list (default targets.txt; targets_99.txt for 99 alone), REPRO=0 skips repro,
 # MODELS the models (default "A B"), GIB the commit per worker (10 for the Cue models), RMAIN=1 also
 # saves the main-coadd matrix.
-# Submit from $RUN on stampede3:
+# Submit from $RUN:
 #   [TARGETS=<file> REPRO=0] sbatch --export=ALL experiments/2026-11-14_poco_psb_sfh/check.slurm
 #SBATCH -J psbcheck
 #SBATCH -p skx-dev

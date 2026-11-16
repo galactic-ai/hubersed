@@ -1,15 +1,9 @@
 """Predict the pocoMC max-likelihood point of one target with the median DESI LSF, ladder step 4.
 
-As 2026-10-28_continuum_c3k_er_rmatrix_map/predict_median_lsf.py, with the poco_repeats fit in
-place of the MAP. The parameters are ``best`` of <TARGETID>_poco_maxl.npz (predict.py), with no
-refit. The model has the parameters of the fit (free afe and SFH hyperparameters) as a
-HyperSpecModel, so prospect smooths the C3K_ER spectrum from the library resolution to a Gaussian of
-the median DESI resolution (hubersed.sps.lsf.desi_resolution) instead of applying the R matrix. Off
-the fitted pixels and in prospect's padding the target is kept 10 km/s above the library, as there.
-COMMAND: on stampede3 through predict_lsf.slurm, with the C3K_ER AFE_FLAG build.
-OUTPUT: results/2026-11-01_poco_repeats/<TARGETID>/median_lsf/<TARGETID>_median_lsf_pred.npz, with
-the data, ``best`` and ``labels`` of the maxl file, ``sp_best`` from this model and
-``sp_best_rmatrix`` from the maxl file.
+As 2026-10-28_continuum_c3k_er_rmatrix_map/predict_median_lsf.py, with ``best`` of
+<TARGETID>_poco_maxl.npz (predict.py) in place of the MAP.
+COMMAND: through predict_lsf.slurm, with the C3K_ER AFE_FLAG build.
+OUTPUT: results/2026-11-01_poco_repeats/<TARGETID>/median_lsf/<TARGETID>_median_lsf_pred.npz.
 """
 
 import argparse

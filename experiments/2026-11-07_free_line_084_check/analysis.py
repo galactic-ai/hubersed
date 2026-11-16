@@ -2,24 +2,18 @@
 
 QUESTION: on real data, does the fork's box probability P_B of each block of free columns agree
 with an independent value, how large are the blocks, and what does a prediction cost?
-HYPOTHESIS: |ln P_B - reference| < 0.01 for blocks of 1-2 (quadrature) and within 3 Monte Carlo
-errors for larger blocks (10^7 draws); the broad H column joins most columns into one block.
-INPUTS: the 10-13 max-L point (_pred.npz `best`) with its data, mask and R (model_setup.COADD);
-broad widths and offset (eline_sigma_broad, eline_sigma_broad_forb, eline_vbroad) from the 10-15
-free-line MAP (map_free.npz). Columns are weak ions (narrow, replace Cue) and broad columns (add to
-Cue) of hubersed.sps.free_lines.IONS, W from results/2026-11-06_line_ew_prior/ion_limits.json.
-C3K_ER Cue, afe 0.
+HYPOTHESIS: |ln P_B - reference| < 0.01 for blocks of 1-2 and within 3 Monte Carlo errors for
+larger blocks (10^7 draws). The broad H column joins most columns into one block.
+INPUTS: the 10-13 max-L point (_pred.npz `best`), 10-15 map_free.npz broad widths,
+results/2026-11-06_line_ew_prior/ion_limits.json. C3K_ER Cue, afe 0.
 SEED: numpy default_rng 0 for the Monte Carlo reference.
-COMMAND: from the repository root on the Mac, with the fork working copy first on the path,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:$HOME/Astronomy_Research/prospector:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+COMMAND: from the repository root, with the fork working copy first on the path,
+``PYTHONPATH=<C3K_ER fsps site>:$HOME/Astronomy_Research/prospector:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-11-07_free_line_084_check/analysis.py``.
-RESULT: 2026-11-07, check.txt. All 8 blocks pass: blocks of 1-2 agree with erf/quadrature to
-3e-11, blocks of 3 within 1.2 MC sigma. 13 of 15 columns have fitted pixels ([NII]5755 and
-[SIII]9069 none), in blocks [3, 3, 2, 1 x 5]; broad H joins only [NeIII] and [NII] broad. 45 ms per
-prediction against 39 ms narrow only. [ArIII]7135 has 1 fitted pixel near its centre, so its sd is
-5e5 times its bound and its net term is about -0.04: it drops out, as derived. Assumptions: one
-parameter point; broad widths 86-88 km/s (wider broad lines make larger blocks); fork working copy.
+RESULT: 2026-11-07, check.txt. All 8 blocks pass (1-2 to 3e-11, 3 within 1.2 MC sigma). Blocks
+[3, 3, 2, 1 x 5], broad H joins only [NeIII] and [NII] broad. 45 ms per prediction against 39 ms.
+Assumptions: one parameter point; broad widths 86-88 km/s (wider broad lines make larger blocks).
 FIGURES: results/2026-11-07_free_line_084_check/check.txt.
 """
 
@@ -127,11 +121,7 @@ def ref_2d(mu, cov, b):
 
 
 def ref_mc(mu, cov, b, rng):
-    """Return ln P of the box from NDRAW normal draws and its 1 sigma error in ln P.
-
-    The error is the binomial one, at least 1/NDRAW, which is the resolution when no draw falls
-    outside the box.
-    """
+    """Return ln P of the box from NDRAW normal draws and its binomial 1 sigma error."""
     inside = 0
     for _ in range(10):
         a = rng.multivariate_normal(mu, cov, size=NDRAW // 10)

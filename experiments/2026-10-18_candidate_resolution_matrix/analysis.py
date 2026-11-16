@@ -1,27 +1,15 @@
 """Save the DESI resolution matrix of four more line outliers and check their per-exposure S/N.
 
-QUESTION: the corrected calibration ivar of 39627770174637084 changes sigma by 1-4% at per-exposure
-pixel S/N 5-20, 6-31% at 20-40 and 17-152% above 40 (ivar_recompute.txt). Which of the four
-candidates have enough pixels above S/N 20 to need the recoadd?
-
-Candidates are from the v2 MAP fits of the 310 outliers. They are 39628357133926597,
-39633278973513279, 39632961393395307 and 39633001071509599. The target 39627770174637084 is the
-reference.
-
-The matrix, flux, ivar and mask are saved with resolution_check.save_matrix, unchanged, so they
-merge the arms as the reference does. Per-exposure S/N is the coadd S/N over sqrt(COADD_NUMEXP),
-which assumes equal exposures. Line pixels are within 400 km/s of the strong lines. The exposure
-list (EXPID, PETAL_LOC, FIBER, CAMERA arms) is written for a later recoadd.
-
-INPUTS: DR1 iron healpix coadds copied from ls6 spender/DATA to data/sv3_bright_coadds/, and
-resolution_matrix.npz of the reference. Redshifts from fastspec-iron-sv3-bright METADATA. SEED: none.
-
-COMMAND: from the repository root on the Mac,
+QUESTION: the corrected ivar changes sigma by 1-4% at per-exposure S/N 5-20, 6-31% at 20-40 and
+17-152% above 40. Which of the four candidates have enough pixels above S/N 20 to need the recoadd?
+INPUTS: DR1 iron healpix coadds in data/sv3_bright_coadds/, the reference resolution_matrix.npz and
+fastspec-iron-sv3-bright METADATA.
+SEED: none.
+COMMAND: from the repository root,
 ``PYTHONPATH=experiments/2026-10-09_nautilus_c3k_er_broadline uv run --no-sync python
 experiments/2026-10-18_candidate_resolution_matrix/analysis.py``.
-
-OUTPUT: results/2026-10-18_candidate_resolution_matrix/, one folder per target with
-resolution_matrix.npz, and snr_table.txt.
+OUTPUT: <TID>/resolution_matrix.npz and snr_table.txt in
+results/2026-10-18_candidate_resolution_matrix/.
 """
 
 import numpy as np

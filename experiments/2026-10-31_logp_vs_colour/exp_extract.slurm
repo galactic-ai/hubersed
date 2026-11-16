@@ -1,6 +1,6 @@
 #!/bin/bash
 # Extract the single-exposure spectra of the exp_targets.txt galaxies (exp_extract.py), after
-# exp_stage.sh. Submit from the repository root on stampede3:
+# exp_stage.sh. Submit from the repository root:
 #   sbatch experiments/2026-10-31_logp_vs_colour/exp_extract.slurm
 #SBATCH -J expext1031
 #SBATCH -p skx-dev

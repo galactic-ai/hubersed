@@ -1,16 +1,8 @@
-"""SV3 recoadd of 39627757533007793 with its C3K ER + afe + R matrix MAP, and the chi of all six models.
+"""SV3 recoadd of 39627757533007793 with its C3K ER + afe + R matrix MAP, and chi of all six models.
 
-The top panel shows the recoadd flux of 2026-10-29_continuum_recoadd/sv3 on the pixels that fit
-used (the file holds no flux elsewhere), a 9 pixel median filter, and its MAP. Below it is one chi
-panel per model, each on the data and uncertainty that model was fitted to or predicted for. The
-models are run 1d (MILES), 2b-off (C3K HR), 3n-free (C3K HR + afe, nebular on), the C3K ER + afe
-MAP with the median LSF (predict_median_lsf.py) and with its R matrix (both on the SV3 DR1 coadd),
-and the recoadd MAP.
-
-COMMAND: from the repository root on the Mac,
-``uv run --no-sync python experiments/2026-10-08_continuum_outlier/spectrum_ladder_recoadd.py``.
-
-OUTPUT: results/2026-10-08_continuum_outlier/39627757533007793/spectrum_ladder_recoadd.png.
+Models are runs 1d, 2b-off, 3n-free, the ER MAP (median LSF, R matrix) and the recoadd MAP.
+COMMAND: ``uv run --no-sync python experiments/2026-10-08_continuum_outlier/spectrum_ladder_recoadd.py``
+OUTPUT: results/2026-10-08_continuum_outlier/39627757533007793/spectrum_ladder_recoadd.png
 """
 
 # %%

@@ -1,21 +1,14 @@
 """Balmer decrement of gallery105 99 from FastSpecFit and from our Cue fits.
 
-QUESTION: Is 99's Halpha/Hbeta near the Case B value (no dust, consistent with dust2 ~ 0 in the fits)?
+QUESTION: is 99's Halpha/Hbeta near Case B (no dust, consistent with dust2 ~ 0 in the fits)?
 HYPOTHESIS: none registered. Descriptive; compared with Case B 2.86 (from memory, not checked here).
-INPUTS: data/fastspec-iron-sv3-bright.fits (HALPHA_FLUX, HBETA_FLUX and their IVAR, SV3 coadd);
-results/2026-11-14_poco_psb_sfh/39633421919584782/<model>/maxl.npz (predict.py) for the Cue models,
-with flux, unc, good, sp_best and sp_cont (stellar continuum, nebular emission off).
-METHOD: (1) FastSpecFit fluxes. (2) For each Cue model with sp_cont, line flux = sum over good pixels
-of (data - sp_cont) * dlambda in rest +-6 A windows around Halpha 6564.61 and Hbeta 4862.68 A
-(vacuum, from memory), f_lambda; errors from unc. The model's own ratio uses sp_best - sp_cont in
-the same windows. The +-6 A windows exclude [NII] 6549.9 and 6585.3 A.
+INPUTS: data/fastspec-iron-sv3-bright.fits,
+results/2026-11-14_poco_psb_sfh/39633421919584782/<model>/maxl.npz (predict.py).
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_poco_psb_sfh/balmer.py``.
-RESULT: 2026-11-15, balmer.txt. FastSpecFit 4.09 +- 0.86 (+1.4 sigma from Case B). Data minus our
-stellar continuum: 2.51 +- 0.53 (AC), 2.60 +- 0.57 (BC, AC0), 2.36-2.46 +- 1.3 (main coadd), all within
-1 sigma of Case B; the gap to FastSpecFit is Hbeta (about 10 vs 5.2), set by how deep the stellar Hbeta
-absorption is. Model ratios 2.94 (AC) to 3.27 (AC0, dust2 0.47). The decrement does not separate the
-low- and high-dust solutions. Assumptions: +-6 A windows; nebular continuum left in the residual.
+RESULT: 2026-11-15, balmer.txt. FastSpecFit 4.09 +- 0.86. Data minus our stellar continuum gives
+2.36-2.60, within 1 sigma of Case B. The decrement does not separate low- and high-dust solutions.
+Assumptions: +-6 A windows; nebular continuum left in the residual.
 FIGURES: none (balmer.txt).
 """
 

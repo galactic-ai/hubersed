@@ -1,22 +1,15 @@
 """Does the grey dust slope of 39627770174637084 survive masking the 4590-4720 A excess?
 
-QUESTION: he2_window.py finds a 2-8% excess over rest ~4590-4700 A that carries +10.0 of the +21.7
-no-mask cost of dust_index = 0. With it masked, how far does n move and what do n = 0 and n = -0.7
-cost?
-
-Repeats mask_refit.py for the masks none and both, with rest 4590-4720 A removed too. SEED: none.
-
-RESULT: 2026-10-17, bump_mask_refit.txt. Inconclusive. No mask: n free 0.365 to 0.324, cost of n = 0
-+21.7 to +12.0, of n = -0.7 +131 to +115. 3800-7600 A: n free 0.394 to 0.400, n = 0 +35.1 to +23.5,
-n = -0.7 +143 to +130. The excess explains about half of the no-mask cost and the rest is the
-continuum bow. These local refits use pipeline errors, which understate the noise on 50-200 A
-scales, so this spectrum does not decide between a grey and a Calzetti-like slope.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+QUESTION: he2_window.py finds a 2-8% excess over rest ~4590-4700 A, +10.0 of the +21.7 no-mask cost
+of dust_index = 0. Masked, how far does n move and what do n = 0 and n = -0.7 cost?
+SEED: none.
+COMMAND: from the repository root with the C3K_ER build,
+``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:<er_path>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-15_broadline_free_amplitude/bump_mask_refit.py --state <path>``.
-
+RESULT: 2026-10-17, inconclusive. The cost of n = 0 falls from +21.7 to +12.0 (no end mask) and
++35.1 to +23.5 (3800-7600 A). n free goes 0.365 to 0.324 and 0.394 to 0.400.
+Assumptions: local refits with pipeline errors, which understate the noise on 50-200 A scales.
 OUTPUT: bump_mask_refit.txt next to the state file.
 """
 

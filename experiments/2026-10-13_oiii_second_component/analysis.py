@@ -1,45 +1,21 @@
 """Does [O III] in 39627770174637084 need a second kinematic component once it has its own width?
 
-QUESTION: the shared model ties every non-Balmer line to the Balmer second-component fraction and
-to one narrow width. Once the high-ionization lines ([O III], [Ne III], [Ar IV], [Ne IV], He II)
-have their own narrow width, do they still need a second component? EmFit (DESI DR1) kept one
-17.3 km/s Gaussian for [O III] 5007 of this target, with a reduced chi2 of 6.43 in its [O III]
-window (knowledge/summary_emfit_oiii_treatment.md, UberSED notes).
-
-HYPOTHESIS: if the [O III] wings are real, F0 (one Gaussian of free width) cannot match both the
-core and the wings, and F1 (free high-ionization fraction) lowers chi2 in the [O III] windows by
-much more than one parameter's worth. If the shared fit only needed a wider [O III], F0 matches
-F1. At DESI resolution a wider single Gaussian and a narrow core plus a second component are
-partly degenerate, so the answer rests on the profile shape at the few-pixel level.
-
-INPUTS: fit_*.npz and profile_*.npz of fit.py in results/2026-10-13_oiii_second_component/, the
-shared MAP map_rmatrix_mask.npz of results/2026-10-13_nautilus_resolution_matrix/, and the data,
-resolution matrix and mask of oiii_setup.py.
-
-SEED: none. Every start is listed in oiii_setup.starts; none is random.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-13_oiii_second_component
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+QUESTION: Once the high-ionization lines ([O III], [Ne III], [Ar IV], [Ne IV], He II) have their own
+narrow width, do they still need a second component?
+HYPOTHESIS: if the [O III] wings are real, F1 (free high-ionization fraction) lowers chi2 in the
+[O III] windows by much more than one parameter's worth over F0 (one Gaussian), else F0 matches F1.
+INPUTS: fit_*.npz and profile_*.npz of fit.py in results/2026-10-13_oiii_second_component/,
+map_rmatrix_mask.npz of results/2026-10-13_nautilus_resolution_matrix/ and oiii_setup.py.
+SEED: none. Every start is listed in oiii_setup.starts.
+COMMAND: from the repository root,
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-13_oiii_second_component
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
 experiments/2026-10-13_oiii_second_component/analysis.py``
-
-RESULT: (oiii_second_component.txt) yes. chi2 over 5530 pixels is 6091.8 for shared, 6398.7 for F0
-and 6084.3 for F1, so F0 - F1 = 314.4 for one parameter (284 after scaling by the F1 reduced chi2
-1.106), with 268.6 of it in the [O III] 5007 window and 52.6 in [O III] 4959. F0 widens [O III] to
-33.2 km/s and leaves wing residuals on both sides of 5007. F1 puts 0.175 of the high-ionization
-flux in the second component, with a narrow width of 22.3 km/s, close to the Balmer 0.179 and
-24.9 km/s and the low-ionization 0.210 and 21.5 km/s. So the shared model was nearly right for
-[O III] (F1 - shared = -7.5 for three more parameters). The profile over the high-ionization
-fraction has its minimum at 0.185 with a dchi2 = 1 half-width of 0.011. The profile over the
-low-ionization fraction has its minimum at 0.213 with a half-width of 0.016, and fraction 0
-costs 161.6, mostly in [N II] 6584 and [S II] 6716. [Ne III] 3869 prefers F0 by 3.2. Each
-optimum moved by less than 0.06 in chi2 on a rerun, and the F0 optimum is 0.7 above the profile
-point at fraction 0. The statistical errors leave out the LSF and the tie of the
-high-ionization second component to the Balmer width and shift.
-
-FIGURES: oiii_windows.png (data, shared, F0 and F1 in the [O III] 4959, [O III] 5007, Hbeta,
-Halpha + [N II] and [S II] windows, with chi below) and oiii_profile.png (chi2 against the
-high-ionization fraction and against the low-ionization fraction, in total and in two windows).
+RESULT: yes. chi2 over 5530 pixels is 6091.8 shared, 6398.7 F0 and 6084.3 F1, so F0 - F1 = 314.4 for
+one parameter (284 scaled by the F1 reduced chi2), 268.6 of it in [O III] 5007. F1 puts 0.175 of the
+high-ionization flux in the second component, near the Balmer 0.179. See oiii_second_component.txt.
+Assumptions: errors leave out the LSF and the hi second component's tie to the Balmer width and shift.
+FIGURES: oiii_windows.png and oiii_profile.png.
 """
 
 # %%

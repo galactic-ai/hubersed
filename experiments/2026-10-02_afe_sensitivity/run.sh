@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run check.py on ls6 with an alpha-enabled FSPS, without touching the project venv or SPS_HOME.
+# Run check.py with an alpha-enabled FSPS, without touching the project venv or SPS_HOME.
 #
 # FSPS: python-fsps c3k-nzinit built with -DAFE_FLAG=1 -mcmodel=medium (wheel in $AFE/wheel_medium),
 # installed into $AFE/fsps_site and put first on PYTHONPATH so it shadows the venv's fsps.

@@ -1,20 +1,12 @@
-"""FastSpecFit line diagnostics of the unsorted gallery92 outliers: AGN, emission-line or neither (#17).
+"""FastSpecFit line class (AGN, emission line or neither) of the unsorted gallery92 outliers (#17).
 
-QUESTION: which of the gallery92 plots still at the top level of results/2026-11-01_gallery92/ are
-AGN or emission-line galaxies by their FastSpecFit lines?
+QUESTION: which gallery92 plots still at the top level of results/2026-11-01_gallery92/ are AGN or
+emission-line galaxies by their FastSpecFit lines?
 HYPOTHESIS: none registered.
-INPUTS: data/fastspec-iron-sv3-bright.fits (FASTSPEC and METADATA, the SV3 bright coadd);
-COADD_NUMEXP of the SV3 bright coadd from results/2026-11-01_repeats92/sparcl_spectra.npz; the plot
-names at the top level of results/2026-11-01_gallery92/ (NN_TARGETID.png).
-Rules, on FastSpecFit fluxes, as used for the repeats92 table:
-- broad: broad Halpha or Hbeta with flux S/N >= 5 and sigma >= 425 km/s (FWHM >= 1000), or MgII
-  with S/N >= 5 and sigma >= 1000 km/s.
-- BPT ([NII]) at S/N >= 3 in Halpha, Hbeta, [OIII]5007 and [NII]6584, Kauffmann+03 and Kewley+01
-  curves of hubersed.detect.line_screen.
-- WHAN: log [NII]/Halpha > -0.4 with EW Halpha > 6 A is "WHAN AGN-like"; EW Halpha < 3 A is
-  "passive or retired".
-- class: AGN if broad or BPT AGN; "emission line" if any of Halpha, Hbeta, [OIII]5007, [OII]3726
-  has S/N >= 5 and EW >= 3 A and the object is not AGN; otherwise "no strong lines".
+INPUTS: data/fastspec-iron-sv3-bright.fits, results/2026-11-01_repeats92/sparcl_spectra.npz,
+the NN_TARGETID.png names at the top level of results/2026-11-01_gallery92/.
+Rules as the repeats92 table. Broad lines need S/N >= 5 and sigma >= 425 km/s (MgII 1000 km/s), BPT
+S/N >= 3, WHAN AGN-like log [NII]/Ha > -0.4 and EW Ha > 6 A, emission line S/N >= 5 and EW >= 3 A.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_gallery92/lines.py``.
 RESULT: pending.

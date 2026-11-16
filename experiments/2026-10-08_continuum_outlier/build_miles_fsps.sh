@@ -1,8 +1,7 @@
 #!/bin/bash
 # Build python-fsps with MILES + MIST for the MILES runs, without touching the project venv.
-# The source is the unmodified c3k-nzinit 8b14205 copy used for the alpha build (see
-# knowledge/_evidence/2026-10-01_afe_build/README.md). The wheel goes into a site dir that run.sh
-# puts first on PYTHONPATH. Run inside a compute-node step on ls6. Built 2026-10-08.
+# The source is the unmodified c3k-nzinit 8b14205 copy used for the alpha build. The wheel goes into
+# a site dir that run.sh puts first on PYTHONPATH. Run inside a compute-node step. Built 2026-10-08.
 # The check at the end prints the library and its resolution. FSPS miles.res gives FWHM 2.54 A
 # over 3530-7490 A and a negative value outside.
 set -euo pipefail

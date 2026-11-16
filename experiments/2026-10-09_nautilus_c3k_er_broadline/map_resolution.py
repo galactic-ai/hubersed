@@ -1,43 +1,11 @@
 """MAP refit of the ER max-L point of 39627770174637084 with its resampled resolution matrix.
 
-QUESTION: when the model goes through this target's own DESI resolution matrix (resampled onto a
-fine grid as R', resolution_model.py) instead of the median Gaussian LSF, how do the line
-luminosities, line widths, dust and recent star formation move, and does the chi2 improve?
-
-HYPOTHESIS: R keeps 86-90% of the strong-line flux at the max-L widths (eval_resolution.txt), so
-the Cue line fluxes rise by 10-15%, through the young SFH bins, dust or gas. eline_sigma_forb leaves
-its 10 km/s floor toward 16-21 km/s. dust_ratio or dust2 shift, since R lowers Hbeta/Halpha by about
-2.5%.
-
-Runs from the same start, the ER max-L point of the 10-09 nautilus run.
-
-- control, the fit's own model with the median LSF.
-- R, ResampledRModel with this target's merged DR1 coadd matrix from resolution_matrix.npz.
-- R_rows, as R with the matrix recoadded with the row weights of desispec PR 2377
-  (resolution_matrix_rows.npz of coadd_rows.py).
-- control_ivar and R_rows_ivar, as control and R_rows with the flux and ivar recomputed with the
-  desispec flux-calibration variance fixes and recoadded (resolution_matrix_rows_ivar.npz of
-  ivar_recompute.py). The coadd is put in maggies with the factor k lambda^2 that maps the DR1 coadd
-  onto the fitted spectrum. Their chi2 is on different errors, so they are compared with each other.
-
-In both the SFH hyperparameters sigma_reg, tau_eq, sigma_dyn and tau_dyn are fixed at max-L (MAP
-does not recover them), and tau_in is fixed as in fit.py. Every other parameter is free. One Powell
-start (hubersed.fitting.map_fits.map_fit, no jitter starts). The control separates the optimizer's
-own drift from the change of resolution model.
-
-INPUTS: the ``_pred.npz`` of predict.py, resolution_matrix.npz of resolution_check.py,
-resolution_matrix_rows.npz of coadd_rows.py, and the DESI spectrum as fit.load_data reads it.
-SEED: none (one start, no jitter).
-
-COMMAND: from the repository root on the Mac with the C3K_ER build, one process per run,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-09_nautilus_c3k_er_broadline
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+Runs control, R, R_rows, control_ivar and R_rows_ivar from the same start. Expected R to raise the
+line fluxes 10-15%, eline_sigma_forb to 16-21 km/s and dust to shift. Run from the repository root as
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-09_nautilus_c3k_er_broadline
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
 experiments/2026-10-09_nautilus_c3k_er_broadline/map_resolution.py <run> [--maxfev N]``,
 then ``... map_resolution.py report`` once they are done.
-
-OUTPUT: map_resolution_<run>.npz, map_resolution.txt, map_resolution_windows.png and
-map_resolution_windows_ivar.png in
-results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/.
 """
 
 import argparse

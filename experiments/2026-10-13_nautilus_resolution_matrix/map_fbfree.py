@@ -1,28 +1,11 @@
 """MAP fit of 39627770174637084 with a free broad fraction for the non-Balmer lines.
 
-QUESTION: map.py ties the broad fraction of every non-Balmer line to the Balmer one (forbidden
-broad "shared"). With that fraction free, where does it go, how much does chi2 drop, and do the
-gas parameters move?
-HYPOTHESIS: the literature (knowledge/lit_broad_emission_components_2026-10-13.md, section 6) finds
-broad fractions that differ by line, so a free fraction should leave the Balmer value and lower
-chi2 in the forbidden-line windows. Whether the gas parameters move is open.
-
-Same setup as the rmatrix mask run of map.py, with C3K_ER, Cue broadline with sigma split 45, the
-target's row-weighted R, corrected ivar, missing-line mask, SFH hyperparameters fixed at the 10-09
-max-L. The only change is ``eline_fbroad_forb``, free with the TopHat(0, 0.9) prior of
-``add_broad_params(forbidden_broad="free")``. One Powell start at the rmatrix mask MAP point with
-``eline_fbroad_forb`` equal to its ``eline_fbroad``. The shared model is the free model with
-``eline_fbroad_forb = eline_fbroad``, so the start is the shared optimum.
-
-INPUTS: map_rmatrix_mask.npz (start), plus the inputs of map.py.
-SEED: none (one start, no jitter).
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+Frees eline_fbroad_forb in the rmatrix mask setup of map.py. Expected it to leave the Balmer value
+and lower chi2 in the forbidden-line windows. Run from the repository root as
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
 experiments/2026-10-13_nautilus_resolution_matrix/map_fbfree.py [--maxfev N]``, then the same with
 ``report`` and with ``scan``.
-OUTPUT: map_rmatrix_mask_fbfree.npz, map_fbfree.txt and map_fbfree_scan.txt in
-results/2026-10-13_nautilus_resolution_matrix/.
 """
 
 import argparse
@@ -40,11 +23,7 @@ FREE = OUT / "map_rmatrix_mask_fbfree.npz"
 
 
 def build(free):
-    """Return the rmatrix mask model, observation, Cue source and the shared MAP point.
-
-    With ``free`` the non-Balmer broad fraction is a free parameter. The returned point is the
-    shared MAP, with ``eline_fbroad_forb`` set to its ``eline_fbroad`` when free.
-    """
+    """Return the rmatrix mask model, observation, Cue source and the shared MAP point."""
     d = np.load(START, allow_pickle=True)
     maxl = dict(zip([str(x) for x in d["labels"]], d["best"], strict=True))
     z, flux, unc, good = load_data(MASKS["mask"])
@@ -141,11 +120,7 @@ SCAN_WINDOWS = {
 
 
 def scan():
-    """Scan chi2 over ``eline_fbroad_forb`` with every other parameter at the free MAP.
-
-    This checks whether the free MAP stopped at a real minimum, and which line windows set it.
-    Holding the other parameters fixed makes the curve steeper than a profile likelihood.
-    """
+    """Scan chi2 over ``eline_fbroad_forb`` with every other parameter at the free MAP."""
     model, obs, cue, _ = build(free=True)
     f = np.load(FREE)
     theta = f["theta"].copy()

@@ -1,11 +1,10 @@
 """Why does ladder step 5 reject about 3% of prior draws?
 
-QUESTION: which exception rejects the step 5 draws, and in which part of the prior? The step 5
-checks gave 0.967 (Mac) and 0.969 (skx) finite first pocoMC batches, against 1.000 in steps 3 and 4.
-prospect's lnprobfn turns any ValueError in predict into -inf, so the cause is hidden.
+QUESTION: which exception rejects the step 5 draws (0.967 and 0.969 finite first batches in two
+checks, against 1.000 in steps 3 and 4), and in which part of the prior?
 INPUTS: fit.build(5) (same data, model and Cue as the step 5 fit), 1024 unit-cube draws.
 SEED: numpy default_rng(1).
-COMMAND: on stampede3 through reject.slurm (one skx-dev node, the fit.py node pool).
+COMMAND: through reject.slurm (one skx-dev node, the fit.py node pool).
 RESULT: pending.
 FIGURES: results/2026-11-07_emline_ladder_39627770174637084/reject_step5.txt.
 """

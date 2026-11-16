@@ -1,38 +1,17 @@
 """Add [SIII]9069 and He I 5876 to the Cue fits to test if they put galaxies on the right branch.
 
-QUESTION: with DESI strong lines Cue does not recover the direct T_e ranking (nosii.py RESULT). In
-Y_P galaxies, adding [SIII]9069,9531, [SII], He I 5876 and [NeIII] to the strong lines (line list 2)
-removes the strong-line offset, rms 0.06 dex, and [SIII] matters most (Korhonen Cuestas+26
-arXiv:2609.22488 Table 2, second_draft.tex:496, :506-508; tested only below ~8.3 with near-solar
-S/O). Does fit.py --lines semi --drop OI6300 (their list 2 plus Hgamma, [OI] dropped as they do)
-follow direct T_e O/H and N2 for BGS galaxies with [SIII]9069 in the DESI range (z < ~0.08)?
-
-``ids`` writes the galaxies of lineflux_table.fits at z > Z_MIN with [SIII]9069 and He I 5876 at
-S/N >= SNR_MIN to semi/semi_ids.txt. ``jobs`` writes semi/jobs.txt, with a semi fit per galaxy and
-a strong fit where none exists. ``compare`` writes semi/semi_compare.txt. Per galaxy it gives N2,
-log M*, direct T_e O/H, Cue O/H with strong lines and with semi lines, the posterior weight above
-8.4, and model/data of [SII]6716+6731, [SIII]9069, their ratio and held-out [OI]. Then it gives
-Spearman rho and offsets against direct O/H (direct.py --ids semi_ids.txt, KEEP) and against N2.
-If [SII] and [SIII] are off by the same factor, Cue's fixed S/O is the likely cause. If their ratio
-is off, low-ionization emission from outside HII regions is (von Raesfeld+26 arXiv:2609.27081
-Fig. 3).
-
+QUESTION: in Korhonen Cuestas+26 (arXiv:2609.22488) line list 2 removes the strong-line offset. Does
+fit.py --lines semi --drop OI6300 follow direct T_e O/H and N2 for BGS galaxies with [SIII]9069?
 SEED: none.
-
-RESULT: 2026-10-15, 444 galaxies, 443 semi fits (ls6 idev; 1 not finished), direct T_e kept for 433
-(rho with N2 +0.53, median 8.09 to 8.59 from N2 <= -1.2 to > -0.6). Cue semi O/H is flat at 8.1-8.2
-in every N2 bin (rho with direct -0.09, with N2 +0.09; median offset -0.14 [-0.49, +0.20]); strong
-on the 107 with both: rho -0.22. Metal-poorer galaxies (N2 <= -0.8, 309): model/data [SII] 0.95,
-[SIII] 1.31, [SII]/[SIII] 0.70, held-out [OI] 0.53, the low-ionization excess of von Raesfeld+26;
-N2 > -0.8 (134): 0.99, 1.04, 0.95, 0.72. Adding [SIII] and He I does not break the branch
-degeneracy here; only 9% of SV3 star-forming galaxies (2% above log M* 10) have [SIII]9069 anyway.
-
+RESULT: 2026-10-15, 443 semi fits, direct kept for 433 (rho with N2 +0.53). Cue semi O/H is flat at
+8.1-8.2 in every N2 bin, rho with direct -0.09. [SIII] and He I do not break the branch degeneracy.
+Assumptions: list 2 was tested only below ~8.3 with near-solar S/O (Korhonen Cuestas+26).
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/semi.py ids``;
 ``direct.py --ids results/2026-10-14_cue_lineflux_calibration/semi/semi_ids.txt``; ``semi.py jobs``;
-each line of semi/jobs.txt from the repository root (ls6, one process per core); then ``semi.py
+each line of semi/jobs.txt from the repository root (one process per core); then ``semi.py
 compare``.
-
-OUTPUT: semi_ids.txt, jobs.txt and semi_compare.txt in results/2026-10-14_cue_lineflux_calibration/semi/.
+OUTPUT: semi_ids.txt, jobs.txt and semi_compare.txt in
+results/2026-10-14_cue_lineflux_calibration/semi/.
 """
 
 import sys

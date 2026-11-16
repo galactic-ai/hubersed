@@ -1,18 +1,9 @@
 """MAPs of the SV3 dark spectrum of 39633433328091196 with dust off and with MILES (#17).
 
-Changes from 2026-10-29_nodust_map_39633433328091196/fit.py (SV3 bright): the data are the SV3 dark
-DR1 coadd (1 exposure, EXPID 88050) of 2026-10-30_continuum_39633433328091196_dark_map, since the
-SV3 bright coadd carries sky residual in the blue. All runs use 4 starts.
-
-``--run er_nodust`` is the C3K ER fit of the dark map fit.py (dark spectrum and R matrix) with
-dust off as in the 10-29 fit.py. Start 0 is the dark dust MAP best point (spr job 3662995).
-``--run miles_dust`` and ``--run miles_nodust`` are the 10-29 MILES fits with logzsol capped at
-+0.2, on the dark spectrum. Their SFH hyperparameters and start 0 are the 10-08 max-L of the SV3
-bright spectrum, with logzsol moved to 0.195.
-
-Steps check, fit and collect as in the 10-29 fit.py. check also asserts that the fitted flux is
-the dark spectrum and not the bright one. Run on a stampede3 compute node through map.slurm, for
-example ``<venv>/bin/python experiments/2026-10-30_nodust_miles_39633433328091196_dark/fit.py
+Changes from 2026-10-29_nodust_map_39633433328091196/fit.py are the SV3 dark DR1 coadd, 4 starts,
+er_nodust start 0 at the dark dust MAP best point, and a check that the fitted flux is dark.
+COMMAND: on a compute node through map.slurm, for example
+``<venv>/bin/python experiments/2026-10-30_nodust_miles_39633433328091196_dark/fit.py
 fit --run er_nodust --start 0``.
 """
 

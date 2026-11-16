@@ -1,23 +1,15 @@
 """Where does forcing dust_index = 0 cost chi2 in the free-line fit of 39627770174637084?
 
-QUESTION: n = 0 costs +21.7 (no mask) and +35.1 (rest 3800-7600 A) against n free (mask_refit.py),
-and the Balmer decrement matches to 0.5% (balmer_check.py). Is the cost a broad continuum colour
-mismatch or local features?
-
-Repeats mask_refit's n-free and n = 0 refits for those two masks, splits the chi2 difference into
-200 A rest bins for continuum and line pixels, and gives the n = 0 to n-free continuum ratio per
-bin. SEED: none.
-
-RESULT: 2026-10-17, region_chi2.txt. The cost is a broad continuum shape. No mask: continuum +18.9,
-lines -2.0, prior about +4.8, largest bin 4600-4800 A (+9.9). 3800-7600 A: continuum +32.0, lines
--3.1, spread over several bins. The two continua differ by a smooth bow under 1% (0.993 at 4000 A,
-1.003 at 5800-6200 A, 0.994 at 7200-7600 A).
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+QUESTION: n = 0 costs +21.7 (no mask) and +35.1 (rest 3800-7600 A) against n free (mask_refit.py).
+Is the cost a broad continuum colour mismatch or local features?
+SEED: none.
+COMMAND: from the repository root with the C3K_ER build,
+``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:<er_path>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-15_broadline_free_amplitude/region_chi2.py --state <path>``.
-
+RESULT: 2026-10-17. The cost is a broad continuum shape, continuum +18.9 and lines -2.0 unmasked,
++32.0 and -3.1 for 3800-7600 A. The two continua differ by a smooth bow under 1%.
+Assumptions: mask_refit's local refits, with the chi2 split into 200 A rest bins.
 OUTPUT: region_chi2.txt next to the state file.
 """
 

@@ -1,10 +1,10 @@
 #!/bin/bash
 # MAPs of the SV3 dark spectrum of 39633433328091196 (fit.py runs er_nodust, miles_dust, miles_nodust),
-# 4 starts each on one core each, on one stampede3 icx node, then collect. Env as
+# 4 starts each on one core each, on one icx node, then collect. Env as
 # 2026-10-29_nodust_map_39633433328091196/er_z.slurm (C3K ER) and miles_z.slurm (MILES), set per
 # process. Memory is about 4 x 22 GiB for C3K ER and 8 x 1.5 GiB for MILES. A start killed by the
 # timeout saves nothing. Needs dark_spectrum.npz, resolution_matrix.npz and the dark MAP in
-# results/2026-10-30_continuum_39633433328091196_dark_map. Submit from the repository root on stampede3:
+# results/2026-10-30_continuum_39633433328091196_dark_map. Submit from the repository root:
 #   sbatch experiments/2026-10-30_nodust_miles_39633433328091196_dark/map.slurm
 #SBATCH -J ndmiles1030
 #SBATCH -p icx

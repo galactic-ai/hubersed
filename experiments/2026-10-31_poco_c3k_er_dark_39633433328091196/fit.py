@@ -1,25 +1,9 @@
 """pocoMC posterior of the C3K ER continuum fit of the SV3 dark spectrum of 39633433328091196 (#17).
 
-Changes from 2026-10-30_continuum_39633433328091196_dark_map/fit.py (dark MAP, spr job 3662995):
-pocoMC 1.2.6 instead of the MAP, and sigma_reg, tau_eq, sigma_dyn and tau_dyn are free with the
-#14 priors (2026-10-13_nautilus_resolution_matrix/model_setup.py, the 2026-09-25 priors that the
-10-08 runs also used) instead of fixed at the C3K_HR max-L of the SV3 bright spectrum. Data,
-resolution matrix, rest window 3320 to 9000 A, tau_in and the other priors are those of the dark
-MAP. Sampler settings as #14 (2026-10-15_broadline_free_amplitude/poco.py): n_effective 1024,
-n_active 512, unit-cube prior with the likelihood from lnprobfn(nested=True).
-
-Stampede3 forbids memory overcommit, so the pool is not forked. Rank 0 runs the sampler and holds no
-FSPS. Every other rank builds its own model, observation and C3K_ER source and evaluates the points
-rank 0 sends, one point at a time to whichever rank is free. On each node at most ``--init-width``
-ranks build FSPS at once, since one build peaks at about 25 GiB.
-
-The ``check`` step (one process) checks the model against the dark MAP model at the MAP point and
-times warm calls at prior draws. The ``run`` step (under ibrun or mpiexec) runs pocoMC or resumes
-the newest state, after checking that every rank gives the same likelihood and logging each rank's
-memory.
-
-FSPS must be the C3K_ER build with AFE_FLAG first on PYTHONPATH, with SPS_HOME holding the ER
-spectra. Run on stampede3 through test.slurm, for example
+Against 2026-10-30_continuum_39633433328091196_dark_map/fit.py, pocoMC 1.2.6 replaces the MAP and
+sigma_reg, tau_eq, sigma_dyn and tau_dyn are free with the #14 priors, on an MPI pool without fork.
+FSPS must be the C3K_ER build with AFE_FLAG first on PYTHONPATH, SPS_HOME holding the ER spectra.
+Run through test.slurm, for example
 ``ibrun <venv>/bin/python experiments/2026-10-31_poco_c3k_er_dark_39633433328091196/fit.py run``.
 """
 
@@ -237,8 +221,8 @@ def build_in_turn(comm, width):
     return time.time() - t
 
 
-GIB_HELPER = 15.0  # commit of one build_ssps helper, a fork of a 14.7 GiB process (job 3664748)
-GIB_WORKER = 6.0  # commit of one pool worker after the free, 5.44 GiB measured (job 3664817)
+GIB_HELPER = 15.0  # commit of one build_ssps helper, a fork of a 14.7 GiB process
+GIB_WORKER = 6.0  # commit of one pool worker after the free, 5.44 GiB measured
 GIB_MARGIN = 8.0  # commit left free on each node
 
 
@@ -272,12 +256,7 @@ def pin_worker(counter, cores):
 
 
 def node_setup(args):
-    """Build every SSP slot, free speclib and fork this node's pool. Runs before MPI starts.
-
-    Each build_ssps helper and each pool worker is a fork, charged under strict overcommit for all of
-    its parent's private memory. So the helpers fork while speclib is held (~15 GiB each) and the
-    pool forks after the free (~6 GiB each), with their numbers set from this node's commit room.
-    """
+    """Build every SSP slot, free speclib and fork this node's pool. Runs before MPI starts."""
     import multiprocessing as mp
     import os
 
@@ -427,12 +406,7 @@ def sample(args, pool):
     from scipy.stats import uniform
 
     class Sampler(pc.Sampler):
-        """pocoMC's Sampler, keeping this process's likelihood when a state is loaded.
-
-        pocoMC saves its state with dill, which stores functions of __main__ by value. A loaded
-        state would put that copy in place of loglike_unit, and the copy does not pickle to the
-        pool, since it is not the same object as __main__.loglike_unit.
-        """
+        """pocoMC's Sampler, keeping this process's likelihood when a state is loaded."""
 
         def load_state(self, path):
             keep = self.log_likelihood

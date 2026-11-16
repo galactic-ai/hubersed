@@ -1,12 +1,6 @@
 """Save 10 Gyr SSPs, MIST isochrones and library-swapped SSPs from the FSPS build in use.
 
-FSPS fixes its stellar library at compile time, so this runs once per build. MILES runs with the
-miles_mac venv, C3K_HR with the hubersed venv. Settings are Kroupa (imf_type 2), no ISM dust,
-no nebular emission, AGB dust at the FSPS default.
-
-The swap sums IMF weight times the FSPS stellar spectrum over the 10 Gyr isochrone of node a,
-with the spectral library of node b. Diagonal entries rebuild the node SSPs.
-
+FSPS fixes its stellar library at compile time, so this runs once per build.
 COMMAND: see analysis.py.
 OUTPUT: results/2026-10-30_miles_zcap_test/ssp_<name>.npz.
 """

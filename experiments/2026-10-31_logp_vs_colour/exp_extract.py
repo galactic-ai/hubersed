@@ -1,7 +1,6 @@
 """Save the single-exposure spectra and per-exposure FIBERSTATUS of the exp_targets.txt galaxies.
 
-Reads each iron spectra file once, keeps the FIBERMAP rows of its targets with their b, r and z flux,
-ivar and mask, and decodes FIBERSTATUS with desispec. Run with the DESI environment's python.
+Run with the DESI environment's python.
 COMMAND: ``$DESIPY exp_extract.py <spectra dir> <out dir>`` through exp_extract.slurm.
 OUTPUT: <out dir>/<TARGETID>.npz, one per target.
 """

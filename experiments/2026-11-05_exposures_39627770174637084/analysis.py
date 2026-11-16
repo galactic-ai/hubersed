@@ -3,18 +3,13 @@
 QUESTION: do the exposures agree with the main coadd in Hbeta + [OIII], Halpha + [NII] and [SII],
 and do outlying exposures have bright sky, poor seeing, low efftime or a FIBERSTATUS flag?
 HYPOTHESIS: none registered. Descriptive, no threshold.
-INPUTS: results/2026-11-05_exposures_39627770174637084/extract.npz (extract.py, DR1 iron healpix 26004
-spectra and coadd files) and conditions.csv (conditions.py). Arms are joined ivar-weighted as spender
-does. Excess is the median of exposure minus main coadd flux (1e-17 erg/s/cm2/A) over good pixels in
-each rest window, at the SV3 redrock redshift.
+INPUTS: results/2026-11-05_exposures_39627770174637084/extract.npz (extract.py) and conditions.csv
+(conditions.py).
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-05_exposures_39627770174637084/analysis.py``.
-RESULT: 2026-11-06, exposures.txt. Two SV3 exposures (sky g 22.00, 21.95) and one main (19.66), no
-FIBERSTATUS flags; the main coadd is that one exposure. SV3 minus main excess +0.30 to +0.83 in all
-three windows. By eye: same continuum tilt in both SV3 exposures (below main blue of ~4000 A, above
-red of ~4500 A) and ~5% dipoles at the strong lines, of opposite sign in the B and R arms.
-Assumptions: one bright-sky main exposure as reference; per-exposure flux calibration; dipoles not
-yet measured.
+RESULT: 2026-11-06, exposures.txt. SV3 minus main excess +0.30 to +0.83 (1e-17 erg/s/cm2/A) in all
+three windows. No FIBERSTATUS flags. Sky g 22.00 and 21.95 in SV3, 19.66 in the one main exposure.
+Assumptions: one bright-sky main exposure as reference, per-exposure flux calibration.
 FIGURES: results/2026-11-05_exposures_39627770174637084/ exposures.txt, full.png, zoom_<window>.png.
 """
 
@@ -30,7 +25,7 @@ from hubersed.paths import PATHS
 from hubersed.plotting.style import use_apj_style
 
 OUT = PATHS["RESULTS"] / "2026-11-05_exposures_39627770174637084"
-Z = 0.0253189  # SV3 bright redrock redshift (SPARCL, 2026-11-05 handoff)
+Z = 0.0253189  # SV3 bright redrock redshift (SPARCL)
 WINDOWS = {"hbeta_oiii": (4830, 5030), "halpha_nii": (6520, 6610), "sii": (6690, 6750)}  # rest A
 SURVEYS = ("sv3", "main")
 N_FLUX, N_RESID = 9, 51  # medfilt widths of the full-spectrum figure, as 11-02
@@ -40,12 +35,10 @@ YLABEL = r"$f_\lambda$ [$10^{-17}$ erg s$^{-1}$ cm$^{-2}$ \AA$^{-1}$]"
 def merge_arms(d, prefix, k=None):
     """Return flux, ivar and mask on the DESI grid, arms joined as spender does.
 
-    Copy of merge_arms in 2026-11-02_exposure_checks/analysis.py.
-
     Parameters
     ----------
     prefix : str
-        ``sv3`` or ``main`` for the exposure in row ``k``, ``coadd_sv3`` or ``coadd_main`` for a coadd.
+        ``sv3`` or ``main`` for exposure row ``k``, ``coadd_sv3`` or ``coadd_main`` for a coadd.
     """
     wave = DESI._wave_obs.numpy()
     flux, ivar = np.zeros(wave.size), np.zeros(wave.size)

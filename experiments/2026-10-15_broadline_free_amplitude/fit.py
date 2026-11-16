@@ -1,22 +1,12 @@
 """Nautilus fit of 39627770174637084 with the free-amplitude broadline model.
 
-Same data, mask, priors, library, resolution matrix and sampler settings as the 10-13 rmatrix mask
-run (its model_setup.py, n_eff 2000), with the line model of hubersed.sps.free_lines (spec in
-UberSED knowledge/broadline_free_amplitude_spec_2026-10-15.md). eline_fbroad is replaced by
-eline_sigma_broad_forb. Variants: ``free`` and ``free_aur0.3`` (auroral lines, [NeIII] and [SIII]
-free or of width 0.3) have 29 parameters. ``free_dust`` is free with dust_ratio Uniform(0, 2) and
-frac_nodust free, Uniform(0, 0.9), for 30 parameters.
-
-``--check-only`` checks the labels against the 10-13 .json and prints the chi2 at the 10-13 max-L
-point and at the map.py MAP point (free 5887.3, free_aur0.3 5896.0 in map.txt). FSPS is the C3K_ER
-build with AFE_FLAG, first on PYTHONPATH, and SPS_HOME holds the ER spectra.
-
-COMMAND: on the Mac, ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+The 10-13 rmatrix mask run plus hubersed.sps.free_lines, eline_sigma_broad_forb for eline_fbroad,
+variant free_aur0.3, and free_dust with dust_ratio Uniform(0, 2) and frac_nodust Uniform(0, 0.9).
+COMMAND: ``PYTHONPATH=<er_path>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-15_broadline_free_amplitude/fit.py --check-only --variant free``.
-On ls6, ``sbatch -J freeline --export=ALL,VARIANT=free
+Or ``sbatch -J freeline --export=ALL,VARIANT=free
 experiments/2026-10-15_broadline_free_amplitude/run.slurm``.
-
 OUTPUT: <stem>.h5 and <stem>.json in results/2026-10-15_broadline_free_amplitude/.
 """
 
@@ -85,10 +75,7 @@ _STATE = {}
 
 
 def process_state(variant):
-    """Return this process's model, observation and Cue source, built on the first call.
-
-    Each pool worker builds its own, since Cue cannot be pickled and JAX is not fork safe.
-    """
+    """Return this process's model, observation and Cue source, built on the first call."""
     if variant not in _STATE:
         z, flux, unc, good = load_data(tuple(MISSING_LINES))
         _STATE[variant] = (make_model(z, variant), make_obs(flux, unc, good, "rmatrix"), get_cue())
@@ -123,7 +110,7 @@ def check_setup(args):
         f"tid {TID}, variant {args.variant}, {int(o.mask.sum())} pixels, "
         f"{model.ndim} free parameters, lnL0 {lnl:.1f}"
     )
-    if not START.exists():  # predict.py output, kept on the Mac only
+    if not START.exists():  # predict.py output, kept locally only
         print(f"{START.name} not found, max-L and MAP chi2 checks skipped")
         print("free:", ", ".join(labels))
         return
@@ -154,7 +141,7 @@ def main(args, pool=None):
     Parameters
     ----------
     args : argparse.Namespace
-        The command-line options, see ``parse_args``.
+        The command-line options.
     pool : multiprocessing.pool.Pool or None
         Pool for nautilus. None makes a spawned pool of ``args.pool`` workers.
     """
@@ -225,13 +212,7 @@ def main(args, pool=None):
 
 
 def parse_args():
-    """Parse the command-line options.
-
-    Returns
-    -------
-    argparse.Namespace
-        The options. ``fit_fork.py`` takes the same ones.
-    """
+    """Parse the command-line options."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--variant", choices=list(VARIANTS), default="free")
     parser.add_argument("--pool", type=int, default=4)

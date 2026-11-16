@@ -1,6 +1,6 @@
 #!/bin/bash
 # Unzip the targets.txt spectra files and run neighbours.py, after stage.sh, as
-# 2026-10-31_screen_all/sky_extract.slurm. Submit from the repository root on stampede3:
+# 2026-10-31_screen_all/sky_extract.slurm. Submit from the repository root:
 #   sbatch experiments/2026-10-31_boss_39633325949715572/neighbours.slurm
 #SBATCH -J bossnb1031
 #SBATCH -p skx-dev

@@ -1,18 +1,10 @@
 """Summarize a pocoMC state of the free-line fit and compare it with the MAP point.
 
-Loads a poco.py state without running the sampler. Prints the weighted 16/50/84% of each parameter
-and of 12+log(O/H) = gas_logz + 8.71, the ESS, beta, calls and log Z (final states only). The best
-particle log L is compared with the map.py MAP point (map_free.npz), or with the MAP given by --map.
-For another target set FIT_TID and pass its 2026-10-18_candidate_map npz as --map.
-
-INPUTS: a pmc_<i>.state or pmc_final.state copied from ls6; map_free.npz or --map, and the 10-13
-_pred.npz of 39627770174637084 for the SFH hyperparameters. SEED: none.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-15_broadline_free_amplitude
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+COMMAND: from the repository root with the C3K_ER build,
+``PYTHONPATH=<er_path>:experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-15_broadline_free_amplitude
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-15_broadline_free_amplitude/compare_poco.py --state <path>``.
-
+For another target set FIT_TID and pass its 2026-10-18_candidate_map npz as --map.
 OUTPUT: compare_poco_<state name>.txt next to the state file.
 """
 
@@ -44,10 +36,7 @@ def quantiles(x, w, q=(0.16, 0.5, 0.84)):
 
 
 def edges(model, name, x, w, frac=0.02):
-    """Return the prior range of ``name`` and the posterior weight within ``frac`` of each edge.
-
-    Vector parameters such as logsfr_ratios_1 get blanks.
-    """
+    """Return the prior range of ``name`` and the posterior weight within ``frac`` of each edge."""
     if name not in model.config_dict:
         return ""
     a, b = np.ravel(model.config_dict[name]["prior"].range)[:2]
@@ -58,11 +47,7 @@ def edges(model, name, x, w, frac=0.02):
 
 
 def map_point(model, path=None):
-    """Return a MAP theta with the SFH hyperparameters at the 10-13 max-L of 39627770174637084.
-
-    ``path`` is a MAP npz, by default map_free.npz of map.py. The candidate MAPs fixed the
-    hyperparameters at these values too.
-    """
+    """Return a MAP theta with the SFH hyperparameters at the 10-13 max-L of 39627770174637084."""
     start = fit.START.with_name(fit.START.name.replace(str(fit.TID), str(REFERENCE)))
     pred = np.load(start, allow_pickle=True)
     best = dict(zip([str(x) for x in pred["labels"]], pred["best"], strict=True))

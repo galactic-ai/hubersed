@@ -1,22 +1,9 @@
-"""Rest-frame U-V and V-J of 39633433328091196 from the C3K ER and MILES best fits, each library at both points.
+"""Rest-frame U-V and V-J of 39633433328091196, C3K ER and MILES libraries at both best-fit points.
 
-QUESTION: does V-J of 39633433328091196 depend on the stellar library? Points as in
-2026-10-29_c3k_vs_miles_dust/spectra.py, except that the MILES point is the logzsol <= 0.2 MAP
-(2026-10-29_nodust_map_39633433328091196, miles_dust_zmax0.2) with the SFH hyperparameters of the
-10-08 max-L, as setup_miles fixes them. Parameters a model lacks are dropped (afe for MILES), and
-parameters a point lacks are set to 0. afe is 0 for C3K at both points, since the Mac C3K_HR build
-(stand-in for C3K_ER) has no AFE_FLAG. Each case is also run with dust2 = 0, so dust1 = 0.
-
-``inputs`` (hubersed venv) evaluates the C3K model of 2026-10-28 make_model and the MILES
-model of 2026-10-08 make_model at both points and saves the FSPS parameters and tabular SFH that
-prospect hands to FSPS. ``spectra --lib c3k_hr|miles`` (the venv of that build, numpy and fsps
-only) replays them through python-fsps and integrates the rest-frame spectra through the FSPS U,
-V and 2MASS_J curves (allfilters.dat, AB, photon counting as getmags.f90). ``check --lib`` (hubersed
-venv) puts the replayed spectra through the prospect model and compares with the saved sp_best.
-
-COMMAND: from the repository root on the Mac, with SPS_HOME=~/Astronomy_Research/fsps and
+QUESTION: does V-J of 39633433328091196 depend on the stellar library?
+COMMAND: from the repository root, with SPS_HOME=<fsps> and
 OMP_NUM_THREADS=1, ``uv run --no-sync python <this file> inputs``, then ``uv run --no-sync python
-<this file> spectra --lib c3k_hr`` and ``~/Astronomy_Research/fsps_builds/miles_mac/.venv/bin/python
+<this file> spectra --lib c3k_hr`` and ``<MILES fsps venv>/bin/python
 <this file> spectra --lib miles``, then ``uv run --no-sync python <this file> check --lib c3k_hr``
 and ``check --lib miles``.
 OUTPUT: results/2026-10-30_uvj_models_39633433328091196/ fsps_inputs.npz, colours_<lib>.npz and
@@ -110,7 +97,7 @@ def theta_of(model, point, dust):
         if k in model.params and k not in free:
             model.params[k] = np.atleast_1d(float(v))
     p = dict(point)
-    p["afe"] = 0.0  # no AFE_FLAG in the Mac C3K_HR build
+    p["afe"] = 0.0  # no AFE_FLAG in the local C3K_HR build
     if dust == "nodust":
         p["dust2"] = 0.0
     zeroed = [k for k in free if k not in point or (k in ("afe", "dust2") and p[k] == 0.0)]
@@ -195,10 +182,7 @@ def read_filters():
 
 
 def ab_mag(wave, fnu, curve):
-    """Return the AB magnitude up to a constant, photon counting, as getmags.f90 does.
-
-    The constant is the same for every band, so differences are AB colours.
-    """
+    """Return the AB magnitude up to a constant, photon counting, as getmags.f90 does."""
     r = np.interp(wave, curve[0], curve[1], left=0.0, right=0.0)
     return -2.5 * np.log10(np.trapezoid(fnu * r / wave, wave) / np.trapezoid(r / wave, wave))
 

@@ -1,18 +1,10 @@
 """Re-evaluate the parameter vectors where prospect's likelihood call raised during the fits.
 
-prospect's lnprobfn prints "There was an error during the likelihood call at parameters [...]"
-and re-raises any exception other than ValueError. map_fit then returns 1e18 for that point, so
-the optimizer sees a wall. This script reads every such vector from the worker logs, finds the
-job it belongs to (the next job that finishes in the same log), predicts the model there outside
-the optimizer and records the exception. It then compares each point with the job's final
-optimum, as a fraction of each prior range.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build, after the fits,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-13_broadline_injection/likelihood_errors.py``
-
-OUTPUT: likelihood_errors.txt in results/2026-10-13_broadline_injection/.
+Reads the failing vectors from the worker logs, records each exception and writes
+likelihood_errors.txt. Run from the repository root after the fits as
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
+experiments/2026-10-13_broadline_injection/likelihood_errors.py``.
 """
 
 import glob
@@ -56,24 +48,14 @@ def parse_logs():
 
 
 def inst2_fails(value, nline=86):
-    """Return True if ``_profile_widths`` would give a nonzero inst2 for this eline_sigma.
-
-    It repeats the arithmetic of TwoCompLineModel._profile_widths when ResolutionMatrixModel
-    sets ``_eline_sigma_kms`` to eline_sigma, an array squared by numpy minus a Python float
-    squared by ``**``.
-    """
+    """Return True if ``_profile_widths`` would give a nonzero inst2 for this eline_sigma."""
     p = float(value)
     sig0 = np.full(nline, p) * np.ones(nline)
     return bool(np.any(np.clip(sig0**2 - p**2, 0, None) != 0))
 
 
 def mechanism_check(model, s, cue, n=200000, seed=0):
-    """Test the rounding mechanism of the AssertionError in ResolutionMatrixModel.fine_lines.
-
-    The printed vectors carry only 9 significant digits, so they need not reproduce the exact
-    failing value. This finds eline_sigma values where the arithmetic gives a nonzero inst2,
-    predicts the model at the truth with one of them, and with the next float up.
-    """
+    """Test the rounding mechanism of the AssertionError in ResolutionMatrixModel.fine_lines."""
     rng = np.random.default_rng(seed)
     x = rng.uniform(10.0, 45.0, n)
     bad = np.array([inst2_fails(v) for v in x])

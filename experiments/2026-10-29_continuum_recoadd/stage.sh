@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copy the iron inputs of recoadd.slurm from Corral to /scratch on the stampede3 login node, since
+# Copy the iron inputs of recoadd.slurm from Corral to /scratch on the login node, since
 # compute nodes do not mount Corral: the spectra files of healpix 26004 (the #14 reference) and
 # 25598, and the exposure folders of the reference (87113, 88269), SV3 83526 and main 122064.
 # Run on the login node: bash experiments/2026-10-29_continuum_recoadd/stage.sh

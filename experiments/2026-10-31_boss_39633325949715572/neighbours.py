@@ -1,8 +1,5 @@
 """Save the target's exposure and the bump ratio of every target fibre in its healpix file.
 
-For each target in targets.txt it saves the target's rows of the healpix spectra file. For every
-other fibre of the same EXPID and PETAL_LOC, and for every TGT fibre of the file (all exposures, as
-a baseline), it saves the median z-arm flux at observed BAND over the sidebands SIDE.
 Run with the DESI environment through neighbours.slurm.
 COMMAND: ``$DESIPY neighbours.py <unzipped dir> <out dir>``.
 OUTPUT: <out dir>/<TARGETID>_neighbours.npz.

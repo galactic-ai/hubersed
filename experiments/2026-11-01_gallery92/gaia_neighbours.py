@@ -1,21 +1,15 @@
 """Gaia DR3 stars within 5 arcsec of each of the 92 canonical continuum outliers (#17).
 
-QUESTION: which of the 92 have a Gaia star close enough to put its light in the 1.5 arcsec fibre,
-which the #10 Gaia screen (G < 16 within 2 arcsec, or on-source within 1 arcsec) did not remove?
+QUESTION: which of the 92 have a Gaia star near enough to light the 1.5 arcsec fibre, missed by the
+#10 Gaia screen (G < 16 within 2 arcsec, or on-source within 1 arcsec)?
 HYPOTHESIS: none registered.
-INPUTS: cont of results/prescreened_outliers_postsimbad.npz and the gallery92 plot names
-(NN_TARGETID); RA and DEC from METADATA of data/fastspec-iron-sv3-bright.fits; gaiadr3.gaia_source
-through the ESA Gaia archive TAP (gea.esac.esa.int), one 5 arcsec cone per target.
-A source counts as a star when parallax_over_error > 5 or total proper motion over its error > 5;
-the error on total proper motion is the hypot of the pmra and pmdec errors.
+INPUTS: cont of results/prescreened_outliers_postsimbad.npz, gallery92 plot names,
+data/fastspec-iron-sv3-bright.fits, gaiadr3.gaia_source on the ESA Gaia TAP (gea.esac.esa.int).
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_gallery92/gaia_neighbours.py``.
-RESULT: 2026-11-02, gaia_neighbours.txt. 17 of the 92 have a Gaia star within 5 arcsec: 04, 06, 07,
-12, 15, 18, 19, 21, 26, 30, 41, 42, 48, 53, 58, 76, 90; nine within 2 arcsec (04 1.12, 26 1.35,
-42 1.37, 58 1.49, 76 1.52, 48 1.57, 19 1.64, 21 1.84, 53 1.88). Every one is outside the #10 screen
-(G < 16 within 2 arcsec or on-source within 1 arcsec).
-Assumptions: Gaia DR3 completeness (G < ~21); 5 sigma parallax or proper motion; fibre-spill depends
-on seeing, which this table does not use.
+RESULT: 2026-11-02. 17 of the 92 have a Gaia star within 5 arcsec, nine within 2 arcsec. Every one
+is outside the #10 screen.
+Assumptions: Gaia DR3 completeness (G < ~21); 5 sigma parallax or proper motion; seeing not used.
 FIGURES: results/2026-11-01_gallery92/gaia_neighbours.txt.
 """
 

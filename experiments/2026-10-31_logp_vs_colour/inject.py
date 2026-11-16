@@ -1,14 +1,9 @@
 """Inject a blue or red power-law tilt into normal spectra and re-score them with both flows (#17).
 
-Galaxies are unflagged by both seed 0 flows, in the VAC and with |dgr| < 0.05 (FIBERTOTFLUX), drawn
-from 25 random chunk files (seed 0), at most 1000. Each normalised spender spectrum is multiplied
-by (lambda / 5800 A)^alpha, re-normalised as spender does, encoded and scored. The injected dgr is
-measured through the BASS g and r curves of 2026-10-30_photcolour_dark_39633433328091196/filters.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_logp_vs_colour/inject.py`` after analysis.py.
 OUTPUT: results/2026-10-31_logp_vs_colour/inject.txt and inject.png.
 RESULT: 2026-10-31. A tilt to dgr -0.48 flags 15% (cont10) and 0.4% (cont15) of 1000 normal
-galaxies, against about 40% and 10-30% observed at that dgr. A smooth tilt explains part of the
-cont10 trend and almost none of cont15.
+galaxies, against about 40% and 10-30% observed at that dgr.
 """
 
 # %%

@@ -1,16 +1,10 @@
 """Helpers and the nautilus run for the 2026-09-30_nautilus_c3k_broadline_split45 experiment.
 
-Same data, degradation, priors and sampler settings as 2026-09-28_nautilus_c3k_broadline_shared,
-with three changes:
+SUPERSEDED BY: experiments/2026-10-09_nautilus_c3k_er_broadline.
+Same fit with C3K_ER and data that are no longer degraded.
 
-- the narrow/broad split is a command-line option (default 45 km/s), because the 37084 run of
-  2026-09-26 railed eline_sigma_broad at its 100 km/s split;
-- the forbidden broad fraction is a command-line option, ``free`` or ``shared``;
-- by default the spender skyline mask is dropped inside the [OI] and [SII] windows. Those pixels
-  get back the original DESI DR1 inverse variance from SPARCL (``sparcl_<tid5>.npz``, pulled by
-  knowledge/_evidence/2026-09-30_kin_vs_ion/sparcl_pull.py). The DESI bitmask and ivar still apply.
-  ``--keep-sky-mask`` restores the old behaviour.
-
+As 2026-09-28_nautilus_c3k_broadline_shared, plus ``--sigma-split`` (default 45 km/s),
+``--forbidden-broad`` and SPARCL ivar (``sparcl_<tid5>.npz``) on [OI]/[SII] sky pixels by default.
 Run from the repository root with
 ``uv run python experiments/2026-09-30_nautilus_c3k_broadline_split45/fit.py --tid 39627770174637084
 --forbidden-broad free --pool 24 --n-batch 480``. ``--check-only`` runs the setup checks and exits
@@ -59,33 +53,7 @@ UNMASK_HALF = 10.0
 
 
 def load_data(tid, rest_max=9000.0, unmask=True):
-    """Load one DESI spectrum in maggies, degraded to ``TARGET_KMS`` where DESI is sharper.
-
-    The whole spectrum is degraded before pixels redward of ``rest_max`` are masked.
-
-    Parameters
-    ----------
-    tid : int
-        DESI TARGETID.
-    rest_max : float
-        Reddest rest-frame wavelength fitted, in Angstrom.
-    unmask : bool
-        Give the pixels inside ``UNMASK_HALF`` of the ``UNMASK_LINES`` that spender's skyline
-        mask zeroed their original DESI inverse variance back, when the DESI bitmask is clear.
-
-    Returns
-    -------
-    z : float
-        Redshift.
-    flux, unc : np.ndarray
-        Degraded flux and the original uncertainty in maggies on ``WAVE_OBS``. Pixels outside
-        ``good`` have zero uncertainty.
-    good : np.ndarray of bool
-        Pixels not masked by the pipeline, inside the C3K_HR window and blueward of
-        ``rest_max``.
-    n_unmasked : int
-        Number of pixels given back by ``unmask``.
-    """
+    """Return z, flux, unc, good and n_unmasked, with SPARCL ivar in sky windows if ``unmask``."""
     s = load_spectrum(tid)
     z = float(s.redshift.value)
     iv_flam = np.asarray(s.uncertainty.array, dtype=float)
@@ -117,27 +85,7 @@ def load_data(tid, rest_max=9000.0, unmask=True):
 
 
 def make_params(z, forbidden_broad, sigma_split):
-    """Build the parameter specification of the two-component line model.
-
-    tau_in is fixed at the age of the universe at ``z``. sigma_dyn, tau_dyn, sigma_reg and
-    tau_eq get log-uniform priors. The broad-line parameters, the forbidden-line width and the
-    forbidden broad fraction come from ``broadline.add_broad_params``. Every other parameter keeps
-    the bounds of the v2 MAP fits.
-
-    Parameters
-    ----------
-    z : float
-        Redshift.
-    forbidden_broad : {"free", "shared"}
-        See ``broadline.add_broad_params``.
-    sigma_split : float
-        Upper bound of the narrow widths and lower bound of the broad width, in km/s.
-
-    Returns
-    -------
-    dict
-        The parameter specification.
-    """
+    """Build the line model parameters for ``forbidden_broad`` and ``sigma_split`` (km/s)."""
     cont_model, cont_tmpl = build_continuum_model(z)
     _, tmpl = build_full_cue_model(cont_tmpl, cont_model.theta, cont_model)
     tmpl["tau_in"]["isfree"] = False
@@ -167,20 +115,7 @@ def make_model(z, forbidden_broad, sigma_split):
 
 
 def make_obs(flux, unc, mask):
-    """Wrap a spectrum as a prospect observation with the resolution of the degraded data.
-
-    Parameters
-    ----------
-    flux, unc : np.ndarray
-        Flux and uncertainty in maggies on ``WAVE_OBS``.
-    mask : np.ndarray of bool
-        Pixels to fit.
-
-    Returns
-    -------
-    list
-        The prospect observations.
-    """
+    """Wrap a spectrum as a prospect observation with the resolution of the degraded data."""
     return build_obs(spec=flux, unc=unc, mask=mask, resolution=RES, wavelength=WAVE_OBS)
 
 
@@ -188,33 +123,7 @@ _STATE = {}
 
 
 def loglike(theta, tid, forbidden_broad, sigma_split, unmask, rest_max=9000.0):
-    """Return the log likelihood of ``theta`` for one galaxy.
-
-    Each process builds its own model, observation and Cue source on its first call and keeps
-    them in ``_STATE``. Pool workers cannot receive them from the main process, because the Cue
-    emulator cannot be pickled and JAX is not fork safe, so the pool uses spawn. The run settings
-    are arguments, not module constants, because spawned workers re-import this file.
-
-    Parameters
-    ----------
-    theta : np.ndarray
-        Free parameters in the order of ``make_model(...).theta_labels()``.
-    tid : int
-        DESI TARGETID.
-    forbidden_broad : {"free", "shared"}
-        See ``make_params``.
-    sigma_split : float
-        See ``make_params``.
-    unmask : bool
-        See ``load_data``.
-    rest_max : float
-        Reddest rest-frame wavelength fitted, see ``load_data``.
-
-    Returns
-    -------
-    float
-        The log likelihood, with the prior left to the sampler.
-    """
+    """Return the log likelihood of ``theta``, with the model cached per spawned process."""
     key = (tid, forbidden_broad, sigma_split, unmask, rest_max)
     if key not in _STATE:
         z, flux, unc, good, _ = load_data(tid, rest_max, unmask)
@@ -225,13 +134,7 @@ def loglike(theta, tid, forbidden_broad, sigma_split, unmask, rest_max=9000.0):
 
 
 def main(args):
-    """Check the library and resolution setup, then run or resume nautilus.
-
-    Parameters
-    ----------
-    args : argparse.Namespace
-        The command-line options, see the parser below.
-    """
+    """Check the library and resolution setup, then run or resume nautilus."""
     tid, fb, split, unmask, rest_max = (
         args.tid,
         args.forbidden_broad,

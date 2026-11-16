@@ -32,10 +32,7 @@ def _transform(rows):
 
 
 def prior_transform_all(unit, z, lsf):
-    """Return model.prior_transform of every row of ``unit``, spread over N_PROC processes.
-
-    The SFH prior covariance depends on each point's hyperparameters, so points are done one by one.
-    """
+    """Return model.prior_transform of every row of ``unit``, spread over N_PROC processes."""
     chunks = np.array_split(unit, max(1, len(unit) // 5000))
     ctx = mp.get_context("spawn")
     with ctx.Pool(N_PROC, initializer=_init, initargs=(z, lsf)) as pool:

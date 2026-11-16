@@ -1,48 +1,10 @@
 """Recoadd a target with the row-weighted resolution matrix of desispec PR 2377.
 
-QUESTION: how much does the DR1 coadd resolution matrix of this two-exposure target change when
-the exposures are combined with the corrected weights, and do the per-exposure matrices and ivars
-behave as the resolution checks assume?
-
-DR1 (iron) coadds weight each exposure's banded matrix by the ivar of the column pixel
-(desispec 0.56 coaddition.coadd), a known issue in the DR1 paper (arXiv:2503.14745,
-A5_knownissues.tex:29). Desispec issue 2372 derives the correct form, the ivar of the row pixel,
-R_hat = (sum_e C_e^-1)^-1 sum_e C_e^-1 R_e. PR 2377 implements it as _resolution_coadd, and the
-arms are merged the same way (coadd_cameras in PR 2377). Cosmic masking needs three or more
-exposures, so it does not apply to the two-exposure reference. For targets with more, the
-row-weighted coadd masks cosmics as PR 2377 does (_mask_cosmics as merged, 4 sigma). The
-column-weighted rebuild masks them as iron did, whose mean gradient divides by the sum of the
-weights over all pixels rather than per pixel (desispec 0.56.2 coaddition.py:416). The number of
-pixels each masks is reported, in total and near the lines.
-
-The script does five things from the iron spectra file of healpix 26004.
-
-- Lists this target's exposures, and every (night, tile) in the file, for the model variance
-  check of the tile-night logs.
-- Rebuilds the coadd with the old column weights and checks it against resolution_matrix.npz (the
-  DR1 coadd), as a test of the reading.
-- Builds the row-weighted coadd per arm and merged over the arms, and compares it with the old one
-  at the strong lines.
-- Tests R = S Q on each exposure, where it holds exactly (Guy et al. 2023, extraction.tex:43-61),
-  by checking that R_ij sqrt(ivar_i) is symmetric.
-- Compares the two exposures pixel by pixel, (f1 - a f2) / sqrt(1/ivar1 + a^2/ivar2) with a scalar a
-  per arm, in bins of S/N, as in desispec issue 2420. Near strong lines the two matrices differ,
-  which adds to the scatter there.
-
-The default target is 39627770174637084 (healpix 26004). --tid picks another target of
-targets.py, whose resolution_matrix.npz comes from
-experiments/2026-10-18_candidate_resolution_matrix/analysis.py.
-
-INPUTS: spectra-sv3-bright-<healpix>.fits.gz (iron), resolution_matrix.npz of resolution_check.py.
-SEED: none.
-
-COMMAND: on an ls6 compute node from the repository root,
+Also checks the iron column-weighted rebuild, R = S Q per exposure and the exposure pair scatter.
+Run from the repository root as
 ``.venv/bin/python experiments/2026-10-09_nautilus_c3k_er_broadline/coadd_rows.py
-/corral/utexas/AST25023/nikhilgaruda/hubersed/data/desi_iron_spectra/spectra-sv3-bright-26004.fits.gz``,
+<iron spectra folder>/spectra-sv3-bright-26004.fits.gz``,
 and with ``--tid <targetid>`` and that target's spectra file for the others.
-
-OUTPUT: coadd_rows.txt and resolution_matrix_rows.npz (same keys as resolution_matrix.npz, with the
-row-weighted matrices) in the target's output folder of targets.py.
 """
 
 import argparse
@@ -68,12 +30,7 @@ COSMICS_NSIG = 4.0  # desispec coadd default, 0.56.2 and PR 2377
 
 
 def iron_cosmics(wave, flux, ivar, mask, nsig=COSMICS_NSIG):
-    """Return the cosmic mask of desispec 0.56.2 coadd for one arm, exposures by pixels.
-
-    Port of coaddition.py:377-431 of 0.56.2. The mean gradient divides by the sum of gradivar over
-    all exposures and pixels. As there, a fully masked exposure is skipped in the gradient stack
-    but the index of the stack picks the exposure.
-    """
+    """Return the desispec 0.56.2 cosmic mask of one arm, exposures by pixels (coaddition.py:377-431)."""
     cosmic = np.zeros(ivar.shape, dtype=bool)
     if ivar.shape[0] <= 2:
         return cosmic
@@ -132,11 +89,7 @@ def iterative_masker(vec, ivar, nsig, min_for_cosmics, threshold=None):
 
 
 def pr2377_cosmics(wave, flux, ivar, nsig=COSMICS_NSIG):
-    """Return the cosmic mask of PR 2377 _mask_cosmics for one arm, exposures by pixels.
-
-    ``ivar`` is zero at masked pixels. Port of coaddition.py:512-641 at the PR 2377 merge commit
-    79529f9, without the logging.
-    """
+    """Return the PR 2377 cosmic mask of one arm, exposures by pixels (coaddition.py:512-641)."""
     min_for_cosmics = 3
     cosmic = np.zeros(ivar.shape, dtype=bool)
     if ivar.shape[0] < min_for_cosmics:

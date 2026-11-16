@@ -1,30 +1,12 @@
 """Quick MAP of four line outliers with the free-line model, SFH hyperparameters fixed at #14's.
 
-QUESTION: how well does the free-line model of 39627770174637084 (#14) fit four more line outliers
-from the v2 MAP ranking, before any posterior run?
-
-Each fit is map.py's ``free`` variant (experiments/2026-10-15_broadline_free_amplitude) on the
-target's own data: the PR 2377 recoadd with the patched calibration ivar and the target's
-resolution matrix (results/2026-10-18_candidate_resolution_matrix/<TID>/), with spender's mask and
-the missing-line masks of model_setup.load_data. sigma_reg, tau_eq, sigma_dyn and tau_dyn are fixed
-at the #14 values map.py used, the max-L point of the 10-13 rmatrix chain. The start is the #14
-``free`` MAP point with logmass set to the target's v2 MAP value. One Powell start, 40000 calls.
-
-``--start K --n-starts N`` runs only start K of N, so the starts can run as separate processes
-(2026-10-18_candidate_map.slurm). Start 0 is the unjittered start, the others add Gaussian jitter of
-``--jitter`` times each prior range (seed 0), drawn the same way in every process.
-
-model_setup reads TID, COADD and DR1_COADD as module globals, so they are set per target here.
-
-INPUTS: map_free.npz of map.py, the 10-13 _pred.npz, the candidate recoadds and the v2 MAP pkls in
-results/map_fits_outliers310_v2/. SEED: 0 for the jittered starts.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-18_candidate_map/fit.py {fit,report} --tid <TID>``. For multi-start on ls6, see
+As map.py free (2026-10-15_broadline_free_amplitude) on each target's PR 2377 recoadd and resolution
+matrix, from the #14 free MAP with the target's v2 MAP logmass, Powell 40000 calls, jittered starts.
+COMMAND: from the repository root with the C3K_ER build,
+``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:<er_path>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
+experiments/2026-10-18_candidate_map/fit.py {fit,report} --tid <TID>``. For multi-start, see
 the slurm script.
-
 OUTPUT: <TID>_map_free.npz, <TID>_map.txt and <TID>_map.png in results/2026-10-18_candidate_map/,
 with suffix _s<K> for a run with ``--start K``.
 """

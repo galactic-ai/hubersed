@@ -1,25 +1,10 @@
 """Measure the same spectral indices on the DESI parent, the noised v2 mocks and the rebuilt mocks.
 
-For analysis.py, which compares post-starburst fractions in matched redshift bins.
-INPUTS: results/prescreened_sample_v1.npz (keep, the parent) through load_by_index (DR1 SV3 bright
-coadds, f_lambda); data/fastspec-iron-sv3-bright.fits (LOGMSTAR); data/prospector_model/noised_cuev2/
-DESIcuev2_*.pkl (the noised v2 mocks the flows trained on, with f_lambda, ivar, z and mock index,
-written by scripts/make_prospector_noisy_sed.py); data/prospector_model/mocks_v2_500000.h5
-(logmass); optionally the rebuilt noiseless subset of 2026-11-13_mock_psb_coverage
-(rebuilt_part*.h5, maggies).
-METHOD: every index on the raw spectrum (lines included), good pixels only (ivar > 0), NaN when a
-band has under 25% good pixels.
-- HdA uses Worthey & Ottaviani (1997) bands taken as air and moved to vacuum, (l2 - l1)(1 - <F/F_c>).
-- Dn4000 is the mean f_nu in 4000-4100 over 3850-3950 A (Balogh et al. 1999, PSG.tex l.326).
-- EW(Halpha) uses the DAP bands (Westfall et al. 2019, emissionlines.tex l.61), main 6557.6-6571.6,
-  sidebands 6483.0-6513.0 and 6623.0-6653.0 A. EW([OII]) uses Yan et al. (2006, ms.tex l.1392)
-  3716.3-3738.3, 3696.3-3716.3 and 3738.3-3758.3 A. The pseudo-continuum is a line between the
-  sideband medians, and EW = band width times <(F - C) / C>, rest frame, emission positive. Band
-  media unstated; taken as vacuum.
+HdA, Dn4000, EW(Halpha) and EW([OII]) on the raw spectra, good pixels only, for analysis.py.
 COMMAND: ``uv run --no-sync python experiments/2026-11-13_psb_fraction_like_for_like/measure.py
 [--rebuilt <rebuilt.h5 or quoted glob of rebuilt_part*.h5>]``.
-OUTPUT: results/2026-11-13_psb_fraction_like_for_like/indices_{desi,noised,rebuilt}.npz (z, logmass,
-hda, dn4000, ew_ha, ew_oii) and snr_noised.npz (median per-pixel S/N of the noised mocks).
+OUTPUT: results/2026-11-13_psb_fraction_like_for_like/indices_{desi,noised,rebuilt}.npz and
+snr_noised.npz.
 """
 
 import argparse
@@ -155,11 +140,7 @@ def rebuilt(pattern, wave):
 
 
 def snr_noised():
-    """Return mock index and median per-pixel S/N (flux sqrt(ivar), ivar > 0) of every noised mock.
-
-    The definition of the latent S/N cut (scripts/get_latent_space.py); the mock normalisation
-    cancels in flux sqrt(ivar).
-    """
+    """Return the mock index and median per-pixel S/N (flux sqrt(ivar), ivar > 0) of each mock."""
     ids, snr = [], []
     for p in sorted(NOISED.glob("DESIcuev2_*.pkl"), key=lambda q: int(q.stem.split("_")[1])):
         with open(p, "rb") as fh:

@@ -1,17 +1,8 @@
 """List the iron files the recoadd of the continuum outlier 39627757533007793 needs, with destinations.
 
-The steps are those of experiments/2026-10-09_nautilus_c3k_er_broadline, as run for the line
-outliers in experiments/2026-10-18_candidate_recoadd. coadd_rows.py needs the healpix spectra file,
-and fluxcal_rerun.py, ivar_check.py and ivar_recompute.py need the 20 files of each exposure and
-petal (exposure_files of 2026-10-18_candidate_recoadd/iron_urls.py). The exposures are SV3 83526
-(night 20210405, petal 0, fiber 229) and main 122064 (night 20220210, petal 1, fiber 523), from
-desi_dr1.ztile, desi_dr1.exposure and desi_dr1.fiberassign (Astro Data Lab TAP, 2026-10-28).
-
-COMMAND: from the repository root on the Mac,
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-29_continuum_recoadd/iron_urls.py``.
-
-OUTPUT: iron_urls.txt next to this script, one "url destination" pair per line, with destinations
-relative to the Corral data folder.
+OUTPUT: iron_urls.txt next to this script, one "url destination" pair per line.
 """
 
 import importlib.util

@@ -1,8 +1,8 @@
 #!/bin/bash
-# Test of this experiment on one stampede3 skx-dev node: save the resolution matrix, check the
+# Test of this experiment on one skx-dev node: save the resolution matrix, check the
 # setup and time warm calls (fit.py check), then a short start-0 MAP and its collect step with
 # tag _test, so the full path runs once. One process at a time.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch experiments/2026-10-28_continuum_c3k_er_rmatrix_map/test.slurm
 #SBATCH -J er1028test
 #SBATCH -p skx-dev

@@ -1,27 +1,9 @@
 """Build the noiseless mocks of the broad-line injection test and check the injector.
 
-The checks, all at the truth point unless stated, are written to validation.txt.
-
-1. InjectedLineModel with our own line structure (S0) reproduces ResolutionMatrixModel to
-   rtol 1e-6, at the truth point and at five jittered points, for the shared and the free
-   forbidden broad fraction.
-2. The no-broad fit model (F-none) reduces correctly. With eline_fbroad = 0 it equals the shared
-   model at eline_fbroad = 0 and the injector with one Gaussian per line, and it does not depend
-   on eline_sigma_broad or eline_vbroad.
-3. Line fluxes. For each scenario the line spectrum on the fine grid is integrated over
-   frequency, line by line, and compared with the intended flux (Cue flux times the sum of the
-   component weights). For S1 and S2 the intended flux is the Cue flux. For S3 the forbidden
-   lines of [N II], [S II], [O I] and [O III] change by design.
-4. The EmFit numbers in injection.py match the csv.
-
-It also gives the chi2 distance of each noiseless mock from the S0 mock on the fitted pixels.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-13_broadline_injection/mocks.py``
-
-OUTPUT: mocks.npz and validation.txt in results/2026-10-13_broadline_injection/.
+Writes mocks.npz and validation.txt with four injector checks. Run from the repository root as
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
+experiments/2026-10-13_broadline_injection/mocks.py``.
 """
 
 import warnings

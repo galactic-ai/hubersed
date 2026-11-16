@@ -1,16 +1,7 @@
 """Figure of where the 58 emission_line outliers sit in latent UMAP, kNN distances and line ratios.
 
-The top left panel is a UMAP (n_neighbors 15, min_dist 0.1, seed 0, as
-scripts/plot_latent_umap_score.py) of the standardised flow-15 latents of 20,000 random training
-mocks, 20,000 random DESI galaxies and the 58, fitted on all of them, with the 58 coloured by
-analysis.py B class. UMAP does not keep distances. The top right panel shows log
-EW([NII]6585)/EW(Halpha) against log EW([OIII]5008)/EW(Hbeta), raw EWs of lines.py, only where all
-four are above 1 A, as mock density (log counts, hexbin) and the 58 by class. The bottom panels
-show, per flow, the mean distance to the 10 nearest training mocks of the held-out mocks
-(histogram, density) and of the 58 (ticks, flagged by that flow in colour, others grey), with a
-dashed line at the held-out p99.9. Splits and scalers as analysis.py.
-INPUTS: as analysis.py, plus results/2026-11-14_emline_outlier_coverage/coverage.csv.
-SEED: 0 (subsamples and UMAP).
+Panels are a flow-15 latent UMAP, log EW([NII])/EW(Halpha) vs log EW([OIII])/EW(Hbeta), and per-flow
+kNN distances of held-out mocks and the 58. Inputs as analysis.py plus coverage.csv. SEED 0.
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_emline_outlier_coverage/figure.py``.
 OUTPUT: results/2026-11-14_emline_outlier_coverage/coverage_figure.png.
 """

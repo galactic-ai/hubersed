@@ -1,9 +1,9 @@
 #!/bin/bash
-# Run the pending skx recoadds on skx-dev when it starts them first (Nikhil, 2026-11-03). For each
+# Run the pending skx recoadds on skx-dev when it starts them first. For each
 # TARGETID:skx-jobid[:skx-dev-jobid] argument, submit a skx-dev copy of recoadd.slurm while skx-dev has
 # a free submit slot (4 per user). When the copy is RUNNING and the skx job still PENDING, cancel the
 # skx job; when the skx job is RUNNING first, cancel the pending copy, so one job writes each output
-# folder. Ends when every target has one job running or done. Run on the stampede3 login node from
+# folder. Ends when every target has one job running or done. Run on the login node from
 # the repository root:
 #   nohup bash experiments/2026-11-01_poco_repeats/recoadd_devswap.sh TID:JOB[:DEVJOB] ... > <log> 2>&1 &
 # TACC's sbatch prints its banner even with --parsable, so the job id is the last numeric line.

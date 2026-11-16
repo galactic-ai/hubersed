@@ -1,18 +1,10 @@
 """Share of each Cue line made by the old CSP at the rmatrix nautilus max-L point.
 
-QUESTION: prospect runs Cue on both the young (< dust_tesc) and the old CSP, each with its own
-fitted ionizing spectrum and Q but the same gas parameters (nebssp_basis.get_spectrum). Does the
-old CSP's harder spectrum make a large part of the auroral lines, and so of the "too hot" gas?
-
-The run wraps nebssp_basis.fit_4loglinear_ionparam and add_dust to record the ionizing parameters
-and the line luminosities of each CSP, before dust and after dust (old lines get only dust2).
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-13_nautilus_resolution_matrix/old_csp_lines.py``
-
-OUTPUT: old_csp_lines.txt in results/2026-10-13_nautilus_resolution_matrix/.
+Records each CSP's ionizing parameters and line luminosities before and after dust, and writes
+old_csp_lines.txt. Run from the repository root as
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
+experiments/2026-10-13_nautilus_resolution_matrix/old_csp_lines.py``.
 """
 
 import numpy as np

@@ -1,13 +1,8 @@
 """Continuum MAP of the SV3 dark spectrum of the continuum outlier 39633433328091196 (#17).
 
-Changes from 2026-10-29_continuum_39633433328091196_map/fit.py (SV3 bright, icx job 3657895): the
-data are the SV3 dark DR1 coadd (1 exposure, EXPID 88050) and its DR1 resolution matrix, both from
-resolution_matrix.py, since the SV3 bright coadd carries sky residual in the blue
-(2026-10-30_recoadd_39633433328091196). Start 0 is the SV3 bright ER MAP best point. Model, priors,
-the SFH hyperparameters fixed at the C3K_HR max-L (hr_maxl.npz of the 10-29 folder), rest window
-3320 to 9000 A, starts and the steps check, fit and collect are those of the 10-28 fit.py.
-
-Run on a stampede3 compute node through map.slurm, for example
+Changes from 2026-10-29_continuum_39633433328091196_map/fit.py. The data are the SV3 dark DR1 coadd
+(1 exposure, EXPID 88050) and its DR1 resolution matrix. Start 0 is the bright ER MAP best point.
+COMMAND: on a compute node through map.slurm, for example
 ``<venv>/bin/python experiments/2026-10-30_continuum_39633433328091196_dark_map/fit.py fit --start 0``.
 """
 

@@ -1,41 +1,10 @@
 """Dust model reading of 37084, with optical depths, line response and where dust is constrained.
 
-QUESTION: why does the HR max-L point with only dust_ratio set to its ER max-L value overshoot
-the emission lines in the ER model, and which wavelengths constrain dust2, dust_ratio and
-dust_index?
-
-The model attenuates the young CSP (ages up to dust_tesc, 10^7 yr) by dust1 and dust2 and the old
-CSP by dust2 only (prospect fake_fsps.add_dust). Cue lines and Cue nebular continuum are computed
-for each CSP from its own ionizing spectrum and get the same split. dust1 = dust2 * dust_ratio.
-
-Six products.
-
-- the optical depths tau2 (Kriek and Conroy curve) and tau1 (power law, index -1) at the lines,
-  at the ER and HR max-L points, from prospect's own ``attenuate``;
-- the factor exp(-delta tau1) that setting dust_ratio from 0.558 to 0.461 at the HR point gives
-  the young lines;
-- the dust_ratio column of the line Jacobian of jacobian.py against the young-only expectation
-  -dust2 * (5500 / lambda) / ln 10, which gives the young share of each line;
-- Fisher correlations and conditional widths of the dust parameters, and the share of their
-  Fisher information in rest-frame wavelength bins, from jacobian.npz;
-- the linear chi2 change from the ER max-L point to the HR point and to the HR point with the ER
-  dust_ratio, against the values hr_point.py measured (hard-coded here);
-- the information shares, widths and correlations in the basis dust1 (dust2 fixed) and dust2
-  (dust1 fixed), and the young share of the model continuum, f_young = -J_ratio / (dust2 (5500 /
-  lambda) m), on continuum pixels.
-
-The Fisher numbers are local and linear at the ER max-L point and ignore the prior. The four SFH
-hyperparameters have no pixel information and are dropped before the inversion.
-
-INPUTS: jacobian.npz of jacobian.py, the ER .json and _pred.npz, and the HR split 45 chain through
-``hr_point.hr_best``. SEED: none (deterministic).
-
-COMMAND: from the repository root on the Mac with the C3K_ER build, as hr_point.py,
+Finds why the HR max-L point with the ER dust_ratio overshoots the ER lines, and which wavelengths
+constrain dust2, dust_ratio and dust_index. Writes dust_reading.txt. Run from the repository root as
 ``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-09_nautilus_c3k_er_broadline
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
 experiments/2026-10-09_nautilus_c3k_er_broadline/dust_reading.py``.
-
-OUTPUT: results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/dust_reading.txt.
 """
 
 import json

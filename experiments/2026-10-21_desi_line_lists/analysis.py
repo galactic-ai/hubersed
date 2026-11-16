@@ -1,18 +1,16 @@
 """List the DESI prospect viewer emission lines that have no line in Cue's list.
 
-QUESTION: Which major and minor emission lines of the DESI prospect viewer have no line in Cue's list?
+QUESTION: Which major and minor emission lines of the DESI prospect viewer have no line in Cue's
+list?
 HYPOTHESIS: None registered before this analysis.
-METHOD: air entries go to vacuum with _airtovac, as the viewer does. A line is in Cue if a Cue line
-lies within 1 A. The fitted range is the rest range of 39633278973513279, 3510-9000 A.
-INPUTS: desi_prospect_emission_lines.txt, desihub/prospect py/prospect/data/emission_lines.txt at
-699d599b73, and cuejax/data/cue_emlines_info.dat of cue 82ed9dc (uv.lock). MISSING_LINES is not used.
+INPUTS: desi_prospect_emission_lines.txt (desihub/prospect py/prospect/data/emission_lines.txt at
+699d599b73) and cuejax/data/cue_emlines_info.dat of cue 82ed9dc (uv.lock).
 SEED: none.
 COMMAND: from the repository root,
 uv run python experiments/2026-10-21_desi_line_lists/analysis.py
-RESULT: 2026-10-21. All 12 major lines in the fitted range are in Cue within 0.01 A. Of the 17,
-only C IV 1549 fails, as DESI lists the doublet blend and Cue has 1548.19 and 1550.77. DESI flags
-Mg II as air though 2796.35 and 2803.53 are vacuum, so the match is off by 0.82 A. Of the 37 minor
-lines, 10 are not in Cue and only He II 5411 (5413.02 A) is in the fitted range. The other 9 are UV.
+RESULT: 2026-10-21. All 12 major lines in the fitted range are in Cue within 0.01 A. Of the 37 minor
+lines, 10 are not in Cue and only He II 5411 (5413.02 A) is in the fitted range.
+Assumptions: a line is in Cue if a Cue line lies within 1 A. Fitted range is rest 3510-9000 A.
 FIGURES: none. major_vs_cue.txt and minor_vs_cue.txt in results/2026-10-21_desi_line_lists/.
 """
 

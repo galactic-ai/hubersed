@@ -1,16 +1,8 @@
 """Continuum MAP of 39627757533007793 on its recoadded SV3 or main-survey spectrum (issue #17).
 
-Changes from the DR1-coadd continuum MAPs (2026-10-28_continuum_c3k_er_rmatrix_map for SV3, icx
-job 3655467, and 2026-10-29_continuum_main_survey_map for main, icx job 3656341): flux, ivar and
-resolution matrix are the recoadd of recoadd.slurm (resolution_matrix_rows_ivar.npz: PR 2377 row
-weights, flux-calibration ivar with PRs 2496, 2827, 2452 and the PR 2422 formula), as for the #14
-line outlier. The fitted pixels are, as there, spender's (DR1 coadd) good pixels where the recoadded
-ivar is positive, at rest 3320 to 9000 A. Start 0 is the spectrum's own DR1-coadd continuum MAP.
-Model, priors, fixed SFH hyperparameters, starts and the steps check, fit and collect are those of
-the 10-28 fit.py, which this file runs with data, matrix, output folder and start swapped.
-
-RECOADD_SURVEY (sv3, default, or main) picks the spectrum, as in the 2026-10-09 targets.py. Run on
-a stampede3 compute node through map.slurm, for example
+Changes from 2026-10-28_continuum_c3k_er_rmatrix_map and 2026-10-29_continuum_main_survey_map are
+the recoadd in resolution_matrix_rows_ivar.npz, pixels with its ivar > 0, and their MAP as start 0.
+COMMAND: on a compute node through map.slurm, for example
 ``RECOADD_SURVEY=main <venv>/bin/python experiments/2026-10-29_continuum_recoadd/fit.py fit --start 0``.
 """
 

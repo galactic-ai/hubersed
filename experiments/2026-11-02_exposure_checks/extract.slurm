@@ -1,6 +1,6 @@
 #!/bin/bash
 # Unzip the urls.txt files in parallel and extract the targets.txt galaxies (extract.py),
-# after stage.sh. Submit from the repository root on stampede3:
+# after stage.sh. Submit from the repository root:
 #   sbatch experiments/2026-11-02_exposure_checks/extract.slurm
 #SBATCH -J expchk
 #SBATCH -p skx-dev

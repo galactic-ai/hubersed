@@ -1,7 +1,7 @@
 #!/bin/bash
 # Dust-free SSP grids from the C3K_HR (project venv) and MILES (miles_build) FSPS builds, with the
 # same SPS_HOME as the 10-08 runs (run.sh). One process at a time, a few minutes each.
-# Submit from the repository root on ls6:
+# Submit from the repository root:
 #   sbatch experiments/2026-10-29_c3k_vs_miles_ssp/ssp.slurm
 #SBATCH -J ssp1029
 #SBATCH -p development

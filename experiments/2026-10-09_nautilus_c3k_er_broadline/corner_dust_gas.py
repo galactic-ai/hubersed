@@ -1,23 +1,9 @@
 """Corner plot of dust_ratio and the Cue gas parameters of the ER and HR split 45 fits of 37084.
 
-QUESTION: is dust_ratio degenerate with the gas parameters (gas_logz, gas_logu, gas_lognH,
-gas_logno, gas_logco) in the ER and HR posteriors? The Fisher matrix at the ER max-L point
-(dust_reading.py) puts no gas parameter among its six largest partners.
-
-INPUTS: the ER ``_pred.npz`` of predict.py (posterior points and log weights), and
-results/2026-09-30_nautilus_c3k_broadline_split45/39627770174637084_broad_shared_split45_unmask_rest9000_seed0.h5
-with its .json. SEED: none.
-
-COMMAND: from the repository root with the C3K_ER build, as hr_point.py (the model is built only
-for the prior edges),
+Writes corner_dust_gas.png and corner_dust_gas.txt. Run from the repository root as
 ``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-09_nautilus_c3k_er_broadline
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
 experiments/2026-10-09_nautilus_c3k_er_broadline/corner_dust_gas.py``.
-
-OUTPUT: results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/corner_dust_gas.png and
-corner_dust_gas.txt (weighted posterior correlations of dust_ratio with every parameter, per run).
-Both runs have the same model and parameters but different data handling, see hr_point.py.
-Fonts are large for slides. Dashed lines mark prior edges inside an axis.
 """
 
 import importlib.util
@@ -75,11 +61,7 @@ def er_posterior():
 
 
 def hr_posterior():
-    """Return the HR posterior points, normalized weights and labels from its checkpoint.
-
-    The fit gave nautilus the identity prior, so the checkpoint holds unit cube points. Points
-    more than e^-30 below the heaviest one are dropped, as in corner_a.py.
-    """
+    """Return the HR posterior points, normalized weights and labels from its checkpoint."""
     f30 = load_module(HR_FIT, "fit_0930")
     cfg = json.loads((HR_DIR / f"{HR_STEM}.json").read_text())
     m = f30.make_model(cfg["z"], cfg["forbidden_broad"], cfg["sigma_split"])

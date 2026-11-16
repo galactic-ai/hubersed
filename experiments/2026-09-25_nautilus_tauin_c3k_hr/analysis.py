@@ -1,16 +1,21 @@
-"""QUESTION: Do the rails of 2026-09-24_nautilus_tauin (sigma_smooth at its 10 km/s floor, gas_logco
-at -1) and the missing 0.15-0.9 Gyr stars go away with FSPS C3K_HR and correct library resolution?
+"""Do the 2026-09-24_nautilus_tauin rails and missing young stars go away with FSPS C3K_HR?
+
+SUPERSEDED BY: experiments/2026-09-26_nautilus_c3k_broadline.
+Same fit with narrow plus broad Balmer line profiles.
+
+QUESTION: Do the rails (sigma_smooth at its 10 km/s floor, gas_logco at -1) and the missing
+0.15-0.9 Gyr stars go away with FSPS C3K_HR and correct library resolution?
 HYPOTHESIS: sigma_smooth railed because the zeroed MILES resolution over-broadened the model, so
 with C3K_HR and a consistent LSF it moves off the floor.
-INPUTS: DESI DR1 spectrum from hubersed.io.desi.load_spectrum, degraded to 43.6 km/s,
-MILES window 3601.8-7400.8 A rest, 4448 pixels.
+INPUTS: DESI DR1 spectrum (hubersed.io.desi.load_spectrum), degraded to 43.6 km/s, MILES window
+3601.8-7400.8 A rest, 4448 pixels.
 SEED: 0 for nautilus, 0 for the posterior draws in the figures.
 COMMAND: uv run python experiments/2026-09-25_nautilus_tauin_c3k_hr/fit.py --window miles --pool 24
---n-batch 480 on LS6 (SPS_HOME at FSPS 7572834), then uv run python
+--n-batch 480 (SPS_HOME at FSPS 7572834), then uv run python
 experiments/2026-09-25_nautilus_tauin_c3k_hr/analysis.py
-RESULT: Converged (N_eff 2000, log Z 79788.06, 1.43M calls).
-sigma_smooth still piles at 10 km/s. gas_logco moved to its upper edge (+0.72) and dust_index to its
-upper edge (0.4). logzsol +0.32 -> -0.23.
+RESULT: Converged (N_eff 2000, log Z 79788.06). sigma_smooth still piles at 10 km/s. gas_logco and
+dust_index moved to their upper edges (+0.72, 0.4). logzsol went from +0.32 to -0.23.
+Assumptions: none stated.
 FIGURES: results/2026-09-25_nautilus_tauin_c3k_hr/spectrum.png, spectrum_zoom.png, corner_phys.png,
 corner_sfh.png and sfh.png.
 """

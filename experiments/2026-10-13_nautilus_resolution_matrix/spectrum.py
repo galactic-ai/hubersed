@@ -1,10 +1,9 @@
 """Plot the rmatrix fit's data, max-L model and residuals from its _pred.npz.
 
-Writes spectrum_rmatrix.png in results/2026-10-13_nautilus_resolution_matrix/. Needs no SPS build.
-
-COMMAND: ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-13_nautilus_resolution_matrix/spectrum.py`` from the repository root.
+Writes spectrum_rmatrix.png. Needs no SPS build. Run from the repository root as
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
+experiments/2026-10-13_nautilus_resolution_matrix/spectrum.py``.
 """
 
 import astropy.units as u

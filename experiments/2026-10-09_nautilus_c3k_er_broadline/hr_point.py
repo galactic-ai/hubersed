@@ -1,33 +1,10 @@
 """The ER model at the maximum likelihood point of the HR split 45 run, against the ER fit.
 
-QUESTION: how does the ER model fit the ER data at the parameters of the HR max-L point, next to
-the ER max-L point? How much of the difference comes from the dust and gas parameters alone, and
-what does dust_ratio alone do?
-The two runs have the same model and the same 29 parameters, and differ in the library
-resolution, the data degradation, the sky mask and the fitted pixels.
-
-Four points go through the ER model on the ER data. They are the ER max-L point, the HR max-L
-point, the ER max-L point with only the dust parameters (dust2, dust_ratio, dust_index) and the gas
-parameters (gas_logz, gas_logu, gas_lognH, gas_logno, gas_logco) set to their HR max-L values, and
-the HR max-L point with only dust_ratio set to its ER max-L value.
-
-INPUTS: the ER ``_pred.npz`` of predict.py, and
-results/2026-09-30_nautilus_c3k_broadline_split45/39627770174637084_broad_shared_split45_unmask_rest9000_seed0.h5
-with its .json. SEED: none (deterministic).
-
-COMMAND: from the repository root on the Mac with the C3K_ER build (no AFE_FLAG, [alpha/Fe] is 0
-in the fit), as jacobian.py,
+Evaluates the ER and HR max-L points and the dust, gas and dust_ratio swaps on the ER data, and
+writes the hr_point, hr_swap and hr_dustratio figures and hr_point_windows.txt. Run from the repository root as
 ``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-09_nautilus_c3k_er_broadline
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
 experiments/2026-10-09_nautilus_c3k_er_broadline/hr_point.py``.
-
-OUTPUT: in results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/,
-hr_point_spectrum.png and hr_point_line_windows.png (ER and HR max-L points),
-hr_swap_spectrum.png and hr_swap_line_windows.png (ER, HR and the dust and gas swap),
-hr_dustratio_spectrum.png and hr_dustratio_line_windows.png (ER, HR and HR with the ER
-dust_ratio), and hr_point_windows.txt
-(chi2 of each point in the line windows of jacobian.py). The line window figures are for slides.
-The log likelihood and chi2 of each point are printed.
 """
 
 import importlib.util
@@ -142,13 +119,7 @@ def spectrum_plot(rest, flam, flux, spec, chi, good, keys, path):
 
 
 def windows_plot(rest, flam, flux, unc, spec, chi, keys, path, chi_lim=None):
-    """Plot the five slide line windows with LaTeX text and large fonts, one chi row per point.
-
-    ``chi_lim`` fixes the y range of every chi row. By default the rows autoscale.
-
-    The ApJ style must be active. It applies to the whole process, so the caller sets it after
-    the spectrum plots.
-    """
+    """Plot the five slide line windows with LaTeX text and large fonts, one chi row per point."""
     n = len(keys)
     fig, axes = plt.subplots(
         1 + n,

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Max-likelihood spectra (predict.py) of the targets given as arguments, one process on one skx-dev node.
-# Submit from the repository root on stampede3, after their prod jobs:
+# Submit from the repository root, after their prod jobs:
 #   sbatch experiments/2026-10-31_poco_robust6/predict.slurm <TARGETID> [<TARGETID> ...]
 #SBATCH -J pred1031
 #SBATCH -p skx-dev

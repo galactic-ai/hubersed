@@ -2,29 +2,16 @@
 
 QUESTION: is Cue's gas too hot in general, and does that bias its gas-phase O/H against the direct
 (T_e) method, as a function of stellar mass?
-
-HYPOTHESIS: from 39627770174637084, Cue over-predicts the held-out auroral lines ([OIII]4363 x2.6,
-[SIII]6312 x1.4, [OII]7325 x1.18) and its O/H is 0.31 dex below the direct value. If general, the
-gap should be positive across mass; if it grows with mass or EW(Hbeta), it changes the MZR shape.
-
-INPUTS: lineflux_table.fits (data.py), fits/<TARGETID>_strong_emfit_mu0.4_zs-0.41.npz (fit.py
---lines strong) and direct_wild0.4_campbell_r2_subset_20.fits (direct.py --ids subset_20.txt) in
-results/2026-10-14_cue_lineflux_calibration/. Cue gas-phase 12+log(O/H) = gas_logz + 8.71
-(before depletion, handoff 2026-10-13e). Points more than e^-30 below the heaviest are dropped.
+HYPOTHESIS: in 39627770174637084 Cue over-predicts [OIII]4363 x2.6, [SIII]6312 x1.4, [OII]7325 x1.18
+with O/H 0.31 dex low. The gap is positive at all masses. A mass or EW(Hbeta) trend bends the MZR.
+INPUTS: lineflux_table.fits, fits/<TARGETID>_strong_emfit_mu0.4_zs-0.41.npz and
+direct_wild0.4_campbell_r2_subset_20.fits in results/2026-10-14_cue_lineflux_calibration/.
 SEED: none.
-
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/analysis.py``
 from the repository root.
-
-RESULT: preliminary, 20 galaxies (subset.py), zstar -0.41, mu 0.4. Held out, Cue over-predicts
-[OII]7325 by a median 1.13 (20 galaxies, 0.41-2.76) and [SIII]6312 by 1.19 (7). Direct - Cue gap
-median +0.08 dex, 16-84 [-0.41, +0.49]; it tracks the [OII]7325 residual, since both use the [OII]
-thermometer, and galaxies with n_e at the 10 cm^-3 floor get high T(O+) and low direct O/H. Not as
-expected: Cue strong-line gas_logz shows no mass trend; at log M* 9.8 and 11.2 it gives Z ~ -0.77
-with N/O ~ +0.2 and U -3.4 to -3.9 (direct 8.61, 9.00), and 39627824604123900 is bimodal (Z -0.76
-and +0.08). The Z, N/O and U degeneracy under a flat N/O prior looks larger than the temperature
-effect for an MZR.
-
+RESULT: preliminary, 20 galaxies. Held-out [OII]7325 over-predicted by a median 1.13, [SIII]6312 by
+1.19 (7). Direct - Cue median +0.08 dex, 16-84 [-0.41, +0.49]. Cue gas_logz has no mass trend.
+Assumptions: zstar -0.41, mu 0.4, O/H = gas_logz + 8.71 before depletion, flat N/O prior.
 FIGURES: compare_subset.txt and compare_subset.png in results/2026-10-14_cue_lineflux_calibration/.
 """
 

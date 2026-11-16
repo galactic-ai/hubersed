@@ -1,6 +1,6 @@
 #!/bin/bash
 # Several ladder.slurm predicts side by side on one node, each on its own core with its step's FSPS
-# build. Arguments are TARGETID:STEP pairs. Submit from the repository root on stampede3:
+# build. Arguments are TARGETID:STEP pairs. Submit from the repository root:
 #   sbatch experiments/2026-11-01_poco_repeats/predict_batch.slurm <TID>:<STEP> [...]
 #SBATCH -J predbatch
 #SBATCH -p skx-dev

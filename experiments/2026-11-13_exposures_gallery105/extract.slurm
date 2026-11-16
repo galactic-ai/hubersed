@@ -2,7 +2,7 @@
 # Unzip the spectra files of urls.txt and extract gallery105 figures 05, 67 and 99 (extract.py),
 # after stage.sh. Scripts are taken from the submit folder (the repository root or a copy of it);
 # outputs go to the repository's results folder.
-# Submit from the repository root (or the copy) on stampede3:
+# Submit from the repository root (or the copy):
 #   sbatch experiments/2026-11-13_exposures_gallery105/extract.slurm
 #SBATCH -J exp05g
 #SBATCH -p skx-dev

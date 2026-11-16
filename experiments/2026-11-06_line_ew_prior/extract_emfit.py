@@ -1,9 +1,8 @@
 """Save the SV3 bright rows of the EmFit DR1 VAC v2.3.1 with the line fluxes analysis.py uses.
 
-Replaces fetch_emfit.py when Data Lab is unavailable. Same columns and output, read from the VAC
-file (data.desi.lbl.gov public/dr1/vac/dr1/emfit/v2.3/emfit-dr1-v2.3.1.fits, sha256 checked),
-column names lower-cased to match the Data Lab table.
-COMMAND: on stampede3 through extract_emfit.slurm, ``python extract_emfit.py <vac.fits> <out.fits>``.
+Replaces fetch_emfit.py when Data Lab is down. Reads emfit-dr1-v2.3.1.fits, columns lower-cased.
+COMMAND: through extract_emfit.slurm,
+``python extract_emfit.py <vac.fits> <out.fits>``.
 OUTPUT: <out.fits>, copied to results/2026-11-06_line_ew_prior/emfit_sv3_bright.fits.
 """
 

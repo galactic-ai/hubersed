@@ -1,4 +1,9 @@
-"""QUESTION:
+"""Compare the MILES, C3K and C3K broad-line runs of 39627770174637084.
+
+SUPERSEDED BY: experiments/2026-09-30_nautilus_c3k_broadline_split45.
+Refit of 37084 with the narrow and broad split at 45 km/s.
+
+QUESTION:
 HYPOTHESIS:
 INPUTS:
 SEED: 0 for nautilus, 0 for the posterior draws in the figures.

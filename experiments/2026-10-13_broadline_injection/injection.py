@@ -1,50 +1,8 @@
 """Mock spectra with injected line profiles, and the fit models, for the broad-line injection test.
 
-The mocks go through the same pipeline as the 10-13 resolution-matrix fit (ResolutionMatrixModel,
-the target's own R, the same pixels, the missing-line mask, maggies). Only the emission lines
-differ. ``InjectedLineModel`` is a ResolutionMatrixModel whose ``fine_lines`` builds each line
-from a list of Gaussian components, each with a weight (a multiple of the line's Cue flux), an
-intrinsic width and a velocity shift. Everything else, the continuum, R' and the response, is the
-parent's code.
-
-Scenarios. All use the truth point, the rmatrix mask MAP of 2026-10-13_nautilus_resolution_matrix.
-
-- ``model`` (S0), the components of our own model, (1 - f_b) G(sigma) + f_b G(sigma_b, v_b) with
-  the widths of TwoCompLineModel. It must reproduce ResolutionMatrixModel.
-- ``S1``, every line has EmFit's three-component Halpha profile for this target.
-- ``S2``, our two-component shape, with broad fractions per line group.
-- ``S3``, our two-component shape, with the broad component of [N II], [S II], [O I] and [O III]
-  scaled by literature broad-to-narrow ratio offsets. Narrow components keep the Cue ratios.
-
-Sources of the injected numbers. Line numbers refer to files in ~/Documents/UberSED/knowledge/.
-
-- EmFit row of 39627770174637084 in ``_evidence/2026-09-30_kin_vs_ion/emfit_rows_2obj.csv``,
-  columns ha_n_*, ha_out_*, ha_b_*. Widths ha_n_sigma 10.218, ha_out_sigma 58.905,
-  ha_b_sigma 154.919 km/s. Fluxes 1463.63, 636.00, 95.36, so fractions 0.6668, 0.2897, 0.0434.
-  Shifts relative to the narrow centre from ha_*_mean, -0.870 and -2.888 km/s. The same numbers
-  are in lit_broad_emission_components_2026-10-13.md lines 23-24. ``check_emfit`` re-reads the csv.
-- Per-group broad fractions (S2). The broad fraction of low-ionization forbidden lines is 1.2
-  times the Balmer one and of high-ionization lines 0.7 times,
-  lit_broad_emission_components_2026-10-13.md line 393, from Hogarth+20 tab2 (lines 338-341,
-  Ha 0.32, [NII] 0.38, [OIII]5007 0.22) and EmFit for this target (line 344, [NII] 0.373 and
-  [SII] 0.349 vs Ha 0.303).
-- Broad ratio offsets (S3), each in dex on the broad component's line over Halpha (or Hbeta).
-  [N II] +0.136 and [S II] +0.091 from EmFit for this target, log N2Ha -1.005 to -0.869 and log
-  S2Ha -0.890 to -0.799 (lit_broad_emission_components_2026-10-13.md line 26). [O I] +0.5 from
-  CLASSY VIII (line 116). [O III] -0.210 = log10(4.41 / 7.16) from Hogarth+20 tab2 (line 321,
-  marked there as the note's own arithmetic on a checked table).
-
-Assumptions that no source fixes, stated in the report too.
-
-- S2 groups. Recombination lines (Balmer, Paschen, He I) keep the Balmer fraction. High
-  ionization is ``broadline.HIGH_ION_PREFIXES`` ([O III], [Ne III], [Ar IV], [Ne IV], He II).
-  Every other line is low ionization, including the intermediate ions [S III], [Ar III] and
-  [Cl III], as in line_groups_ionization_zones_2026-10-10.md line 22. No paper read gives broad
-  fractions for the intermediate ions.
-- S3 offsets apply to every line of the ion, auroral lines included ([N II] 5755, [S II] 4070,
-  [O I] 5577, [O III] 4363), and both members of each doublet. Other ions are unchanged.
-- S1 gives all lines, [O III] included, the Halpha profile. EmFit fits [O III] with one 17.3 km/s
-  Gaussian and finds no second component for it (oiii5007_out_sigma_flag = -1).
+Scenarios S0 (our model), S1 (EmFit Halpha profile), S2 (per-group broad fractions) and S3 (broad
+ratio offsets) at the rmatrix mask MAP truth point. S2 and S3 numbers are from Hogarth+20 tab2,
+CLASSY VIII and EmFit for this target.
 """
 
 import csv
@@ -107,13 +65,7 @@ def emfit_components():
 
 
 def check_emfit(path=EMFIT_CSV):
-    """Re-read the EmFit csv row and check it matches ``EMFIT_HA``.
-
-    Returns
-    -------
-    str
-        A one-line summary, or a note that the file is missing.
-    """
+    """Re-read the EmFit csv row and check it matches ``EMFIT_HA``."""
     if not Path(path).exists():
         return f"EmFit csv not found at {path}; EMFIT_HA not re-checked"
     rows = [r for r in csv.DictReader(open(path)) if r["targetid"] == "39627770174637084"]
@@ -154,8 +106,6 @@ class InjectedLineModel(ResolutionMatrixModel):
 
     Parameters
     ----------
-    params : dict
-        Model parameter specification, as for ResolutionMatrixModel.
     scenario : {"S0", "S1", "S2", "S3"}
         Which line components ``line_components`` returns.
     """
@@ -172,8 +122,7 @@ class InjectedLineModel(ResolutionMatrixModel):
         Returns
         -------
         list of list of tuple
-            For each line, a list of (weight, intrinsic sigma in km/s, shift in km/s). The weight
-            multiplies the line's Cue flux, so the weights of a line sum to its flux multiplier.
+            For each line, (weight, intrinsic sigma in km/s, shift in km/s). Weights multiply the Cue flux.
         """
         nline = self._ewave_obs.shape[0]
         names = self._line_names()
@@ -207,20 +156,7 @@ class InjectedLineModel(ResolutionMatrixModel):
         return np.array([sum(c[0] for c in comps) for comps in self.line_components()])
 
     def fine_lines(self, fine):
-        """Return the injected line spectrum on the fine grid, with the parent's line selection.
-
-        Parameters
-        ----------
-        fine : np.ndarray
-            The fine grid in observed Angstrom.
-
-        Returns
-        -------
-        spec : np.ndarray
-            The line spectrum in maggies at ``fine``.
-        added : np.ndarray of bool
-            The lines that were added.
-        """
+        """Return the injected line spectrum on the fine grid, with the parent's line selection."""
         nline = self._ewave_obs.shape[0]
         spec = np.zeros(fine.size)
         added = np.zeros(nline, dtype=bool)
@@ -245,21 +181,11 @@ def make_fit_params(z, fit_model, hyper_values):
 
     Parameters
     ----------
-    z : float
-        Redshift.
     fit_model : {"shared", "free", "none"}
-        ``shared`` is the 10-13 model (make_params of model_setup). ``free`` adds a free forbidden
-        broad fraction, as add_broad_params(forbidden_broad="free"). ``none`` fixes eline_fbroad
-        at 0, so no line has a broad component, fixes eline_sigma_broad and eline_vbroad (they
-        then do nothing) and gives eline_sigma and eline_sigma_forb the TopHat(10, 250) prior
-        of the Cue model before add_broad_params.
+        ``shared`` is the 10-13 model, ``free`` adds a free forbidden broad fraction and ``none``
+        fixes eline_fbroad at 0 with the TopHat(10, 250) width prior.
     hyper_values : dict
         Values of the SFH hyperparameters ``HYPERS``, fixed in every model.
-
-    Returns
-    -------
-    dict
-        The parameter specification.
     """
     from model_setup import make_params
 
@@ -303,13 +229,10 @@ def load_hypers():
 def setup(unmasked_lines=()):
     """Return the data, observation and truth used by every mock and fit.
 
-    ``unmasked_lines`` is passed to model_setup.load_data.
-
     Returns
     -------
     dict
-        ``z``, ``flux`` (the real data), ``unc``, ``good``, ``obs`` (built on the real flux),
-        ``truth`` and ``maxl`` (dicts by name) and ``hypers``.
+        ``z``, ``flux``, ``unc``, ``good``, ``obs``, ``truth``, ``maxl`` and ``hypers``.
     """
     hypers, z_post = load_hypers()
     z, flux, unc, good = load_data(MASK_LINES, unmasked_lines)
@@ -320,22 +243,7 @@ def setup(unmasked_lines=()):
 
 
 def theta_for(model, values, fill=None):
-    """Return a theta vector of ``model`` from a dict by name, clipped into the prior.
-
-    Parameters
-    ----------
-    model : prospect.models.ProspectorParams
-        The model.
-    values : dict
-        Parameter values by theta label.
-    fill : dict, optional
-        Values for labels missing from ``values``.
-
-    Returns
-    -------
-    np.ndarray
-        The theta vector.
-    """
+    """Return a theta vector of ``model`` from a dict by name, clipped into the prior."""
     fill = fill or {}
     th = []
     for k in model.theta_labels():
@@ -365,24 +273,10 @@ def prior_bounds(model):
 def jitter_start(model, theta, seed, frac=0.05):
     """Return a start jittered about ``theta``, drawn until it lies inside the prior.
 
-    Bounded parameters get a Gaussian of ``frac`` times their prior range. The logsfr_ratios get a
-    Gaussian of their prior standard deviation (the diagonal of the MultiVariateNormal prior).
-
     Parameters
     ----------
-    model : prospect.models.ProspectorParams
-        The model.
-    theta : np.ndarray
-        The centre.
-    seed : int
-        Seed of the draw.
     frac : float
         Jitter width as a fraction of the prior range.
-
-    Returns
-    -------
-    np.ndarray
-        The jittered start.
     """
     rng = np.random.default_rng(seed)
     lo, hi = prior_bounds(model)
@@ -399,11 +293,7 @@ def jitter_start(model, theta, seed, frac=0.05):
 
 
 def noise(unc, good, seed):
-    """Return the Gaussian noise of one seed, zero on pixels that are not fitted.
-
-    The same seed gives the same noise in every scenario, so scenarios can be compared seed by
-    seed.
-    """
+    """Return the Gaussian noise of one seed, zero on pixels that are not fitted."""
     rng = np.random.default_rng(seed)
     e = rng.normal(size=unc.size)
     return np.where(good, e * np.where(good, unc, 0.0), 0.0)

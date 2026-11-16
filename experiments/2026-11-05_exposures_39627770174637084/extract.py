@@ -1,10 +1,8 @@
 """Save every SV3 and main bright exposure and both coadds of 39627770174637084.
 
-As 2026-11-02_exposure_checks/extract.py, for one target in the SV3 and main bright healpix 26004
-spectra files, plus its rows of the two coadd files. Run with the DESI environment.
+As 2026-11-02_exposure_checks/extract.py, for healpix 26004. Run with the DESI environment.
 COMMAND: ``$DESIPY extract.py <spectra dir> <out.npz>`` through extract.slurm.
-OUTPUT: <out.npz>. Keys are <survey>_<column> for the exposures, <survey>_<arm>_<flux|ivar|mask>
-for the exposures and coadd_<survey>_<arm>_<flux|ivar|mask> for the coadds.
+OUTPUT: <out.npz>, keys <survey>_<column>, <survey>_<arm>_<flux|ivar|mask> and coadd_<survey>_...
 """
 
 import sys

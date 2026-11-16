@@ -1,7 +1,7 @@
 #!/bin/bash
 # skx-dev job of this experiment: prepare.py (spender mask on SV3 and main, main resolution matrix),
 # then fit.py check (setup and timing of warm calls on the main data).
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch experiments/2026-10-29_continuum_main_survey_map/check.slurm
 #SBATCH -J main1029chk
 #SBATCH -p skx-dev

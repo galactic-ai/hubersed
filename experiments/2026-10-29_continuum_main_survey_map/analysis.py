@@ -3,15 +3,14 @@
 QUESTION: do the C3K ER + afe + R matrix continuum MAP parameters and residuals of the SV3
 spectrum repeat on the independent DR1 main-survey exposure?
 HYPOTHESIS: none registered.
-INPUTS: <TID>_map.npz of 2026-10-28_continuum_c3k_er_rmatrix_map (SV3, icx job 3655467) and of
-this folder (main, icx job 3656341), each with the data it fitted, copied from stampede3. Index
-bands from $SPS_HOME/data/allindices.dat.
+INPUTS: <TID>_map.npz of 2026-10-28_continuum_c3k_er_rmatrix_map (SV3) and of this folder (main),
+and $SPS_HOME/data/allindices.dat.
 SEED: none.
-COMMAND: from the repository root on the Mac,
-``SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+COMMAND: from the repository root,
+``SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-29_continuum_main_survey_map/analysis.py``.
 RESULT: pending.
-FIGURES: results/2026-10-29_continuum_main_survey_map/sv3_vs_main.png, and sv3_vs_main.txt.
+FIGURES: results/2026-10-29_continuum_main_survey_map/sv3_vs_main.png and sv3_vs_main.txt.
 """
 
 # %%
@@ -49,11 +48,7 @@ def flam(d, x):
 
 
 def index_bands():
-    """Return each index's shaded rest-frame spans (feature, or Dn4000's two bands).
-
-    As index_bands of 2026-10-28_continuum_c3k_er_rmatrix_map/analysis.py, from
-    $SPS_HOME/data/allindices.dat.
-    """
+    """Return each index's shaded rest-frame spans (feature, or Dn4000's two bands)."""
     table = np.genfromtxt(
         Path(os.environ["SPS_HOME"]) / "data" / "allindices.dat",
         dtype=None,

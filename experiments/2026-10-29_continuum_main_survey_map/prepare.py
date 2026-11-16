@@ -1,16 +1,6 @@
 """Build the spender-masked DR1 main-survey spectrum of 39627757533007793 and its resolution matrix.
 
-spender's own DESI.prepare_spectra (spender/data/desi.py) reads a healpix coadd and its redrock
-file, merges the arms, zeroes the weights where the DESI mask is set, where ivar <= 1e-6 and
-around bright sky lines, and divides by a median norm. Run on the SV3 coadd first, the result must
-equal the SV3 spender chunk that load_spectrum reads, which checks the path. Then it runs on the
-main coadd (with MAIN_DESI_TARGET aliased to DESI_TARGET, see spender_spectrum), and the flux
-and ivar are saved without the norm. The main resolution matrix is saved
-with resolution_check.save_matrix, as in 2026-10-28. The fibre correction columns of both coadd
-FIBERMAPs are printed.
-
-COMMAND: on a stampede3 compute node from the repository root, through check.slurm.
-
+COMMAND: on a compute node from the repository root, through check.slurm.
 OUTPUT: results/2026-10-29_continuum_main_survey_map/main_spectrum.npz and resolution_matrix.npz.
 """
 
@@ -38,12 +28,7 @@ if os.environ.get("SPEC_DATA"):
 
 
 def spender_spectrum(coadd, main_alias=False):
-    """Return flux, ivar and z of the target from spender's prepare_spectra, without its norm.
-
-    prepare_spectra cuts on the column <SURVEY>_DESI_TARGET, which main-survey coadds call
-    DESI_TARGET. With ``main_alias`` the tables it reads get MAIN_DESI_TARGET as a copy of
-    DESI_TARGET for that call only.
-    """
+    """Return flux, ivar and z of the target from spender's prepare_spectra, without its norm."""
     read = sdesi.aTable.Table.read
 
     def read_with_alias(*args, **kwargs):

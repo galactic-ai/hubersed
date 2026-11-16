@@ -1,11 +1,8 @@
 """Compare gas-parameter biases of the mock fits with and without [SII]6731 fitted.
 
-Masked fits are fits/, unmasked ones fits_unmask_sii6731/ (fit.py --unmask "[SII]6731"). Shared
-model, best of the truth and maxl starts per seed. Writes compare_unmask.txt.
-
-COMMAND: ``PYTHONPATH=experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-13_broadline_injection
-uv run --no-sync python experiments/2026-10-13_broadline_injection/compare_unmask.py`` from the
-repository root.
+Reads fits/ and fits_unmask_sii6731/ and writes compare_unmask.txt. Run from the repository root as
+``PYTHONPATH=experiments/2026-10-13_nautilus_resolution_matrix:experiments/2026-10-13_broadline_injection
+uv run --no-sync python experiments/2026-10-13_broadline_injection/compare_unmask.py``.
 """
 
 from pathlib import Path

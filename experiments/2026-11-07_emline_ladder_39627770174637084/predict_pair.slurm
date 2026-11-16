@@ -1,7 +1,7 @@
 #!/bin/bash
 # Two predicts on one node, one after the other: predict.slurm with STEP=$A, then STEP=$B, each to
-# its own log (side by side they ran out of commit room in the SSP build fork, job 3705373).
-# Submit from the repository root on stampede3:
+# its own log (side by side they ran out of commit room in the SSP build fork).
+# Submit from the repository root:
 #   A=7 B=8 sbatch --export=ALL experiments/2026-11-07_emline_ladder_39627770174637084/predict_pair.slurm
 #SBATCH -J ladpredict2
 #SBATCH -p spr

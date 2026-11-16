@@ -1,16 +1,7 @@
 """Targets of the recoadd with the patched flux calibration ivar.
 
-39627770174637084 is the #14 target these scripts were written for. The other four are the
-free-line candidates of experiments/2026-10-18_candidate_recoadd (exposures.txt there). Each entry
-gives the redshift, the DR1 healpix, the output folder and the exposures as {expid: (night, petal,
-fiber)}. The reference redshift is the SV3 ZCAT_PRIMARY row of zall-pix-iron-bgs.fits, the others
-are fastspec-iron-sv3-bright METADATA Z. It imports no hubersed code, so that fluxcal_rerun.py can
-use it from the desispec 0.56.2 environment.
-
-39627757533007793 is the continuum outlier of experiments/2026-10-29_continuum_recoadd, observed in
-SV3 and in the main survey. The environment variable RECOADD_SURVEY=main picks the main-survey
-entries of MAIN_TARGETS, and RECOADD_OUT replaces an entry's output folder, for example to rerun
-the reference elsewhere. Environment variables reach the child processes of fluxcal_rerun.py.
+39627770174637084 is the #14 reference. RECOADD_SURVEY=main picks MAIN_TARGETS and RECOADD_OUT
+replaces an entry's output folder. Imports no hubersed code, for the desispec 0.56.2 environment.
 """
 
 import os
@@ -156,10 +147,7 @@ MAIN_TARGETS = {
 
 
 def target(tid):
-    """Return the entry of ``tid``, from MAIN_TARGETS if RECOADD_SURVEY is main.
-
-    RECOADD_OUT, if set, replaces the output folder of the entry.
-    """
+    """Return the entry of ``tid``, from MAIN_TARGETS if RECOADD_SURVEY is main."""
     survey = os.environ.get("RECOADD_SURVEY", "sv3")
     assert survey in ("sv3", "main"), f"RECOADD_SURVEY {survey} is not sv3 or main"
     entry = dict((MAIN_TARGETS if survey == "main" else TARGETS)[int(tid)])

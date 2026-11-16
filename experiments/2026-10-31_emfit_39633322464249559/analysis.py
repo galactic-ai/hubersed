@@ -2,18 +2,12 @@
 
 QUESTION: does the EmFit VAC find a broad Balmer component or AGN-like narrow-line ratios?
 HYPOTHESIS: none registered. FastSpecFit gives broad MgII (sigma 2677 km/s) and no broad Halpha.
-INPUTS: desi_dr1.emfit on Astro Data Lab TAP (sv3/bright row), as
-2026-10-14_cue_lineflux_calibration/data.py; Kewley+01 and Kauffmann+03 [NII] lines (from the TeX,
-astro-ph/0106324 and astro-ph/0304239); WHAN of Cid Fernandes+11 (1012.4426, sec 5).
-EmFit fits Hbeta, [OIII], [NII], Halpha and [SII] only, so it cannot test MgII.
+INPUTS: desi_dr1.emfit on Astro Data Lab TAP, as 2026-10-14_cue_lineflux_calibration/data.py;
+Kewley+01 (astro-ph/0106324), Kauffmann+03 (astro-ph/0304239), Cid Fernandes+11 (1012.4426, sec 5).
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_emfit_39633322464249559/analysis.py``.
-RESULT: EmFit puts almost all Halpha in a broad component, sigma 1651 km/s, flux 167 +- 69 (S/N 2.4),
-prob_broad 78.2; narrow Halpha 1.9 +- 14, [NII] 1.5 +- 8.8, Hbeta 2.6 +- 3.2, [OIII] 21 +- 9.
-FastSpecFit gives the opposite split (narrow Halpha and [NII] at S/N ~30, no broad), so the
-Halpha decomposition is degenerate here (Halpha at ~9100 A observed). No BPT from EmFit.
-FastSpecFit (fastspec.txt): MgII 2796/2803 sigma 2677 km/s, S/N 5.5 and 13.6; log [NII]/Ha 0.005 and
-EW Ha 9.4 A (WHAN strong AGN); [OIII]/Hb with Hb at +3 sigma 0.53, above Kewley+01 (-0.12).
+RESULT: EmFit puts almost all Halpha in a broad component (sigma 1651 km/s, S/N 2.4). FastSpecFit
+gives narrow Halpha at S/N ~30 and no broad, so the Halpha split is degenerate. No BPT from EmFit.
 Assumptions: totals sum narrow, outflow and broad components, as the cue data.py.
 FIGURES: results/2026-10-31_emfit_39633322464249559/ emfit_row.fits, emfit.txt, fastspec.txt.
 """

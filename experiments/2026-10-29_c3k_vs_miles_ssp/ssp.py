@@ -1,15 +1,7 @@
 """Save dust-free SSP spectra from the FSPS build on PYTHONPATH, for the C3K against MILES test.
 
-QUESTION: is the C3K continuum bowed against MILES at the same age and metallicity? The fits of
-39633433328091196 imply the C3K best model is about 6% fainter at rest 3400 A and 4% at 7000 A,
-relative to V, than the MILES one (2026-10-29_continuum_39633433328091196_map/reddening.py).
-
-Both builds use MIST isochrones (build_miles_fsps.sh; build_er_fsps.sh). SSPs have the prospect
-default Kroupa IMF (imf_type 2), no dust, no nebular emission and zcontinuous 1. FSPS MILES spectra stop
-at Z 0.030 (log Z/Zsun +0.2) and are not extrapolated, so logzsol -0.3 and 0 lie inside its grid and
-+0.3 shows the cap.
-
-COMMAND: on a stampede3 compute node from the repository root, through ssp_s3.slurm.
+QUESTION: is the C3K continuum bowed against MILES at the same age and metallicity?
+COMMAND: on a compute node from the repository root, through ssp_s3.slurm.
 OUTPUT: results/2026-10-29_c3k_vs_miles_ssp/ssp_<library>.npz.
 """
 

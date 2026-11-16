@@ -1,17 +1,20 @@
-"""QUESTION: Do the v2 MAP rails of 39627770174637084 (sigma_dyn, tau_eq, tau_in, dust_ratio, dust_index,
-sigma_smooth at prior bounds) disappear when tau_in is fixed at t_H and the posterior is sampled with nautilus?
-HYPOTHESIS: The rails are MAP artefacts (the SFH prior's -1/2 ln det Sigma term drives the hyperparameters
-to their bounds), so the posterior piles up at no prior edge and chi2 beats v2.
-INPUTS: DESI DR1 spectrum from hubersed.io.desi.load_spectrum. v2 MAP fit
-results/map_fits_outliers310_v2/39627770174637084.pkl. Checkpoint
+"""Do the v2 MAP rails of 39627770174637084 go away with tau_in fixed at t_H and nautilus?
+
+SUPERSEDED BY: experiments/2026-09-25_nautilus_tauin_c3k_hr.
+Same fit with the FSPS C3K_HR library.
+
+QUESTION: Do the v2 rails (sigma_dyn, tau_eq, tau_in, dust_ratio, dust_index, sigma_smooth at prior
+bounds) disappear when tau_in is fixed at t_H and the posterior is sampled with nautilus?
+HYPOTHESIS: The rails are MAP artefacts (the SFH prior's -1/2 ln det Sigma term drives them to their
+bounds), so the posterior piles up at no prior edge and chi2 beats v2.
+INPUTS: hubersed.io.desi.load_spectrum, results/map_fits_outliers310_v2/39627770174637084.pkl,
 results/2026-09-24_nautilus_tauin/39627770174637084_miles_seed0.h5
 SEED: 0 for nautilus, 0 for the posterior draws in the figures.
 COMMAND: uv run python experiments/2026-09-24_nautilus_tauin/fit.py --pool 24 --n-batch 480, then
 uv run python experiments/2026-09-24_nautilus_tauin/analysis.py
-RESULT: Converged (N_eff 2006, log Z 78155.05, 1.56M calls); chi2_red 2.52 vs 3.10 for v2 on the same 4448 pixels.
-The rails are gone (dust_ratio, dust_index, tau_eq, sigma_dyn; sigma_reg leans to 0.1).
-Still railed: sigma_smooth at its 10 km/s floor (zeroed library resolution over-broadens the model) and gas_logco at -1.
-Open: Z* +0.32 vs gas_logz -0.39, and too few 0.15-0.9 Gyr stars (model HdeltaA 2.9 vs 6.0-7.8 emission-subtracted).
+RESULT: Converged (N_eff 2006, log Z 78155.05). chi2_red 2.52 vs 3.10 (v2) on the same 4448 pixels.
+The rails are gone, but sigma_smooth stays at its 10 km/s floor and gas_logco at -1.
+Assumptions: the library resolution is zeroed, which over-broadens the model.
 FIGURES: results/2026-09-24_nautilus_tauin/spectrum.png, spectrum_zoom.png, corner_phys.png,
 corner_sfh.png and sfh.png.
 """

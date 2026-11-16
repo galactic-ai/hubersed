@@ -1,9 +1,7 @@
 """Same-ion null test. Do two lines of one ion get the same second-component fraction?
 
-QUESTION: [O III] 4959 and 5007, and [N II] 6548 and 6584, each come from one upper level of one
-ion, so their second-component fractions must be equal. With a free fraction per line, how far
-apart are they, and is that larger than the difference between the low-ionization group and the
-Balmer lines (0.21 vs 0.18) found in 2026-10-13_oiii_second_component?
+QUESTION: With a free fraction per line, how far apart are [O III] 4959 and 5007, and [N II] 6548
+and 6584, and is that larger than the low-ionization vs Balmer difference (0.21 vs 0.18)?
 HYPOTHESIS: the pair differences measure the floor of the fit. If they are as large as the group
 difference, the group difference is not a measurement.
 INPUTS: results/2026-10-13_same_ion_null/fit_*.npz and profile_*.npz from fit.py.
@@ -11,14 +9,8 @@ SEED: none.
 COMMAND: ``PYTHONPATH=experiments/2026-10-13_same_ion_null:experiments/2026-10-13_oiii_second_component:experiments/2026-10-13_nautilus_resolution_matrix
 uv run --no-sync python experiments/2026-10-13_same_ion_null/analysis.py``
 RESULT: see same_ion_null.txt.
+Assumptions: errors are statistical and unscaled, from parabolas within 30 of each profile minimum.
 FIGURES: same_ion_profiles.png in results/2026-10-13_same_ion_null/.
-
-Each profile fixes one per-line fraction and re-optimizes the line profile, the other per-line
-fractions and the gas parameters. A parabola through the points within 30 of the minimum gives the
-best value and the Delta chi2 = 1 half-width sigma (statistical, unscaled). The slope of the partner
-line's fraction along the profile is b = rho sigma_partner / sigma_self, so the covariance of the
-pair is b sigma_self^2 and the error of the difference is sqrt(s1^2 + s2^2 - 2 cov). Both profiles
-of a pair give an estimate of the covariance; their mean is used.
 """
 
 # %%

@@ -1,31 +1,10 @@
 """Cue emulator error and training range at the ER max-L point of 37084.
 
-QUESTION: are the line flux misfits of the ER fit within the Cue emulator's own error, and is
-the max-L point inside the emulator's training range?
-
-The emulator error comes from cuejax/data/nn_stats_v0.pkl. SN_quantile has 7 rows of a test-set
-S/N per line, where the noise is the emulator error (cue demo notebook). The package does not say
-which quantile levels the 7 rows are. prospect uses 1 / SN_quantile[1] as the line error, and
-cuejax/data/eline_frac_error.dat holds the same numbers. This script prints 1 / SN for every row.
-
-The young CSP ionizing parameters are found as prospect.sources.nebssp_basis.get_spectrum does
-it. After a predict at max-L the young and old CSPs are read back with ssp._csp_young_old and
-passed to cuejax.utils.fit_4loglinear_ionparam with ssp.wavelengths. The raw fit, before the clip,
-is rebuilt from the returned power-law coefficients.
-
-The training range is read from the input normalization (mean and std) of the Cue networks. For a
-parameter drawn uniformly the range is mean -/+ sqrt(3) std. For n_H, which the networks take in
-linear units, the log-uniform range with the same mean and std is solved for.
-
-INPUTS: the ER _pred.npz (max-L point), line_flux_check.txt of line_flux_check.py, and the cuejax
-package data. SEED: none (deterministic).
-
-COMMAND: from the repository root on the Mac with the C3K_ER build,
+Prints 1 / SN for every SN_quantile row of cuejax/data/nn_stats_v0.pkl and the training ranges.
+Writes cue_error_check.txt. Run from the repository root as
 ``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-09_nautilus_c3k_er_broadline
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
 experiments/2026-10-09_nautilus_c3k_er_broadline/cue_error_check.py``.
-
-OUTPUT: results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/cue_error_check.txt.
 """
 
 import importlib.resources

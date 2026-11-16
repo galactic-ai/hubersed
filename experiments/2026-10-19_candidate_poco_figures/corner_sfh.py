@@ -2,21 +2,17 @@
 
 QUESTION: Does any parameter of the pocoMC free_dust fit of a candidate sit at its prior bound?
 HYPOTHESIS: None registered before this analysis.
-INPUTS: pmc_final.state of poco.py in
-results/2026-10-15_broadline_free_amplitude/poco_<TID>_free_dust_neff1024/.
-METHOD: corner plot of every free parameter but logsfr_ratios, with median and 16-84% titles and the
-sSFR posterior at top right. Axes show the central 99.8% plus 5%. Prior bounds inside an axis are
-dashed lines. The table gives the 0.5% and 99.5% quantiles and their distance to each bound as a
-fraction of the prior width.
+INPUTS: results/2026-10-15_broadline_free_amplitude/poco_<TID>_free_dust_neff1024/pmc_final.state.
 SEED: 0 for the SFH draws.
-COMMAND: from the repository root on the Mac with the C3K_ER build,
-FIT_TID=<TID> PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-15_broadline_free_amplitude:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+COMMAND: from the repository root with the C3K_ER build,
+FIT_TID=<TID> PYTHONPATH=<er_path>:experiments/2026-10-15_broadline_free_amplitude:experiments/2026-10-13_nautilus_resolution_matrix
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-19_candidate_poco_figures/corner_sfh.py
-RESULT: 2026-10-21, 39633278973513279. Within 1% of the prior width of a bound: tau_eq and dust_ratio
-at their lower bounds, sigma_reg at 0.8%, gas_logco at 1.2% of its upper bound. dust2 and sigma_dyn
-come within 4-5% of their upper bounds. logzsol, dust_index and frac_nodust stay clear of theirs.
-FIGURES: <TID>_corner_sfh.png and <TID>_prior_edges.txt in results/2026-10-19_candidate_poco_figures/.
+RESULT: 2026-10-21, 39633278973513279. tau_eq and dust_ratio sit within 1% of their lower bounds,
+sigma_reg at 0.8%, gas_logco at 1.2% of its upper bound, dust2 and sigma_dyn at 4-5% of theirs.
+Assumptions: edge distance of the 0.5% and 99.5% quantiles, as a fraction of the prior width.
+FIGURES: <TID>_corner_sfh.png and <TID>_prior_edges.txt in
+results/2026-10-19_candidate_poco_figures/.
 """
 
 # %%

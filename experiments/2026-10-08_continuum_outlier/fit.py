@@ -1,12 +1,10 @@
 """Nautilus fits of the continuum outlier 39627757533007793 (issue #17).
 
-The model, priors and sampler are the ones of 2026-09-25_nautilus_tauin_c3k_hr. Four switches:
-``--lib`` is the FSPS stellar library, ``--window`` is the rest-frame window and ``--nebular``
-turns the Cue nebular model on or off. FSPS fixes its library at compile time, so the MILES runs
-need the MILES venv. With ``--degrade on`` the data are degraded to the library resolution plus
-10 km/s wherever DESI is sharper. With ``--degrade off`` the data stay at the DESI resolution and
-the library resolution is zeroed, as in 2026-09-24_nautilus_tauin.
+SUPERSEDED BY: experiments/2026-10-28_continuum_c3k_er_rmatrix_map.
+Continuum MAP with C3K_ER and the DR1 resolution matrix instead of C3K_HR.
 
+As 2026-09-25_nautilus_tauin_c3k_hr, with switches ``--lib``, ``--window``, ``--nebular``, ``--afe``
+and ``--degrade`` (off zeroes the library resolution, as in 2026-09-24_nautilus_tauin).
 Run from the repository root with
 ``uv run python experiments/2026-10-08_continuum_outlier/fit.py --lib c3k_hr --window full
 --nebular on --pool 24 --n-batch 480``.
@@ -60,21 +58,7 @@ TARGETS = {
 
 
 def load_data(tid, lib, window, degrade):
-    """Load one DESI spectrum in maggies, degraded to the target of ``lib`` if ``degrade``.
-
-    Returns
-    -------
-    z : float
-        Redshift.
-    flux, unc : np.ndarray
-        Degraded flux and the original uncertainty on ``WAVE_OBS``. Unfitted pixels have
-        infinite uncertainty.
-    good : np.ndarray of bool
-        Pixels to fit.
-    target_kms : np.ndarray
-        Target resolution sigma in km/s. It is inf outside the library window, and everywhere
-        when the data are not degraded.
-    """
+    """Return z, flux, unc, good and target_kms, degraded to the ``lib`` target if ``degrade``."""
     s = load_spectrum(tid)
     z = float(s.redshift.value)
     flux = to_maggies(WAVE_OBS * u.AA, s.flux).value
@@ -101,13 +85,7 @@ def load_data(tid, lib, window, degrade):
 
 
 def make_model(z, nebular, afe="none"):
-    """Build the model with the star formation history priors of 2026-09-25.
-
-    tau_in is fixed at the age of the universe at ``z``. The other four hyperparameters are free
-    with log-uniform priors. With ``nebular`` False the Cue parameters are left out and FSPS
-    nebular emission is off. With ``afe`` "free" [alpha/Fe] is free over the grid, -0.2 to 0.6,
-    and with "zero" it is fixed at 0. Then logzsol is [Fe/H], not [Z/H].
-    """
+    """Build the 2026-09-25 model. With ``afe`` free or zero, logzsol is [Fe/H], not [Z/H]."""
     cont_model, tmpl = build_continuum_model(z)
     if nebular:
         _, tmpl = build_full_cue_model(tmpl, cont_model.theta, cont_model)
@@ -131,11 +109,7 @@ def make_model(z, nebular, afe="none"):
 
 
 def make_sps(nebular, degrade):
-    """Return the Cue source with nebular emission, or the plain FSPS source without it.
-
-    Without ``degrade`` the library resolution is set to zero on ``SSPBasis``, which both sources
-    inherit from, so prospect smooths the model straight to the DESI resolution.
-    """
+    """Return the Cue or plain FSPS source, library resolution zeroed unless ``degrade``."""
     if not degrade:
         SSPBasis.spectral_resolution = property(lambda self: np.zeros_like(self.ssp.wavelengths))
     if nebular:
@@ -144,23 +118,14 @@ def make_sps(nebular, degrade):
 
 
 def model_resolution(z, target_kms, good, sps):
-    """Return the resolution prospect smooths the model to, in km/s on ``WAVE_OBS``.
-
-    On fitted pixels it is the degraded data resolution, max(LSF, target). Elsewhere it is also
-    kept 10 km/s above the library, so the smoothing works on the whole padded grid.
-    """
+    """Return the resolution prospect smooths the model to, in km/s on ``WAVE_OBS``."""
     lib = np.interp(WAVE_OBS, sps.wavelengths * (1 + z), sps.spectral_resolution)
     res = np.maximum(LSF, np.where(np.isfinite(target_kms), target_kms, 0.0))
     return np.where(good, res, np.maximum(res, np.hypot(lib, 10.0)))
 
 
 def make_obs(z, flux, unc, good, target_kms, sps):
-    """Wrap the spectrum as a prospect observation.
-
-    prospect pads the grid by 100 A on each side and copies the edge resolution into the padding.
-    There the library can be coarser, for example below 3001 A rest for C3K_HR, so the padding
-    also gets the library plus 10 km/s.
-    """
+    """Wrap the spectrum as a prospect observation, with library plus 10 km/s in the padding."""
     res = model_resolution(z, target_kms, good, sps)
     obs = build_obs(spec=flux, unc=unc, mask=good, resolution=res, wavelength=WAVE_OBS)
     for spec in obs:
@@ -177,12 +142,7 @@ _STATE = {}
 
 
 def loglike(theta, tid, lib, window, nebular, degrade, afe="none"):
-    """Return the log likelihood of ``theta``.
-
-    Each process builds its model, data and source on the first call and keeps them in
-    ``_STATE``. The Cue emulator cannot be pickled and JAX is not fork safe, so the pool uses
-    spawn.
-    """
+    """Return the log likelihood of ``theta``, with the model cached per spawned process."""
     key = (tid, lib, window, nebular, degrade, afe)
     if key not in _STATE:
         z, flux, unc, good, target_kms = load_data(tid, lib, window, degrade)
@@ -194,15 +154,7 @@ def loglike(theta, tid, lib, window, nebular, degrade, afe="none"):
 
 
 def check_setup(tid, lib, window, nebular, degrade, afe="none"):
-    """Check the library and resolution setup and return z, the model and the pixel count.
-
-    Raises
-    ------
-    AssertionError
-        If FSPS was compiled with another library or, for ``afe``, without AFE_FLAG, if the
-        library resolution is not what ``degrade`` asks for, if the data target is sharper than
-        the library plus 10 km/s on a fitted pixel, or if the start is not finite.
-    """
+    """Check the library and resolution setup and return z, the model and the pixel count."""
     z, flux, unc, good, target_kms = load_data(tid, lib, window, degrade)
     model = make_model(z, nebular, afe)
     sps = make_sps(nebular, degrade)

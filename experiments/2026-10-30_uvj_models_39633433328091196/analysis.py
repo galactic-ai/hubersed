@@ -1,15 +1,15 @@
-"""Rest-frame U-V and V-J of 39633433328091196 from the C3K and MILES best fits, each library at both points.
+"""Rest-frame U-V and V-J of 39633433328091196, C3K and MILES libraries at both best-fit points.
 
-QUESTION: does V-J of 39633433328091196 depend on the stellar library, at fixed parameters and at each fit's own point?
+QUESTION: does V-J depend on the stellar library, at fixed parameters and at each fit's own point?
 HYPOTHESIS: none registered.
-INPUTS: colours_c3k_hr.npz, colours_miles.npz, check_<lib>.txt and check_pred_c3k_hr.npy of colours.py;
-FastSpecFit ABSMAG00_U and ABSMAG00_V from data/fastspec-iron-sv3-bright.fits; CIGALE VAC values as quoted by the caller.
+INPUTS: colours_c3k_hr.npz, colours_miles.npz, check_<lib>.txt and check_pred_c3k_hr.npy of
+colours.py, data/fastspec-iron-sv3-bright.fits and quoted CIGALE VAC values.
 SEED: none.
-COMMAND: from the repository root on the Mac, after colours.py,
+COMMAND: from the repository root, after colours.py,
 ``uv run --no-sync python experiments/2026-10-30_uvj_models_39633433328091196/analysis.py``.
-RESULT: 2026-10-30, uvj_models.txt. At a fixed point the libraries differ by <= 0.07 in U-V and 0.04 in V-J;
-the point moves V-J by 0.19 (dust 0.25 of 1.34 at the C3K point). Both fits give U-V 1.70-1.92, not 2.15.
-Assumptions: C3K_HR with afe 0 for C3K_ER (sp_best off by 4-7%), FSPS MILES is not MILES in J, no nebular.
+RESULT: 2026-10-30. At a fixed point the libraries differ by <= 0.07 in U-V and 0.04 in V-J. The
+point moves V-J by 0.19 (dust 0.25 of 1.34 at C3K's point). Both fits give U-V 1.70-1.92, not 2.15.
+Assumptions: C3K_HR with afe 0 for C3K_ER (sp_best off 4-7%), FSPS MILES not MILES in J, no nebular.
 FIGURES: none; table in results/2026-10-30_uvj_models_39633433328091196/uvj_models.txt.
 """
 

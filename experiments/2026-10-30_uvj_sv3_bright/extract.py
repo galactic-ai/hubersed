@@ -1,13 +1,7 @@
 """Keep the DR1 CIGALE VAC rows of the SV3 BGS bright galaxies, for the UVJ diagram.
 
-The VAC is data/cigale_dr1/IronPhysProp_v1.2.fits (7.3 GB, from
-https://data.desi.lbl.gov/public/dr1/vac/dr1/cigale/iron/v1.2/, sha256 checked against
-dr1_vac_dr1_cigale_iron_v1.2.sha256sum). Rows whose TARGETID is in
-data/fastspec-iron-sv3-bright.fits are kept, whatever SURVEY and PROGRAM the CIGALE row has,
-since the VAC holds one row per TARGETID.
-
-COMMAND: from the repository root on the Mac,
-``uv run --no-sync python experiments/2026-10-30_uvj_sv3_bright/extract.py``.
+INPUTS: data/cigale_dr1/IronPhysProp_v1.2.fits and data/fastspec-iron-sv3-bright.fits.
+COMMAND: ``uv run --no-sync python experiments/2026-10-30_uvj_sv3_bright/extract.py``.
 OUTPUT: data/cigale_dr1/cigale_sv3_bright.npz.
 """
 

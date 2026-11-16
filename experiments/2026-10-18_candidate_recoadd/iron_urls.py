@@ -1,13 +1,7 @@
 """List the iron files that the patched flux calibration and recoadd need for four line outliers.
 
-The steps are those of experiments/2026-10-09_nautilus_c3k_er_broadline for 39627770174637084.
-coadd_rows.py needs the healpix spectra file, and fluxcal_rerun.py, ivar_check.py and
-ivar_recompute.py need 20 files per exposure and petal. The exposures come from EXP_FIBERMAP of the
-DR1 healpix coadds in data/sv3_bright_coadds/.
-
-COMMAND: from the repository root on the Mac,
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-18_candidate_recoadd/iron_urls.py``.
-
 OUTPUT: iron_urls.txt and exposures.txt next to this script.
 """
 

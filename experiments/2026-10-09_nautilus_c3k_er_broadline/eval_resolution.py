@@ -1,57 +1,11 @@
 """Evaluate the ER max-L model of 39627770174637084 with this target's own DESI resolution matrix.
 
-QUESTION: does the chi2 of the ER max-L point change, and do the line-core residuals at
-[OIII]5007, [OIII]4959, Hbeta and Halpha go away, when the model is blurred with this target's
-resolution matrix instead of the median Gaussian LSF? No refit.
-
-HYPOTHESIS: resolution_check found this target's matrix columns about 10-20% narrower than the
-median at its strong lines, close to the profile_check scales of the blue lines. If the matrix is
-right, the blue-line cores improve with it. Halpha (profile_check s_C1s 1.08) should not.
-
-The model is built at the max-L point as in fit.py. Six versions of the spectrum are compared.
-
-- current, the fit's own path. Prospect smooths the continuum by sqrt(inst^2 - lib^2) with the
-  median sigma and adds the lines as Gaussians of width sqrt(intrinsic^2 + inst^2) sampled at the
-  pixel centres.
-- R, the target's merged matrix from resolution_matrix.npz. The continuum is smoothed by the
-  stellar velocity dispersion with the library resolution taken out in quadrature,
-  sqrt(sigma_smooth^2 - lib^2), and averaged over each pixel. The lines have their intrinsic
-  widths only and are integrated over each pixel. The matrix is applied to the sum.
-- R_nolibfix, as R but with the full sigma_smooth, so the library resolution stays in the
-  continuum. This measures the leftover cost of applying a matrix to a library spectrum.
-- R_colnorm, as R with each column of the matrix rescaled to sum to one. The rows of the DESI
-  matrix sum to one, but its columns at this target's strong lines sum to 0.83-0.92, so R removes
-  flux from unresolved lines. R_colnorm keeps the shape of the matrix and conserves flux.
-- R_fine, the raw matrix resampled row by row onto a 0.05 A model grid with a cubic spline (Guy et
-  al. 2023, appendix on resampling the resolution matrix; resolution_model.py). The lines and the
-  continuum go through R' on the fine grid without rebinning first. R and R_colnorm average the
-  model over each 0.8 A pixel before the matrix, which that appendix calls incorrect for
-  unresolved lines.
-- sigma_t, the fit's own path with this target's per-pixel Gaussian sigma (a Gaussian fit to each
-  column of the merged matrix) in place of the median.
-
-The chi2 is reported in total, per arm, on the line pixels and the continuum pixels, and in the
-four profile_check windows with the chi of the core pixels. Each model's line is also fitted with
-profile_check's fits B and C1s, to give the scale s of the median sigma that the model line itself
-has, next to the data values in profile_check.txt.
-
-A flux table gives, for the lines of the four windows, the fraction of each model line's flux that
-R and R_fine keep, and the observed line flux over the current model's line flux, with the background taken
-from the current model. With an emline file of the DESI pipeline (desispec.emlinefit, a Gaussian
-on a constant continuum fitted to the coadd flux without the resolution matrix) the script also
-lists its fluxes next to the observed fluxes summed here.
-
-INPUTS: the ``_pred.npz`` of predict.py, resolution_matrix.npz of resolution_check.py, and
-optionally the emline file of healpix 26004 (sv3 bright) as the first argument. SEED: none.
-
-COMMAND: from the repository root on the Mac with the C3K_ER build, as profile_check.py,
-``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-09_nautilus_c3k_er_broadline
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-09_nautilus_c3k_er_broadline/eval_resolution.py [emline file]``. Building the
-Cue source takes a few minutes.
-
-OUTPUT: eval_resolution.txt and eval_resolution.png in
-results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/.
+Compares the median LSF with the matrix (R, R_nolibfix, R_colnorm, R_fine) and sigma_t, no refit.
+Expected the blue-line cores to improve and Halpha (s_C1s 1.08) not. Writes eval_resolution.txt.
+Run from the repository root as
+``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-09_nautilus_c3k_er_broadline
+SPS_HOME=<SPS_HOME with the ER spectra> uv run --no-sync python
+experiments/2026-10-09_nautilus_c3k_er_broadline/eval_resolution.py [emline file]``.
 """
 
 import sys
@@ -98,11 +52,7 @@ def apply_banded(data, x):
 
 
 def unit_line(edges, mu, sigma_kms):
-    """Return a unit-flux Gaussian line in f_nu (per Hz), averaged over each pixel.
-
-    The Gaussian is in velocity about ``mu``, as prospect's get_eline_gaussians, so it is a
-    Gaussian in wavelength with sigma mu * sigma_kms / c.
-    """
+    """Return a unit-flux Gaussian line in f_nu (per Hz), averaged over each pixel."""
     sl = mu * sigma_kms / C_KMS
     centre = 0.5 * (edges[1:] + edges[:-1])
     flam = 0.5 * np.diff(erf((edges - mu) / (np.sqrt(2) * sl))) / np.diff(edges)

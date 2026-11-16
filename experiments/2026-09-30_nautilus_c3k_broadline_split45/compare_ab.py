@@ -1,18 +1,17 @@
-"""QUESTION: for 37084, does freeing the forbidden-line broad fraction (run B, forbidden_broad="free")
-change the fit relative to run A (forbidden_broad="shared", f_forb tied to the Balmer f_b)?
-HYPOTHESIS (recorded 2026-10-01, before B converged; plan_T1c_low_high_ion_2026-10-01.md section 2):
-f_forb is dominated by [OIII] and lands near 1.2 x f_b, about 0.2 (A has f_b = 0.181). If the [OIII]
-and Hbeta core residuals in A (-/+/- pattern, design note 6.8 item 5) come from the shared profile,
-the [OIII] core residual shrinks in B; Hbeta's does not, since its profile is unchanged.
+"""Does freeing the forbidden broad fraction (run B) change the fit of 37084 relative to run A?
+
+QUESTION: For 37084, does run B (forbidden_broad="free") change the fit relative to run A
+(forbidden_broad="shared", f_forb tied to the Balmer f_b)?
+HYPOTHESIS (recorded 2026-10-01, before B converged): f_forb is dominated by [OIII] and lands near
+1.2 x f_b, about 0.2 (A has f_b = 0.181). If A's [OIII] and Hbeta core residuals come from the
+shared profile, the [OIII] one shrinks in B and Hbeta's does not.
 INPUTS: results/2026-09-30_nautilus_c3k_broadline_split45/39627770174637084_broad_{shared,free}_split45_unmask_rest9000_seed0.{h5,json}
 SEED: none needed (no random draws).
 COMMAND: uv run python experiments/2026-09-30_nautilus_c3k_broadline_split45/compare_ab.py
-[--b-dir DIR --tag TAG] (a copy of an unconverged B checkpoint can be read from DIR; outputs then go
-to compare_ab_TAG/)
+[--b-dir DIR --tag TAG] (DIR may hold an unconverged B copy, outputs then go to compare_ab_TAG/)
 RESULT: compare_ab/compare_ab.txt next to the figures.
+Assumptions: nautilus 1.0.6 gives no log Z error, only its sampling part (~1/sqrt(N_eff)) is known.
 FIGURES: compare_ab/{corner_ab.png, line_windows_ab.png, fforb_ratio.png}
-NOTE: nautilus 1.0.6 gives no log Z uncertainty (sampler.py, log_z is a logsumexp over shells). The
-importance-sampling part is about 1/sqrt(N_eff); shell-volume and seed-to-seed scatter are unknown.
 """
 
 # %%

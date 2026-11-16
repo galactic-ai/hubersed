@@ -1,24 +1,16 @@
 """Do the mocks nearest the emission_line outliers in line space sit at a prior edge?
 
-QUESTION: For each of the 58 outliers (B class from analysis.py), are the parameters of its 20
-nearest mocks in EW space piled at an edge of the v2 prior (prior too narrow) or inside it (region
-undersampled)?
+QUESTION: for each of the 58 outliers, are the parameters of its 20 nearest mocks in EW space piled
+at an edge of the v2 prior (prior too narrow) or inside it (region undersampled)?
 HYPOTHESIS: none registered. A parameter is at an edge for a class when the share of nearest mocks
 with prior rank u < 0.02 or u > 0.98 exceeds 25% (2% expected at each edge by chance).
-INPUTS: results/2026-11-14_emline_outlier_coverage/{coverage.csv, ew_desi.npz, ew_mocks.npz};
-data/prospector_model/mocks_v2_500000.h5 (priors/theta, theta_labels, failed).
-METHOD: same chi2 as analysis.py part B over the lines of each outlier; the 20 mocks with the lowest
-chi2. u is the rank of a mock's parameter among all not failed mocks, divided by their number, so it
-does not depend on the prior shape. Some priors depend on z (tau_eq, logsfr_ratios), so u mixes
-redshifts.
+INPUTS: results/2026-11-14_emline_outlier_coverage/{coverage.csv, ew_desi.npz, ew_mocks.npz},
+data/prospector_model/mocks_v2_500000.h5.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_emline_outlier_coverage/params.py``.
 RESULT: 2026-11-14, params.txt. No parameter is at a prior edge in any class (largest edge share
-0.08: dust2 and gas_logno low edge, outside class; 0.02 expected) and no single outlier has half
-of its nearest mocks at an edge. Nearest mocks of the outside and tail classes sit low in dust2
-(median u 0.23), gas_logno (0.25) and logzsol (0.27-0.38), high in gas_logu (0.59-0.63) and
-gas_logz (0.60-0.62): a joint corner inside the prior. Assumptions: edges judged per parameter,
-not jointly; u mixes redshifts for z-dependent priors; 20 nearest mocks by line chi2 only.
+0.08). Outside and tail classes sit in a joint corner inside the prior.
+Assumptions: edges per parameter, not joint; u mixes redshifts; 20 nearest mocks by line chi2 only.
 FIGURES: none (params.txt).
 """
 

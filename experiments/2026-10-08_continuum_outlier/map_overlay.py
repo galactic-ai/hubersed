@@ -1,8 +1,7 @@
 """Plot run 1c of 39627757533007793 with the v2 MAP fit of the same spectrum.
 
-Both use the same DESI flux and uncertainty, and chi is shown on the pixels 1c fitted. The MAP
-fit is results/map_fits_outliers310_v2/<tid>.pkl, a Powell fit with Cue nebular emission and the
-GP stochastic SFH prior. Run from the repository root with
+The MAP fit is results/map_fits_outliers310_v2/<tid>.pkl (Powell, Cue nebular emission, GP
+stochastic SFH prior). Chi is on the pixels 1c fitted. Run from the repository root with
 ``uv run python experiments/2026-10-08_continuum_outlier/map_overlay.py``.
 """
 

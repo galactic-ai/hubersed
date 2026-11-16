@@ -1,34 +1,16 @@
-"""QUESTION: how does the fit quality of 37084 compare across the nautilus/MAP steps of 2026-09-24 to
-2026-09-30 when measured on the same pixels?
-METHOD: recompute the max-L chi2 of runs A (shared) and B (free) on (i) their own full-window pixels,
-(ii) the 4448 sky-masked MILES-window pixels the 09-25/09-26 runs used, (iii) the 24 unmasked sky
-pixels, and (iv) the red 7400.8-9000 A pixels. Read the C/O MAP chi2 from the 09-26 map_co pickles.
-CAVEAT: from 09-25 on the data are degraded to 43.6 km/s but keep the raw DESI ivar (keep_ivar=True),
-which overstates the noise of the smoothed flux, so chi2_nu is not in noise units (09-25 analysis.py
-L145). The 09-24 MILES run (2.52) is on a different scale. Compare chi2 on a fixed pixel set instead.
+"""Compare the max-L chi2 of 37084 across the 2026-09-24 to 2026-09-30 fits on fixed pixel sets.
+
+QUESTION: How does the fit quality of 37084 compare across the nautilus and MAP steps of 2026-09-24
+to 2026-09-30 when measured on the same pixels?
+METHOD: Recompute the max-L chi2 of runs A (shared) and B (free) on their full-window pixels, the
+4448 MILES-window pixels of 09-25/09-26, the 24 unmasked sky pixels and red 7400.8-9000 A pixels.
 INPUTS: results/2026-09-30_nautilus_c3k_broadline_split45/39627770174637084_broad_{shared,free}_*.h5
 (or a copy of B via --b-dir), results/2026-09-26_nautilus_c3k_broadline/map_co/*_map_co_{miles,full}.pkl
 SEED: none needed.
 COMMAND: uv run python experiments/2026-09-30_nautilus_c3k_broadline_split45/chi2_ladder.py [--b-dir DIR]
-RESULT: results/2026-09-30_nautilus_c3k_broadline_split45/chi2_ladder.txt. First run 2026-10-08 with B
-at N_eff 453 (B_prelim_1002):
-
-| step | setup | pixels | chi2_nu | chi2 |
-|---|---|---|---|---|
-| 09-24 | MILES lib, tau_in = t_H, nautilus | 4448 MILES window, undegraded | 2.52 | separate scale |
-| 09-25 | C3K_HR, narrow only, nautilus | 4448 | 1.77 (quoted by Nikhil) | |
-| 09-26 | C3K, broadline, nautilus (split 100) | 4448 | 1.32 (quoted by Nikhil) | |
-| 09-26 | + C/O tied / free, MAP | 4448 | 0.980 / 0.979 | 4333.0 / 4329.6 |
-| 09-26 | C/O tied / free, MAP, full window | 5840 (3511-9581 A) | 1.268 / 1.264 | 7370.5 / 7349.5 |
-| 09-30 A | split 45, full window < 9000 A, sky unmasked | 5621 | 0.921 | 5150.0 |
-| 09-30 A | same max-L point, MILES pixels only | 4448 | 0.998 | 4440.8 |
-| 09-30 A | unmasked sky pixels | 24 | 0.861 per pixel | 20.7 |
-| 09-30 A | red 7400.8-9000 A | 1032 | 0.551 per pixel | 568.6 |
-| 09-30 B | f_forb free (prelim, N_eff 453) | 5621 | 0.921 | 5149.5 |
-
-Reading: on the same 4448 pixels A is worse than the C/O MAP by ~108 in chi2 (A fits a wider window
-jointly, split 45 vs 100, and a sampled max-L point vs an optimizer's MAP). The full-window 0.921 is
-low because the red pixels sit at chi2/pixel 0.55, not because the fit improved.
+RESULT: results/2026-09-30_nautilus_c3k_broadline_split45/chi2_ladder.txt. On the 4448 pixels A
+is ~108 worse in chi2 than the C/O MAP. Red pixels at chi2/pixel 0.55 pull A's chi2_nu to 0.921.
+Assumptions: from 09-25 on, degraded data keep the raw DESI ivar, so chi2_nu is not in noise units.
 """
 
 import argparse

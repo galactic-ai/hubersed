@@ -1,13 +1,8 @@
 """Save the max-likelihood spectrum and the log evidence of each fit of fit.py.
 
-As 2026-11-01_poco_repeats/predict.py. The sample with the largest stored lnlike in pmc_final.state
-goes through the prior transform and the model of fit.py; its lnlike is recomputed and must match to
-1e-4. The SSPs are loaded from the cache as in fit.py, and the cache key must hold after each call.
-log Z and its error are pocoMC's (Sampler.evidence) from the same state; fit_model does not write
-them to fit.h5. Run on stampede3 through predict.slurm, or at the end of prod.slurm; TARGETIDs as
-arguments restrict it to those, and --model to those models.
-For the Cue models, sp_cont is the same spectrum with add_neb_emission off (no Cue lines and no
-nebular continuum), the stellar continuum for line fluxes (balmer.py).
+As 2026-11-01_poco_repeats/predict.py, with pocoMC's log Z. For the Cue models sp_cont is the same
+spectrum with add_neb_emission off. TARGETIDs and --model restrict it.
+COMMAND: through predict.slurm, or at the end of prod.slurm.
 OUTPUT: results/2026-11-14_poco_psb_sfh/<TID>/<model>/maxl.npz.
 """
 

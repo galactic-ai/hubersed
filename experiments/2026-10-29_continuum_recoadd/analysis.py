@@ -1,25 +1,19 @@
 """DR1 coadd against PR 2377 recoadd continuum MAPs of the continuum outlier 39627757533007793 (#17).
 
 QUESTION: how do the continuum MAP parameters and residuals change when the SV3 and main spectra
-are recoadded with the PR 2377 row-weighted resolution matrix and the fixed flux-calibration ivar,
-as for the #14 line outlier?
+are recoadded with the PR 2377 row-weighted resolution matrix and the fixed flux-calibration ivar?
 HYPOTHESIS: none registered.
-INPUTS: <TID>_map.npz of the DR1-coadd MAPs (2026-10-28_continuum_c3k_er_rmatrix_map for SV3,
-2026-10-29_continuum_main_survey_map for main) and of the recoadd MAPs in
-results/2026-10-29_continuum_recoadd/<survey>/, each with the data it fitted, copied from
-stampede3. Index bands from $SPS_HOME/data/allindices.dat.
+INPUTS: $SPS_HOME/data/allindices.dat and <TID>_map.npz of 2026-10-28_continuum_c3k_er_rmatrix_map,
+2026-10-29_continuum_main_survey_map and results/2026-10-29_continuum_recoadd/<survey>/.
 SEED: none.
-COMMAND: from the repository root on the Mac,
-``SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+COMMAND: from the repository root,
+``SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-10-29_continuum_recoadd/analysis.py``.
-RESULT: 2026-10-29, dr1_vs_recoadd.txt. chi2/(N-16) drops from 1.874 to 1.047 (SV3) and from
-1.152 to 0.916 (main). The SV3 red end (rest 6300-8800 A, chi2/N 3.0-4.4) falls to 0.84-1.39.
-The Mgb deficit stays (mean chi -0.42 SV3, -0.47 main), the main NaD deficit stays (-0.61) and the
-SV3 Halpha-core deficit shrinks (-1.16 to -0.71). SV3 and main still disagree: afe -0.03 vs 0.30,
-logzsol +0.19 vs -0.13, dust_index -2.5 (edge) vs -1.05. sigma_smooth is 275 vs 277 km/s.
+RESULT: 2026-10-29. chi2/(N-16) falls from 1.874 to 1.047 (SV3) and 1.152 to 0.916 (main). SV3 and
+main still disagree in afe (-0.03 vs 0.30), logzsol (+0.19 vs -0.13) and dust_index (-2.5 vs -1.05).
 Assumptions: MAP only (7 Powell starts), SFH hyperparameters fixed, no calibration polynomial.
-FIGURES: results/2026-10-29_continuum_recoadd/<survey>_dr1_vs_recoadd.png,
-zoom_5100_5400.png (Mgb to Fe5335), dr1_vs_recoadd.txt and snr.txt.
+FIGURES: results/2026-10-29_continuum_recoadd/<survey>_dr1_vs_recoadd.png, zoom_5100_5400.png,
+dr1_vs_recoadd.txt and snr.txt.
 """
 
 # %%

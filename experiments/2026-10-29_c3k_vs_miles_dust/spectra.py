@@ -1,19 +1,9 @@
 """Model spectra of 39633433328091196 from one library at both the MILES and the C3K ER best points.
 
 QUESTION: at the same parameters, how do the MILES and C3K models of 39633433328091196 differ?
-These are C. Hahn's tests 1 and 2.
-
-The points are the 10-08 MILES nautilus max-L (miles_miles_neboff_nodeg_pred.npz) and the C3K ER MAP
-of icx job 3657895 (<TID>_map.npz) with its fixed SFH hyperparameters (hr_maxl.npz). Parameters a
-library's model lacks are dropped (afe for MILES), and parameters a point lacks are set to 0 (afe
-for C3K at the MILES point). ``--lib er`` uses the C3K ER model, data and R matrix of
-2026-10-29_continuum_39633433328091196_map/fit.py; ``--lib miles`` the MILES model and data of
-2026-10-08_continuum_outlier/fit.py (native data, MILES window, nebular off). The script asserts
-that each library at its own point gives back its saved best spectrum.
-
-COMMAND: ``--lib er`` on a stampede3 compute node through spectra_er.slurm; ``--lib miles`` on a
-stampede3 compute node through miles_s3.slurm (or ls6 through ls6.slurm). SPEC_DATA can name a
-folder with the staged spender files.
+INPUTS: miles_miles_neboff_nodeg_pred.npz, <TID>_map.npz and hr_maxl.npz.
+COMMAND: ``--lib er`` on a compute node through spectra_er.slurm; ``--lib miles`` on a compute
+node through miles_s3.slurm (or through ls6.slurm).
 OUTPUT: results/2026-10-29_c3k_vs_miles_dust/spectra_<lib>.npz.
 """
 
@@ -36,7 +26,7 @@ MILES_PRED = (
     PATHS["RESULTS"] / "2026-10-08_continuum_outlier" / f"{TID}_miles_miles_neboff_nodeg_pred.npz"
 )
 HYPERS = ("sigma_reg", "tau_eq", "sigma_dyn", "tau_dyn")
-if os.environ.get("SPEC_DATA"):  # staged spender files, as on stampede3 compute nodes
+if os.environ.get("SPEC_DATA"):  # staged spender files, as on compute nodes
     desi_io.DATA_PATH = Path(os.environ["SPEC_DATA"])
 
 

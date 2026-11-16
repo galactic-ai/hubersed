@@ -1,29 +1,17 @@
 """How large are emission-line equivalent widths in DR1 SV3 bright, for a data-based line prior?
 
-QUESTION: per line, what are the maximum and the 99.9th and 99.99th percentiles of the rest-frame EW
-in FastSpecFit v3.0 and EmFit, for our parent sample (median pixel S/N > 3) and for our outliers?
-These set the upper bound of a U(0, EW_max) amplitude prior, in EW rather than flux.
+QUESTION: per line, what are the max and 99.9th and 99.99th percentile rest-frame EW in FastSpecFit
+v3.0 and EmFit, for the parent sample (median pixel S/N > 3) and for the outliers?
 HYPOTHESIS: none registered.
-INPUTS: data/fastspecfit_v3.0/fastspec-iron-sv3-bright.fits (SPECTYPE GALAXY; EW = FLUX/CONT/(1+z),
-checked to 1e-6) and results/2026-11-06_line_ew_prior/emfit_sv3_bright.fits (extract_emfit.py from
-the VAC v2.3.1 file, or fetch_emfit.py from Data Lab), whose EW is the summed component flux over
-the FastSpecFit continuum at the same line, matched on TARGETID. Outliers are `full` of
-results/prescreened_outliers_postsimbad.npz (231). A FastSpecFit EW counts when EW > 0 and
-EW_IVAR > 0, an EmFit EW when its flux and the continuum are > 0.
+INPUTS: data/fastspecfit_v3.0/fastspec-iron-sv3-bright.fits, emfit_sv3_bright.fits (extract_emfit.py
+or fetch_emfit.py) in the results folder, results/prescreened_outliers_postsimbad.npz.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-06_line_ew_prior/analysis.py``.
-RESULT: 2026-11-07, ew_prior.txt, parent sample (median pixel S/N > 3, 114,136 galaxies). FastSpecFit
-99.99th percentiles: Halpha 544 A, [OIII]5007 518, Hbeta 143, [NII]6584 82, [SII] 46 and 39, [OI]6300
-20, [OIII]4363 12, broad Halpha 429. EmFit agrees for narrow lines; its Balmer totals and broad EWs
-on the FSF continuum are unusable. Outliers exceed the 99.99th percentile in Halpha (1024),
-[OIII]5007 (733), [OIII]4363 (20), [SII]6716 (54) and [ArIII]7135 (30). Assumptions: EmFit EW on the
-FSF continuum; SV3 bright; EmFit v2.3.1. W_j (ew_limits.json) = max(p99.99, outlier max) per line.
-Per free column (ion_limits.json, summed ion EWs): [SII] 89 A, [OI] 26, [ArIII]7135 30, [OIII]4363 20,
-[OII]7325 15, [NII]5755 11, [NeIII] 74, [SIII]6312 10, [SIII]9069 177, H broad 507; broad forbidden
-columns take their ion's narrow W ([OII] 238, [OIII] 1040, [NII] 108). Cue ratios [OI]6363/6300 0.308,
-[NeIII]3968/3869 0.304.
-FIGURES: results/2026-11-06_line_ew_prior/ ew_prior.txt, ew_limits.json (per line), ion_limits.json
-(per free column) and ew_hist.png.
+RESULT: 2026-11-07, ew_prior.txt. FastSpecFit 99.99th percentiles in 114,136 galaxies are Halpha
+544 A, [OIII]5007 518, Hbeta 143. Outliers exceed them in Halpha (1024) and [OIII]5007 (733).
+Assumptions: EmFit EW on the FSF continuum; SV3 bright; EmFit v2.3.1.
+FIGURES: results/2026-11-06_line_ew_prior/ ew_prior.txt, ew_limits.json, ion_limits.json and
+ew_hist.png.
 """
 
 # %%
@@ -128,7 +116,7 @@ for cat, data, mask in (("FSF", fsf, outlier), ("EmFit", emfit, em_outlier)):
         lines.append(
             f"{cat:10} {name:16} {na:7d} {ma:10.1f} {qa[0]:8.1f} {qa[1]:8.1f}   {no:5d} {mo:8.1f}"
         )
-# W_j of the uniform EW prior (Nikhil 2026-11-07): per FastSpecFit line, the larger of the parent
+# W_j of the uniform EW prior: per FastSpecFit line, the larger of the parent
 # 99.99th percentile and the largest outlier EW
 limits = {}
 for name, ew in fsf.items():
@@ -139,7 +127,7 @@ lines += ["", "W_j = max(parent p99.99, outlier max), FastSpecFit:"]
 lines += [f"  {name:16} {w:8.1f}" for name, w in limits.items()]
 
 
-# W per free column (Nikhil 2026-11-07): per galaxy, the sum of the ion's FastSpecFit EWs, a missing
+# W per free column: per galaxy, the sum of the ion's FastSpecFit EWs, a missing
 # or undetected line counting zero; lines FastSpecFit lacks ([OI]6363, [NeIII]3968) are added with
 # Cue's median ratio to the measured line; broad forbidden columns take their ion's narrow W.
 def cue_ratio(missing, measured, n=500, seed=0):

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Max-likelihood spectra (predict.py) of the targets given as arguments, one process per skx-dev node.
-# With more targets than nodes, a node runs its targets in turn. Submit from the repository root on
-# stampede3, after their prod jobs, with one node per target:
+# With more targets than nodes, a node runs its targets in turn. Submit from the repository root,
+# after their prod jobs, with one node per target:
 #   sbatch -N <n> -n <n> experiments/2026-11-01_poco_repeats/predict.slurm <TARGETID> [<TARGETID> ...]
 #SBATCH -J predr1101
 #SBATCH -p skx-dev

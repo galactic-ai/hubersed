@@ -1,5 +1,10 @@
 """Helpers and the nautilus run for the 2026-09-28_nautilus_c3k_broadline_shared experiment.
 
+SUPERSEDED BY: experiments/2026-09-30_nautilus_c3k_broadline_split45.
+Same fit with three changes, among them a 45 km/s narrow and broad split.
+
+Two-component line model with a shared forbidden broad fraction and a split of ``SIGMA_SPLIT``
+(eline_sigma prior 10-50 km/s), fitted only blueward of ``--rest-max``.
 Run from the repository root with
 ``uv run python experiments/2026-09-28_nautilus_c3k_broadline_shared/fit.py --pool 24
 --n-batch 480``. ``--check-only`` runs the setup checks and exits without sampling.
@@ -39,28 +44,7 @@ N_EFF = 2000
 
 
 def load_data(tid, rest_max=9000.0):
-    """Load one DESI spectrum in maggies, degraded to ``TARGET_KMS`` where DESI is sharper.
-
-    The whole spectrum is degraded before pixels redward of ``rest_max`` are masked.
-
-    Parameters
-    ----------
-    tid : int
-        DESI TARGETID.
-    rest_max : float
-        Reddest rest-frame wavelength fitted, in Angstrom.
-
-    Returns
-    -------
-    z : float
-        Redshift.
-    flux, unc : np.ndarray
-        Degraded flux and the original uncertainty in maggies on ``WAVE_OBS``. Pixels outside
-        ``good`` have zero uncertainty.
-    good : np.ndarray of bool
-        Pixels not masked by the pipeline, inside the C3K_HR window and blueward of
-        ``rest_max``.
-    """
+    """Return z, flux, unc and good in maggies, degraded and cut redward of ``rest_max`` A rest."""
     s = load_spectrum(tid)
     z = float(s.redshift.value)
     flux = to_maggies(WAVE_OBS * u.AA, s.flux).value
@@ -76,24 +60,7 @@ def load_data(tid, rest_max=9000.0):
 
 
 def make_params(z):
-    """Build the parameter specification of the two-component line model.
-
-    tau_in is fixed at the age of the universe at ``z``. sigma_dyn, tau_dyn, sigma_reg and
-    tau_eq get log-uniform priors. The broad-line parameters, the forbidden-line width and the
-    shared forbidden broad fraction come from ``broadline.add_broad_params`` with a split of
-    ``SIGMA_SPLIT``, which narrows the eline_sigma prior to 10-50 km/s. Every other parameter keeps
-    the bounds of the v2 MAP fits.
-
-    Parameters
-    ----------
-    z : float
-        Redshift.
-
-    Returns
-    -------
-    dict
-        The parameter specification.
-    """
+    """Build the two-component line parameters with the shared forbidden broad fraction."""
     cont_model, cont_tmpl = build_continuum_model(z)
     _, tmpl = build_full_cue_model(cont_tmpl, cont_model.theta, cont_model)
     tmpl["tau_in"]["isfree"] = False
@@ -118,36 +85,12 @@ def make_params(z):
 
 
 def make_model(z):
-    """Build the two-component line model.
-
-    Parameters
-    ----------
-    z : float
-        Redshift.
-
-    Returns
-    -------
-    hubersed.sps.broadline.TwoCompLineModel
-        The model.
-    """
+    """Build the two-component line model."""
     return broadline.TwoCompLineModel(make_params(z))
 
 
 def make_obs(flux, unc, mask):
-    """Wrap a spectrum as a prospect observation with the resolution of the degraded data.
-
-    Parameters
-    ----------
-    flux, unc : np.ndarray
-        Flux and uncertainty in maggies on ``WAVE_OBS``.
-    mask : np.ndarray of bool
-        Pixels to fit.
-
-    Returns
-    -------
-    list
-        The prospect observations.
-    """
+    """Wrap a spectrum as a prospect observation with the resolution of the degraded data."""
     return build_obs(spec=flux, unc=unc, mask=mask, resolution=RES, wavelength=WAVE_OBS)
 
 
@@ -155,26 +98,7 @@ _STATE = {}
 
 
 def loglike(theta, tid, rest_max=9000.0):
-    """Return the log likelihood of ``theta`` for one galaxy.
-
-    Each process builds its own model, observation and Cue source on its first call and keeps
-    them in ``_STATE``. Pool workers cannot receive them from the main process, because the Cue
-    emulator cannot be pickled and JAX is not fork safe, so the pool uses spawn.
-
-    Parameters
-    ----------
-    theta : np.ndarray
-        Free parameters in the order of ``make_model(z).theta_labels()``.
-    tid : int
-        DESI TARGETID.
-    rest_max : float
-        Reddest rest-frame wavelength fitted, see ``load_data``.
-
-    Returns
-    -------
-    float
-        The log likelihood, with the prior left to the sampler.
-    """
+    """Return the log likelihood of ``theta``, with the model cached per spawned process."""
     key = (tid, rest_max)
     if key not in _STATE:
         z, flux, unc, good = load_data(tid, rest_max)
@@ -185,25 +109,7 @@ def loglike(theta, tid, rest_max=9000.0):
 
 
 def main(tid, rest_max, pool, n_batch, timeout, out, check_only=False):
-    """Check the library and resolution setup, then run or resume nautilus.
-
-    Parameters
-    ----------
-    tid : int
-        DESI TARGETID.
-    rest_max : float
-        Reddest rest-frame wavelength fitted, see ``load_data``.
-    pool : int
-        Number of spawned worker processes.
-    n_batch : int or None
-        Likelihood calls per batch. None uses the nautilus default.
-    timeout : float
-        Seconds before the sampler stops and saves. Rerunning resumes from the checkpoint.
-    out : pathlib.Path
-        Directory for the checkpoint and its run configuration.
-    check_only : bool
-        Run the setup checks and return before sampling.
-    """
+    """Check the library and resolution setup, then run or resume nautilus."""
     z, flux, unc, good = load_data(tid, rest_max)
     model = make_model(z)
 

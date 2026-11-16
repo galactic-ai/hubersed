@@ -1,12 +1,8 @@
 """Pick galaxies for the first Cue line-flux fits, 19 at even stellar-mass ranks plus the target.
 
-The ranks are round(linspace(0, N - 1, 19)) of lineflux_table.fits sorted by LOGMSTAR, so the pick
-spans the sample's mass range and depends on nothing random.
-
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/subset.py`` from
 the repository root.
-
-OUTPUT: subset_20.txt (TARGETID per line) in results/2026-10-14_cue_lineflux_calibration/.
+OUTPUT: subset_20.txt in results/2026-10-14_cue_lineflux_calibration/.
 """
 
 import numpy as np

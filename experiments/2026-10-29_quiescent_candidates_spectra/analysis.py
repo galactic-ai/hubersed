@@ -3,13 +3,10 @@
 QUESTION: what do the SV3 spectra and Legacy Survey images of the quiescent continuum outliers
 look like, before one is picked as the next target?
 HYPOTHESIS: none registered.
-INPUTS: SV3 DR1 coadds from hubersed.io.desi.load_spectrum. RA and Dec from the METADATA of
-data/fastspec-iron-sv3-bright.fits. Legacy Survey DR10 griz jpeg cutouts (256 px, 0.262"/px)
-from spender DESI.get_image, cached in results/2026-10-29_quiescent_candidates_spectra/cutouts/.
-The six TARGETIDs are the Halpha EW 0 rows (ranks 1, 2, 3, 4, 5, 7) of
-results/2026-10-21_continuum_outlier_snr/table.txt, whose code is not committed.
+INPUTS: data/fastspec-iron-sv3-bright.fits, results/2026-10-21_continuum_outlier_snr/table.txt
+(code not committed) and results/2026-10-29_quiescent_candidates_spectra/cutouts/.
 SEED: none.
-COMMAND: from the repository root on the Mac,
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-29_quiescent_candidates_spectra/analysis.py``.
 RESULT: pending.
 FIGURES: results/2026-10-29_quiescent_candidates_spectra/spectra_cutouts.png.

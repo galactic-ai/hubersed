@@ -1,29 +1,17 @@
 """Recovery of gas O/H from the line-flux mocks with flat and Nicholls N/O and C/O priors.
 
-QUESTION: with strong lines only, can Cue recover gas O/H when N/O and C/O follow the Nicholls+17
-relations, with flat priors and with the relations as priors? Does the prior dominate when the true
-N/O is 0.3 dex off the relation?
-
-HYPOTHESIS: flat priors trade Z against N/O, so recovered Z is biased low at high Z; the prior
-removes most of that bias. If the prior dominates, the control mocks shift Z by about
-offset / (d gas_logno / d gas_logz), about +-0.34 dex near solar.
-
-INPUTS: mocks/mock_table.fits (mocks.py) and mocks/fits/<TARGETID>_strong_emfit_mu0.4_zs-0.41
-[_pnicholls].npz (fit.py --table --prior) in results/2026-10-14_cue_lineflux_calibration/. Recovered
-12+log(O/H) = gas_logz + 8.71, the same scale as the truth. Points more than e^-30 below the
-heaviest are dropped. The mocks and the fits share Cue and the ionizing spectrum, so this tests
-identifiability, not whether Cue fits real galaxies. SEED: none.
-
+QUESTION: with strong lines only, can Cue recover gas O/H when N/O and C/O follow Nicholls+17, with
+flat priors and with the relations as priors? Does the prior dominate when N/O is 0.3 dex off?
+HYPOTHESIS: flat priors trade Z against N/O and bias Z low at high Z. The prior removes most of it.
+If it dominates, control Z shifts by offset / (d gas_logno / d gas_logz), ~+-0.34 dex near solar.
+INPUTS: mocks/mock_table.fits and mocks/fits/<TARGETID>_strong_emfit_mu0.4_zs-0.41[_pnicholls].npz
+in results/2026-10-14_cue_lineflux_calibration/.
+SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/analysis_mocks.py``
 from the repository root.
-
-RESULT: 54 mocks (6 Z x 2 U x 3 donors, plus 18 N/O-offset controls). Not as expected: flat
-priors recover O/H well, mean bias -0.004 dex, rms 0.040, 68% coverage 0.75 (prior: -0.009, 0.036,
-0.78), including at 8.8-9.0, and N/O is recovered to about +-0.03 dex. Control Z shifts are -0.015
-to +0.025 dex against +-0.33-0.39 for full prior dominance. So within Cue the strong lines separate
-Z from N/O, and the flat Cue MZR of the real subset is not an identifiability problem; it points to
-real metal-rich spectra that Cue does not reproduce at their true Z.
-
+RESULT: not as expected. 54 mocks. Flat priors recover O/H with bias -0.004 dex, rms 0.040, 68%
+coverage 0.75 (prior -0.009, 0.036, 0.78). Control Z shifts are -0.015 to +0.025 dex.
+Assumptions: mocks and fits share Cue and the ionizing spectrum, so this tests identifiability only.
 FIGURES: mocks/compare_mocks.txt and mocks/compare_mocks.png.
 """
 

@@ -1,25 +1,12 @@
-"""Which SV3 bright exposure carries the excess of each repeat-observed outlier of targets.txt (#17)?
+"""Which SV3 bright exposure carries the excess of each repeat-observed targets.txt outlier (#17)?
 
-QUESTION: for the outliers of targets.txt (the 16 labelled sky or data artifact in
-2026-11-01_repeats92/classes.tsv, then the 5 whose repeat has a wrong redshift and 3 star-forming
-galaxies with an SV3 offset, then the 22 gallery92 outliers still unsorted on 2026-11-02, which have
-no repeat), which single SV3 bright exposures differ from the target's repeat spectrum (or from the
-median of its SV3 exposures when there is no repeat), and do those
-exposures have bright sky, poor seeing, a bad petal sky model, a fibre flag or a fibre offset?
+QUESTION: which SV3 bright exposures of the targets.txt outliers differ from the repeat spectrum,
+and do they have bright sky, poor seeing, a bad petal sky model, a fibre flag or a fibre offset?
 HYPOTHESIS: none registered. If sky light causes the flag, the excess should sit in the exposures
 with the brightest sky or a bad petal sky chi2.
-INPUTS: results/2026-11-02_exposure_checks/exposures/<TARGETID>.npz (extract.py, DR1 healpix spectra files);
-the reference spectrum, the other DR1 coadd of the same target with the highest TSNR2_BGS and the
-same redshift, from results/2026-11-01_repeats92/sparcl_spectra.npz; when every repeat has a wrong
-redrock redshift, the deepest repeat anyway (its flux does not depend on z), scored at the SV3
-redshift; for NOREF targets, whose repeat is another object, the pixel median of the SV3 exposures; sky_mag_g_spec, seeing_gfa,
-transparency_gfa and efftime_spec of each exposure from
-results/2026-10-31_spectrum_qa_cont_outliers/sv3_bright_exposures.csv; PETALQA and FIBERQA of each
-exposure-qa-<EXPID>.fits (iron exposures folder), cached in results/2026-11-02_exposure_checks/exposure_qa/;
-encoders and seed 0 flows as 2026-11-01_repeats92/analysis.py.
-Each exposure's arms are joined ivar-weighted as spender does; the excess is the median of exposure
-minus reference flux in four observed windows (1e-17 erg/s/cm2/A), and each exposure is scored on
-both flows after spender's steps.
+INPUTS: exposures/<TARGETID>.npz and exposure_qa/ in results/2026-11-02_exposure_checks/,
+results/2026-11-01_repeats92/sparcl_spectra.npz, seed 0 flows as 2026-11-01_repeats92/analysis.py,
+results/2026-10-31_spectrum_qa_cont_outliers/sv3_bright_exposures.csv.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-02_exposure_checks/analysis.py``.
 RESULT: pending.

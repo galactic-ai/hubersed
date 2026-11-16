@@ -1,21 +1,18 @@
 """Does the prospector fork's resolution matrix path reproduce hubersed's ResolutionMatrixModel?
 
-QUESTION: at one parameter point of 39627770174637084, do the fork's SpecModel through
-prospect.observation.ResolutionMatrixSpectrum and the 10-13 hubersed ResolutionMatrixModel give the
-same model spectrum and lnL on the same data, mask and R?
-HYPOTHESIS: they agree to max |dmodel|/sigma < 0.1 and |dlnL| < 1; the old path smooths with
-hubersed's smooth_log_uniform and the new one with sedpy's native Fourier path.
-INPUTS: the 10-13 max-L point (_pred.npz `best`) with eline_fbroad = 0 and eline_sigma_forb =
-eline_sigma, so the old two-component model has one narrow width; the data, uncertainty and
-fitted pixels of that file; R from 10-13 model_setup.COADD (the recoadd). C3K_ER Cue, afe 0.
+QUESTION: at one parameter point of 39627770174637084, do the fork's ResolutionMatrixSpectrum and
+the 10-13 ResolutionMatrixModel give the same model spectrum and lnL on the same data, mask and R?
+HYPOTHESIS: they agree to max |dmodel|/sigma < 0.1 and |dlnL| < 1.
+INPUTS: the 10-13 max-L point (_pred.npz `best`) with eline_fbroad = 0, R from 10-13
+model_setup.COADD. C3K_ER Cue, afe 0.
 SEED: none.
-COMMAND: from the repository root on the Mac,
+COMMAND: from the repository root,
 ``PYTHONPATH=<C3K_ER fsps site>:experiments/2026-10-13_nautilus_resolution_matrix
-SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
+SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-11-06_rmatrix_port_check/analysis.py``.
-RESULT: 2026-11-06, check.txt. Pass: max |new - old|/sigma 0.001 (rms < 0.001) over 5530 pixels,
-lnL -5169.31 old vs -5169.44 new (-0.13). The old path reproduces the saved max-L (sp_best exactly).
-Assumptions: one parameter point; narrow lines only; Mac C3K_ER build; recoadd R.
+RESULT: 2026-11-06, check.txt. Pass. Max |new - old|/sigma 0.001 over 5530 pixels, lnL -5169.31 old
+vs -5169.44 new (-0.13).
+Assumptions: one parameter point; narrow lines only; one C3K_ER build; recoadd R.
 FIGURES: results/2026-11-06_rmatrix_port_check/ check.txt and check.png.
 """
 

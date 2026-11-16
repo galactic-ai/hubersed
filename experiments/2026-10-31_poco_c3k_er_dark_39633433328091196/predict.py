@@ -1,12 +1,7 @@
 """Save the model spectrum of the max-likelihood pocoMC sample of the C3K ER dark fit (#17).
 
-The sample with the largest stored lnlike in pmc_final.state (poco_neff1024_forktest) goes through
-the prior transform and the model of fit.py with C3K_ER. Its lnlike is recomputed and must match the
-stored one. The output has the keys of the MAP npz files (wave, z, flux, unc, good, labels, best,
-sp_best), so analysis.py can plot it like the dark MAP.
-
-FSPS must be the C3K_ER build with AFE_FLAG first on PYTHONPATH, with SPS_HOME holding the ER
-spectra. Run on stampede3 through predict.slurm.
+FSPS must be the C3K_ER build with AFE_FLAG first on PYTHONPATH, SPS_HOME holding the ER spectra.
+Run through predict.slurm.
 OUTPUT: results/2026-10-31_poco_c3k_er_dark_39633433328091196/<TID>_poco_maxl.npz.
 """
 

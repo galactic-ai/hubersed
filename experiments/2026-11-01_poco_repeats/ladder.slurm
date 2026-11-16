@@ -1,7 +1,7 @@
 #!/bin/bash
 # One fit_ladder.py action for one target and step, with that step's FSPS build. runfork is the
 # production pocoMC run on 8 spr nodes as prod.slurm; check and predict run one process and are
-# submitted to one skx-dev node. Submit from the repository root on stampede3:
+# submitted to one skx-dev node. Submit from the repository root:
 #   TID=<TARGETID> STEP=<miles|c3k_hr|c3k_hr_afe|recoadd> ACTION=runfork sbatch --export=ALL \
 #       -J lad_<STEP>_<TID> experiments/2026-11-01_poco_repeats/ladder.slurm
 #   POOL=<n> sets the workers per node, TLIM=<s> the fit time (resubmit to resume), CORE=<n> the core of check or predict. TID=... STEP=... ACTION=check sbatch --export=ALL -p skx-dev -N 1 -t 01:00:00 ... ladder.slurm

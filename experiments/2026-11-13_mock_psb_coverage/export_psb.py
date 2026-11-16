@@ -1,8 +1,7 @@
-"""Save the DR1 SV3 bright coadds of the gallery105 PSBs for indices.py on stampede3.
+"""Save the DR1 SV3 bright coadds of the gallery105 PSBs for indices.py.
 
-The PSBs are the rows of 2026-11-13_gallery105/review.tsv with review_class psb. Spectra come from
-load_by_index (the coadds the flows scored), on the DESI grid.
-COMMAND: ``uv run --no-sync python experiments/2026-11-13_mock_psb_coverage/export_psb.py`` (Mac).
+The PSBs are the review_class psb rows of 2026-11-13_gallery105/review.tsv, from load_by_index.
+COMMAND: ``uv run --no-sync python experiments/2026-11-13_mock_psb_coverage/export_psb.py``.
 OUTPUT: results/2026-11-13_mock_psb_coverage/psb_spectra.npz (nn, targetid, z, wave, flux in
 1e-17 erg/s/cm2/A, ivar).
 """

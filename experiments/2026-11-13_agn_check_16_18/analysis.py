@@ -1,31 +1,10 @@
-"""Are selected gallery105 figures AGN or PSB? Their DR1 coadds, line windows, MgII, Halpha and photometry.
+"""Are selected gallery105 figures AGN or PSB? DR1 coadds, line windows, MgII, Halpha, photometry.
 
-Targets (TARGETS) are 16, 18, 22, 41, 42, 67, 74, 77, 78, 81 (coadd comparison only), 82, 86, 89,
-96 and 99 (coadd comparison), 102 (no SPARCL coadds, screened out) and 104.
-
-QUESTION: 16 (39627788365337938) has a featureless continuum with no break, Hbeta emission and no
-[OII]; 18 (39627788382109772) has a possibly broad MgII (FastSpecFit sigma 1322 km/s, S/N 4.0), narrow
-Hbeta and [OIII] and almost no [OII]. Do all their DR1 coadds agree in continuum and lines, is the
-MgII of 18 broad in each coadd, and what do the optical and WISE colours say?
+QUESTION: do all DR1 coadds of 16 and 18 agree in continuum and lines, is the possibly broad MgII
+of 18 broad in each coadd, and what do the optical and WISE colours say?
 HYPOTHESIS: none registered. Descriptive.
-INPUTS: results/2026-11-10_data_quality_screen/sparcl_spectra.npz (all DR1 coadds of each target,
-SPARCL) and repeats.csv (number of coadds the flows flag; which coadd is not saved);
-data/fastspec-iron-sv3-bright.fits (METADATA photometry, FASTSPEC fit values).
-METHOD: good pixels have mask 0 and ivar > 0. Each coadd is put in its own rest frame and divided
-by its median over rest 4200-4600 A. The ratio panel is each coadd over the deepest (largest
-COADD_NUMEXP, then TSNR2_BGS), 51 px median filter. The MgII fit on each coadd over rest
-2700-2900 A is a linear continuum plus two Gaussians at 2796.35 and 2803.53 A (vacuum, from memory)
-with one shared velocity and sigma and free amplitudes, weighted by ivar (scipy curve_fit). sigma
-is not corrected for the instrument (about 50-70 km/s, small next to the widths tested). Fe II
-emission is not modelled. For broad Halpha, on each coadd over rest 6480-6650 A, a linear
-continuum with narrow Halpha and [NII] 6548/6584 (ratio 1/3, one velocity and sigma <= 400 km/s)
-is fit with and without one broad Halpha Gaussian (sigma 400-5000 km/s); dBIC = dchi2 - 3 ln N,
-positive favours the broad line. Line wavelengths and the 1/3 ratio are from memory. Colours are
-AB from the Legacy Surveys fluxes (nanomaggies). W1-W2 in Vega adds
-3.339 - 2.699 = 0.640 (m_AB = m_Vega + dm, WISE All-Sky Explanatory Supplement IV.4.h Table 3, the
-offsets DR9 uses), for the Stern et al. (2012, arXiv:1205.0811) AGN cut W1-W2 >= 0.8 (Vega), set at
-W2 <~ 15.05 (Vega, 10 sigma) in COSMOS; it picks AGN-dominated sources, AGN fraction >~ 80% (their
-Fig. 2 caption, wise_cosmos.tex l.262-264).
+INPUTS: results/2026-11-10_data_quality_screen/sparcl_spectra.npz and repeats.csv,
+data/fastspec-iron-sv3-bright.fits.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-13_agn_check_16_18/analysis.py``.
 RESULT: pending.

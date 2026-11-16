@@ -1,10 +1,10 @@
 #!/bin/bash
 # Multi-start MAP of one candidate (2026-10-18_candidate_map.py) on one vm-small node.
 # Starts 0..NSTART-1 run at once, each pinned to its own pair of cores. Start 0 is the
-# unjittered start, so it repeats the Mac quick MAP in the ls6 environment.
+# unjittered start, so it repeats the local quick MAP in the cluster environment.
 # After the fits, the report step writes <TID>_map_s<K>.txt and .png for each finished start.
 # FIT_TID stays unset: map.py reads it at import for the #14 start file.
-# Submit from the repository root on ls6:
+# Submit from the repository root:
 #   sbatch --export=ALL,TID=39628357133926597 experiments/2026-10-18_candidate_map/fit.slurm
 #SBATCH -J candmap
 #SBATCH -p vm-small

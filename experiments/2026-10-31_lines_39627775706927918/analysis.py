@@ -1,19 +1,15 @@
-"""Are the emission lines of 39627775706927918, robust6 target 1 (#17), real, and what ionizes them?
+"""Are the emission lines of 39627775706927918 (robust6 target 1, #17) real, and what ionizes them?
 
 QUESTION: are the emission features left by the C3K continuum fit real lines, what ionizes them,
 and are the red-end spikes sky residuals?
 HYPOTHESIS: none registered.
-INPUTS: FastSpecFit iron sv3 bright (data/fastspec-iron-sv3-bright.fits, fastspecfit 2.5.1);
-2026-10-31_poco_robust6 max-likelihood npz; DR1 single exposures (extract.py, <TID>_exposures.npz).
-The Kauffmann+03 (astro-ph/0304239, sec 3) and Kewley+01 (astro-ph/0106324, [NII] line) lines and
-the WHAN classes of Cid Fernandes+11 (1012.4426, sec 5) are read from the TeX.
+INPUTS: data/fastspec-iron-sv3-bright.fits, 2026-10-31_poco_robust6 max-likelihood npz,
+<TID>_exposures.npz (extract.py); Kauffmann+03 (astro-ph/0304239, sec 3), Kewley+01
+(astro-ph/0106324) and Cid Fernandes+11 (1012.4426, sec 5).
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_lines_39627775706927918/analysis.py``.
-RESULT: no line detected (FastSpecFit Halpha flux 0, every line S/N < 1.5; WHAN passive, BPT not
-classifiable). Every residual spike, the one near Halpha too (rest ~6551 A), is in EXPID 87710 only,
-not 87469, so they are single-exposure artifacts.
-Against the main bright coadd (1 exposure, 1254.5 s), median SV3/main is 0.72-0.74 for 87469
-(flat in wavelength) and 1.13-1.17 for 87710, which also rises above 2 below ~4700 A observed.
+RESULT: no line detected (FastSpecFit Halpha flux 0, every line S/N < 1.5; WHAN passive). Every
+residual spike is in EXPID 87710 only, not 87469, so they are single-exposure artifacts.
 Assumptions: FastSpecFit 2.5.1 fluxes and EWs as given; spikes picked at chi > 5 on the coadd.
 FIGURES: results/2026-10-31_lines_39627775706927918/ lines.txt, bpt_whan.png, spikes.png,
 exposures_main.png (with data/coadd-main-bright-26275.fits).

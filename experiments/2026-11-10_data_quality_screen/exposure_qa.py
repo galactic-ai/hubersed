@@ -1,23 +1,16 @@
 """Do per-exposure QA columns separate the gallery92 artifacts from the physical outliers?
 
-QUESTION: For each target, take the worst value over its SV3 bright exposures of the per-exposure
-fibre QA (QAFIBERSTATUS, DELTA_X/Y, fibre EFFTIME_SPEC) and of its petal's QA (sky chi2 and sky
-throughput rms per arm, STARRMS, NSTDSTAR, throughput fractions, WORSTREADNOISE). Which columns flag
-the gallery92 artifacts (bad_sky above all) and not the physical classes?
+QUESTION: which fibre and petal QA columns of each target's worst SV3 bright exposure flag the
+gallery92 artifacts (bad_sky above all) and not the physical classes?
 HYPOTHESIS: none stated before the run.
-INPUTS: results/2026-11-10_data_quality_screen/{targets.npz, exposure.fits} (fetch.py); the DR1
-exposure-qa-<EXPID>.fits files (FIBERQA per fibre, PETALQA per petal), from the 2026-11-02 cache in
-results/2026-11-02_exposure_checks/exposure_qa/ or downloaded from the public DR1 iron exposures
-folder into results/2026-11-10_data_quality_screen/exposure_qa/. Targets are matched by TARGETID in
-FIBERQA; a target's petal row is PETALQA at its PETAL_LOC in that exposure. Labels as analysis.py.
+INPUTS: results/2026-11-10_data_quality_screen/{targets.npz, exposure.fits} and the
+exposure-qa-<EXPID>.fits files in results/2026-11-02_exposure_checks/exposure_qa/ or
+results/2026-11-10_data_quality_screen/exposure_qa/.
 SEED: none.
 COMMAND: ``uv run python experiments/2026-11-10_data_quality_screen/exposure_qa.py``.
-RESULT: all 288 exposures, all 2,457 targets matched. No column separates: share above the control
-p95 of the worst petal sky chi2 is bad_sky 2/10, artifacts 24%, physical 11%, control 5%; sky
-throughput rms 20/13/9/5%; STARRMS 10/13/2/5%. Per-exposure QAFIBERSTATUS bits fire at similar
-rates in every group (bits 9, 10 most often). bad_sky targets have a shallower worst exposure (fibre
-EFFTIME median 108 s vs 168 s physical). DESI's QA does not flag the hand-labelled sky artifacts.
-Assumption: the worst exposure per target summarises the per-exposure QA.
+RESULT: no column separates. Worst petal sky chi2 above the control p95 in bad_sky 2/10, artifacts
+24%, physical 11%, control 5%. DESI's QA does not flag the hand-labelled sky artifacts.
+Assumptions: the worst exposure per target summarises the per-exposure QA.
 FIGURES: none (exposure_qa.txt).
 """
 

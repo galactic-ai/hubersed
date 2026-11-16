@@ -1,15 +1,9 @@
 """Rebuild a random subset of the v2 mocks with the continuum and the emission lines saved apart.
 
-The stored mocks keep only continuum + lines. This rebuilds mocks with the code that made them
-(2026-11-09_mocks_v2_outliers/mocks.py, loaded by path; draw_params, setup_worker and the mock
-model class unchanged, mock i drawn from default_rng([SEED, i]) and the same R bank row) and saves,
-after model.predict, the returned spectrum, the prospect fork's _resolved_continuum (stars and
-nebular continuum, after R) and _resolved_lines (all lines, free columns included). The subset is
-20,000 indices from default_rng(0).choice(500000, 20000, replace=False), sorted.
+Same code, draws and R bank rows as 2026-11-09_mocks_v2_outliers/mocks.py, for 20,000 indices from
+default_rng(0).choice(500000, 20000, replace=False). --cache loads SSPs, --nparts splits the subset.
 COMMAND: ``python rebuild.py <mocks.py> <out.h5> [--n 20000] [--pool 0] [--gib-worker 8] [--cache
-<ssp cache>] [--part k --nparts K]`` (stampede3, run.slurm; pool sized from the node's commit room as
-mocks.py). With --cache the SSPs are loaded, not built; with --nparts the sorted subset is split
-into K slices (np.array_split) and slice k is rebuilt.
+<ssp cache>] [--part k --nparts K]`` (run.slurm).
 OUTPUT: <out.h5> with index, redshift, flux (returned spectrum), continuum, lines, ok.
 """
 
@@ -71,11 +65,7 @@ def task(args):
 
 
 def cached_pool(lad, cache, npool, gib_worker):
-    """Return the ladder's forked pool with the SSPs loaded from ``cache`` instead of built.
-
-    As the ladder's node_pool (same population flags, speclib free, pool sizing and pinning), but
-    the SSP slots come from hubersed.sps.ssp_cache (2026-11-13_ssp_cache_c3k_er), checked there.
-    """
+    """Return the ladder's forked pool with the SSPs loaded from ``cache`` instead of built."""
     import multiprocessing as mp
     import os
 

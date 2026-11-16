@@ -1,8 +1,7 @@
 """Save the DESI DR1 spectra (survey, program, z) of the Tang et al. sample from the Astro Data Lab.
 
-Tang et al. (arXiv:2611.02580) sent their 1,199 TARGETIDs by email; the list is
-results/2026-11-10_prescreen_replay/tang_desi_targetid.txt. One row per DR1 spectrum in
-desi_dr1.zpix, so a target can appear more than once.
+One desi_dr1.zpix row per DR1 spectrum of the TARGETIDs in
+results/2026-11-10_prescreen_replay/tang_desi_targetid.txt.
 COMMAND: ``uv run --no-sync python experiments/2026-11-10_prescreen_replay/fetch.py``.
 OUTPUT: results/2026-11-10_prescreen_replay/tang_zpix.fits.
 """

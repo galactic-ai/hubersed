@@ -1,6 +1,6 @@
 #!/bin/bash
 # Build and check the C3K ER SSP cache (build.py) with the environment of the mock and ladder jobs.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch experiments/2026-11-13_ssp_cache_c3k_er/build.slurm
 # The cache is written to /scratch (Corral is not mounted on compute nodes); copy it to
 # data/ssp_cache/ on the login node afterwards.

@@ -1,24 +1,8 @@
 """Posterior correlations of the line profile parameters with the gas and dust parameters.
 
-QUESTION: in the converged C3K_ER broadline fit of 39627770174637084, do the line profile parameters
-(eline_fbroad, eline_sigma_broad, eline_vbroad, eline_sigma, eline_sigma_forb) correlate with the
-Cue gas parameters (gas_logz, gas_logu, gas_lognH, gas_logno, gas_logco) and the dust parameters?
-HYPOTHESIS: the profile only moves flux within each line, so it couples to the gas parameters
-only through blended lines (Halpha + [NII], [SII], [OII]). Correlations should be weak.
-INPUTS: results/2026-10-09_nautilus_c3k_er_broadline/<stem>_pred.npz from predict.py, with
-<stem> = 39627770174637084_er_broad_shared_split45_rest9000_seed0. Points and log_w are physical
-parameter values and nautilus log weights.
-SEED: none.
-COMMAND: from the repository root,
-uv run python experiments/2026-10-09_nautilus_c3k_er_broadline/line_gas_corr.py
-RESULT: see line_gas_corr.txt. Two parameters sit on prior edges (eline_sigma_forb at its 10 km/s
-floor, gas_logco near its log 5.4 ceiling), so their correlations are truncated.
-FIGURES: results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/line_gas_corr.txt and
-line_gas_corr.png.
-
-Pearson is the weighted correlation of each pair. Partial is the correlation of each pair with all
-other 27 parameters held fixed, from the inverse of the weighted covariance of all 29. Both are
-linear measures and miss curved degeneracies.
+Expected weak correlations, through blended lines only. Writes line_gas_corr.txt and
+line_gas_corr.png. Run from the repository root with
+``uv run python experiments/2026-10-09_nautilus_c3k_er_broadline/line_gas_corr.py``.
 """
 
 # %%

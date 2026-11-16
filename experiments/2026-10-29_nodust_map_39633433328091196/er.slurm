@@ -1,8 +1,8 @@
 #!/bin/bash
-# C3K ER MAP of 39633433328091196 with dust off (fit.py --lib er), on one stampede3 icx node: check,
+# C3K ER MAP of 39633433328091196 with dust off (fit.py --lib er), on one icx node: check,
 # 7 starts on one core each, collect. Env and start layout as
 # 2026-10-29_continuum_39633433328091196_map/map.slurm. A start killed by the timeout saves nothing.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch experiments/2026-10-29_nodust_map_39633433328091196/er.slurm
 #SBATCH -J nodust_er
 #SBATCH -p icx

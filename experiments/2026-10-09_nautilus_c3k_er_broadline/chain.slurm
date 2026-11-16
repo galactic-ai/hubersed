@@ -8,7 +8,7 @@
 # The first link that converges writes a marker and cancels the pending links of its name.
 # Same as the 2026-09-30_nautilus_c3k_broadline_split45 chain, except for the FSPS build, SPS_HOME,
 # the account and the pool. The C3K_ER build with AFE_FLAG peaks near 21 GiB per process at
-# startup (build job 3500233), so the pool is 8: nine processes, about 190 GiB on a 256 GB node.
+# startup, so the pool is 8: nine processes, about 190 GiB on a 256 GB node.
 #SBATCH -p development
 #SBATCH -N 1
 #SBATCH -n 1

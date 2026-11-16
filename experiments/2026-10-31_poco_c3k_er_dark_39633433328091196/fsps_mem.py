@@ -1,20 +1,8 @@
 """Free FSPS's spectral library after the SSPs are built, so forked workers commit less memory.
 
-Copied unchanged from experiments/2026-10-21_continuum_poco/fsps_mem.py on /work (never committed), so
-that fit.py --fork can free speclib.
-
-FSPS keeps the whole C3K_ER library in the allocatable module array sps_vars::speclib (10.1 GiB,
-sps_vars.f90:544, allocated and filled once in sps_setup.f90:91-358). Only SSP building reads it
-(getspec, via ssp_gen and stellar_spectrum). Once every SSP slot is built, spectra read only
-spec_ssp_zz and the isochrones. On nodes with strict overcommit (vm.overcommit_memory = 2) each
-forked child is charged for all of its parent's private memory, so freeing speclib in the parent
-before the fork cuts that charge by 10 GiB per child.
-
-free_speclib frees the array's buffer with libc free (gfortran allocates it with malloc) and sets
-the descriptor's data pointer to NULL, so ALLOCATED(speclib) is false and sps_setup would allocate
-it again. Any later SSP build reads a NULL pointer and crashes the process instead of returning a
-wrong spectrum. The symbol __sps_vars_MOD_speclib must be in the dynamic symbol table of _fsps,
-as in the c3k_er_afe_v3 build. It uses no FSPS code change.
+Copied unchanged from experiments/2026-10-21_continuum_poco/fsps_mem.py (never committed).
+free_speclib frees sps_vars::speclib (10.1 GiB) and nulls its pointer, so a later SSP build crashes.
+Needs the symbol __sps_vars_MOD_speclib in the dynamic symbol table of _fsps (c3k_er_afe_v3 build).
 """
 
 import ctypes

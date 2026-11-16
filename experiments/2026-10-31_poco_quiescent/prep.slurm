@@ -1,7 +1,7 @@
 #!/bin/bash
 # For every target of targets.txt: the DR1 resolution matrix (resolution_matrix.py), then fit.py check
 # in one process (model build and lnlike at prior draws). After stage.sh. Env as the 10-31 test.slurm.
-# Submit from the repository root on stampede3:
+# Submit from the repository root:
 #   sbatch experiments/2026-10-31_poco_quiescent/prep.slurm
 #SBATCH -J prepq1031
 #SBATCH -p skx-dev

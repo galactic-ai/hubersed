@@ -3,17 +3,14 @@
 QUESTION: which of the three SV3 bright exposures carries the blue excess of the DR1 coadd, and
 does the recoadd (row-weighted R, fixed flux-calibration ivar) remove it?
 HYPOTHESIS: none registered.
-INPUTS: sv3/exposures.npz (exposures.py) and sv3/resolution_matrix_rows_ivar.npz (ivar_recompute.py)
-of stampede3 job 3662886 (recoadd.slurm), copied to the Mac. DR1 SV3 bright and dark through spender
-as in 2026-10-30_sv3_bright_dark_39633433328091196. Sky g (mag/arcsec2, sky_mag_g_spec) and
-efftime_spec from desi_dr1.exposure (Astro Data Lab, 2026-10-30).
+INPUTS: sv3/exposures.npz, sv3/resolution_matrix_rows_ivar.npz, DR1 SV3 bright and dark spectra
+as in 2026-10-30_sv3_bright_dark_39633433328091196, and desi_dr1.exposure.
 SEED: none.
-COMMAND: from the repository root on the Mac,
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-30_recoadd_39633433328091196/analysis.py``.
-RESULT: 2026-10-30, exposures.txt. Median flux at observed 3600-4000 A grows with sky brightness:
-0.65 (87837, sky g 22.05), 3.22 (87838, 20.67), 7.64 (87839, 19.09); dark 0.34. Redward of 5500 A the
-exposures agree within ~10%. The recoadd is within 2% of the DR1 coadd in every bin, so it does not
-remove the excess. Assumptions: 51 px median filter; sky values from desi_dr1.exposure.
+RESULT: 2026-10-30. Median flux at observed 3600-4000 A grows as sky g brightens, 0.65 (87837,
+22.05), 3.22 (87838, 20.67), 7.64 (87839, 19.09). The recoadd is within 2% and keeps the excess.
+Assumptions: 51 px median filter, sky values from desi_dr1.exposure.
 FIGURES: results/2026-10-30_recoadd_39633433328091196/exposures.png and exposures.txt.
 """
 
@@ -37,10 +34,7 @@ TOL = 1e-4  # A
 
 
 def stitch(d, i, grid):
-    """Return flux and ivar of exposure row ``i`` with b, r, z combined by ivar on ``grid``.
-
-    As spender DESI.prepare_spectra, masked pixels get no weight and overlaps are ivar-weighted.
-    """
+    """Return flux and ivar of exposure row ``i`` with b, r, z combined by ivar on ``grid``."""
     num, den = np.zeros(grid.size), np.zeros(grid.size)
     for arm in "BRZ":
         w = d[f"{arm}_wave"]

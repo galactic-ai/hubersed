@@ -1,54 +1,9 @@
 """Compare the DESI resolution matrix of 39627770174637084 with the median LSF the fit uses.
 
-QUESTION: profile_check found the blue-arm lines of the ER max-L model about 10-15% too broad
-(s_C1s 0.84-0.91) and Halpha too narrow (s_C1s 1.08). Is that because this target's own
-resolution differs from the median curve, because the median curve's estimator misreads the
-matrix rows, or neither?
-
-HYPOTHESIS: if this target's matrix gives the same sigma as the median curve at the lines, the
-matrix is not the cause and the misfit lies in how the model draws the lines.
-
-The fit uses one sigma curve in km/s on the merged grid, C/(2.355 R_median) from
-hubersed.sps.lsf.desi_resolution, as map_fits.LSF. R_median was built from the median of about 100
-SV3 bright targets, each pixel's sigma taken from the ratio of the first off-diagonal to the
-diagonal of the matrix (resolution_to_sigma_kms).
-
-For each arm of this target the script computes
-
-- sig_ratio, the same off-diagonal ratio estimator on this target's matrix;
-- sig_col and sig_row, a Gaussian fit to every stored diagonal of each column and each row;
-- sig_med, the median curve the fit uses, interpolated to the arm.
-
-At each line it also applies this target's matrix to a line with intrinsic sigma 10 km/s and fits
-a Gaussian at the pixel centres to the result, as profile_check fits B. The input line is
-integrated over each pixel, because a 10 km/s line is narrower than a pixel and sampling it at the
-pixel centres depends on where it falls. Whether the DESI matrix expects pixel averages is not
-checked here. The line centre is moved across one pixel in eight steps, which also covers the
-redshift uncertainty, and the table gives the mean and range. s_app is the instrumental sigma
-this implies, sqrt(sig_tot^2 - 10^2), divided by sig_med. It is the quantity profile_check fitted
-as s_B and s_C1s.
-
-The banded storage is read with the desispec convention, offsets running from ndiag//2 down to
--(ndiag//2), so that R[j - offset, j] is data[k, j]. This convention is from memory. Columns and
-rows give the same width if it is wrong, but the sign of the centroid shift flips.
-
-INPUTS: the DR1 coadd of healpix 26004 (sv3 bright), given on the command line, and the median
-curve tracked in hubersed/sps/desi_lsf_calibration.npz. The profile_check s values are copied
-from profile_check.txt. Redshift 0.025319 is the SV3 ZCAT_PRIMARY row of zall-pix-iron-bgs.fits.
-SEED: none.
-
-COMMAND: on an ls6 compute node from the repository root,
+Writes resolution_check.txt, resolution_check.png and resolution_matrix.npz. The banded storage
+convention is from memory. Run from the repository root as
 ``.venv/bin/python experiments/2026-10-09_nautilus_c3k_er_broadline/resolution_check.py
-/work/11006/nikhilgaruda/ls6/research/spender/DATA/26004/coadd-sv3-bright-26004.fits``.
-No FSPS or Cue needed.
-
-OUTPUT: resolution_check.txt, resolution_check.png and resolution_matrix.npz in
-results/2026-10-09_nautilus_c3k_er_broadline/39627770174637084/. The npz holds this target's
-banded matrix, flux, ivar and mask per arm, and the matrix and flux merged over the arms. The
-merged matrix follows desispec.coaddition.coadd_cameras, each column weighted by the unmasked ivar
-of its pixel. The merged flux follows spender.data.desi.prepare_spectra, weighted by the masked
-ivar, without the skyline mask or the normalisation. Spender's own merged matrix divides by the
-summed ivar of each whole arm, so it is not used.
+<spender DATA folder>/26004/coadd-sv3-bright-26004.fits``.
 """
 
 import argparse
@@ -117,11 +72,6 @@ def fit_width(x, y):
 def band_profiles(data):
     """Return the column and row profiles of a banded matrix.
 
-    Parameters
-    ----------
-    data : np.ndarray
-        Banded matrix, shape ``(ndiag, n)``.
-
     Returns
     -------
     x : np.ndarray
@@ -159,10 +109,7 @@ def full_matrix(data):
 
 
 def applied_width(wave, R, lam0, sig_kms):
-    """Apply R to a pixel-integrated unit line and return the fitted total sigma in km/s.
-
-    The line centre steps across one pixel around lam0. Returns the sigma at each step.
-    """
+    """Return the fitted total sigma in km/s of R on a pixel-integrated unit line, per centre step."""
     sig_a = lam0 * sig_kms / C_KMS
     edges = np.concatenate(
         [

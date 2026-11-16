@@ -1,26 +1,9 @@
 """Mock DESI spectra from the ladder step 5/6 model, for the outlier rerun.
 
-Changed from the old mocks (src/hubersed/mocks/seds.py, run of 2026-08-25). C3K ER with afe free,
-TopHat(-0.2, 0.6) as 2026-10-08_continuum_outlier, and the ladder's model and priors (make_params
-of 2026-11-07_emline_ladder_39627770174637084/fit.py, with its SFH hyperpriors and tau_in = t_H(z)).
-Redshift is U(0.01, 0.6). Each mock takes the DR1 coadd R of a random target of the
-2026-11-09_r_matrix_survey. The free line columns are drawn from the fit prior, EW uniform from 0
-to W per column, through MockLineModel. The observation mask is the ladder's rest 3320-9000 A,
-where the library resolution is constant (prospect refuses a varying one). Pixels outside it get
-prospect's own smoothed continuum and lines. The plan is
-~/.claude/plans/mocks_v2_outlier_rerun_plan.md.
-
-``rbank`` merges the R of the 1,000 survey targets into rbank.npz (stampede3, reads the coadds on
-/work) and fills each target's all-zero columns (its ivar = 0 pixels) with the median column of
-the others. ``run --start --stop`` writes mocks start to stop to one h5 part, with the fork pool of
-the ladder (SSP build, speclib free, fork before JAX). Mock i draws all its numbers from
-default_rng([SEED, i]), so a part does not depend on the pool size or the order of the tasks.
-
-COMMAND: on stampede3, ``sbatch experiments/2026-11-09_mocks_v2_outliers/mocks.slurm`` (see there).
-
-OUTPUT: results/2026-11-09_mocks_v2_outliers/rbank.npz and mocks_<start>_<stop>.h5 with fluxes
-(maggies, DESI grid), wavelength, priors/redshifts, priors/theta, priors/column_ew, priors/rbank_index,
-failed, and the theta and column labels as attributes.
+Changed from the old mocks (src/hubersed/mocks/seds.py) are C3K ER with afe free, the ladder priors,
+z ~ U(0.01, 0.6), a survey DR1 R per mock and free line columns. Subcommands ``rbank`` and ``run``.
+COMMAND: ``sbatch experiments/2026-11-09_mocks_v2_outliers/mocks.slurm`` (see there).
+OUTPUT: results/2026-11-09_mocks_v2_outliers/rbank.npz and mocks_<start>_<stop>.h5.
 """
 
 import argparse
@@ -117,12 +100,7 @@ def row_sums(data):
 
 
 def mock_model_class():
-    """Return HyperSpecModel with the free columns drawn from their prior instead of marginalised.
-
-    _marginalise_columns follows the prospect fork's code for the column templates and the
-    amplitude bound, then sets each amplitude to u * upper with u ~ U(0, 1) from the mock's
-    generator, which is the uniform EW prior from 0 to W. The drawn EWs (u * W) are kept.
-    """
+    """Return HyperSpecModel with the free columns drawn from their prior, not marginalised."""
     from prospect.models.sedmodel import HyperSpecModel, lightspeed
     from scipy.sparse import csc_matrix
 
@@ -182,23 +160,14 @@ def setup_worker():
 
 
 def _afe_prior():
-    """Return the [alpha/Fe] prior, TopHat(-0.2, 0.6), the C3K ER grid as in 2026-10-08.
-
-    With afe free, logzsol is [Fe/H]. The mocks cover both the line and the continuum models.
-    """
+    """Return the [alpha/Fe] prior, TopHat(-0.2, 0.6), the C3K ER grid as in 2026-10-08."""
     from prospect.models.priors import TopHat
 
     return TopHat(mini=-0.2, maxi=0.6)
 
 
 def draw_params(i):
-    """Return the parameter template of mock i and its generator, all free values drawn.
-
-    z ~ U(0.01, 0.6); make_params(z) sets zred, the age bins, tau_in and the hyperpriors. Every
-    free parameter but logsfr_ratios is drawn through its prior's unit_transform. logsfr_ratios is
-    then drawn from the multivariate normal that adjust_stochastic_params builds from the drawn
-    hyperparameters.
-    """
+    """Return the parameter template of mock i and its generator, all free values drawn."""
     from prospect.models.templates import adjust_stochastic_params
 
     rng = np.random.default_rng([SEED, i])
@@ -319,7 +288,7 @@ if __name__ == "__main__":
     p.add_argument("--stop", type=int, default=1000)
     p.add_argument("--pool", type=int, default=0, help="0 sizes it from the commit room")
     p.add_argument("--block", type=int, default=20, help="mocks per task")
-    # skx pilot 3699130: 121 GB committed with 18 workers on a 15 GB baseline, ~5.6 GB each
+    # pilot: 121 GB committed with 18 workers on a 15 GB baseline, ~5.6 GB each
     p.add_argument(
         "--gib-worker", type=float, default=6.5, help="commit per worker, sizes the pool"
     )

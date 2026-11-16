@@ -1,14 +1,8 @@
 """Run 3n-free (C3K HR + afe) and the C3K ER + afe MAP (median LSF) of 39627757533007793.
 
-Data are the DR1 coadd from load_spectrum on every unmasked pixel, with a 9 pixel median filter.
-Each model and chi is drawn on the pixels its run fitted. 3n-free (nebular on) fit degraded data;
-its chi is on that with the original DESI uncertainty, as in analysis.py. The C3K ER model is the
-2026-10-28 MAP best point predicted with the median DESI LSF (predict_median_lsf.py there).
-
-COMMAND: from the repository root on the Mac,
-``uv run --no-sync python experiments/2026-10-08_continuum_outlier/spectrum_3nfree_er_full.py``.
-
-OUTPUT: results/2026-10-08_continuum_outlier/39627757533007793/spectrum_3nfree_er_full.png.
+Data are the DR1 coadd, 9 pixel median filtered. ER model from 2026-10-28 predict_median_lsf.py.
+COMMAND: ``uv run --no-sync python experiments/2026-10-08_continuum_outlier/spectrum_3nfree_er_full.py``
+OUTPUT: results/2026-10-08_continuum_outlier/39627757533007793/spectrum_3nfree_er_full.png
 """
 
 # %%

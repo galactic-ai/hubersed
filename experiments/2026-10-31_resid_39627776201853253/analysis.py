@@ -1,17 +1,14 @@
-"""Where the C3K max-likelihood residuals of 39627776201853253 (robust6 target 4, #17) are bad, and why.
+"""Where the C3K max-likelihood residuals of 39627776201853253 (robust6 target 4, #17) are bad.
 
 QUESTION: which wavelength ranges carry the excess chi2 of the pocoMC max-likelihood fit, and do
 they line up with arm joins, sky lines or stellar and nebular features?
 HYPOTHESIS: none registered.
-INPUTS: 2026-10-31_poco_robust6/<TID>/<TID>_poco_maxl.npz. Arm joins from the DR1 exposure grid
-(B 3600-5800, R 5760-7620, Z 7520-9824 A observed, 2026-10-31_lines_39627775706927918). Feature
-wavelengths are standard air values from memory, not checked against a line list.
+INPUTS: 2026-10-31_poco_robust6/<TID>/<TID>_poco_maxl.npz, arm joins of
+2026-10-31_lines_39627775706927918, feature air wavelengths from memory, not checked.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_resid_39627776201853253/analysis.py``.
-RESULT: chi2/N 1.087; no bin above chi2/N 2.6 (Hbeta, mean chi +0.5, emission). The 4 exposures
-(EXPID 87113, 87833, 87937, 88162) sit at 0.93-1.07 of the coadd in every arm, with no exposure-only
-feature. FastSpecFit: Halpha EW 21.9 A, log [NII]/Ha -0.71, log [OIII]/Hb -0.56, below Kauffmann+03
-(0.50 at that x): star-forming. Half the pixels at obs 9280-9320 A (Halpha) are masked.
+RESULT: chi2/N 1.087, no bin above chi2/N 2.6 (Hbeta). The 4 exposures sit at 0.93-1.07 of the
+coadd with no exposure-only feature. FastSpecFit lines are below Kauffmann+03, star-forming.
 Assumptions: FastSpecFit 2.5.1 fluxes; bins of 25 A rest with >= 10 good pixels.
 FIGURES: results/2026-10-31_resid_39627776201853253/ resid.txt, resid.png, worst_bins_exposures.png,
 exposure_ratio.png.

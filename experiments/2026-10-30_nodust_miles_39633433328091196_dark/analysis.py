@@ -3,19 +3,15 @@
 QUESTION: on the SV3 dark spectrum, does turning dust off still cost chi2 for C3K ER and MILES,
 and does that cost differ from the SV3 bright one?
 HYPOTHESIS: none registered.
-INPUTS: dark C3K ER with dust, <TID>_map.npz of 2026-10-30_continuum_39633433328091196_dark_map
-(spr job 3662995); dark C3K ER without dust and dark MILES with and without dust (logzsol <= 0.2),
-er_nodust/, miles_dust_zmax0.2/ and miles_nodust_zmax0.2/ of fit.py (spr job 3663513); bright
-pairs from 2026-10-29_continuum_39633433328091196_map and 2026-10-29_nodust_map_39633433328091196.
-Copied from stampede3.
+INPUTS: <TID>_map.npz of 2026-10-30_continuum_39633433328091196_dark_map, er_nodust/,
+miles_dust_zmax0.2/ and miles_nodust_zmax0.2/ of fit.py, and the bright pairs of
+2026-10-29_continuum_39633433328091196_map and 2026-10-29_nodust_map_39633433328091196.
 SEED: none.
-COMMAND: from the repository root on the Mac,
+COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-30_nodust_miles_39633433328091196_dark/analysis.py``.
-RESULT: 2026-10-30, nodust_dark.txt. Delta chi2 (no dust minus dust), dark against bright: C3K ER
-+387.0 (delta BIC +361.7) against +112.9 (+87.6); MILES +292.5 (+267.6) against +35.6 (+10.6). On
-dark the cost sits at 4300-5300 A and above 6300 A rest. MILES dark with dust, start 3 is 44.2 above
-the best in -ln p. Assumptions: 4 starts on dark, fixed SFH hyperparameters, DR1 coadd ivar of one
-dark exposure, MILES logzsol at the +0.2 cap.
+RESULT: 2026-10-30. Delta chi2 (no dust minus dust) on dark against bright is +387.0 (delta BIC
++361.7) against +112.9 (+87.6) for C3K ER, +292.5 (+267.6) against +35.6 (+10.6) for MILES.
+Assumptions: 4 dark starts, fixed SFH hyperparameters, one dark exposure ivar, MILES logzsol <= 0.2.
 FIGURES: results/2026-10-30_nodust_miles_39633433328091196_dark/nodust_dark.txt and
 nodust_dark_<lib>.png.
 """

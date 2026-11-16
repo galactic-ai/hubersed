@@ -1,10 +1,6 @@
 """Rest-frame DR1 coadd spectra and cutouts of the 28 follow-up outliers not yet looked at closely.
 
 The 36 of survivors.txt less the robust six (robust6.py), 39627757533007793 and 39633421923781141.
-One figure per target in survivors.txt order, styled as robust6.py. Each shows pixels with ivar > 0,
-raw (grey) and 15 px median (black), dotted [OII], Hbeta, [OIII] 5007, Mgb, NaD and Halpha, and the
-Legacy DR9 cutout (cutouts of 2026-10-31_logp_vs_colour/gallery.py) with the 1.5'' fibre at top
-right. The title adds the broad Halpha and Hbeta S/N of broad.txt.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_screen_all/follow28.py``.
 OUTPUT: results/2026-10-31_screen_all/follow28/<NN>_<TARGETID>.png.
 """

@@ -1,13 +1,6 @@
 """Save the DR1 resolution matrix of the continuum outlier 39633433328091196.
 
-As 2026-10-28_continuum_c3k_er_rmatrix_map/resolution_matrix.py with this target. The matrix,
-flux, ivar and mask come from the DR1 healpix coadd (healpix 10231, from
-fastspec-iron-sv3-bright METADATA) and are saved with resolution_check.save_matrix. The script
-then checks that the saved flux and ivar equal load_spectrum's on the good pixels, which is what
-fit.py reads. SPEC_DATA can name a folder with the staged spender files.
-
-COMMAND: on a stampede3 compute node from the repository root,
-``SPEC_DATA=/scratch/11006/nikhilgaruda/hubersed_data <venv>/bin/python
+COMMAND: on a compute node from the repository root, ``SPEC_DATA=<data dir> <venv>/bin/python
 experiments/2026-10-29_continuum_39633433328091196_map/resolution_matrix.py``.
 OUTPUT: results/2026-10-29_continuum_39633433328091196_map/resolution_matrix.npz.
 """

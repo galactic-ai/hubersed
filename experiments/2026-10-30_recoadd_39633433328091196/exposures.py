@@ -1,13 +1,9 @@
 """Save the single-exposure SV3 bright spectra of the continuum outlier 39633433328091196.
 
-The iron spectra file of healpix 10231 holds one row per exposure and fiber, with b, r and z
-arms on their own grids. The rows of this TARGETID are saved with their EXPID, and each arm's
-flux, ivar and mask, plus the sky-related FIBERMAP columns when present.
-
-COMMAND: on a stampede3 compute node from the repository root, through recoadd.slurm, or
+COMMAND: on a compute node from the repository root, through recoadd.slurm, or
 ``<venv>/bin/python experiments/2026-10-30_recoadd_39633433328091196/exposures.py <spectra file>``.
 OUTPUT: results/2026-10-30_recoadd_39633433328091196/sv3/exposures.npz.
-Job 3662886 ran this file before ruff format and this line, so its logged sha256 differs.
+Its logged run used this file before ruff format, so the logged sha256 differs.
 """
 
 import argparse

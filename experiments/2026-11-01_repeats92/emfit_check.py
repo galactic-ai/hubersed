@@ -1,28 +1,18 @@
 """Check the AGN and emission-line labels of 23 of the 92 continuum outliers with EmFit DR1 (#17).
 
-QUESTION: does the DESI DR1 EmFit VAC confirm our visual and FastSpecFit labels (16 AGN, 5
-star-forming, 2 weak AGN by WHAN) for the sv3/bright spectrum, so they can leave the continuum sample?
+QUESTION: does EmFit DR1 confirm our visual and FastSpecFit labels (16 AGN, 5 star-forming, 2 weak
+AGN by WHAN) for the sv3/bright spectrum, so they can leave the continuum sample?
 HYPOTHESIS: none registered.
-INPUTS: classes.tsv; desi_dr1.emfit on Astro Data Lab TAP, one ``targetid IN`` query, as
-2026-10-31_emfit_39633322464249559. EmFit fits Hbeta, [OIII], [NII], Halpha and [SII] only, z <= 0.45.
-Broad Halpha is a BL candidate, as Pucha+2026 sec 2 (2606.02699 S02_Data.tex:87), when
-prob_broad >= 80, S/N of ha_b flux and of ha_b_sigma >= 3, and ha_b_amplitude / nii_ha_noise >= 2.
-Broad sigma < 425 km/s (FWHM < 1000) is marked, since Pucha+2025 App. B finds many such are missed
-outflows.
-BPT uses narrow Balmer (n + out, no broad) and forbidden lines (primary + out), each at S/N >= 3
-(flux_err; a line whose window has no noise is not measurable), classed with line_screen.bpt on the
-[NII] curves only, its [SII] curve and S/N 5 gate switched off. EmFit has no EW, so no WHAN.
-For the verdict, a BL candidate or BPT AGN is confirmed AGN, composite is AGN or composite, BPT SF
-is confirmed emission-line/SF, and anything else is not confirmed. Only the sv3/bright row counts;
-other rows are listed.
+INPUTS: classes.tsv; desi_dr1.emfit on Astro Data Lab TAP, as 2026-10-31_emfit_39633322464249559.
+BL candidates as Pucha+2026 sec 2 (2606.02699 S02_Data.tex:87), prob_broad >= 80, ha_b flux and
+sigma S/N >= 3, ha_b_amplitude / nii_ha_noise >= 2; BPT lines at S/N >= 3, [NII] curves only.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_repeats92/emfit_check.py``.
-RESULT: 20 of 23 have a row (07, 17, 28 none, z > 0.5), one per target; 03, 16, 36, 38, 82 only
-non-sv3/bright. Of the 15 sv3/bright rows, 10 agree (5 broad Ha, 2 BPT AGN, 3 SF), 14 and 24 are
-composite, 20, 33, 34 untested (one BPT line S/N < 3), none conflict. Other rows: 03 SF, 36 broad Ha.
-Assumptions: EmFit MC flux errors are underestimated (Pucha+2025 erratum), some are ~0.01; Halpha
-narrow/broad split is degenerate for broad-line targets; the BL and S/N cuts set the yes/untested split.
-FIGURES: results/2026-11-01_repeats92/ emfit_check.txt, emfit_rows.fits (all rows of the query).
+RESULT: 20 of 23 have a row. Of the 15 sv3/bright rows, 10 agree (5 broad Ha, 2 BPT AGN, 3 SF),
+14 and 24 are composite, 20, 33, 34 untested (one BPT line S/N < 3), none conflict.
+Assumptions: EmFit MC flux errors are underestimated (Pucha+2025 erratum); the Halpha narrow/broad
+split is degenerate for broad-line targets; the BL and S/N cuts set the yes/untested split.
+FIGURES: results/2026-11-01_repeats92/ emfit_check.txt, emfit_rows.fits.
 """
 
 # %%
