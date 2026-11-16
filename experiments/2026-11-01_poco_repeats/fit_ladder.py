@@ -2,17 +2,17 @@
 
 The steps are runs 1d, 2b-off and 3n-free of 2026-10-08_continuum_outlier/fit.py, whose load_data,
 make_model, make_sps, make_obs and check_setup this file loads by path, with nebular emission off in
-all three. miles: MILES on rest 3601.8 to 7400.8 A, data not degraded, library resolution zeroed,
-median DESI LSF. c3k_hr and c3k_hr_afe: C3K HR on its full window, data degraded to R 3000 plus
-10 km/s, afe fixed at 0 and free, both with the C3K HR AFE_FLAG build. The SFH hyperparameters are
-free under the #14 priors. recoadd: the fit.py model, priors and C3K_ER source, with flux, ivar
-and resolution matrix from the target's SV3 recoadd (recoadd.slurm,
-recoadd/resolution_matrix_rows_ivar.npz) and the fitted pixels of
-2026-10-29_continuum_recoadd/fit.py load_data: spender's positive-ivar pixels where the recoadded
+all three. The miles step fits MILES on rest 3601.8 to 7400.8 A, with data not degraded, library
+resolution zeroed and the median DESI LSF. The c3k_hr and c3k_hr_afe steps fit C3K HR on its full
+window, with data degraded to R 3000 plus 10 km/s and afe fixed at 0 and free, both with the C3K HR
+AFE_FLAG build. The SFH hyperparameters are free under the #14 priors. The recoadd step uses the
+fit.py model, priors and C3K_ER source, with flux, ivar and resolution matrix from the target's SV3
+recoadd (recoadd.slurm, recoadd/resolution_matrix_rows_ivar.npz). Its fitted pixels are those of
+2026-10-29_continuum_recoadd/fit.py load_data, spender's positive-ivar pixels where the recoadded
 ivar is positive, rest 3320 to 9000 A. Sampler, fork pool and settings are those of fit.py
 runfork, n_effective 1024 and n_active 512. The MILES build has no build_ssps and a static
-speclib, so its pool forks without the build and without the free; each worker builds its own SSP
-slots.
+speclib, so its pool forks without the build and without the free, and each worker builds its own
+SSP slots.
 OUTPUT: results/2026-11-01_poco_repeats/<TARGETID>/<step>/poco_neff1024 and, from predict,
 <TARGETID>_<step>_maxl.npz there.
 COMMAND: through prod_ladder.slurm (check, then runfork) and predict_ladder.slurm, for example

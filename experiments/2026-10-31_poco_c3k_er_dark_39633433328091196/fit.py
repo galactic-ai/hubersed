@@ -13,9 +13,10 @@ FSPS. Every other rank builds its own model, observation and C3K_ER source and e
 rank 0 sends, one point at a time to whichever rank is free. On each node at most ``--init-width``
 ranks build FSPS at once, since one build peaks at about 25 GiB.
 
-Steps: ``check`` (one process) checks the model against the dark MAP model at the MAP point and
-times warm calls at prior draws. ``run`` (under ibrun or mpiexec) runs pocoMC or resumes the newest
-state, after checking that every rank gives the same likelihood and logging each rank's memory.
+The ``check`` step (one process) checks the model against the dark MAP model at the MAP point and
+times warm calls at prior draws. The ``run`` step (under ibrun or mpiexec) runs pocoMC or resumes
+the newest state, after checking that every rank gives the same likelihood and logging each rank's
+memory.
 
 FSPS must be the C3K_ER build with AFE_FLAG first on PYTHONPATH, with SPS_HOME holding the ER
 spectra. Run on stampede3 through test.slurm, for example
@@ -353,7 +354,7 @@ def serve_node(comm, local):
 
 
 def run_fork(args):
-    """Option 2: one MPI rank per node with a forked pool after the free; rank 0 also samples."""
+    """Run one MPI rank per node, each with a pool forked after the free, and sample on rank 0."""
     pool, info = node_setup(args)
     from mpi4py import MPI  # initialises MPI, so only after the fork
 
@@ -429,8 +430,8 @@ def sample(args, pool):
         """pocoMC's Sampler, keeping this process's likelihood when a state is loaded.
 
         pocoMC saves its state with dill, which stores functions of __main__ by value. A loaded
-        state would put that copy in place of loglike_unit, and pickling the copy to the pool
-        fails (it's not the same object as __main__.loglike_unit, job 3664872 run 2).
+        state would put that copy in place of loglike_unit, and the copy does not pickle to the
+        pool, since it is not the same object as __main__.loglike_unit.
         """
 
         def load_state(self, path):

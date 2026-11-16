@@ -1,9 +1,9 @@
 """Legacy DR9 Tractor photometry and cutouts of the 18 single-exposure blue outliers (#17).
 
-Groups from exp_table.txt: "all blue" when every exposure has dgr < -0.25, "sky" when the bluest
-exposure has the brightest sky and the spread is > 0.3, else "varies". Baseline: the matched
-controls of these outliers (controls.npz). Tractor rows from ls_dr9.tractor (Data Lab) by LS_ID.
-Cutouts from the Legacy Survey viewer (ls-dr9, 0.262"/px).
+Groups come from exp_table.txt. A target is "all blue" when every exposure has dgr < -0.25, "sky"
+when the bluest exposure has the brightest sky and the spread is > 0.3, else "varies". The baseline
+is the matched controls of these outliers (controls.npz). Tractor rows come from ls_dr9.tractor
+(Data Lab) by LS_ID. Cutouts come from the Legacy Survey viewer (ls-dr9, 0.262"/px).
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_logp_vs_colour/photometry.py``.
 OUTPUT: results/2026-10-31_logp_vs_colour/photometry.txt and cutouts.png.
 RESULT: 2026-10-31. fracflux_g > 3 for 9 of 18 (controls: 95th percentile 0.054); cutouts show bright

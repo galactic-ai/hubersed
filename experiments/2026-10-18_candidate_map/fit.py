@@ -22,8 +22,8 @@ results/map_fits_outliers310_v2/. SEED: 0 for the jittered starts.
 COMMAND: from the repository root on the Mac with the C3K_ER build,
 ``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude:~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-18_candidate_map/fit.py {fit,report} --tid <TID>``. Multi-start on ls6: see the
-slurm script.
+experiments/2026-10-18_candidate_map/fit.py {fit,report} --tid <TID>``. For multi-start on ls6, see
+the slurm script.
 
 OUTPUT: <TID>_map_free.npz, <TID>_map.txt and <TID>_map.png in results/2026-10-18_candidate_map/,
 with suffix _s<K> for a run with ``--start K``.
@@ -81,7 +81,7 @@ def build(tid):
 
 
 def pick_start(model, theta0, start, n_starts, jitter):
-    """Return start ``start`` of ``n_starts``: theta0 for 0, else a jittered draw inside the prior."""
+    """Return start ``start`` of ``n_starts``, theta0 for 0 or a jittered draw inside the prior."""
     if start == 0:
         return theta0
     rng = np.random.default_rng(0)

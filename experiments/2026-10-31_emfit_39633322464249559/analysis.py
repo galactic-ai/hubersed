@@ -1,10 +1,10 @@
-"""EmFit DR1 lines of 39633322464249559, robust6 target 5 (#17): is it an AGN?
+"""Is 39633322464249559, robust6 target 5 (#17), an AGN by its EmFit DR1 lines?
 
 QUESTION: does the EmFit VAC find a broad Balmer component or AGN-like narrow-line ratios?
 HYPOTHESIS: none registered. FastSpecFit gives broad MgII (sigma 2677 km/s) and no broad Halpha.
 INPUTS: desi_dr1.emfit on Astro Data Lab TAP (sv3/bright row), as
-2026-10-14_cue_lineflux_calibration/data.py; Kewley+01 and Kauffmann+03 [NII] lines (TeX checked
-2026-10-31, astro-ph/0106324 and astro-ph/0304239); WHAN of Cid Fernandes+11 (1012.4426, sec 5).
+2026-10-14_cue_lineflux_calibration/data.py; Kewley+01 and Kauffmann+03 [NII] lines (from the TeX,
+astro-ph/0106324 and astro-ph/0304239); WHAN of Cid Fernandes+11 (1012.4426, sec 5).
 EmFit fits Hbeta, [OIII], [NII], Halpha and [SII] only, so it cannot test MgII.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_emfit_39633322464249559/analysis.py``.

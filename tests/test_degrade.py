@@ -1,4 +1,4 @@
-"""Resolution matching: the C3K_HR path smooths only where DESI is sharper."""
+"""Check resolution matching. The C3K_HR path smooths only where DESI is sharper."""
 
 import numpy as np
 
@@ -10,7 +10,7 @@ Z = 0.025
 
 
 def _desi_sigma():
-    """Return a DESI-like LSF sigma in km/s: 56 at the blue end, falling to 24 at the red end."""
+    """Return a DESI-like LSF sigma in km/s, from 56 at the blue end down to 24 at the red end."""
     return np.interp(W, [3600, 5000, 6000, 9824], [56.0, 42.0, 32.0, 24.0])
 
 

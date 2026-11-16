@@ -1,11 +1,11 @@
 """At fixed S/N, does the DESI flow outlier rate depend on flux calibration quality?
 
-QUESTION: Part B1 of the calibration plan (~/.claude/plans/calib_injection_2026-11-13.md). Within
-each S/N bin, does the outlier rate of each flow rise with the predicted calibration error f of
-the petals a target was observed on, and fall with the number of tiles?
-HYPOTHESIS: if missing calibration distortions drive the high-S/N excess (explanation 2), the rate
-in the top quartile of f exceeds the bottom quartile by more than 3 sigma in the S/N 8-15 and > 15
-bins of cont10 and cont15. If the excess is a model offset (explanation 1), the rate is flat in f.
+QUESTION: Within each S/N bin, does the outlier rate of each flow rise with the predicted
+calibration error f of the petals a target was observed on, and fall with the number of tiles?
+Plan in ~/.claude/plans/calib_injection_2026-11-13.md.
+HYPOTHESIS: if missing calibration distortions drive the high-S/N excess, the rate in the top
+quartile of f exceeds the bottom quartile by more than 3 sigma in the S/N 8-15 and > 15 bins of
+cont10 and cont15. If the excess is a model offset, the rate is flat in f.
 INPUTS: data/iron_tileqa/<tile>/tile-qa-*.fits (latest file per tile; FIBERQA TARGETID, PETAL_LOC,
 EFFTIME_SPEC, QAFIBERSTATUS; PETALQA NSTDSTAR, STARRMS) for the 214 SV3 bright tiles of
 data/iron_tiles/tiles-iron.csv; results/2026-11-09_mocks_v2_outliers/flows/desi_outliers_flow_nsf_
@@ -14,8 +14,8 @@ METHOD: f per tile-petal from the r-camera fit of results/2026-10-13_fluxcal_sam
 summarise_f.txt l.24, f = -0.0159 + 0.1209 / sqrt(NSTDSTAR) + 0.0582 STARRMS (NSTDSTAR 0 set to 1).
 Per target, over the tiles it was observed on (QAFIBERSTATUS 0 rows first, all rows when none),
 f_coadd = sqrt(mean(f^2) / n_tiles). Quartiles of f_coadd over the scored parent. Errors
-sqrt(r (1 - r) / N). Matched check: within each S/N bin, the 3+ tile rate is reweighted to the
-1-tile mix over cells of z (0.1 bins), log M* and Dn4000 (FastSpecFit LOGMSTAR and Dn4000 of
+sqrt(r (1 - r) / N). In the matched check, within each S/N bin, the 3+ tile rate is reweighted to
+the 1-tile mix over cells of z (0.1 bins), log M* and Dn4000 (FastSpecFit LOGMSTAR and Dn4000 of
 2026-11-13_psb_fraction_like_for_like indices_desi.npz) and S/N quartile; cells without both
 groups are dropped (coverage given).
 SEED: none.

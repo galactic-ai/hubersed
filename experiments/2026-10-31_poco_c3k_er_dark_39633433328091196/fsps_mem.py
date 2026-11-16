@@ -1,8 +1,7 @@
 """Free FSPS's spectral library after the SSPs are built, so forked workers commit less memory.
 
 Copied unchanged from experiments/2026-10-21_continuum_poco/fsps_mem.py on /work (never committed), so
-that fit.py --fork can free speclib. The 2026-10-31 skx-dev job 3664817 (free_speclib_debug)
-ran 24 forked workers after this free with bitwise equal spectra.
+that fit.py --fork can free speclib.
 
 FSPS keeps the whole C3K_ER library in the allocatable module array sps_vars::speclib (10.1 GiB,
 sps_vars.f90:544, allocated and filled once in sps_setup.f90:91-358). Only SSP building reads it

@@ -1,8 +1,8 @@
 """Apply the data-quality screen to the old and new candidates and recount through SIMBAD.
 
-Screen (Nikhil 2026-11-10, after analysis.py): drop a candidate with a Gaia DR3 star within 5 arcsec
-brighter than G = 20 (parallax/error > 5 or proper motion > 3 mas/yr), or observed on fibre 2675
-or 2676 in any SV3 bright tile (gallery92: fibre_2675 class, the petal-5 z-arm step on 2676).
+The screen drops a candidate with a Gaia DR3 star within 5 arcsec brighter than G = 20
+(parallax/error > 5 or proper motion > 3 mas/yr), or observed on fibre 2675 or 2676 in any SV3
+bright tile (the gallery92 fibre_2675 class, the petal-5 z-arm step on 2676).
 SIMBAD flags as experiments/2026-11-09_mocks_v2_outliers/simbad.py (cache results/
 simbad_screen_v2.csv and results/2026-11-09_mocks_v2_outliers/simbad_new.csv; every candidate is
 in one of them). Flow flags are per galaxy, so screening after flagging equals screening first.

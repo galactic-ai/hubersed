@@ -1,6 +1,5 @@
-"""QUESTION: How does the converged C/O tie fit of 39627770174637084 (soft C/O tie, two forbidden
-widths, He I on the Balmer profile) differ from the ER fit of the same data, in evidence, posteriors,
-SFH and the line-window misfits that motivated the three changes?
+"""QUESTION: How does the converged C/O tie fit of 39627770174637084 differ from the ER fit of the
+same data, in evidence, posteriors, SFH and line-window misfits?
 HYPOTHESIS: None registered before this analysis.
 INPUTS: results/2026-10-10_nautilus_c3k_er_cotie_split/<stem>_pred.npz from predict.py, with
 <stem> = 39627770174637084_er_cotie_split_broad_shared_split45_rest9000_seed0, and the ER run's

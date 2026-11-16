@@ -4,7 +4,7 @@ QUESTION: is the [OIII]5007 misfit of the #14 ER fit of 39627770174637084 (rms c
 analysis) a wrong total flux, which C/O and the other Cue parameters can change, or a wrong line
 shape, which they cannot?
 
-For each rest-frame window, on the fitted pixels and at the maximum likelihood spectrum:
+For each rest-frame window, on the fitted pixels and at the maximum likelihood spectrum, it gives
 
 - R = sum(data - model) dlam, its noise sqrt(sum unc^2) dlam, and R as a fraction of the model
   line flux. The model line flux is the model minus a straight line through the median model in

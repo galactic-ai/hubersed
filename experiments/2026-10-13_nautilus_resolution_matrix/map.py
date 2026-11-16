@@ -11,12 +11,12 @@ and the parameters that pushed against those pixels move. The line results of th
 
 Four runs from the ER max-L point of the 10-09 nautilus run (model_setup.py), each with the SFH
 hyperparameters sigma_reg, tau_eq, sigma_dyn and tau_dyn fixed at max-L and one Powell start
-(hubersed.fitting.map_fits.map_fit), as map_resolution.py in the 10-09 folder: rmatrix and median,
-each with and without the mask. With the mask sigma_smooth drops from about 31 to 21 km/s. Two more
-mask settings find which masked pixels drive it. mask_noPa16 leaves Pa16 unmasked, whose window
-starts 0.47 A red of the Ca II 8500.36 A line (NIST, vacuum). mask_noH1112 leaves H11 and H12
-unmasked, which sit on the stellar H11 and H12 absorption. Neither moves sigma_smooth back, so
-mask_noPa1112 and mask_noHeI leave Pa11 and Pa12, or He I 5016 and 7281, unmasked.
+(hubersed.fitting.map_fits.map_fit), as map_resolution.py in the 10-09 folder. They are rmatrix
+and median, each with and without the mask. With the mask sigma_smooth drops from about 31 to
+21 km/s. Two more mask settings find which masked pixels drive it. mask_noPa16 leaves Pa16 unmasked,
+whose window starts 0.47 A red of the Ca II 8500.36 A line (NIST, vacuum). mask_noH1112 leaves H11
+and H12 unmasked, which sit on the stellar H11 and H12 absorption. Neither moves sigma_smooth back,
+so mask_noPa1112 and mask_noHeI leave Pa11 and Pa12, or He I 5016 and 7281, unmasked.
 
 INPUTS: the 10-09 ``_pred.npz`` (start point), resolution_matrix_rows_ivar.npz and
 resolution_matrix.npz of the 10-09 folder, and the DESI spectrum as hubersed.io.desi reads it.

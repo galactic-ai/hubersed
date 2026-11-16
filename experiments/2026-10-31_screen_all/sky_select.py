@@ -1,6 +1,6 @@
 """List the screened outliers whose coadd includes a bright-sky exposure, and their iron spectra files.
 
-Targets: screened94.npz members with COADD_NUMEXP >= 2 and a tile exposure with sky g < 21
+Targets are screened94.npz members with COADD_NUMEXP >= 2 and a tile exposure with sky g < 21
 (qa_outliers.txt columns numexp and sky_min).
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_screen_all/sky_select.py``.
 OUTPUT: sky_targets.txt and sky_urls.txt next to this script.

@@ -5,8 +5,8 @@ that are in the FastSpecFit VAC, and that pass the redshift cuts of sample.py (V
 [0.01, 0.6], |z_pipeline - z_VAC| / (1 + z_VAC) <= 0.01). The Gaia, SGA, SIMBAD, PSF, BPT and
 shred screens are not applied to the pool.
 
-matched: nearest in (VAC z, r fiber magnitude, SNR_B), each standardised over the pool.
-cont10, cont15: nearest in that flow's latent space, scaled by the flow's mock scaler.
+The matched set is nearest in (VAC z, r fiber magnitude, SNR_B), each standardised over the pool.
+The cont10 and cont15 sets are nearest in that flow's latent space, scaled by its mock scaler.
 Within a set no galaxy is used twice. Outliers take their neighbours in TARGETID order.
 
 COMMAND: from the repository root on the Mac,

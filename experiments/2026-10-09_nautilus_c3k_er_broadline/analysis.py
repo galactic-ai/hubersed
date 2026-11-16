@@ -1,12 +1,11 @@
-"""QUESTION: What does the converged C3K_ER broadline fit of 39627770174637084 look like (posterior,
-SFH, spectrum and line residuals), and how do its posteriors differ from the C3K_HR split45 fit of the
-same object with the same model?
+"""QUESTION: What does the converged C3K_ER broadline fit of 39627770174637084 look like, and how do
+its posteriors differ from the C3K_HR split45 fit of the same object with the same model?
 HYPOTHESIS: None registered before this analysis.
 INPUTS: results/2026-10-09_nautilus_c3k_er_broadline/<stem>_pred.npz from predict.py, with
 <stem> = 39627770174637084_er_broad_shared_split45_rest9000_seed0. For comparison the checkpoint
 results/2026-09-30_nautilus_c3k_broadline_split45/39627770174637084_broad_shared_split45_unmask_rest9000_seed0.h5.
 The HR run fitted different data (degraded to C3K_HR plus 10 km/s, [OI]/[SII] sky pixels unmasked),
-so its log Z and chi2 are not comparable with the ER run. Only posteriors are compared.
+so only posteriors are compared, not log Z or chi2.
 SEED: 0 for the SFH draws here, 0 for the 100 spectrum draws in predict.py.
 COMMAND: on an ls6 compute node, after predict.py,
 .venv/bin/python experiments/2026-10-09_nautilus_c3k_er_broadline/analysis.py

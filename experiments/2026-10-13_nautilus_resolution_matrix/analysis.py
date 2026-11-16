@@ -1,8 +1,8 @@
 """Compare the posteriors of three nautilus fits of 39627770174637084.
 
 QUESTION: how do the posteriors move from HR split 45 (09-30) to ER (10-09) to rmatrix (this
-folder: target R, corrected ivar, missing-line mask)? Same 29 parameters and priors. Pixels differ:
-5621, 5597, 5530.
+folder, with target R, corrected ivar and missing-line mask)? Same 29 parameters and priors. The
+pixel counts differ (5621, 5597, 5530).
 
 HYPOTHESIS: from the MAP runs, rmatrix has wider lines than ER (eline_sigma_forb ~22 km/s,
 eline_sigma ~25 km/s), lower dust_ratio (~0.37 vs 0.46), sigma_smooth ~21 km/s. SFH barely moves.

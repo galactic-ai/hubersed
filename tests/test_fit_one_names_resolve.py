@@ -1,17 +1,7 @@
 """Static check that map_fits and its script have no undefined names in the hot functions.
 
-Three separate runs have now been thrown away by a NameError/KeyError raised AFTER the
-expensive fitting was done:
-
-  1. `eline_sigma` -- summary printer assumed the Cue parameter set, KeyError'd after all
-     20 per-galaxy pkls were written (2026-08-20b).
-  2. `logzsol`     -- same printer, after --fix-from-sample removed logzsol from
-     theta_dict; again after all 11 pkls were written (2026-08-20f).
-  3. `zcontinuous` -- referenced in fit_one's `rec` dict but threaded only through
-     _worker and get_sps, so it raised after all 10 optimizer starts had run.
-
-Every one is a name that does not resolve, and every one is catchable in milliseconds
-without FSPS, a fit, or any data. That is what this does.
+A name that does not resolve raises only when its line runs, which in fit_one is after the
+expensive fitting. Such names are found here in milliseconds, without FSPS, a fit or any data.
 
 Run with ``uv run pytest tests/test_fit_one_names_resolve.py`` (never ``uvx``).
 """
@@ -30,7 +20,7 @@ FUNCS = [(SRC, "fit_one"), (SRC, "_worker"), (SRC, "map_fit"), (SCRIPT, "main")]
 
 
 def module_scope(tree):
-    """Top-level names: imports, defs, classes, assignments."""
+    """Return the top-level names bound by imports, defs, classes and assignments."""
     names = set(dir(builtins))
     for node in tree.body:
         if isinstance(node, (ast.Import, ast.ImportFrom)):
@@ -92,7 +82,7 @@ def test_no_undefined_names(path, func):
 
 
 def test_fit_one_and_worker_agree():
-    """_worker forwards to fit_one; a parameter on one and not the other is the bug."""
+    """_worker forwards to fit_one, so a parameter on one and not the other is an error."""
     tree = ast.parse(SRC.read_text())
 
     def get(name):

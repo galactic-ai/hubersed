@@ -8,10 +8,10 @@ the ER ``_pred.npz`` of experiments/2026-10-09_nautilus_c3k_er_broadline/predict
 The fit gave nautilus the identity prior, so the checkpoint holds unit cube points. They are read
 with the identity here and only the kept ones go through model.prior_transform.
 
-The data are those of the fit: degraded to C3K_HR with the original uncertainty kept, and with the
-SPARCL sky pixels unmasked unless ``--keep-sky-mask`` is given.
+The data are those of the fit. They are degraded to C3K_HR with the original uncertainty kept, and
+the SPARCL sky pixels are unmasked unless ``--keep-sky-mask`` is given.
 
-Run from the repository root with the default C3K_HR build. Command for run A of 37084:
+Run from the repository root with the default C3K_HR build. The command for run A of 37084 is
 ``SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
 experiments/2026-09-30_nautilus_c3k_broadline_split45/predict.py --forbidden-broad shared``.
 """

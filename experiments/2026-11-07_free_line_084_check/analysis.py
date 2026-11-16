@@ -5,10 +5,10 @@ with an independent value, how large are the blocks, and what does a prediction 
 HYPOTHESIS: |ln P_B - reference| < 0.01 for blocks of 1-2 (quadrature) and within 3 Monte Carlo
 errors for larger blocks (10^7 draws); the broad H column joins most columns into one block.
 INPUTS: the 10-13 max-L point (_pred.npz `best`) with its data, mask and R (model_setup.COADD);
-broad widths and offset from the 10-15 free-line MAP (map_free.npz): eline_sigma_broad,
-eline_sigma_broad_forb, eline_vbroad. Columns: weak ions (narrow, replace Cue) and broad columns
-(add to Cue) of hubersed.sps.free_lines.IONS, W from results/2026-11-06_line_ew_prior/
-ion_limits.json. C3K_ER Cue, afe 0.
+broad widths and offset (eline_sigma_broad, eline_sigma_broad_forb, eline_vbroad) from the 10-15
+free-line MAP (map_free.npz). Columns are weak ions (narrow, replace Cue) and broad columns (add to
+Cue) of hubersed.sps.free_lines.IONS, W from results/2026-11-06_line_ew_prior/ion_limits.json.
+C3K_ER Cue, afe 0.
 SEED: numpy default_rng 0 for the Monte Carlo reference.
 COMMAND: from the repository root on the Mac, with the fork working copy first on the path,
 ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:$HOME/Astronomy_Research/prospector:experiments/2026-10-13_nautilus_resolution_matrix

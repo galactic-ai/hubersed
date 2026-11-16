@@ -1,11 +1,11 @@
-"""Targets and per-exposure inputs for the data-quality screen (plan
-~/.claude/plans/data_quality_screen_plan.md, first version: fibre QA, exposure conditions, Gaia).
+"""Targets and per-exposure inputs for the data-quality screen (fibre QA, exposure conditions, Gaia).
 
-Targets: the old (310 run) and new (v2 mocks) candidates after the prescreen, before SIMBAD (flag
-rule (6 & 10 & 15) | (cont10 & cont15)), plus a control of 2,000 random parent galaxies flagged by
-neither (seed 0). Fetched from the Astro Data Lab: desi_dr1.ztile rows (survey sv3, program bright)
-of every target, and desi_dr1.exposure rows of their tiles. Gaia DR3 sources within 5 arcsec from
-the ESA Gaia archive (cross-match on uploaded positions).
+The plan is ~/.claude/plans/data_quality_screen_plan.md.
+Targets are the old (310 run) and new (v2 mocks) candidates after the prescreen, before SIMBAD
+(flag rule (6 & 10 & 15) | (cont10 & cont15)), plus a control of 2,000 random parent galaxies
+flagged by neither (seed 0). From the Astro Data Lab it fetches the desi_dr1.ztile rows (survey
+sv3, program bright) of every target and the desi_dr1.exposure rows of their tiles. Gaia DR3
+sources within 5 arcsec come from the ESA Gaia archive (cross-match on uploaded positions).
 COMMAND: ``uv run --no-sync python experiments/2026-11-10_data_quality_screen/fetch.py``.
 OUTPUT: results/2026-11-10_data_quality_screen/{targets.npz, ztile.fits, exposure.fits, gaia5.fits}.
 """

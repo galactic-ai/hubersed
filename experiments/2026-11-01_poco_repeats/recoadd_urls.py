@@ -1,6 +1,6 @@
 """List the iron files the SV3 recoadds of the six poco_repeats targets need, with destinations.
 
-As 2026-10-18_candidate_recoadd/iron_urls.py: the exposures of each target come from EXP_FIBERMAP of
+As 2026-10-18_candidate_recoadd/iron_urls.py. The exposures of each target come from EXP_FIBERMAP of
 its DR1 healpix coadd in the spender DATA folder on /work, and each exposure and petal needs the 20
 files of exposure_files there, plus the healpix spectra file for coadd_rows.py. The six targets are
 those of targets.txt and targets_quiescent2.txt and targets_quiescent3.txt with a pocoMC fit.

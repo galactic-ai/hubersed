@@ -11,9 +11,9 @@ zs), data/latents/spender_spec_<tag>latent_snr3.h5, data/dataset_z_snr.npz (DESI
 scalers (results/2026-11-09_mocks_v2_outliers/flows/flow_nsf_<tag>latent.pt), and
 results/2026-11-14_emline_outlier_coverage/coverage.csv (the 58).
 METHOD: N = 20,000 random DESI and 20,000 training mocks (the flows' seed-0 split), standardised
-with the flow scaler; k = 15 Euclidean neighbours in the pooled set, self excluded. Matched: mocks
-drawn to the DESI counts in cells of S/N (edges 3, 4, 5, 6, 8, 10, 15, 25, inf) and z (0.05).
-The 58 are queried against the same pool.
+with the flow scaler; k = 15 Euclidean neighbours in the pooled set, self excluded. The matched set
+has mocks drawn to the DESI counts in cells of S/N (edges 3, 4, 5, 6, 8, 10, 15, 25, inf) and z
+(0.05). The 58 are queried against the same pool.
 SEED: 0.
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_latent_domain_gap/analysis.py``.
 RESULT: 2026-11-14, mixing.txt. DESI and mocks barely mix in any flow: mean other-set fraction of

@@ -1,4 +1,6 @@
-"""QUESTION: Does any parameter of the pocoMC free_dust fit of a candidate sit at its prior bound?
+"""Corner plot and prior edge table of the pocoMC free_dust fit of one candidate.
+
+QUESTION: Does any parameter of the pocoMC free_dust fit of a candidate sit at its prior bound?
 HYPOTHESIS: None registered before this analysis.
 INPUTS: pmc_final.state of poco.py in
 results/2026-10-15_broadline_free_amplitude/poco_<TID>_free_dust_neff1024/.

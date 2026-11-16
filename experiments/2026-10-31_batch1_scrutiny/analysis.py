@@ -1,8 +1,8 @@
-"""Scrutiny of follow-up outliers 1-5 of follow28 (#17): lines, sky coincidence and exposures.
+"""Check the lines, sky coincidence and exposures of follow-up outliers 1-5 of follow28 (#17).
 
 QUESTION: which of the five are AGN, sky artefacts or clean continuum targets for a pocoMC fit?
-HYPOTHESIS: none registered. Visual calls (Nikhil, 2026-10-31): 1 crowded, 2 AGN, 3 emission-line,
-4 to check, 5 fit-ready.
+HYPOTHESIS: none registered. The visual calls are 1 crowded, 2 AGN, 3 emission-line, 4 to check
+and 5 fit-ready.
 INPUTS: FastSpecFit iron sv3 bright; spender chunk coadds (load_spectrum); spender sky-lines.txt;
 DR1 single exposures of 39627770254327945 from 2026-10-31_screen_all/sky_extract.py
 (results/2026-10-31_screen_all/exposures/).

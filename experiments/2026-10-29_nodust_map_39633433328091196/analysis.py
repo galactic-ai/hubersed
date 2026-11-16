@@ -7,8 +7,8 @@ INPUTS: C3K ER with dust, <TID>_map.npz of 2026-10-29_continuum_3963343332809119
 3657895); C3K ER without dust, er_nodust/<TID>_map.npz of fit.py (icx job 3658736); MILES with and
 without dust, miles_dust/ and miles_nodust/ of fit.py (icx job 3658941); C3K ER with rest
 3850-4450 and 4600-4750 A masked, with and without dust, er_dust_features/ and er_nodust_features/
-(follow-up 3, icx jobs 3659211 and 3659176); both libraries with the logzsol prior capped at +0.2,
-*_zmax0.2/ (follow-up 2, icx jobs 3659851, 3659852, 3659853). Copied from stampede3.
+(icx jobs 3659211 and 3659176); both libraries with the logzsol prior capped at +0.2,
+*_zmax0.2/ (icx jobs 3659851, 3659852, 3659853). Copied from stampede3.
 SEED: none.
 COMMAND: from the repository root on the Mac,
 ``uv run --no-sync python experiments/2026-10-29_nodust_map_39633433328091196/analysis.py``.

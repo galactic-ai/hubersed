@@ -5,8 +5,8 @@ it, which takes ~950 s for the 65 C3K ER slots. This module copies the slots out
 ``driver.get_ssp_slot`` and back in with ``driver.set_ssp_slot`` (galactic-ai python-fsps, commit
 2c5168f). It relies on private names of that fork (``_update_params``, ``_ssp_cache_inputs``), so it
 fails if any is missing. A cache loads only into a process with the same build and the same SSP
-inputs: the file holds the fork's cache key (the exact SSP parameters and ``smooth_velocity``) and a
-build identity, and both must match.
+inputs. The file holds the fork's cache key (the exact SSP parameters and ``smooth_velocity``) and
+a build identity, and both must match.
 """
 
 import os
@@ -122,8 +122,8 @@ def load_ssp_cache(sp, path):
     """Load saved SSP slots into this process for ``sp``.
 
     ``sp`` must have the SSP parameters the cache was built with. The first saved slot is built
-    again (this sets FSPS IMF state) and must equal the saved one; the others are copied in. The next
-    spectrum then uses the loaded slots as long as the SSP parameters stay unchanged.
+    again (this sets FSPS IMF state) and must equal the saved one. The others are copied in. The
+    next spectrum then uses the loaded slots as long as the SSP parameters stay unchanged.
 
     Parameters
     ----------

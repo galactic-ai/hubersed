@@ -1,7 +1,7 @@
 """Save the EmFit line widths of every DR1 SV3 bright spectrum from the Astro Data Lab.
 
 Changed from 2026-11-06_line_ew_prior/fetch_emfit.py: the same chunked synchronous queries of
-desi_dr1.emfit (Pucha+2025 method, arXiv:2411.00091), but for the widths. Columns: TARGETID, z,
+desi_dr1.emfit (Pucha+2025 method, arXiv:2411.00091), but for the widths. Columns are TARGETID, z,
 prob_broad, and for Halpha (narrow, outflow, broad), [OIII]5007 and [SII]6716 (primary, outflow)
 the intrinsic sigma in km/s, its flag (0 resolved and corrected, 1 unresolved, -1 undetected) and
 the flux.

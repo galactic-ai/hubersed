@@ -4,11 +4,13 @@ QUESTION: the calibration test fits Cue to line fluxes with an assumed attenuati
 diagnostics does the curve choice move, by how much, and how large is that in temperature?
 
 Every curve is scaled so A(Hbeta) - A(Halpha) matches the FastSpecFit Halpha/Hbeta of
-39627770174637084 for an intrinsic 2.86. Curves: CCM89 R_V 3.1 (PyNeb), Kriek & Conroy 2013 (the
-pipeline's dust_type 4, prospect fake_fsps.attenuate) at several dust_index with no birth cloud,
-and the pipeline's line curve at the target's rmatrix nautilus medians (dust_index 0.259,
+39627770174637084 for an intrinsic 2.86. The curves are CCM89 R_V 3.1 (PyNeb), Kriek & Conroy 2013
+(the pipeline's dust_type 4, prospect fake_fsps.attenuate) at several dust_index with no birth
+cloud, and the pipeline's line curve at the target's rmatrix nautilus medians (dust_index 0.259,
 dust_ratio 0.390, dust1_index -1). Temperature slopes d ln R / d ln T are PyNeb emissivity ratios
-at 1e4 K and n_e 250 cm^-3. SEED: none.
+at 1e4 K and n_e 250 cm^-3.
+
+SEED: none.
 
 COMMAND: ``uv run python experiments/2026-10-14_dust_curve_leverage/analysis.py`` from the repository root.
 

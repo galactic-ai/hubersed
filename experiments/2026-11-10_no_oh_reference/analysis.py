@@ -3,11 +3,11 @@
 QUESTION: Do DESI SV3 bright star-forming galaxies follow the N/O-O/H relation, with N/O scatter
 tied to M*, as González-Koda+26 find for SDSS (arXiv:2611.09330)? This is the reference that
 Cue posteriors under a flat, independent gas_logno prior must reproduce (plan
-~/.claude/plans/no_oh_population_test_plan.md, route A).
+~/.claude/plans/no_oh_population_test_plan.md).
 HYPOTHESIS: none stated before the run.
 INPUTS: data/fastspec-iron-sv3-bright.fits (fluxes, LOGMSTAR); prescreen_steps.npz from
 2026-11-10_prescreen_replay (step 0 parent, step 1 removed by latent S/N <= 3).
-METHOD, as González-Koda+26: S/N > 3 (flux * sqrt(ivar)) for [OII]3726+29, Hbeta, [OIII]5007,
+METHOD: as González-Koda+26. S/N > 3 (flux * sqrt(ivar)) for [OII]3726+29, Hbeta, [OIII]5007,
 Halpha, [NII]6584; star-forming below Kauffmann+03 eq. 1 (astro-ph/0304239 l.334); Balmer
 decrement, case B 2.86, Cardelli R_V = 3.1 (extinction.ccm89), drop A_V < 0. N/O from N2O2 with
 Florido+22 eq. fit1 (arXiv:2203.17021 l.265, valid -1.74 < N2O2 < 0.62). O/H from R23 and O32

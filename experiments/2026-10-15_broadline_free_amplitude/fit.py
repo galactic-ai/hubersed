@@ -8,13 +8,13 @@ free or of width 0.3) have 29 parameters. ``free_dust`` is free with dust_ratio 
 frac_nodust free, Uniform(0, 0.9), for 30 parameters.
 
 ``--check-only`` checks the labels against the 10-13 .json and prints the chi2 at the 10-13 max-L
-point and at the map.py MAP point (map.txt: free 5887.3, free_aur0.3 5896.0). FSPS is the C3K_ER
+point and at the map.py MAP point (free 5887.3, free_aur0.3 5896.0 in map.txt). FSPS is the C3K_ER
 build with AFE_FLAG, first on PYTHONPATH, and SPS_HOME holds the ER spectra.
 
 COMMAND: on the Mac, ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
-experiments/2026-10-15_broadline_free_amplitude/fit.py --check-only --variant free`` (passed
-2026-10-15: 29 parameters, MAP chi2 5887.3). On ls6, ``sbatch -J freeline --export=ALL,VARIANT=free
+experiments/2026-10-15_broadline_free_amplitude/fit.py --check-only --variant free``.
+On ls6, ``sbatch -J freeline --export=ALL,VARIANT=free
 experiments/2026-10-15_broadline_free_amplitude/run.slurm``.
 
 OUTPUT: <stem>.h5 and <stem>.json in results/2026-10-15_broadline_free_amplitude/.

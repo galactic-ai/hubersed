@@ -38,8 +38,8 @@ SV3_MAP = PATHS["RESULTS"] / "2026-10-28_continuum_c3k_er_rmatrix_map" / f"{base
 def load_data():
     """Return the redshift, the flux and uncertainty in maggies, and the fitted pixels.
 
-    The rules are those of the 10-28 load_data, on the main spectrum: spender's positive ivar,
-    positive ivar in the matrix file, finite values and rest REST_MIN to REST_MAX.
+    The rules are those of the 10-28 load_data on the main spectrum. They are spender's positive
+    ivar, positive ivar in the matrix file, finite values and rest REST_MIN to REST_MAX.
     """
     d = np.load(OUT / "main_spectrum.npz")
     z = float(d["z"])
@@ -63,7 +63,7 @@ def load_data():
 
 
 def start_values(nebular):
-    """Return start 0: the HR max-L, overridden by the SV3 continuum MAP best point."""
+    """Return start 0, the HR max-L overridden by the SV3 continuum MAP best point."""
     assert not nebular, "this experiment fits the continuum only"
     best = base.hr_best()
     m = np.load(SV3_MAP)

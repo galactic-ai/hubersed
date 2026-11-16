@@ -3,17 +3,19 @@
 QUESTION: inputs.py found the mock encoder inputs noiseless at the sky-line mask (25% of pixels),
 one pixel short, and almost without DESI's exact-zero masked pixels. If 20,000 mocks are fixed
 for these and re-encoded, does their neighbour mixing with DESI rise from ~0.01 toward 0.5?
-HYPOTHESIS: none registered beyond the plan: a large rise means preprocessing drives the separation.
+HYPOTHESIS: none registered beyond the plan, where a large rise means preprocessing drives the
+separation.
 INPUTS: data/prospector_model/noised_cuev2/DESIcuev2_<k>.pkl (spec, ivar, z, mock index, norm;
 row = index mod 1024 of file index // 1024, make_prospector_noisy_sed.py); data/prospector_model/
 mocks_v2_500000.h5 (last pixel); data/latents/mocks_v2/prospector_noise_spec_cuev2_<tag>latent_snr3.h5
 (stored mock latents, the S/N > 3 set); data/latents/spender_spec_<tag>latent_snr3.h5 (DESI latents
 and specs); data/dataset_z_snr.npz; encoders in data/checkpoints and flow scalers as analysis.py.
-METHOD: 20,000 random mocks of the S/N > 3 set. Null: the pickled spectra re-encoded must give the
-stored latents. Arm 1: noise added at sky-mask pixels with sigma interpolated (in pixel index) from
-the non-masked pixels of the same spectrum (sigma = 1/sqrt(ivar)). Arm 2: arm 1, plus the 7781st
-pixel (noiseless flux / norm plus noise with the last sigma), plus the exact-zero pixels of a
-random DESI encoder input copied as zeros. Mixing as analysis.py (k = 15, same 20,000 DESI).
+METHOD: 20,000 random mocks of the S/N > 3 set. In the null check the pickled spectra re-encoded
+must give the stored latents. Arm 1 adds noise at sky-mask pixels with sigma interpolated (in
+pixel index) from the non-masked pixels of the same spectrum (sigma = 1/sqrt(ivar)). Arm 2 is arm
+1 plus the 7781st pixel (noiseless flux / norm plus noise with the last sigma), plus the
+exact-zero pixels of a random DESI encoder input copied as zeros. Mixing as analysis.py (k = 15,
+same 20,000 DESI).
 SEED: 0 (samples), 1 (noise and zero patterns).
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_latent_domain_gap/fix.py``.
 RESULT: 2026-11-14, fix.txt. Null passes in every flow (re-encoded = stored, max 0.0000). The

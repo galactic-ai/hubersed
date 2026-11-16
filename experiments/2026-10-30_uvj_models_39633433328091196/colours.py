@@ -7,7 +7,7 @@ QUESTION: does V-J of 39633433328091196 depend on the stellar library? Points as
 parameters a point lacks are set to 0. afe is 0 for C3K at both points, since the Mac C3K_HR build
 (stand-in for C3K_ER) has no AFE_FLAG. Each case is also run with dust2 = 0, so dust1 = 0.
 
-Steps. ``inputs`` (hubersed venv) evaluates the C3K model of 2026-10-28 make_model and the MILES
+``inputs`` (hubersed venv) evaluates the C3K model of 2026-10-28 make_model and the MILES
 model of 2026-10-08 make_model at both points and saves the FSPS parameters and tabular SFH that
 prospect hands to FSPS. ``spectra --lib c3k_hr|miles`` (the venv of that build, numpy and fsps
 only) replays them through python-fsps and integrates the rest-frame spectra through the FSPS U,

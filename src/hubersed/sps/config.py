@@ -97,7 +97,7 @@ def build_continuum_model(redshift, logmass_init=None, sigma_floor=10.0):
         Starting value of ``logmass`` in log10 solar masses. The default is 8.7.
     sigma_floor : float, optional
         Lower bound of the ``sigma_smooth`` prior in km/s. Use ``library_sigma_floor`` so the
-        LOSVD cannot go below the library resolution. The default, 10, is the old bound.
+        LOSVD cannot go below the library resolution. The default is 10.
 
     Returns
     -------

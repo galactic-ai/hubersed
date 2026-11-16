@@ -8,12 +8,13 @@ INPUTS: results/2026-11-09_mocks_v2_outliers/flows (flow_nsf_<tag>latent.pt, des
 <tag>latent_snr3.pt for the mock file and threshold); data/prospector_model/mocks_v2_500000.h5
 (priors/theta, theta_labels, priors/redshifts, failed).
 METHOD: held-out mocks (first tenth of the default_rng(0) permutation) scored with the saved flow.
-Check first: mock target_id is the row of the 500k file (make_prospector_noisy_sed.py), so the
-latent-file z must equal priors/redshifts at that row and no row may be failed. Unevenness: weights
-w = 1/p, Kish ESS/N = (sum w)^2 / (N sum w^2), and the largest single weight share. Per parameter,
-rank u among not failed mocks (as params.py) in deciles: median log p and share below the saved
-threshold. Region: u < 0.3 in dust2, gas_logno, logzsol and u > 0.6 in gas_logu, gas_logz; count
-among not failed mocks against N x 0.3^3 x 0.4^2, and held-out log p inside vs outside it.
+The first check uses that mock target_id is the row of the 500k file (make_prospector_noisy_sed.py),
+so the latent-file z must equal priors/redshifts at that row and no row may be failed. Unevenness
+uses weights w = 1/p, Kish ESS/N = (sum w)^2 / (N sum w^2), and the largest single weight share.
+Per parameter, rank u among not failed mocks (as params.py) in deciles gives the median log p and
+the share below the saved threshold. The region is u < 0.3 in dust2, gas_logno, logzsol and u > 0.6
+in gas_logu, gas_logz, with its count among not failed mocks against N x 0.3^3 x 0.4^2, and
+held-out log p inside vs outside it.
 SEED: none (the split uses the flows' seed 0).
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_mock_effective_volume/analysis.py``.
 RESULT: 2026-11-14, effvol.txt. Check passes (z match 3e-8, no failed rows). Region holds 2,204

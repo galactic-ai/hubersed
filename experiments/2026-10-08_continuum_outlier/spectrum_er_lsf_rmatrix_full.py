@@ -1,7 +1,7 @@
 """The C3K ER + afe MAP of 39627757533007793 with the median DESI LSF and with its R matrix.
 
-Both models are the 2026-10-28 MAP best point (SV3 DR1 coadd, native data): sp_best is the median
-LSF prediction of predict_median_lsf.py there, sp_best_rmatrix the MAP's own R matrix model. Data
+Both models are the 2026-10-28 MAP best point (SV3 DR1 coadd, native data). sp_best is the median
+LSF prediction of predict_median_lsf.py there, and sp_best_rmatrix is the MAP's own R matrix model. Data
 are the DR1 coadd from load_spectrum on every unmasked pixel, with a 9 pixel median filter. Models
 and chi are drawn on the fitted pixels.
 

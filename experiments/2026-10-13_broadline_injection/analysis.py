@@ -1,11 +1,9 @@
 """Bias of the Cue gas and dust parameters when the true line profiles differ from our model.
 
-QUESTION: our line model takes each line's total flux from Cue and only splits the profile, with
-the same broad fraction, width and shift for every line (forbidden broad shared). If the true
-spectrum has a different profile (S1, EmFit's three components), per-line broad fractions (S2)
-or a broad component with different line ratios (S3), how biased are gas_logz, gas_logu,
-gas_lognH, gas_logno, gas_logco and the dust parameters? Does the broad component reduce or add
-bias compared with no broad component at all (F-none)?
+QUESTION: our model takes each line's flux from Cue and gives every line the same broad fraction,
+width and shift. If the truth has another profile (S1, EmFit's three components), per-line broad
+fractions (S2) or broad line ratios off Cue (S3), how biased are the gas and dust parameters, and
+does the broad component reduce or add bias against no broad component (F-none)?
 
 HYPOTHESIS: S1 and S2 keep every Cue flux, so the gas parameters should move little and most of
 the mismatch should go into the line widths and f_b. S3 changes total forbidden fluxes ([O III]

@@ -1,26 +1,26 @@
 """Direct-method (T_e) oxygen abundance from the line-flux table, following Scholte+26 choices.
 
-Recipe (Scholte et al. 2026, arXiv:2601.02463, main.tex:197-202, unless noted):
+The recipe is from Scholte et al. 2026 (arXiv:2601.02463, main.tex:197-202), unless noted.
 
-- PyNeb with Scholte's atomic data (tables/pyneb_data.tex): O+ A FFT04 and collision strengths
+- PyNeb with Scholte's atomic data (tables/pyneb_data.tex). O+ uses A FFT04 and collision strengths
   Kal09, O++ A FFT04 and SSB14, S+ RGJ19 and TZ10, H+ SH95 case B.
-- Dust: A_V from Halpha/Hbeta and Hgamma/Hbeta against case B at 1e4 K and 100 cm^-3, combined by
-  inverse variance and floored at 0. Curve: the Wild+11 line curve with mu ``--mu`` (default 0.4),
-  or CCM89 R_V 3.1 with ``--curve ccm89`` (Scholte's choice). Here we differ from Scholte, who fit
-  A_V jointly in the PyNeb model.
+- A_V comes from Halpha/Hbeta and Hgamma/Hbeta against case B at 1e4 K and 100 cm^-3, combined by
+  inverse variance and floored at 0. The curve is the Wild+11 line curve with mu ``--mu`` (default
+  0.4), or CCM89 R_V 3.1 with ``--curve ccm89`` (Scholte's choice). Here we differ from Scholte, who
+  fit A_V jointly in the PyNeb model.
 - n_e and T(O+) together from [SII]6731/6716 (EmFit) and [OII]3727+/7325+ (all four 2P-2D lines),
-  with PyNeb getCrossTemDen. Here we differ: Scholte use [OII]3726/3729 for n_e, which the
+  with PyNeb getCrossTemDen. Here we differ. Scholte use [OII]3726/3729 for n_e, which the
   FastSpecFit split cannot give at our resolution. n_e is bounded to Scholte's prior range 10-1000
-  cm^-3 (tables/pyneb_table.tex:10): a draw outside it, or with an [SII] ratio beyond the ratio at
+  cm^-3 (tables/pyneb_table.tex:10). A draw outside it, or with an [SII] ratio beyond the ratio at
   the bound, gets n_e at the bound and T(O+) from [OII] alone at that n_e. NE_BOUND_FRAC is the
   fraction of such draws.
 - T(O++) from [OIII]4363/5007 at that n_e where 4363 and 5007 have S/N > 3. Otherwise the inverted
   T_low = 0.7 T_high + 3000 K (Scholte's fiducial), or ``--trel scholte`` for their fit T(O+) =
   0.648 T(O++) + 3270 K (main.tex:264-266).
 - O/H = O+/H+ from [OII]3727/Hbeta at T(O+) plus O++/H+ from [OIII]5007/Hbeta at T(O++), no ICF.
-- Errors: Monte Carlo over the flux errors, N_MC draws with the seed (SEED, TARGETID), so a galaxy
-  gets the same draws alone or in the full run. Here we differ: Scholte sample a forward model with
-  UltraNest. A galaxy is kept if its 12+log(O/H) 16-84 width is < 0.6 dex.
+- Errors come from Monte Carlo over the flux errors, N_MC draws with the seed (SEED, TARGETID), so a
+  galaxy gets the same draws alone or in the full run. Here we differ. Scholte sample a forward
+  model with UltraNest. A galaxy is kept if its 12+log(O/H) 16-84 width is < 0.6 dex.
 
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/direct.py
 [--targetid T] [--curve wild|ccm89] [--mu 0.4] [--trel campbell|scholte]`` from the repository
@@ -177,7 +177,7 @@ def as_dict(row):
 
 
 def work(args):
-    """Return one output row: TARGETID, T_FROM_4363 and the summary numbers."""
+    """Return one output row with TARGETID, T_FROM_4363 and the summary numbers."""
     row, kind, mu, trel = args
     d, use_4363, frac = one(row, kind, mu, trel)
     s = summary(d)

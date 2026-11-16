@@ -39,7 +39,7 @@ TOL = 1e-4  # A
 def stitch(d, i, grid):
     """Return flux and ivar of exposure row ``i`` with b, r, z combined by ivar on ``grid``.
 
-    As spender DESI.prepare_spectra: masked pixels get no weight, overlaps are ivar-weighted.
+    As spender DESI.prepare_spectra, masked pixels get no weight and overlaps are ivar-weighted.
     """
     num, den = np.zeros(grid.size), np.zeros(grid.size)
     for arm in "BRZ":

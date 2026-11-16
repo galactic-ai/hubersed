@@ -1,4 +1,4 @@
-"""pocoMC posterior of the C3K ER fit of the SV3 dark spectrum of 39633433328091196: dust (#17).
+"""Posterior dust of the pocoMC C3K ER fit of the SV3 dark spectrum of 39633433328091196 (#17).
 
 QUESTION: what are dust2, dust_index, A_V and E(B-V) once logzsol, afe, the SFH and its
 hyperparameters are marginalised? Does the posterior exclude dust2 = 0, and how does dust trade
@@ -26,8 +26,8 @@ and 1, 4, 5 and 7 outside the 95% range (pct 97.7, 2.2, 98.0, 1.2).
 FIGURES: results/2026-10-31_poco_c3k_er_dark_39633433328091196/ posterior.txt, attenuation.png,
 best_fit.png from <TID>_poco_maxl.npz of predict.py (max-likelihood sample), prior_edges.txt, and the
 corners corner.png (dust), corner_stars_dust.png, corner_sfh.png and corner_all_ssfr.png (with the
-sSFR posterior from 2000 draws, seed 0), all in the style of corner_sfh.py of 10-19: axes the central
-99.8% of the posterior plus 5%, prior bounds dashed, no points marked.
+sSFR posterior from 2000 draws, seed 0), all in the style of corner_sfh.py of 10-19, with axes over
+the central 99.8% of the posterior plus 5%, prior bounds dashed and no points marked.
 """
 
 # %%
@@ -80,8 +80,8 @@ def load_sampler(path):
 def kc13_curve(lam, delta):
     """Return the FSPS dust_type 4 curve, tau(lam) / tau_V, for rest ``lam`` in A.
 
-    As 2026-10-29_c3k_vs_miles_dust/analysis.py: the Calzetti curve over 4.05, plus a 2175 A
-    Drude bump of strength 0.85 - 1.9 delta, times (lam / 5500)^delta.
+    It is the Calzetti curve over 4.05, plus a 2175 A Drude bump of strength 0.85 - 1.9 delta,
+    times (lam / 5500)^delta, as 2026-10-29_c3k_vs_miles_dust/analysis.py.
     """
     lam = np.asarray(lam, float)
     delta = np.atleast_1d(np.asarray(delta, float))[:, None]

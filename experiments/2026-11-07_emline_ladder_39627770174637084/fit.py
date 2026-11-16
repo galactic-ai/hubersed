@@ -4,10 +4,9 @@ Steps 7 and 8 (2026-11-10) are steps 5 and 6 with the broad widths set as a rati
 width, r ~ TopHat(1.2, 40), and the narrow width TopHat(10, 450) km/s (add_line_params widths
 "ratio", bounds from 2026-11-10_line_width_split), instead of the 250 km/s split.
 
-Step 3: Cue narrow lines, one width, median DESI Gaussian LSF (map_fits.LSF). Step 4: as 3 with
-the own DR1 R instead. Step 5: as 4 with the free line columns below. Same data, pixels, priors
-and sampler in all three; steps 3 and 4 keep Cue's eline_sigma prior TopHat(10, 250).
-
+Step 3 fits Cue narrow lines with one width and the median DESI Gaussian LSF (map_fits.LSF). Step 4
+is 3 with the own DR1 R instead. Step 5 is 4 with the free line columns below. Same data, pixels,
+priors and sampler in all three. Steps 3 and 4 keep Cue's eline_sigma prior TopHat(10, 250).
 
 Changed from step 4 (ladder plan): weak ions ([SII], [OI], [ArIII], auroral, [NeIII], [SIII])
 replace their Cue lines with free amplitudes, and H, [OII], [OIII], [NII], [SII], [OI] get free
@@ -90,10 +89,15 @@ if os.environ.get("SPEC_DATA"):  # staged spender files; Corral is not mounted o
 def load_data(recoadd=False):
     """Return the redshift, flux and uncertainty in maggies, fitted pixels and the R matrix.
 
-    DR1 (default): flux and ivar from load_spectrum, checked equal to the DR1 npz flux on the fitted
-    pixels, with the DR1 R. Recoadd (step 6): flux, ivar and R from the recoadd npz on the DR1
-    fitted pixels where its ivar is positive, as 2026-10-13 model_setup, without its missing-line
-    masks. Pixels outside ``good`` have zero flux and infinite uncertainty.
+    Pixels outside ``good`` have zero flux and infinite uncertainty.
+
+    Parameters
+    ----------
+    recoadd : bool
+        False takes flux and ivar from load_spectrum, checked equal to the DR1 npz flux on the
+        fitted pixels, with the DR1 R. True (step 6) takes flux, ivar and R from the recoadd npz on
+        the DR1 fitted pixels where its ivar is positive, as 2026-10-13 model_setup, without its
+        missing-line masks.
     """
     s = load_spectrum(TID)
     z = float(s.redshift.value)
@@ -119,12 +123,18 @@ def load_data(recoadd=False):
 
 
 def make_params(z, cue, lines=True, floor=None, afe_zero=False, widths="ratio"):
-    """Return the parameter specification: Cue model, fixed tau_in, 10-13 hyper priors.
+    """Return the parameter specification with the Cue model, fixed tau_in and 10-13 hyper priors.
 
-    With ``lines`` the line widths and broad offset are added (add_line_params, ``widths``
-    "split" for steps 5-6, "ratio" for steps 7-8 and the mocks). ``floor``
-    is the sigma_smooth prior floor, by default the library resolution over rest 3320-9000 A.
-    ``afe_zero`` adds afe fixed at 0, as the 11-01 c3k_hr step.
+    Parameters
+    ----------
+    lines : bool
+        Add the line widths and broad offset (add_line_params).
+    floor : float, optional
+        The sigma_smooth prior floor, by default the library resolution over rest 3320-9000 A.
+    afe_zero : bool
+        Add afe fixed at 0, as the 11-01 c3k_hr step.
+    widths : str
+        "split" for steps 5-6, "ratio" for steps 7-8 and the mocks.
     """
     from prospect.models.priors import LogUniform
 
@@ -158,10 +168,10 @@ def f08():
 def build_library_step(step):
     """Return ([observation], model, cue) of step 1 (MILES) or 2 (C3K HR), with 10-08's data code.
 
-    Step 1: MILES rest window 3601.8-7400.8 A, data not degraded, library resolution zeroed (10-08
-    make_sps), median DESI LSF, sigma_smooth floor 10 km/s (as 09-24). Step 2: whole DESI range in
-    the C3K HR window, data degraded to C3K HR + 10 km/s where DESI is sharper, afe fixed at 0,
-    sigma_smooth floor = C3K HR resolution over its window.
+    Step 1 uses the MILES rest window 3601.8-7400.8 A, data not degraded, library resolution zeroed
+    (10-08 make_sps), median DESI LSF and sigma_smooth floor 10 km/s (as 09-24). Step 2 uses the
+    whole DESI range in the C3K HR window, data degraded to C3K HR + 10 km/s where DESI is sharper,
+    afe fixed at 0 and sigma_smooth floor = C3K HR resolution over its window.
     """
     from prospect.models.sedmodel import HyperSpecModel
 
@@ -180,7 +190,7 @@ def build_library_step(step):
 
 
 def build(step=5):
-    """Return ([observation], model, cue) of ``step``. The likelihood builder of fit_model."""
+    """Return ([observation], model, cue) of ``step``, the likelihood builder of fit_model."""
     from prospect.models.sedmodel import HyperSpecModel
     from prospect.observation import ResolutionMatrixSpectrum
 
@@ -304,9 +314,9 @@ def predict_one(theta, step):
 
 
 def predict(pool, step):
-    """Write predict.npz: data, the max-likelihood model, percentiles of 100 posterior draws, chi.
+    """Write predict.npz with data, the max-likelihood model, percentiles of 100 posterior draws, chi.
 
-    Draws are taken by weight from the step's .h5 (seed 0); step 5 also gets the free-column EWs.
+    Draws are taken by weight from the step's .h5 (seed 0). Step 5 also gets the free-column EWs.
     """
     from prospect.io.read_results import results_from
 

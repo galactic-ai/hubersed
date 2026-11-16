@@ -3,22 +3,22 @@
 QUESTION: (1) Are the cont flows' training mocks past both cont thresholds as often at z 0.45-0.60 as
 DESI is (thin flow density there), or do high-z mocks score normally while DESI does not? (2) Is
 gallery105 99 (z 0.015) flagged because mocks are sparse near its z, or for a reason of its own?
-HYPOTHESIS: none registered. Plan ~/.claude/plans/z_coverage_and_99_2026-11-14.md. Reading: held-out
+HYPOTHESIS: none registered. Plan ~/.claude/plans/z_coverage_and_99_2026-11-14.md. Held-out
 mocks at z 0.45-0.60 flagged at >= 5x their overall 0.1% means thin coverage; within 2x while DESI is
-20x+ means a DESI-mock difference at high z. 99: under 20 mocks within |z - 0.015| <= 0.01, or its
-kNN distance above the 99.9 percentile of same-z held-out mocks while those mocks are not flagged,
-means coverage; else specific to 99.
+20x+ means a DESI-mock difference at high z. For 99, under 20 mocks within |z - 0.015| <= 0.01, or
+its kNN distance above the 99.9 percentile of same-z held-out mocks while those mocks are not
+flagged, means coverage; else specific to 99.
 INPUTS: results/2026-11-09_mocks_v2_outliers/flows (flow_nsf_cont{10,15}latent.pt; desi_outliers_flow_
 nsf_cont{10,15}latent_snr3.pt for DESI log p, thresholds and the latent files), data/dataset_z_snr.npz
 (DESI z and median S/N, the latent-cut definition as the mocks' snr_med, 2026-11-13_mock_noise_snr_check),
 results/prescreened_sample_v1.npz (keep).
 METHOD: mock log p recomputed with the saved flows; held-out mocks are the first tenth of the
 default_rng(0) permutation. Flag = at or below both saved cont thresholds; held-out mocks are flagged
-in both flows on the same rows (mock files share target_ids, checked). Per z bin (0.05, plus 0-0.03):
-counts, median S/N, flagged share with binomial error, median cont10 log p, for held-out mocks and
-DESI (prescreen keep); then z >= 0.45 split in S/N bins 3-4, 4-5, 5-8, >= 8. 99: mean Euclidean
-distance to the 10 nearest training mocks in each standardised cont latent, against held-out mocks
-within |z - 0.015| <= 0.01.
+in both flows on the same rows (mock files share target_ids, checked). Per z bin (0.05, plus 0-0.03)
+it gives counts, median S/N, flagged share with binomial error and median cont10 log p, for
+held-out mocks and DESI (prescreen keep); then z >= 0.45 split in S/N bins 3-4, 4-5, 5-8, >= 8.
+For 99, the mean Euclidean distance to the 10 nearest training mocks in each standardised cont
+latent, against held-out mocks within |z - 0.015| <= 0.01.
 SEED: none (the split uses the flows' seed 0).
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_cont_z_coverage/analysis.py``.
 RESULT: 2026-11-14, coverage.txt. Not coverage: no held-out mock is flagged in any z bin (0 of 2,065

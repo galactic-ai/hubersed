@@ -1,19 +1,18 @@
-"""Where do best-fit model spectra land in the cont10 latent space, next to their DESI spectrum or
-with the v2 mocks?
+"""Do best-fit model spectra land near their DESI spectrum or the v2 mocks in cont10 latent space?
 
 QUESTION: DESI continua sit off the v2 mock bulk in cont10 space (61% below the mock p5 log p;
 compare_flows.py). Can the model make DESI-like continua at all? If a galaxy's best-fit model lands
 next to its own DESI spectrum, the offset comes from how the priors populate mock space; if it lands
 away from DESI (toward the mocks), the model misses part of the continuum shape.
 HYPOTHESIS: none stated before the run.
-INPUTS: results/map_fits_outliers310_v2/<tid>.pkl (MAP fits of the 310: DESI flux, unc, best-fit
-model, maggies on the DESI grid), data/checkpoints/spender_desi_cont_10latent_zmax.pt,
+INPUTS: results/map_fits_outliers310_v2/<tid>.pkl (MAP fits of the 310 with DESI flux, unc and
+best-fit model, maggies on the DESI grid), data/checkpoints/spender_desi_cont_10latent_zmax.pt,
 data/latents/spender_spec_cont10latent_snr3.h5 (stored DESI latents), the new cont10 flow
 (flows/flow_nsf_cont10latent.pt) and the v2 mock latents.
 METHOD: flux and model converted to f_lambda, normalized by the median over rest 5300-5850 A of good
 pixels (unc > 0, outside the spender sky-line mask), as spender's prepare_spectra; encoded with
 the cont10 encoder. Model spectra are encoded noiseless and with one noise draw from the galaxy's
-unc. Check first: the re-encoded DESI flux must match the stored DESI latent.
+unc. The re-encoded DESI flux must first match the stored DESI latent.
 SEED: 0 (noise draw).
 COMMAND: ``uv run python experiments/2026-11-09_mocks_v2_outliers/model_spectra_test.py``.
 RESULT: 310 fits; re-encoded DESI = stored latents (distance 0.000). Under the new cont10 flow the

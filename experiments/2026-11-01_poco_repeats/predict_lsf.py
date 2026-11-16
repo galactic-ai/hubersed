@@ -1,7 +1,7 @@
 """Predict the pocoMC max-likelihood point of one target with the median DESI LSF, ladder step 4.
 
 As 2026-10-28_continuum_c3k_er_rmatrix_map/predict_median_lsf.py, with the poco_repeats fit in
-place of the MAP: the parameters are ``best`` of <TARGETID>_poco_maxl.npz (predict.py), with no
+place of the MAP. The parameters are ``best`` of <TARGETID>_poco_maxl.npz (predict.py), with no
 refit. The model has the parameters of the fit (free afe and SFH hyperparameters) as a
 HyperSpecModel, so prospect smooths the C3K_ER spectrum from the library resolution to a Gaussian of
 the median DESI resolution (hubersed.sps.lsf.desi_resolution) instead of applying the R matrix. Off

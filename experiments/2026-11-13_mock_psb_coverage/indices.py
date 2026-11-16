@@ -1,28 +1,31 @@
-"""Methods 2a and 2b: do the v2 mock spectra reach the Balmer absorption of the gallery105 PSBs?
+"""Do the v2 mock spectra reach the Balmer absorption of the gallery105 PSBs?
 
 QUESTION: (2a) For each gallery105 PSB, what fraction of mocks at the same 4000 A break and redshift
 has HdA at least as strong? (2b) What fraction of mocks passes the Leung et al. (2024) PSB cut?
 HYPOTHESIS: none registered.
-INPUTS: the rebuilt subset (rebuild.py: flux, continuum, lines, redshift, index), the stored mocks
-(mocks_v2_500000.h5, for the reproduction check), psb_spectra.npz (export_psb.py).
+INPUTS: the rebuilt subset (rebuild.py with flux, continuum, lines, redshift, index), the stored
+mocks (mocks_v2_500000.h5, for the reproduction check), psb_spectra.npz (export_psb.py).
 METHOD:
-- Check: the rebuilt flux must reproduce the stored flux of the same mock, and continuum + lines the
-  rebuilt flux; the largest relative differences are reported.
+- The rebuilt flux must reproduce the stored flux of the same mock, and continuum + lines the
+  rebuilt flux. The largest relative differences are reported.
 - Mock fluxes are maggies (f_nu); f_lambda = f_nu / lambda^2 up to a constant, which no index uses.
-- HdA: Worthey & Ottaviani (1997) Table 1 bands, taken as air and moved to vacuum (DAP lists them as
-  air, Westfall et al. 2019, spectralindices.tex l.39), mean form (l2 - l1)(1 - <F/F_c>) on f_lambda.
-- Dn4000: mean f_nu in 4000-4100 A over mean f_nu in 3850-3950 A (Balogh et al. 1999, PSG.tex l.307,
-  l.326; the f_nu convention and the vacuum frame are ours, the paper states neither).
-- 2a: raw total spectra for mocks and PSBs alike (lines included). For each PSB, mocks with
-  |Dn4000 - Dn4000_psb| <= 0.05 and |z - z_psb| <= 0.05; fraction with HdA >= HdA_psb. Wild et al.
-  (2007, arXiv:0706.3113, l.2162-2169) define PSBs by Balmer lines stronger than expected for the break.
-- 2b: Leung et al. (2024, arXiv:2309.16626, l.200): HdA > 3 A, W(Ha) < 10 A and log W(Ha) < 0.23 HdA -
-  0.46, as the MaNGA DAP measures them (Westfall et al. 2019, arXiv:1901.00856): HdA on the continuum
-  (lines removed, spectralindices.tex l.102); W(Ha) = line flux of the lines part in 6557.6-6571.6 A
-  over the pseudo-continuum from the medians of the total spectrum in 6483.0-6513.0 and 6623.0-6653.0 A
-  at the line centre 6564.632 A, divided by 1 + z (emissionlines.tex l.61, Eq. lineew). The DAP does not
-  label the Halpha bands air or vacuum; vacuum is assumed. W(Ha) <= 0 counts as passing the log cut.
-  Only mocks with the red sideband on the grid (z < 0.4766) can be tested.
+- HdA uses the Worthey & Ottaviani (1997) Table 1 bands, taken as air and moved to vacuum (DAP lists
+  them as air, Westfall et al. 2019, spectralindices.tex l.39), in the mean form
+  (l2 - l1)(1 - <F/F_c>) on f_lambda.
+- Dn4000 is the mean f_nu in 4000-4100 A over the mean f_nu in 3850-3950 A (Balogh et al. 1999,
+  PSG.tex l.307, l.326; the f_nu convention and the vacuum frame are ours, the paper states neither).
+- 2a uses raw total spectra for mocks and PSBs alike (lines included). For each PSB it takes mocks
+  with |Dn4000 - Dn4000_psb| <= 0.05 and |z - z_psb| <= 0.05 and gives the fraction with
+  HdA >= HdA_psb. Wild et al. (2007, arXiv:0706.3113, l.2162-2169) define PSBs by Balmer lines
+  stronger than expected for the break.
+- 2b is the cut of Leung et al. (2024, arXiv:2309.16626, l.200), HdA > 3 A, W(Ha) < 10 A and
+  log W(Ha) < 0.23 HdA - 0.46, as the MaNGA DAP measures them (Westfall et al. 2019,
+  arXiv:1901.00856). HdA is on the continuum (lines removed, spectralindices.tex l.102). W(Ha) is
+  the line flux of the lines part in 6557.6-6571.6 A over the pseudo-continuum from the medians of
+  the total spectrum in 6483.0-6513.0 and 6623.0-6653.0 A at the line centre 6564.632 A, divided by
+  1 + z (emissionlines.tex l.61, Eq. lineew). The DAP does not label the Halpha bands air or vacuum;
+  vacuum is assumed. W(Ha) <= 0 counts as passing the log cut. Only mocks with the red sideband on
+  the grid (z < 0.4766) can be tested.
 Assumptions: mocks are noiseless; data indices include noise and the sky mask of load_by_index.
 SEED: none (the subset is fixed in rebuild.py).
 COMMAND: ``python indices.py <rebuilt.h5 or 'rebuilt_part*.h5'> <mocks_v2_500000.h5> <psb_spectra.npz>

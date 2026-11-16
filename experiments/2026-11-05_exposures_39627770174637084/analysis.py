@@ -1,8 +1,7 @@
 """Do the single SV3 and main bright exposures of 39627770174637084 agree with its main coadd (#14)?
 
-QUESTION: do the SV3 bright and main bright exposures of 39627770174637084 agree with the main coadd in
-Hbeta + [OIII], Halpha + [NII] and [SII], and do outlying exposures have bright sky, poor seeing, low
-efftime or a FIBERSTATUS flag?
+QUESTION: do the exposures agree with the main coadd in Hbeta + [OIII], Halpha + [NII] and [SII],
+and do outlying exposures have bright sky, poor seeing, low efftime or a FIBERSTATUS flag?
 HYPOTHESIS: none registered. Descriptive, no threshold.
 INPUTS: results/2026-11-05_exposures_39627770174637084/extract.npz (extract.py, DR1 iron healpix 26004
 spectra and coadd files) and conditions.csv (conditions.py). Arms are joined ivar-weighted as spender
@@ -41,8 +40,12 @@ YLABEL = r"$f_\lambda$ [$10^{-17}$ erg s$^{-1}$ cm$^{-2}$ \AA$^{-1}$]"
 def merge_arms(d, prefix, k=None):
     """Return flux, ivar and mask on the DESI grid, arms joined as spender does.
 
-    Copy of merge_arms in 2026-11-02_exposure_checks/analysis.py. ``prefix`` picks the exposure
-    (``sv3`` or ``main``, row ``k``) or coadd (``coadd_sv3`` or ``coadd_main``) arrays.
+    Copy of merge_arms in 2026-11-02_exposure_checks/analysis.py.
+
+    Parameters
+    ----------
+    prefix : str
+        ``sv3`` or ``main`` for the exposure in row ``k``, ``coadd_sv3`` or ``coadd_main`` for a coadd.
     """
     wave = DESI._wave_obs.numpy()
     flux, ivar = np.zeros(wave.size), np.zeros(wave.size)

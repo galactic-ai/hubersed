@@ -3,12 +3,13 @@
 QUESTION: (A) How far is each of the 58 gallery105 emission_line outliers from the v2 mocks in the
 latent space of each flow, compared with held-out mocks? (B) In emission-line EW space, how many v2
 mocks fall inside each outlier's 2 sigma error ellipse?
-HYPOTHESIS: none registered. Plan ~/.claude/plans/emline_outliers_coverage_2026-11-14.md cuts: (A)
-"far" when the mean distance to the 10 nearest training mocks exceeds the held-out mock p99.9 in
-every flow that flags it, else "tail-adjacent"; (B) 0 mocks = outside, 1-50 = tail, > 50 = covered.
+HYPOTHESIS: none registered. The cuts of plan ~/.claude/plans/emline_outliers_coverage_2026-11-14.md
+are (A) "far" when the mean distance to the 10 nearest training mocks exceeds the held-out mock
+p99.9 in every flow that flags it, else "tail-adjacent", and (B) 0 mocks = outside, 1-50 = tail,
+> 50 = covered.
 INPUTS: data/latents/mocks_v2/prospector_noise_spec_cuev2_<tag>latent_snr3.h5,
-data/latents/spender_spec_<tag>latent_snr3.h5, results/2026-11-09_mocks_v2_outliers/flows
-(flow_nsf_<tag>latent.pt: scaler; desi_outliers_flow_nsf_<tag>latent_snr3.pt: log p, threshold);
+data/latents/spender_spec_<tag>latent_snr3.h5, results/2026-11-09_mocks_v2_outliers/flows (scaler
+from flow_nsf_<tag>latent.pt, log p and threshold from desi_outliers_flow_nsf_<tag>latent_snr3.pt);
 results/2026-11-14_emline_outlier_coverage/{ew_desi.npz, ew_mocks.npz} (lines.py).
 METHOD: (A) training and held-out mocks rebuilt as get_outliers_flow.py (default_rng(0) permutation,
 first tenth held out); latents standardised with the saved scaler; kNN (k = 10, Euclidean) against

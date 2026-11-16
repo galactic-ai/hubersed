@@ -1,9 +1,10 @@
 """Pick 60 more galaxies stratified by EW(Hbeta) and stellar mass, to test the EW dependence of Cue O/H.
 
-Cells: EW(Hbeta) in EW_BINS (A, FastSpecFit HBETA_EW) times LOGMSTAR in MASS_BINS, N_PER_CELL each,
-drawn at random with seed SEED from lineflux_table.fits. Galaxies at z <= Z_MIN are left out,
-since a DESI fibre at such low redshift likely sits on an HII region inside a large galaxy and
-its FastSpecFit mass does not describe it. Galaxies already in subset_20.txt are left out.
+The cells are EW(Hbeta) in EW_BINS (A, FastSpecFit HBETA_EW) times LOGMSTAR in MASS_BINS. Each gets
+N_PER_CELL galaxies drawn at random with seed SEED from lineflux_table.fits. Galaxies at z <= Z_MIN
+are left out, since a DESI fibre at such low redshift likely sits on an HII region inside a large
+galaxy and its FastSpecFit mass does not describe it. Galaxies already in subset_20.txt are left
+out.
 
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/subset_ew.py`` from
 the repository root.

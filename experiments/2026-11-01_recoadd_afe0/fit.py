@@ -52,7 +52,7 @@ def make_model(z, nebular=False):
 
 
 def start_values(nebular):
-    """Return start 0: the HR max-L, overridden by this spectrum's afe-free recoadd MAP."""
+    """Return start 0, the HR max-L overridden by this spectrum's afe-free recoadd MAP."""
     assert not nebular, "this experiment fits the continuum only"
     best = base.hr_best()
     m = np.load(AFE_FREE_MAP)

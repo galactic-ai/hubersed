@@ -3,18 +3,18 @@
 QUESTION: What share of DESI quiescent galaxies at the redshift of 67, 71, 88 (z 0.47-0.48) and 99
 (z 0.015) is past both cont thresholds, against all DESI and against line emitters; and where do the
 four sit in log p among their matched controls?
-HYPOTHESIS: none registered. Plan ~/.claude/plans/cont_flag_population_2026-11-14.md. Reading: a
-quiescent flagged share at z 0.45-0.50 at least 5x the all-DESI share means the four are the tail of a
+HYPOTHESIS: none registered. Plan ~/.claude/plans/cont_flag_population_2026-11-14.md. A quiescent
+flagged share at z 0.45-0.50 at least 5x the all-DESI share means the four are the tail of a
 population offset; within 2x, with the four below the control p5 of log p, means specific to them.
 INPUTS: results/2026-11-09_mocks_v2_outliers/flows/desi_outliers_flow_nsf_cont{10,15}latent_snr3.pt
 (log p, thresholds), data/fastspec-iron-sv3-bright.fits (Z, DN4000, HALPHA_EW and IVAR, OII EWs),
 results/prescreened_sample_v1.npz (keep), data/dataset_z_snr.npz (median S/N).
 METHOD: population = prescreen keep with cont log p (the S/N > 3 latent set). Flag = log p at or
-below the saved threshold in both cont10 and cont15 (the cont branch of the flag rule). Quiescent = no
-lines as 2026-11-13_hda_parent_67: EW Halpha < 3 A (or no Halpha measurement) and EW [OII] 3726+3729 <
-2.5 A; the rest are line emitters. Flagged share with binomial error per z bin (0.05 wide), split at the
-median S/N. Controls as hda_parent_67: same Dn4000 window and |z - z_target| <= 0.05, target removed;
-target log p percentile among the quiescent controls.
+below the saved threshold in both cont10 and cont15 (the cont branch of the flag rule). Quiescent =
+no lines as 2026-11-13_hda_parent_67, EW Halpha < 3 A (or no Halpha measurement) and EW [OII]
+3726+3729 < 2.5 A; the rest are line emitters. Flagged share with binomial error per z bin (0.05
+wide), split at the median S/N. Controls as hda_parent_67 (same Dn4000 window and
+|z - z_target| <= 0.05, target removed); target log p percentile among the quiescent controls.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_cont_flag_population/analysis.py``.
 RESULT: 2026-11-14, cont_flags.txt. 0.11% of all DESI are cont-flagged (quiescent 0.15%, line

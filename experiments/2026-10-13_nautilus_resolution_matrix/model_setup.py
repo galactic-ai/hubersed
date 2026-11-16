@@ -14,7 +14,7 @@ PR 2422, coadd rows weighted as PR 2377). The fitted pixels are those of the 10-
 mask and sky mask, rest 3320 to 9000 A) where the recoadded ivar is positive. Optionally the
 emission lines that are missing from the Cue line list are masked at rest +-4 A.
 
-The parameters are those of the 10-09 ER fit (make_params there): the Cue broadline model with a
+The parameters are those of the 10-09 ER fit (make_params there), the Cue broadline model with a
 shared forbidden broad fraction and sigma_split 45 km/s.
 
 The environment variable FIT_TID picks another target, default 39627770174637084. Its recoadd and

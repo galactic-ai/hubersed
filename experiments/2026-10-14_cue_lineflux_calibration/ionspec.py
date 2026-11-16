@@ -1,7 +1,7 @@
 """Ionizing spectrum of an assumed young population for the line-flux Cue fits, against the pipeline's.
 
 QUESTION: the line-flux fits have no continuum, so Cue's ionizing spectrum comes from an assumed
-young population: constant SFR for 10 Myr (the pipeline's young/old split, dust_tesc), at fixed
+young population of constant SFR for 10 Myr (the pipeline's young/old split, dust_tesc) at fixed
 stellar Z. How far are its 7 Cue ionizing parameters from those the full-spectrum pipeline used at
 the rmatrix nautilus max-L of 39627770174637084 (old_csp_lines.txt), and how much does that move
 the line ratios at the same gas parameters?
@@ -9,7 +9,7 @@ the line ratios at the same gas parameters?
 The population is built with the pipeline's FSPS object and settings (C3K_ER build, the model's
 imf_type and other FSPS parameters), with sfh 1, const 1, tage 0.01 Gyr. The young CSP of FSPS is
 fitted with cuejax fit_4loglinear_ionparam, as prospect does. Line ratios use Cue at the max-L gas
-parameters for three stellar Z: -0.41 (the target's fitted logzsol), 0.0 and -0.75. SEED: none.
+parameters for three stellar Z, -0.41 (the target's fitted logzsol), 0.0 and -0.75. SEED: none.
 
 COMMAND: from the repository root on the Mac with the C3K_ER build,
 ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-13_nautilus_resolution_matrix

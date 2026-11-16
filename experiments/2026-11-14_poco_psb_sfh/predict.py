@@ -1,6 +1,6 @@
 """Save the max-likelihood spectrum and the log evidence of each fit of fit.py.
 
-As 2026-11-01_poco_repeats/predict.py: the sample with the largest stored lnlike in pmc_final.state
+As 2026-11-01_poco_repeats/predict.py. The sample with the largest stored lnlike in pmc_final.state
 goes through the prior transform and the model of fit.py; its lnlike is recomputed and must match to
 1e-4. The SSPs are loaded from the cache as in fit.py, and the cache key must hold after each call.
 log Z and its error are pocoMC's (Sampler.evidence) from the same state; fit_model does not write

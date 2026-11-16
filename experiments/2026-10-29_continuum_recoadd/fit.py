@@ -75,7 +75,7 @@ def load_data():
 
 
 def start_values(nebular):
-    """Return start 0: the HR max-L, overridden by this spectrum's DR1-coadd continuum MAP."""
+    """Return start 0, the HR max-L overridden by this spectrum's DR1-coadd continuum MAP."""
     assert not nebular, "this experiment fits the continuum only"
     best = base.hr_best()
     m = np.load(DR1_MAP / f"{base.TID}_map.npz")

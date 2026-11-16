@@ -79,7 +79,7 @@ def tids_to_indices(tids):
     Notes
     -----
     ``all_target_ids.npy`` lists TARGETIDs in numeric chunk order, the order
-    ``load_by_index`` uses. This was checked against all 249 chunk files on 2026-09-22.
+    ``load_by_index`` uses. It was checked against all 249 chunk files.
     """
     all_tids = np.load(DATA_PATH / "all_target_ids.npy").astype(np.int64)
     order = np.argsort(all_tids)

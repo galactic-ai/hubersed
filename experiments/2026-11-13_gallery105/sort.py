@@ -1,8 +1,8 @@
 """Copy each reviewed gallery105 figure into a folder named after its review class, and summarise.
 
-Classes come from review.tsv (one row per reviewed figure, written during the review with Nikhil).
-Figures are copied, not moved, so seed.py still finds all 105 at the top level. The script only adds
-copies; when a class changes it lists the old copy for removal by hand.
+Classes come from review.tsv (one row per reviewed figure). Figures are copied, not moved, so
+seed.py still finds all 105 at the top level. The script only adds copies; when a class changes it
+lists the old copy for removal by hand.
 INPUTS: review.tsv; results/2026-11-13_gallery105/<NN>_<TARGETID>.png (analysis.py).
 COMMAND: ``uv run --no-sync python experiments/2026-11-13_gallery105/sort.py``.
 OUTPUT: results/2026-11-13_gallery105/<review_class>/<NN>_<TARGETID>.png and review_summary.txt (class by

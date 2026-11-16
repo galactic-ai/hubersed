@@ -1,21 +1,19 @@
 """Mock DESI spectra from the ladder step 5/6 model, for the outlier rerun.
 
-Changed from the old mocks (src/hubersed/mocks/seds.py, run of 2026-08-25): C3K ER with afe free,
+Changed from the old mocks (src/hubersed/mocks/seds.py, run of 2026-08-25). C3K ER with afe free,
 TopHat(-0.2, 0.6) as 2026-10-08_continuum_outlier, and the ladder's model and priors (make_params
 of 2026-11-07_emline_ladder_39627770174637084/fit.py, with its SFH hyperpriors and tau_in = t_H(z)).
-Redshift is U(0.01, 0.6). Each mock takes the DR1
-coadd R of a random target of the 2026-11-09_r_matrix_survey. The free line columns are drawn from
-the fit prior, EW uniform from 0 to W per column, through MockLineModel. The observation mask is
-the ladder's rest 3320-9000 A, where the library resolution is constant (prospect refuses a
-varying one); pixels outside it get prospect's own smoothed continuum and lines (smoke test 11-09:
-finite, continuous at the edge). Plan:
+Redshift is U(0.01, 0.6). Each mock takes the DR1 coadd R of a random target of the
+2026-11-09_r_matrix_survey. The free line columns are drawn from the fit prior, EW uniform from 0
+to W per column, through MockLineModel. The observation mask is the ladder's rest 3320-9000 A,
+where the library resolution is constant (prospect refuses a varying one). Pixels outside it get
+prospect's own smoothed continuum and lines. The plan is
 ~/.claude/plans/mocks_v2_outlier_rerun_plan.md.
 
-Actions. ``rbank`` merges the R of the 1,000 survey targets into rbank.npz (stampede3, reads the
-coadds on /work) and fills each target's all-zero columns (its ivar = 0 pixels) with the median
-column of the others; without the fill 30% of the pilot mocks failed prospect's row-sum check.
-``run --start --stop`` writes mocks start to stop to one h5 part, with the fork pool of the
-ladder (SSP build, speclib free, fork before JAX). Mock i draws all its numbers from
+``rbank`` merges the R of the 1,000 survey targets into rbank.npz (stampede3, reads the coadds on
+/work) and fills each target's all-zero columns (its ivar = 0 pixels) with the median column of
+the others. ``run --start --stop`` writes mocks start to stop to one h5 part, with the fork pool of
+the ladder (SSP build, speclib free, fork before JAX). Mock i draws all its numbers from
 default_rng([SEED, i]), so a part does not depend on the pool size or the order of the tasks.
 
 COMMAND: on stampede3, ``sbatch experiments/2026-11-09_mocks_v2_outliers/mocks.slurm`` (see there).
@@ -91,11 +89,7 @@ def rbank():
 
 
 def fill_empty_columns(res):
-    """Fill each target's all-zero columns with the median column of the other targets.
-
-    A column is all zero where the target's ivar is zero in every arm (merged_matrix divides by
-    the summed ivar only where it is positive). Those pixels say nothing about the instrument,
-    so they take the element-wise median over the targets whose column is not empty.
+    """Fill all-zero columns (zero ivar in every arm) with the median of the other targets' columns.
 
     Returns
     -------
@@ -190,8 +184,7 @@ def setup_worker():
 def _afe_prior():
     """Return the [alpha/Fe] prior, TopHat(-0.2, 0.6), the C3K ER grid as in 2026-10-08.
 
-    With afe free, logzsol is [Fe/H] (Nikhil 11-10: the mocks cover both the line and the
-    continuum models).
+    With afe free, logzsol is [Fe/H]. The mocks cover both the line and the continuum models.
     """
     from prospect.models.priors import TopHat
 

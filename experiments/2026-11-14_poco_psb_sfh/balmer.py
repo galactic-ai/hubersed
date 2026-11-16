@@ -3,12 +3,12 @@
 QUESTION: Is 99's Halpha/Hbeta near the Case B value (no dust, consistent with dust2 ~ 0 in the fits)?
 HYPOTHESIS: none registered. Descriptive; compared with Case B 2.86 (from memory, not checked here).
 INPUTS: data/fastspec-iron-sv3-bright.fits (HALPHA_FLUX, HBETA_FLUX and their IVAR, SV3 coadd);
-results/2026-11-14_poco_psb_sfh/39633421919584782/<model>/maxl.npz (predict.py) for the Cue models:
-flux, unc, good, sp_best and sp_cont (stellar continuum, nebular emission off).
-METHOD: (1) FastSpecFit fluxes. (2) For each Cue model with sp_cont: line flux = sum over good pixels of
-(data - sp_cont) * dlambda in rest +-6 A windows around Halpha 6564.61 and Hbeta 4862.68 A (vacuum,
-from memory), f_lambda; errors from unc. The model's own ratio uses sp_best - sp_cont in the same
-windows. The +-6 A windows exclude [NII] 6549.9 and 6585.3 A.
+results/2026-11-14_poco_psb_sfh/39633421919584782/<model>/maxl.npz (predict.py) for the Cue models,
+with flux, unc, good, sp_best and sp_cont (stellar continuum, nebular emission off).
+METHOD: (1) FastSpecFit fluxes. (2) For each Cue model with sp_cont, line flux = sum over good pixels
+of (data - sp_cont) * dlambda in rest +-6 A windows around Halpha 6564.61 and Hbeta 4862.68 A
+(vacuum, from memory), f_lambda; errors from unc. The model's own ratio uses sp_best - sp_cont in
+the same windows. The +-6 A windows exclude [NII] 6549.9 and 6585.3 A.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_poco_psb_sfh/balmer.py``.
 RESULT: 2026-11-15, balmer.txt. FastSpecFit 4.09 +- 0.86 (+1.4 sigma from Case B). Data minus our

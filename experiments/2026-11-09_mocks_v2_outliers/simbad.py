@@ -3,13 +3,13 @@
 QUESTION: After the SIMBAD screen, how many v2-mock candidates remain, and which of the 310 (by
 branch, source class and fit classification) do they keep or drop?
 HYPOTHESIS: none stated before the run.
-METHOD: as the 310 run (claude-backup jobs/a3ef5882/tmp/recount.py and simbad_posthoc.py): flags of
-the five flows intersected with the prescreened parent (results/prescreened_sample_v1.npz), full =
-6 & 10 & 15, cont = cont10 & cont15; a candidate is dropped if its nearest SIMBAD object within
-SEP_MAX has an AGN or star type (or a dC spectral type). Rules copied from scripts/simbad_screen.py
-(commit 9781230). Answers cached in results/simbad_screen_v2.csv are reused; new targets are queried
-and cached in results/2026-11-09_mocks_v2_outliers/simbad_new.csv. Check: the old flows must give
-exactly the 310.
+METHOD: as the 310 run (claude-backup jobs/a3ef5882/tmp/recount.py and simbad_posthoc.py). Flags of
+the five flows are intersected with the prescreened parent (results/prescreened_sample_v1.npz),
+full = 6 & 10 & 15, cont = cont10 & cont15. A candidate is dropped if its nearest SIMBAD object
+within SEP_MAX has an AGN or star type (or a dC spectral type). Rules copied from
+scripts/simbad_screen.py (commit 9781230). Answers cached in results/simbad_screen_v2.csv are
+reused; new targets are queried and cached in results/2026-11-09_mocks_v2_outliers/simbad_new.csv.
+The old flows must give exactly the 310.
 INPUTS: results/noised_cue_meanzero_wide_flow/ (old), results/2026-11-09_mocks_v2_outliers/flows/
 (new), data/fastspec-iron-sv3-bright.fits (RA, DEC), results/map_fits_outliers310_v2/
 classification_v2.csv.

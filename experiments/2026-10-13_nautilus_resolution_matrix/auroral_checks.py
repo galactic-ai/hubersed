@@ -6,7 +6,7 @@ need between 3727 and 7325?
 
 Three checks at the profile points n_H 1.6 and 2.4 (profile_nH<V>.npz, [SII]6731 fitted). The line
 flux tables also give the max-L point of the rmatrix nautilus run (NAUTILUS, all 29 parameters
-free, [SII]6731 masked in that fit), the global best fit with nothing fixed:
+free, [SII]6731 masked in that fit), the global best fit with nothing fixed.
 
 - observed line fluxes. The model's attenuated line fluxes against the FastSpecFit fluxes, each
   divided by its own Halpha. No dust correction enters.

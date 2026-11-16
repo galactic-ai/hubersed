@@ -10,9 +10,9 @@ The quantities follow the papers in UberSED knowledge/discussion_2026-11-04_deep
 - Light-weighted age: the FSPS compute_light_ages spectrum averaged over rest 5580 to 6820 A
   (Suess+2022).
 - SFR over the last 100 Myr over surviving mass, and SFR over 10 Myr for the CIGALE comparison.
-- D = sSFR_100 t_H with the mass formed (Tacchella+2022: quiescent below 1/20, transitioning
-  1/20 to 1/3), and the share of draws in each class. Quenching times are not computed: on our
-  bins they follow the 1-10 Myr bins (Nikhil, 2026-11-04; Suess+2022 on bin-set quenching times).
+- D = sSFR_100 t_H with the mass formed (Tacchella+2022, quiescent below 1/20, transitioning
+  1/20 to 1/3), and the share of draws in each class. Quenching times are not computed, since on
+  our bins they follow the 1-10 Myr bins (Suess+2022 on bin-set quenching times).
 - Metallicity: [Fe/H] and [alpha/Fe] of the afe runs, log Z/Zsun of all (ladder_hist.mist2_logz).
 - sigma_smooth: the stellar velocity dispersion; instrumental resolution is handled separately.
 Draws: 1000 weighted posterior resamples (seed 0) and 1000 prior draws through the model's
@@ -21,8 +21,8 @@ Ages of the universe use Planck18 (hubersed.sps.utils.universe_age_gyr), as the 
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_poco_repeats/derived.py draws --tid <TID>``
 on the laptop. Then, on stampede3, derived.slurm runs ``derived.py fsps --tid <TID> --run <RUN>``
 once per run with that run's build. Then ``derived.py table --tid <TID>`` on the laptop.
-OUTPUT: results/2026-11-01_poco_repeats/<TID>/derived/: draws_<RUN>.npz, fsps_<RUN>.npz,
-derived.txt.
+OUTPUT: draws_<RUN>.npz, fsps_<RUN>.npz and derived.txt in
+results/2026-11-01_poco_repeats/<TID>/derived/.
 """
 
 # %%

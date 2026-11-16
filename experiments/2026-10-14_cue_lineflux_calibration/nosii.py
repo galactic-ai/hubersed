@@ -1,7 +1,7 @@
-"""Drop [SII] (and [OI]) from the Cue fits: do they hold metal-rich galaxies on the low branch?
+"""Drop [SII] (and [OI]) from the Cue fits. Do they hold metal-rich galaxies on the low branch?
 
 QUESTION: forced onto the upper branch, Cue raises U, over-predicts [OIII] and [SII]6716 and
-under-predicts [OII]3727. Two reasons [SII] could mislead a single Cue cloud: Cue fixes S/O at
+under-predicts [OII]3727. [SII] could mislead a single Cue cloud for two reasons. Cue fixes S/O at
 solar (Li+24 arXiv:2405.04598 main.tex:91; a fixed S/O biases Cue O/H, Korhonen Cuestas+26
 arXiv:2609.22488 second_draft.tex:406-407), and [SII] and [OI] can carry emission from gas outside
 HII regions (Raesfeld+26 arXiv:2609.27081 p6-7 fit Cue without S, Ar and low-ionization lines and
@@ -17,19 +17,22 @@ suffix _<arguments>. Strong lines alone need an N/O-O/H or U-O/H relation to pic
 ``compare`` also sets Cue O/H with and without [SII] against direct T_e O/H for the subset_20
 galaxies kept by direct.py (direct_wild0.4_campbell_r2_subset_20.fits, KEEP).
 
-``jobs`` writes nosii/jobs.txt, one fit.py command per line: free fits without [SII] for the 80
-galaxies of subset_20.txt and subset_ew60.txt and the 10 of control/control_ids.txt, and fits forced to
-12+log(O/H) >= forced.ZMIN_OH without [SII] for forced_ids.txt and the controls. ``compare`` writes
-nosii/nosii_compare.txt: per galaxy, O/H, U and N/O with and without [SII], the change of the best
-data log likelihood forced minus free without [SII], and model/data of the held-out [SII] and of
-[OIII]5007, [OII]3727 and [OI]6300; then Spearman rho of Cue O/H with N2 and log M* over galaxies at
-z > Z_MIN, and the median posterior weight above forced.ZMIN_OH for N2 > N2_MIN.
+``jobs`` writes nosii/jobs.txt, one fit.py command per line. It holds free fits without [SII] for
+the 80 galaxies of subset_20.txt and subset_ew60.txt and the 10 of control/control_ids.txt, and fits
+forced to 12+log(O/H) >= forced.ZMIN_OH without [SII] for forced_ids.txt and the controls.
+``compare`` writes nosii/nosii_compare.txt. Per galaxy it gives O/H, U and N/O with and without
+[SII], the change of the best data log likelihood forced minus free without [SII], and model/data of
+the held-out [SII] and of [OIII]5007, [OII]3727 and [OI]6300. Then it gives Spearman rho of Cue O/H
+with N2 and log M* over galaxies at z > Z_MIN, and the median posterior weight above
+forced.ZMIN_OH for N2 > N2_MIN.
 
-Excess [OI] as in Raesfeld+26 (p7, eq. 2): f = 1 - L_Cue / L_obs from the fit without [SII] (and
-[OI]), by Monte Carlo over N_MC draws of the observed flux (Gaussian error) and of the 200 saved
-posterior predictions. It is reported only where the predicted log [OII]3727/[OIII]5007 is within
-1 sigma of the observed (flux errors and prediction spread in quadrature), their cut for a fit that
-describes the HII regions. SEED: SEED for the Monte Carlo.
+Excess [OI] is computed as in Raesfeld+26 (p7, eq. 2), f = 1 - L_Cue / L_obs from the fit without
+[SII] (and [OI]), by Monte Carlo over N_MC draws of the observed flux (Gaussian error) and of the
+200 saved posterior predictions. It is reported only where the predicted log [OII]3727/[OIII]5007 is
+within 1 sigma of the observed (flux errors and prediction spread in quadrature), their cut for a
+fit that describes the HII regions.
+
+SEED: SEED for the Monte Carlo.
 
 RESULT: 2026-10-15, fits on ls6 idev. Direct T_e O/H follows N2 (rho +0.85, 19 galaxies); Cue does
 not in any variant. Cue - direct median [16, 84], rho: all lines -0.08 [-0.49, +0.41], -0.39; no

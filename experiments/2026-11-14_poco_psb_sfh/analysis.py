@@ -2,18 +2,19 @@
 
 QUESTION: For each target, how do model A (current stochastic SFH) and model B (prospect's PSB SFH)
 compare in max-likelihood chi2, log evidence and SFH posterior?
-HYPOTHESIS: none registered. Plan ~/.claude/plans/poco_psb_sfh_2026-11-14.md: good fits under both
+HYPOTHESIS: none registered. Plan ~/.claude/plans/poco_psb_sfh_2026-11-14.md. Good fits under both
 mean the flag is rarity or data; bad under A and good under B mean the current SFH prior cannot reach
 them; bad under both mean model failure.
 INPUTS: results/2026-11-14_poco_psb_sfh/<TID>/<model>/{fit.h5, maxl.npz} (fit.py, predict.py), copied
 from stampede3; the models of fit.py for the SFH transforms (no FSPS).
 METHOD: weights and samples from fit.h5, ESS = 1 / sum(w^2). Max-likelihood chi2/N on the fitted
 pixels and on those at rest 3700-4400 A. Weighted quantiles of the free parameters; prior edges as
-2026-11-01_poco_repeats/analysis.py (0.5% and 99.5% quantiles against the bounds). SFH from 2000
-weighted draws: mass fraction formed at lookback < 1.5 Gyr, and the mid lookback time of the bin with
-the highest SFR among bins starting within 2 Gyr (sfh.py definitions). ln Z(B) - ln Z(A) from
-pocoMC; B's is lower by about 0.35 from its cut prior (fit.py). Last cell (degeneracy.txt): Spearman
-correlation of logzsol with the recent mass fraction, afe, dust2, dust_index and logmass on the draws.
+2026-11-01_poco_repeats/analysis.py (0.5% and 99.5% quantiles against the bounds). The SFH from
+2000 weighted draws gives the mass fraction formed at lookback < 1.5 Gyr and the mid lookback time
+of the bin with the highest SFR among bins starting within 2 Gyr (sfh.py definitions).
+ln Z(B) - ln Z(A) from pocoMC; B's is lower by about 0.35 from its cut prior (fit.py). The last
+cell (degeneracy.txt) gives the Spearman correlation of logzsol with the recent mass fraction, afe,
+dust2, dust_index and logmass on the draws.
 SEED: 0 (posterior draws).
 COMMAND: ``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude uv run --no-sync python
 experiments/2026-11-14_poco_psb_sfh/analysis.py``.
@@ -55,21 +56,22 @@ between fits, since dust takes up the difference.
 Model L for five emission-line outliers (gallery105 28, 34, 80, 25, 64; jobs 3723160-4): do they fit,
 by chi2/N overall and in the line windows of 2026-10-15_broadline_free_amplitude/map.py
 (windows_em5.txt)? Result pending. degeneracy.txt and total_z.txt leave L out.
-FIGURES: results/2026-11-14_poco_psb_sfh/<TID>/<model>/best_fit.png (style of poco_repeats);
-results/2026-11-14_poco_psb_sfh/sfh.png: per target, sSFR = SFR / (0.6 mass formed) (as
+FIGURES: results/2026-11-14_poco_psb_sfh/<TID>/<model>/best_fit.png (style of poco_repeats).
+results/2026-11-14_poco_psb_sfh/sfh.png shows per target sSFR = SFR / (0.6 mass formed) (as
 map_fits.sfh_from_theta) on a log lookback-time grid, median and 16-84% of 2000 weighted draws, A red,
-B blue, Cue models dashed (99 only); axes not clipped. sfh_99.png: the same for 99's Cue variants (AC, BC,
-AC0, AC_main, BC_main). corner_99_AC.png and corner_99_AC_AC0.png: 99 corners as poco_repeats red_corner
-(levels 0.393/0.865, smooth 1, 30 bins), prior bounds dashed. fit_<nn>_<model>.png (99 AC; 22, 51, 69
-A): the fit in the design of 2026-11-01_poco_repeats/ladder_plot.py (top panel from zero, 9 px median
-filter, DR10 griz cutout with the 1.5'' fibre top right, one chi panel -5 to 5 dashed at +-2), with PSB
-markings as in the literature: Balmer H-alpha to H-theta ticks (orange) and forbidden lines (purple) as
-Pawlik+18, Ca II K (green, Ca II H labelled with H-epsilon), and the HdA band (dark grey) and continua
-(light grey) as Setton+20.
-L: sfh_em5.png as sfh.png; fit_<nn>_L.png with the emline ladder's line ticks in place of the PSB
-markings; windows_<nn>_L.png as the emline ladder windows.png (2026-10-18_issue14_figures
-windows_figure); corner_<nn>_L_{stars_dust,gas,all_ssfr}.png as corner_99_AC_AC0.png (all_ssfr with
-an sSFR inset, median and 16-84% as sfh.png).
+B blue, Cue models dashed (99 only); axes not clipped. sfh_99.png is the same for 99's Cue variants
+(AC, BC, AC0, AC_main, BC_main). corner_99_AC.png and corner_99_AC_AC0.png are 99 corners as
+poco_repeats red_corner (levels 0.393/0.865, smooth 1, 30 bins), prior bounds dashed.
+fit_<nn>_<model>.png (99 AC; 22, 51, 69 A) is the fit in the design of
+2026-11-01_poco_repeats/ladder_plot.py (top panel from zero, 9 px median filter, DR10 griz cutout
+with the 1.5'' fibre top right, one chi panel -5 to 5 dashed at +-2), with PSB markings as in the
+literature. These are Balmer H-alpha to H-theta ticks (orange) and forbidden lines (purple) as
+Pawlik+18, Ca II K (green, Ca II H labelled with H-epsilon), and the HdA band (dark grey) and
+continua (light grey) as Setton+20.
+For L, sfh_em5.png is as sfh.png, fit_<nn>_L.png has the emline ladder's line ticks in place of the
+PSB markings, windows_<nn>_L.png is as the emline ladder windows.png (2026-10-18_issue14_figures
+windows_figure), and corner_<nn>_L_{stars_dust,gas,all_ssfr}.png is as corner_99_AC_AC0.png
+(all_ssfr with an sSFR inset, median and 16-84% as sfh.png).
 """
 
 # %%

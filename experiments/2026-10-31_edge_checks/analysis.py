@@ -1,4 +1,4 @@
-"""Training-edge checks for two groups of screened continuum outliers: z > 0.5 and dwarfs (#17).
+"""Training-edge checks for two groups of screened continuum outliers, z > 0.5 and dwarfs (#17).
 
 QUESTION: (a) does the flag rate rise toward the z = 0.6 end of the mocks, and where do the z > 0.5
 survivors sit? (b) how many training mocks lie near the low-mass, low-z survivors in (z, log M)?
@@ -8,7 +8,7 @@ mocks data/latents/noised_cue_meanzero_wide/prospector_noise_spec_cue_cont10late
 after S/N > 3) with their masses from stochastic_priors_sample_cue_500000.npz (Corral, 2026-08-25;
 mock target_ids index the draws, z matches to 3e-8); FastSpecFit LOGMSTAR for DESI. Mock mass is the
 Prospector mass parameter, LOGMSTAR a current stellar mass, so (b) compares them only roughly.
-Neighbourhood for (b): |dz| < 0.02 and |dlogM| < 0.25.
+The neighbourhood for (b) is |dz| < 0.02 and |dlogM| < 0.25.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_edge_checks/analysis.py``.
 RESULT: 2026-10-31. Common-flag rate is 0.03-0.3% at z 0.08-0.44 but 3.5-10.5% at z 0.48-0.60

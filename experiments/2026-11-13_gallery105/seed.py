@@ -4,21 +4,21 @@ The category column is left empty; it is filled by eye from the gallery figures.
 INPUTS: targets of analysis.py; results/2026-11-10_data_quality_screen/{screened.npz, gaia5.fits,
 repeats.csv}; data/fastspec-iron-sv3-bright.fits (FASTSPEC, METADATA);
 results/2026-11-10_line_width_split/emfit_widths_sv3_bright.fits.
-Rules, copied unchanged: Gaia star (parallax/err > 5 or pm > 3 mas/yr) and D(g-r) (FLUX_SYNTH minus
-FIBERFLUX colour) as 2026-11-10_data_quality_screen screen.py and colour.py; FastSpecFit broad, BPT,
-WHAN and class as 2026-11-01_gallery92/lines.py, except that EW(Halpha) and WHAN are blank when
-Halpha is off the spectrum. EmFit sigmas are given only with sigma flag 0.
-HdA and HgA are measured on each DR1 coadd (load_by_index) with the Worthey & Ottaviani (1997) Table 1
-bandpasses: mean flux in each sideband, a straight line between the sideband midpoints as the
-continuum, index = (l2 - l1)(1 - <F/F_c>) over the good pixels of the feature band (their Eq. 2),
-in rest-frame A, absorption positive. The bandpasses are taken as air and moved to vacuum with
-_airtovac (the paper does not say). Good pixels have ivar > 0; load_by_index zeroes spender's sky-line
-mask, so a band can lose up to half its pixels. An index is NaN if any band has fewer than 25% good
-pixels; <name>_good is the smallest good fraction of its three bands. Its error is the std over
-200 noise draws from ivar (SEED 0). No resolution matching to Lick is done.
-goto_like follows Goto (2007, arXiv:0801.1106, l.333) with EW(Hd) replaced by HdA: HdA > 5 A,
-EW(Ha) < 3 A and EW([OII] 3726 + 3729) < 2.5 A, FastSpecFit EWs with emission positive; when Halpha
-is off the spectrum only the [OII] cut is used (goto_ha_used False).
+Rules copied unchanged are the Gaia star (parallax/err > 5 or pm > 3 mas/yr) and D(g-r) (FLUX_SYNTH
+minus FIBERFLUX colour) as 2026-11-10_data_quality_screen screen.py and colour.py, and FastSpecFit
+broad, BPT, WHAN and class as 2026-11-01_gallery92/lines.py, except that EW(Halpha) and WHAN are
+blank when Halpha is off the spectrum. EmFit sigmas are given only with sigma flag 0.
+HdA and HgA are measured on each DR1 coadd (load_by_index) with the Worthey & Ottaviani (1997)
+Table 1 bandpasses. The continuum is a straight line between the mean fluxes of the sidebands at
+their midpoints, and index = (l2 - l1)(1 - <F/F_c>) over the good pixels of the feature band (their
+Eq. 2), in rest-frame A, absorption positive. The bandpasses are taken as air and moved to vacuum
+with _airtovac (the paper does not say). Good pixels have ivar > 0; load_by_index zeroes spender's
+sky-line mask, so a band can lose up to half its pixels. An index is NaN if any band has fewer than
+25% good pixels; <name>_good is the smallest good fraction of its three bands. Its error is the std
+over 200 noise draws from ivar (SEED 0). No resolution matching to Lick is done.
+goto_like follows Goto (2007, arXiv:0801.1106, l.333) with EW(Hd) replaced by HdA, so HdA > 5 A,
+EW(Ha) < 3 A and EW([OII] 3726 + 3729) < 2.5 A, FastSpecFit EWs with emission positive. When
+Halpha is off the spectrum only the [OII] cut is used (goto_ha_used False).
 COMMAND: ``uv run --no-sync python experiments/2026-11-13_gallery105/seed.py``.
 OUTPUT: results/2026-11-13_gallery105/gallery105.tsv, one row per figure, in figure order.
 """

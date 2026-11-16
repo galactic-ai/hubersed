@@ -1,15 +1,15 @@
 """How large are emission-line equivalent widths in DR1 SV3 bright, for a data-based line prior?
 
 QUESTION: per line, what are the maximum and the 99.9th and 99.99th percentiles of the rest-frame EW
-in FastSpecFit v3.0 and EmFit, for our parent sample (median pixel S/N > 3) and for our outliers? These set the upper bound of a
-U(0, EW_max) amplitude prior (Chang's suggestion, in EW rather than flux).
+in FastSpecFit v3.0 and EmFit, for our parent sample (median pixel S/N > 3) and for our outliers?
+These set the upper bound of a U(0, EW_max) amplitude prior, in EW rather than flux.
 HYPOTHESIS: none registered.
 INPUTS: data/fastspecfit_v3.0/fastspec-iron-sv3-bright.fits (SPECTYPE GALAXY; EW = FLUX/CONT/(1+z),
-checked to 1e-6); results/2026-11-06_line_ew_prior/emfit_sv3_bright.fits (extract_emfit.py from the VAC v2.3.1 file;
-fetch_emfit.py gives the same table from Data Lab when it is up), whose EW
-is the summed component flux over the FastSpecFit continuum at the same line, matched on TARGETID;
-outliers are `full` of results/prescreened_outliers_postsimbad.npz (231). A FastSpecFit EW counts
-when EW > 0 and EW_IVAR > 0, an EmFit EW when its flux and the continuum are > 0.
+checked to 1e-6) and results/2026-11-06_line_ew_prior/emfit_sv3_bright.fits (extract_emfit.py from
+the VAC v2.3.1 file, or fetch_emfit.py from Data Lab), whose EW is the summed component flux over
+the FastSpecFit continuum at the same line, matched on TARGETID. Outliers are `full` of
+results/prescreened_outliers_postsimbad.npz (231). A FastSpecFit EW counts when EW > 0 and
+EW_IVAR > 0, an EmFit EW when its flux and the continuum are > 0.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-06_line_ew_prior/analysis.py``.
 RESULT: 2026-11-07, ew_prior.txt, parent sample (median pixel S/N > 3, 114,136 galaxies). FastSpecFit

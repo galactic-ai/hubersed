@@ -5,9 +5,10 @@ our SV3 bright sample, and does it depend on the fiber aperture correction FLAT_
 
 For one target (experiments/2026-10-09_nautilus_c3k_er_broadline/fluxcal_rerun.py) the corrected
 calibrated variance is the iron variance plus (f F')^2, less the small iron calibration term,
-with f = sigma_C / C from the flux calibration rerun with desispec PRs 2496, 2827 and 2452. With PR 2452 the calibration of each fiber
-and its ivar are both scaled by FLAT_TO_PSF_FLUX, so f should not depend on it. In iron it did,
-by a factor FLAT_TO_PSF_FLUX. This script measures f for every fiber of each listed exposure-petal.
+with f = sigma_C / C from the flux calibration rerun with desispec PRs 2496, 2827 and 2452. With
+PR 2452 the calibration of each fiber and its ivar are both scaled by FLAT_TO_PSF_FLUX, so f should
+not depend on it. In iron it did, by a factor FLAT_TO_PSF_FLUX. This script measures f for every
+fiber of each listed exposure-petal.
 
 For each unit (night, exposure, petal) it downloads the iron frame, sky, fiberflatexp and fluxcalib
 of the three cameras, the stdstars file and calibstars csv, and checks each against the iron
@@ -15,11 +16,12 @@ sha256sum file. Downloads go to the public AWS S3 copy of DR1 (bucket desidata),
 also to data.desi.lbl.gov (--nersc-streams, it returns 503 above about 6), with retries. A camera
 whose files are not in the iron exposure is skipped. Units whose petal is flagged BADPETALSTDSTAR in
 the exposure QA (column N_BADPETALSTDSTAR of units_all.csv from make_units.py) are recorded and
-skipped: desispec then uses a default calibration with 100% uncertainty, which needs
-DESI_SPECTRO_CALIB. Each unit writes its own tables under units/, so a rerun skips finished units. It then runs desi_compute_fluxcalibration of desispec 0.56.2
-with iron's arguments, unchanged and patched, through fluxcal_rerun.py --child of the 10-09
-folder. It checks that the unchanged run reproduces the iron fluxcalib and that the patched one
-leaves the calibration vector unchanged, and writes one row per camera and fiber.
+skipped, since desispec then uses a default calibration with 100% uncertainty, which needs
+DESI_SPECTRO_CALIB. It then runs desi_compute_fluxcalibration of desispec 0.56.2 with iron's
+arguments, unchanged and patched, through fluxcal_rerun.py --child of the 10-09 folder. It checks
+that the unchanged run reproduces the iron fluxcalib and that the patched one leaves the
+calibration vector unchanged, and writes one row per camera and fiber. Each unit writes its own
+tables under units/, so a rerun skips finished units.
 
 Downloaded inputs are kept unless --discard is given, which removes the unit's own working folder
 under the scratch directory after its summary is written.

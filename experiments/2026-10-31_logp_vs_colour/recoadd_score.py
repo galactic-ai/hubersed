@@ -1,9 +1,9 @@
 """Flow log p of the PR 2377 recoadd of the first #17 outlier 39627757533007793.
 
 The recoadd (2026-10-29_continuum_recoadd, resolution_matrix_rows_ivar.npz, SV3) goes through
-spender's steps as in rule.py: arms joined ivar-weighted on spender's grid, sky-line pixels at zero
-weight, median normalised at rest 5300-5850 A. The stored DR1 spender spectrum is scored too, as
-the check, and the flux change between the two is reported.
+spender's steps as in rule.py. Arms are joined ivar-weighted on spender's grid, sky-line pixels get
+zero weight, and the spectrum is median normalised at rest 5300-5850 A. The stored DR1 spender
+spectrum is scored too, as the check, and the flux change between the two is reported.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_logp_vs_colour/recoadd_score.py``.
 OUTPUT: results/2026-10-31_logp_vs_colour/recoadd_score.txt.
 RESULT: 2026-10-31. Normalised flux barely changes (99th percentile 1.2%); log p -21.56 to -21.48

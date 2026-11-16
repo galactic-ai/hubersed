@@ -1,4 +1,4 @@
-"""Method 1: how many v2 mocks have a post-starburst star formation history?
+"""How many v2 mocks have a post-starburst star formation history?
 
 QUESTION: What fraction of the 500,000 v2 mocks (2026-11-09_mocks_v2_outliers) has an SFH that
 counts as post-starburst by published criteria, overall and at z 0.45-0.60 where the gallery105
@@ -7,13 +7,13 @@ HYPOTHESIS: none registered.
 INPUTS: mocks_v2_500000.h5 (priors/theta, priors/redshifts, failed), path as the first argument.
 METHOD: each mock's SFR per bin from prospect's logsfr_ratios_to_sfrs (logmass, the 9 logsfr_ratios,
 hubersed make_stochastic_agebins(z)), piecewise constant in lookback time. A mock is PSB-like when all
-three hold:
-1. quenched: SFR averaged over the last 100 Myr / M_formed < 0.2 / t_H(z) (Pacifici et al. 2016,
+three hold.
+1. Quenched, SFR averaged over the last 100 Myr / M_formed < 0.2 / t_H(z) (Pacifici et al. 2016,
    arXiv:1609.03572, l.229; 100 Myr as Carnall et al. 2019, arXiv:1903.11082, l.372-377, and Wild
-   et al. 2020 l.295; the 10 Myr window of Pacifici l.184 is also reported);
-2. burst-like: mean SFR within +-50 Myr of the SFR peak in the last 2 Gyr above the mean SFR 200-300 Myr
-   before the peak (Wild et al. 2020, arXiv:2001.09154, l.358, l.214);
-3. more than 40% of the mass formed in the last 1.5 Gyr (Wild et al. 2020 l.362).
+   et al. 2020 l.295; the 10 Myr window of Pacifici l.184 is also reported).
+2. Burst-like, mean SFR within +-50 Myr of the SFR peak in the last 2 Gyr above the mean SFR 200-300 Myr
+   before the peak (Wild et al. 2020, arXiv:2001.09154, l.358, l.214).
+3. More than 40% of the mass formed in the last 1.5 Gyr (Wild et al. 2020 l.362).
 Assumptions: sSFR uses mass formed (logmass), not living mass, so it is low by the mass-loss
 fraction; the peak is located on the bin grid (factor ~2.3 wide bins at z~0.5); Wild's criteria come
 from z~1 galaxies.

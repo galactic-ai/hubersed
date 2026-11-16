@@ -2,7 +2,7 @@
 
 fit.py fixes the SFH hyperparameters there and starts from it. The checkpoint is
 results/2026-10-08_continuum_outlier/39633433328091196_c3k_hr_full_neboff_afefree_seed0.h5
-(window full, nebular off, degraded data, afe free). It is read as predict.py does: the
+(window full, nebular off, degraded data, afe free). It is read as predict.py does. The
 likelihood is never called, and the unit-cube point with the largest log L goes through the
 prior transform of the 10-08 make_model. The likelihood at that point is not recomputed, since
 that needs the C3K_HR AFE build.

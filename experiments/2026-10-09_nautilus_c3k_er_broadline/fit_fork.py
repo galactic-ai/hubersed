@@ -2,13 +2,13 @@
 
 The main process runs the FSPS setup once and builds every SSP slot the fit can reach
 with StellarPopulation.build_ssps (python-fsps dc3e41e), then forks the pool. Workers inherit both
-copy on write, so each needs about 1 GiB instead of 15 GiB and none waits on SSP builds (job
-3500970). python-fsps keeps the inherited SSP cache because the fit's SSP inputs equal the defaults
+copy on write, so each needs about 1 GiB instead of 15 GiB and none waits on SSP builds.
+python-fsps keeps the inherited SSP cache because the fit's SSP inputs equal the defaults
 the main process built with. A worker whose inputs differ warns and rebuilds.
 
 The fork must come before the JAX backend starts (JAX is not fork safe), so workers import
 prospect in their initializer. Each worker is pinned to one core first, so XLA makes ~15 threads
-instead of ~300 and the pool stays under the 16384-thread user limit on ls6 (job 3500937).
+instead of ~300 and the pool stays under the 16384-thread user limit on ls6.
 
 Takes the same options as fit.py, with the same PYTHONPATH and SPS_HOME, for example
 ``.venv/bin/python experiments/2026-10-09_nautilus_c3k_er_broadline/fit_fork.py

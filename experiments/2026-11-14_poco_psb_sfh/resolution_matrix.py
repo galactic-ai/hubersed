@@ -4,8 +4,8 @@ As 2026-11-01_poco_repeats/resolution_matrix.py, with load_resolution_npz from h
 hubersed.sps.resolution_matrix module it imported was removed). The healpix comes from targets.txt,
 the coadd from the spender DATA folder on /work. The saved flux and ivar must equal load_spectrum's
 on the good pixels. SPEC_DATA names the folder with the staged spender files. With --coadd main
-(added 2026-11-15) the main bright coadd staged in MAIN_DIR is saved instead, with no load_spectrum
-check (the spender files hold the SV3 coadd only).
+the main bright coadd staged in MAIN_DIR is saved instead, with no load_spectrum check (the spender
+files hold the SV3 coadd only).
 COMMAND: on a stampede3 compute node, through check.slurm,
 ``<venv>/bin/python experiments/2026-11-14_poco_psb_sfh/resolution_matrix.py --tid <TARGETID>
 [--coadd main]``.

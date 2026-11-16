@@ -1,4 +1,4 @@
-"""Select the B2 sample: cont-flow outliers above S/N 8 and a control matched in S/N and z.
+"""Select cont-flow outliers above S/N 8 and a control matched in S/N and z.
 
 Outliers are DESI targets flagged by cont10 or cont15 (log p at or below the run threshold) with
 latent-cut median S/N > 8. The control is three times as many targets flagged by neither flow,

@@ -4,9 +4,9 @@ QUESTION: is the blue excess of the SV3 bright spectrum (synthetic g 3.1 times t
 1.6 in r and z) also in the independent SV3 dark spectrum?
 HYPOTHESIS: none registered.
 INPUTS: SV3 bright DR1 coadd from hubersed.io.desi.load_spectrum (spender chunk files). SV3 dark DR1
-healpix coadd data/sv3_dark_coadds/coadd-sv3-dark-10231.fits and redrock-sv3-dark-10231.fits
-(iron, sha256 checked; 1 exposure, EXPID 88050, 921 s), put through the same spender step
-(spender DESI.prepare_spectra: ivar-weighted b, r, z stitching onto the 7781 px grid, DESI mask and
+healpix coadd data/sv3_dark_coadds/coadd-sv3-dark-10231.fits and redrock-sv3-dark-10231.fits (iron,
+sha256 checked; 1 exposure, EXPID 88050, 921 s), put through the same spender step (spender
+DESI.prepare_spectra, with ivar-weighted b, r, z stitching onto the 7781 px grid, DESI mask and
 sky-line mask), with the spender norm undone as hubersed.io.desi.load_by_index does. Spender reads
 the redrock file at the coadd path with "coadd" replaced, so a copy sits in data/sv3_dark_redrocks/.
 SEED: none.

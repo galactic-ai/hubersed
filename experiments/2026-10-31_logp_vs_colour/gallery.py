@@ -1,9 +1,9 @@
 """DR1 SV3 bright coadd spectra of the 18 blue outliers with their Legacy DR9 cutouts (#17).
 
-Cause labels from photometry.txt (neighbour: fracflux_g > 1) and rule.txt (sky: the sky g >= 21
-coadd is no longer flagged by one of the flows); otherwise "not explained". Spectra are the
-spender inputs with the normalisation undone, pixels with ivar > 0 only, raw (grey) and 21 px
-median filter (black). Cutouts are 25" across with the 1.5" fiber.
+Cause labels are "neighbour" when fracflux_g > 1 (photometry.txt), "sky" when the sky g >= 21
+coadd is no longer flagged by one of the flows (rule.txt), and "not explained" otherwise. Spectra
+are the spender inputs with the normalisation undone, pixels with ivar > 0 only, raw (grey) and
+21 px median filter (black). Cutouts are 25" across with the 1.5" fiber.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_logp_vs_colour/gallery.py``.
 OUTPUT: results/2026-10-31_logp_vs_colour/gallery.png and cutouts/<TARGETID>.jpg.
 RESULT: 2026-10-31. 7 neighbour, 2 neighbour + sky, 3 sky, 6 not explained.

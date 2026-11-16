@@ -13,8 +13,8 @@ priors of the 10-08 run. Its start 0 is the continuum MAP best point (<TID>_map.
 stellar parameters and the afefree max-L for the gas parameters and eline_sigma. Its outputs carry
 the tag _cue. The resolution matrix is the same, including its zero columns at ivar 0 pixels.
 
-Steps: ``check`` builds the model, checks the setup and times warm likelihood calls. ``fit
---start K`` runs start K of ``--n-starts`` (start 0 unjittered, the others jittered by ``--jitter``
+``check`` builds the model, checks the setup and times warm likelihood calls. ``fit --start K``
+runs start K of ``--n-starts`` (start 0 unjittered, the others jittered by ``--jitter``
 times each prior range, seed 0) and saves map_s<K>.npz. ``collect`` keeps the lowest -lnp and saves
 <TID>_map.npz for analysis.py, with a parameter table in map.txt.
 
@@ -177,7 +177,7 @@ def build(nebular=False):
 
 
 def pick_start(model, theta0, start, n_starts, jitter):
-    """Return start ``start`` of ``n_starts``: theta0 for 0, else a jittered draw inside the prior."""
+    """Return start ``start`` of ``n_starts``, theta0 for 0 or a jittered draw inside the prior."""
     if start == 0:
         return theta0
     rng = np.random.default_rng(0)

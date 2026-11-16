@@ -1,7 +1,7 @@
 """DESI SV3 and SDSS BOSS spectra of 39633325949715572, robust6 target 6 (#17), in one panel.
 
 QUESTION: is the wide bump near rest 6400-6600 A of the single DESI exposure also in an independent
-spectrum? DR1 has no other DESI spectrum (desi_dr1.zpix: sv3/bright only, 1 exposure, 295 s).
+spectrum? DR1 has no other DESI spectrum (desi_dr1.zpix has sv3/bright only, 1 exposure, 295 s).
 HYPOTHESIS: none registered.
 INPUTS: DESI SV3 bright coadd via load_spectrum (spender chunk, as the fits use); SDSS BOSS
 plate 6793, MJD 56430, fiber 154 (z 0.266657, sciencePrimary), fetched with astroquery.sdss.

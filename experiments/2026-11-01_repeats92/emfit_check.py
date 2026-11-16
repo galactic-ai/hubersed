@@ -5,14 +5,16 @@ star-forming, 2 weak AGN by WHAN) for the sv3/bright spectrum, so they can leave
 HYPOTHESIS: none registered.
 INPUTS: classes.tsv; desi_dr1.emfit on Astro Data Lab TAP, one ``targetid IN`` query, as
 2026-10-31_emfit_39633322464249559. EmFit fits Hbeta, [OIII], [NII], Halpha and [SII] only, z <= 0.45.
-Broad Halpha is a BL candidate as Pucha+2026 sec 2 (2606.02699 S02_Data.tex:87): prob_broad >= 80,
-S/N of ha_b flux and of ha_b_sigma >= 3, ha_b_amplitude / nii_ha_noise >= 2. Broad sigma < 425 km/s
-(FWHM < 1000) is marked, since Pucha+2025 App. B finds many such are missed outflows.
+Broad Halpha is a BL candidate, as Pucha+2026 sec 2 (2606.02699 S02_Data.tex:87), when
+prob_broad >= 80, S/N of ha_b flux and of ha_b_sigma >= 3, and ha_b_amplitude / nii_ha_noise >= 2.
+Broad sigma < 425 km/s (FWHM < 1000) is marked, since Pucha+2025 App. B finds many such are missed
+outflows.
 BPT uses narrow Balmer (n + out, no broad) and forbidden lines (primary + out), each at S/N >= 3
 (flux_err; a line whose window has no noise is not measurable), classed with line_screen.bpt on the
 [NII] curves only, its [SII] curve and S/N 5 gate switched off. EmFit has no EW, so no WHAN.
-Verdict: BL candidate or BPT AGN is confirmed AGN, composite is AGN or composite, BPT SF is
-confirmed emission-line/SF, else not confirmed. Only the sv3/bright row counts; other rows are listed.
+For the verdict, a BL candidate or BPT AGN is confirmed AGN, composite is AGN or composite, BPT SF
+is confirmed emission-line/SF, and anything else is not confirmed. Only the sv3/bright row counts;
+other rows are listed.
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_repeats92/emfit_check.py``.
 RESULT: 20 of 23 have a row (07, 17, 28 none, z > 0.5), one per target; 03, 16, 36, 38, 82 only

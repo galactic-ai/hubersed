@@ -7,11 +7,11 @@ mocks PSB-like at every redshift, while Rowlands et al. (2018, arXiv:1707.07989,
 at z < 0.35 rising to 2-3% at z ~ 0.7.
 INPUTS: results/2026-11-13_psb_fraction_like_for_like/indices_{desi,noised,rebuilt}.npz (measure.py).
 METHOD: every sample is first cut to median per-pixel S/N > 3, the parent cut and the cut of the mocks
-the flows saw (post_mac.sh, get_latent_space.py --snr_min 3). Cuts on the raw indices of measure.py,
-emission positive:
-- Goto (2007, arXiv:0801.1106, ea5_astroph.tex l.333, with EW(Hdelta) replaced by HdA): HdA > 5 A,
+the flows saw (post_mac.sh, get_latent_space.py --snr_min 3). Cuts are on the raw indices of
+measure.py, emission positive.
+- Goto (2007, arXiv:0801.1106, ea5_astroph.tex l.333, with EW(Hdelta) replaced by HdA) is HdA > 5 A,
   EW([OII]) < 2.5 A, and EW(Halpha) < 3 A where Halpha is measured (z < ~0.48).
-- Leung et al. (2024, arXiv:2309.16626, l.200): HdA > 3 A, W(Halpha) < 10 A and
+- Leung et al. (2024, arXiv:2309.16626, l.200) is HdA > 3 A, W(Halpha) < 10 A and
   log W(Halpha) < 0.23 HdA - 0.46 (W <= 0 passes), only where Halpha is measured.
 Fractions per z bin of 0.1 from 0 to 0.6, all masses and log M* >= 10.6 (DESI FastSpecFit LOGMSTAR,
 mocks logmass, the mass formed), and median per-pixel S/N > 8 as Leung et al. require (l.198-200; DESI

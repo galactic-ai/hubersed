@@ -6,8 +6,8 @@ the red end, or the whole spectrum?
 Starts at the pocoMC best point (highest ln L + ln prior of the 300 particles with the highest ln L)
 and maximises ln L + model.prior_product over dust2, dust_ratio, dust_index, logmass, logzsol and
 logsfr_ratios_1-9. Gas, line and SFH hyperparameters stay fixed (|r| <= 0.1 with dust_index).
-Powell, then Nelder-Mead. Masks: none, rest < 3800 A, rest > 7600 A, both. For each, n free, n = 0
-and n = -0.7.
+Powell, then Nelder-Mead. The masks are none, rest < 3800 A, rest > 7600 A and both. For each, n
+free, n = 0 and n = -0.7.
 
 RESULT: 2026-10-17, mask_refit.txt. Neither end holds n up. n free is 0.365 to 0.394 for all masks.
 The cost of n = 0 is +21.7 (none), +21.3, +36.9 and +35.1 (both), and of n = -0.7 +131 to +153. With

@@ -5,8 +5,9 @@ in ladder_corner.py. One panel per free parameter of the DR1 run. The x axis spa
 runs' prior bounds. Bins are 30 equal steps over the 0.1 to 99.9 per cent span of the runs' weighted
 samples, so narrow posteriors stay resolved on a wide axis. The logsfr_ratios prior is a Gaussian
 set by the SFH hyperparameters, with no bounds, so its nine panels share one axis and one set of
-bins: the widest 0.1 to 99.9 per cent span over the three runs and nine ratios. A run without a
-parameter (afe in MILES) has no curve in that panel. With afe free logzsol is [Fe/H], without it [Z/H].
+bins, set by the widest 0.1 to 99.9 per cent span over the three runs and nine ratios. A run
+without a parameter (afe in MILES) has no curve in that panel. With afe free logzsol is [Fe/H],
+without it [Z/H].
 A last panel puts every run on log10(Z/Zsun), with Z the initial metal mass fraction of the MIST2
 model (mist2_zh.py), linear in log Z between the ([Fe/H], [alpha/Fe]) grid nodes, and Zsun the Z
 of the [Fe/H] = 0, [alpha/Fe] = 0 model. Solar-scaled runs take logzsol as [Fe/H] at [alpha/Fe] = 0.

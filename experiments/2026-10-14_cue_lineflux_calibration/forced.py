@@ -1,16 +1,18 @@
-"""Force Cue onto the upper metallicity branch for metal-rich galaxies: which lines fail, and is it dust?
+"""Force Cue onto the upper branch for metal-rich galaxies. Which lines fail, and is it dust?
 
 QUESTION: over 78 galaxies Cue never takes the upper branch (posterior weight at 12+log(O/H) > 8.41
 median 0.00 for N2 > -0.8), and A_V rises with N2 and mass (Spearman +0.73, +0.71). Forced to
 12+log(O/H) >= ZMIN_OH, how much worse do metal-rich galaxies fit, in which lines, and does it
 differ between low and high A_V?
 
-``pick`` writes forced_ids.txt: among galaxies of subset_20.txt and subset_ew60.txt at z > 0.01 with
-observed N2 > N2_MIN, the N_EACH highest-N2 galaxies with free-fit A_V < AV_LOW and the N_EACH with
-A_V > AV_HIGH (A_V is the weighted median of the flat strong-line fit). ``compare`` then reads the
-free fits and fit.py --zmin fits (gas_logz >= ZMIN_OH - 8.71) and writes forced_compare.txt: O/H,
-the change of the best data log likelihood, and model/data per line (median over posterior draws)
-for both. Points more than e^-30 below the heaviest are dropped. SEED: none.
+``pick`` writes forced_ids.txt. Among galaxies of subset_20.txt and subset_ew60.txt at z > 0.01
+with observed N2 > N2_MIN, it takes the N_EACH highest-N2 galaxies with free-fit A_V < AV_LOW and
+the N_EACH with A_V > AV_HIGH (A_V is the weighted median of the flat strong-line fit). ``compare``
+then reads the free fits and fit.py --zmin fits (gas_logz >= ZMIN_OH - 8.71). It writes O/H, the
+change of the best data log likelihood, and model/data per line (median over posterior draws) for
+both to forced_compare.txt. Points more than e^-30 below the heaviest are dropped.
+
+SEED: none.
 
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/forced.py pick``;
 then for each TARGETID in forced_ids.txt, ``fit.py TARGETID --lines strong --zmin -0.31``; then
@@ -93,7 +95,7 @@ def pick():
 
 
 def compare():
-    """Write forced_compare.txt: free against forced fits for each picked galaxy."""
+    """Write forced_compare.txt, comparing free and forced fits for each picked galaxy."""
     ids = np.loadtxt(OUT / "forced_ids.txt", dtype=np.int64)
     order = [k for k in LINES]
     out = [

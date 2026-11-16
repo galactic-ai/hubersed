@@ -59,7 +59,7 @@ def inst2_fails(value, nline=86):
     """Return True if ``_profile_widths`` would give a nonzero inst2 for this eline_sigma.
 
     It repeats the arithmetic of TwoCompLineModel._profile_widths when ResolutionMatrixModel
-    sets ``_eline_sigma_kms`` to eline_sigma: an array squared by numpy minus a Python float
+    sets ``_eline_sigma_kms`` to eline_sigma, an array squared by numpy minus a Python float
     squared by ``**``.
     """
     p = float(value)

@@ -1,18 +1,20 @@
-"""Control sample without the [OII]7325 cut: does Cue also miss the upper branch for typical galaxies?
+"""Test whether Cue also misses the upper branch for typical galaxies, without the [OII]7325 cut.
 
 QUESTION: the calibration sample needs [OII]7325 S/N >= 5. Among metal-rich (N2 > -0.8) star-forming
 galaxies above log M* 10 that cut keeps 86 of 25039, with higher O3, EW(Hb) and sSFR at fixed mass,
 also at matched Hbeta S/N. Do metal-rich galaxies without the cut, at the same data quality, also fit
 worse when forced onto the upper branch, in the same lines?
 
-``pick`` selects the control pool: star-forming as in data.py, [OII]7325 S/N < SNR_7325, FastSpecFit
-N2 > N2_MIN, Hbeta S/N >= SNR_HB, Z_MIN < z <= Z_MAX, an EmFit sv3/bright row, and EmFit N2 > N2_MIN.
-It writes the pool in the lineflux_table.fits format (fluxes built as in data.py) and picks N_PICK
-galaxies matched in log M* to the metal-rich galaxies of subset_20.txt and subset_ew60.txt (as in
-forced.py pick): N_PICK reference masses evenly spaced in rank, each matched by a random unused
-control within DM of it, else the nearest. ``compare`` reads the free and fit.py --zmin fits of the
-picks and of forced_ids.txt and writes control_compare.txt: O/H, A_V, the change of the best data
-log likelihood, model/data per line and of Halpha/Hbeta. SEED: SEED.
+``pick`` selects the control pool. It is star-forming as in data.py, with [OII]7325 S/N < SNR_7325,
+FastSpecFit N2 > N2_MIN, Hbeta S/N >= SNR_HB, Z_MIN < z <= Z_MAX, an EmFit sv3/bright row and EmFit
+N2 > N2_MIN. It writes the pool in the lineflux_table.fits format (fluxes built as in data.py) and
+picks N_PICK galaxies matched in log M* to the metal-rich galaxies of subset_20.txt and
+subset_ew60.txt (as in forced.py pick). N_PICK reference masses are evenly spaced in rank, and each
+is matched by a random unused control within DM of it, else the nearest. ``compare`` reads the free
+and fit.py --zmin fits of the picks and of forced_ids.txt. It writes O/H, A_V, the change of the
+best data log likelihood, and model/data per line and of Halpha/Hbeta to control_compare.txt.
+
+SEED: SEED.
 
 RESULT: 2026-10-15, 989 in the pool, 10 picks (fits run on ls6 idev). 8 of 10 free fits sit at O/H
 7.86-8.20; 2 are already above 8.4 (8.44, 8.89, A_V ~0.7). Forced, the 8 lose dlnL 4.5 to 144 (median
@@ -210,7 +212,7 @@ def pick():
 
 
 def compare():
-    """Write control_compare.txt: free against forced fits for the picks and for forced_ids.txt."""
+    """Write control_compare.txt, free against forced fits for the picks and forced_ids.txt."""
     order = list(LINES)
     out = [
         f"free vs forced (12+log(O/H) >= {forced.ZMIN_OH}) strong-line fits; m/d = model/data, "

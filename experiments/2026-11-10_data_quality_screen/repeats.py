@@ -1,17 +1,17 @@
 """Do the screened outliers stay outliers in their other DESI DR1 spectra?
 
 QUESTION: For each screened old and new outlier (screened.npz), do its other DR1 coadds (main, SV1,
-SV3 dark ...) also pass the flag rule of its branch (full: 6 & 10 & 15, cont: cont10 & cont15)
+SV3 dark ...) also pass the flag rule of its branch (full = 6 & 10 & 15, cont = cont10 & cont15)
 with the same flows? An outlier set by one bad exposure, fibre or sky should not repeat; one set by
 the galaxy should.
 HYPOTHESIS: none stated before the run.
-METHOD: as experiments/2026-11-01_repeats92/analysis.py: each SPARCL spectrum goes through spender's
+METHOD: as experiments/2026-11-01_repeats92/analysis.py. Each SPARCL spectrum goes through spender's
 steps (mask or ivar <= 1e-6 to zero weight, sky-line mask, median at rest 5300-5850 A, own
 redshift), is encoded with each tag's encoder and scored with its flow (old flows for old lists,
 new for new). A repeat counts if its median per-pixel S/N > 3 (the parent cut) and its redshift
-is within 0.01 (1 + z) of the SV3 bright one. Per target: robust (flagged in every usable repeat),
-cleared (in none), mixed, or no usable repeat. Check: SPARCL SV3 bright spectra must reproduce the
-run log p.
+is within 0.01 (1 + z) of the SV3 bright one. Each target is robust (flagged in every usable
+repeat), cleared (in none), mixed, or has no usable repeat. SPARCL SV3 bright spectra must
+reproduce the run log p.
 INPUTS: results/2026-11-10_data_quality_screen/{screened.npz, sparcl_spectra.npz}; flows of
 results/noised_cue_meanzero_wide_flow (old) and results/2026-11-09_mocks_v2_outliers/flows (new);
 encoders in data/checkpoints; gallery92 labels.

@@ -7,10 +7,10 @@ HYPOTHESIS: none fixed; steps 3, 4 and 5 share pixels and compare by chi2 and lo
 fit other pixels and are shown, not compared.
 INPUTS: results/2026-11-07_emline_ladder_39627770174637084/<STEM>/predict.npz (fit.py predict),
 <STEM>.h5 (fit.py run) and pmc_final.state (log Z), copied from stampede3. Missing steps are marked
-"not run yet". Figures reuse two designs: the model ladder of 2026-11-01_poco_repeats/ladder_plot.py
-(its cutout and fibre circle are imported from it; emission lines marked instead of its index
-bands, Nikhil 11-11) and the line windows of
-2026-10-18_issue14_figures windows_figure (windows of 2026-10-15_broadline_free_amplitude/map.py).
+"not run yet". Figures reuse the model ladder of 2026-11-01_poco_repeats/ladder_plot.py (cutout and
+fibre circle imported from it, emission lines marked instead of its index bands) and the line
+windows of 2026-10-18_issue14_figures windows_figure (windows of
+2026-10-15_broadline_free_amplitude/map.py).
 SEED: none here (posterior draws in fit.py predict, seed 0).
 COMMAND: ``SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
 experiments/2026-11-07_emline_ladder_39627770174637084/analysis.py``.

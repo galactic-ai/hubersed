@@ -1,8 +1,8 @@
-"""Scrutiny of follow-up outliers 6-14 of follow28 (#17): broad lines, BPT, WHAN and masked Halpha.
+"""Check broad lines, BPT, WHAN and masked Halpha of follow-up outliers 6-14 of follow28 (#17).
 
 QUESTION: which of the nine are AGN, star-forming or quiescent, and which can go to a pocoMC fit?
-HYPOTHESIS: none registered. Visual calls (Nikhil, 2026-10-31): 06 good, 07 AGN, 08 AGN, 09
-star-forming, 10 good, 11 good, 12 good, 13 AGN, 14 good.
+HYPOTHESIS: none registered. The visual calls are 06 good, 07 AGN, 08 AGN, 09 star-forming,
+10 good, 11 good, 12 good, 13 AGN and 14 good.
 INPUTS: FastSpecFit iron sv3 bright; spender chunk coadds (load_by_index) for the Halpha mask;
 survivors.txt for logM, Dn4000 and the exposure count. BPT lines Kauffmann+03 (astro-ph/0304239) and
 Kewley+01 (astro-ph/0106324), WHAN classes Cid Fernandes+11 (1012.4426), checked in the TeX.

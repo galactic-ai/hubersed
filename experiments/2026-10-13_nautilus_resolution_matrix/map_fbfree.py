@@ -7,7 +7,7 @@ HYPOTHESIS: the literature (knowledge/lit_broad_emission_components_2026-10-13.m
 broad fractions that differ by line, so a free fraction should leave the Balmer value and lower
 chi2 in the forbidden-line windows. Whether the gas parameters move is open.
 
-Same setup as the rmatrix mask run of map.py: C3K_ER, Cue broadline with sigma split 45, the
+Same setup as the rmatrix mask run of map.py, with C3K_ER, Cue broadline with sigma split 45, the
 target's row-weighted R, corrected ivar, missing-line mask, SFH hyperparameters fixed at the 10-09
 max-L. The only change is ``eline_fbroad_forb``, free with the TopHat(0, 0.9) prior of
 ``add_broad_params(forbidden_broad="free")``. One Powell start at the rmatrix mask MAP point with

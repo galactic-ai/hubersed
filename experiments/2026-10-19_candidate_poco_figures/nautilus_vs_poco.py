@@ -1,4 +1,6 @@
-"""QUESTION: Do nautilus (#14, converged) and pocoMC agree on the free-variant posterior of 39627770174637084?
+"""Compare the nautilus and pocoMC posteriors of the free variant of 39627770174637084.
+
+QUESTION: Do nautilus (#14, converged) and pocoMC agree on the free-variant posterior of 39627770174637084?
 HYPOTHESIS: None registered before this analysis.
 INPUTS: the nautilus .h5 of 2026-10-15_broadline_free_amplitude (job 3513585, copied from ls6 on 2026-10-21)
 and poco_<TID>_free_neff512_ls6/pmc_final.state. Both use the free variant (29 parameters, frac_nodust 0).

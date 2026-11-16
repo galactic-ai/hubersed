@@ -1,10 +1,10 @@
 """Model spectra of 39633433328091196 from one library at both the MILES and the C3K ER best points.
 
-QUESTION (C. Hahn, 2026-10-29, tests 1 and 2): at the same parameters, how do the MILES and C3K
-models of 39633433328091196 differ?
+QUESTION: at the same parameters, how do the MILES and C3K models of 39633433328091196 differ?
+These are C. Hahn's tests 1 and 2.
 
-Points: the 10-08 MILES nautilus max-L (miles_miles_neboff_nodeg_pred.npz) and the C3K ER MAP of
-icx job 3657895 (<TID>_map.npz) with its fixed SFH hyperparameters (hr_maxl.npz). Parameters a
+The points are the 10-08 MILES nautilus max-L (miles_miles_neboff_nodeg_pred.npz) and the C3K ER MAP
+of icx job 3657895 (<TID>_map.npz) with its fixed SFH hyperparameters (hr_maxl.npz). Parameters a
 library's model lacks are dropped (afe for MILES), and parameters a point lacks are set to 0 (afe
 for C3K at the MILES point). ``--lib er`` uses the C3K ER model, data and R matrix of
 2026-10-29_continuum_39633433328091196_map/fit.py; ``--lib miles`` the MILES model and data of

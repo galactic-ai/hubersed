@@ -5,10 +5,10 @@ off is it from the formula fixed in desispec PR 2422, with iron's own calibratio
 
 desispec 0.56.2 (iron) apply_flux_calibration divides the flux by the calibration vector C before
 it computes the ivar, so Var(F') = 1/(ivar_F C^2) + F'^2/(ivar_C C^4). PR 2422 computes it from the
-uncalibrated flux, Var(F') = 1/(ivar_F C^2) + F'^2/(ivar_C C^2). PR 2496 then found the iron ivar_C
-itself too small (an error floor left in the final variance solve). So the fixed formula with iron
+uncalibrated flux, Var(F') = 1/(ivar_F C^2) + F'^2/(ivar_C C^2). The iron ivar_C is itself too
+small (PR 2496, an error floor left in the final variance solve), so the fixed formula with iron
 ivar_C is not the corrected ivar. This script only checks the reading and shows the size of each
-term, before the calibration is rerun.
+term.
 
 For each exposure and camera of this target it checks F/C against the cframe flux, the old formula
 against the cframe ivar, and the old formula inverted for ivar_F against the sframe ivar

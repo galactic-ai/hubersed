@@ -3,10 +3,10 @@
 QUESTION: How do the visual classes of the 105 compare with the FastSpecFit line class, HdA and the
 Goto-like flag of seed.py?
 HYPOTHESIS: none registered.
-INPUTS: visual_labels.txt (Nikhil 2026-11-13, by eye from the gallery105 figures, verbatim, one line
-per figure number); results/2026-11-13_gallery105/gallery105.tsv (seed.py, run that first).
-METHOD: visual_text keeps each label verbatim. visual_class is the first of these keywords in the
-text: psb, agn, quiescent, emission, data error (bad_data); unsure when none appears. visual_sure
+INPUTS: visual_labels.txt (by eye from the gallery105 figures, verbatim, one line per figure
+number); results/2026-11-13_gallery105/gallery105.tsv (seed.py, run that first).
+METHOD: visual_text keeps each label verbatim. visual_class is the first keyword in the text among
+psb, agn, quiescent, emission and data error (bad_data), or unsure when none appears. visual_sure
 is False when the text has a "?". visual_image collects blend ("two galaxies"), crowded ("crowd" or
 "star") and diffuse. These rules are mechanical; edit visual_class by hand where they misread.
 SEED: none.

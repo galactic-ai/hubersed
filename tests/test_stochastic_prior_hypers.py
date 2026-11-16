@@ -1,22 +1,20 @@
-"""Why the 5 PSD hyperparameters must stay frozen in a MAP fit, as a test.
+"""Show, as tests, why the 5 PSD hyperparameters must stay frozen in a MAP fit.
 
-Two claims, both load-bearing for every continuum-only sample fit:
+Both claims below matter for every continuum-only sample fit.
 
-  1. The MAP objective is UNBOUNDED with the hyperparameters free.
-     ``hyperparameters.py:53-62`` scores ``logsfr_ratios`` with the NORMALISED
-     ``scipy.stats.multivariate_normal`` pdf, and Sigma is linear in ``sigma_reg**2``
-     and ``sigma_dyn**2`` (``hyperparam_transforms.py:120-136``). Shrink both sigmas
-     and the ratios by the same factor: the Mahalanobis term is exactly invariant
-     while ``-0.5*ln|Sigma|`` grows by ``(nbins-1)*ln(10)`` per decade, forever. The
-     optimiser therefore walks the sigmas to their LogUniform floors and, in doing so,
-     squeezes the SFH prior onto a constant SFH -- the opposite of what a quiescent
-     galaxy needs.
+The MAP objective is unbounded with the hyperparameters free. ``hyperparameters.py:53-62``
+scores ``logsfr_ratios`` with the normalised ``scipy.stats.multivariate_normal`` pdf, and
+Sigma is linear in ``sigma_reg**2`` and ``sigma_dyn**2`` (``hyperparam_transforms.py:120-136``).
+Shrinking both sigmas and the ratios by the same factor leaves the Mahalanobis term exactly
+unchanged, while ``-0.5*ln|Sigma|`` grows by ``(nbins-1)*ln(10)`` per decade without limit.
+The optimiser therefore walks the sigmas to their LogUniform floors. This squeezes the SFH
+prior onto a constant SFH, the opposite of what a quiescent galaxy needs.
 
-  2. ``build_continuum_model`` yields exactly the 15 free parameters the sample run
-     assumes, with the hyperparameters already ``isfree=False``.
+``build_continuum_model`` yields exactly the 15 free parameters the sample run assumes, with
+the hyperparameters already ``isfree=False``.
 
-Test 1 needs only numpy + prospect's transforms. Test 2 needs a model build, so it
-skips where FSPS is unavailable.
+The first claim needs only numpy and prospect's transforms. The second needs a model build,
+so its test skips where FSPS is unavailable.
 
 Run with ``uv run pytest tests/test_stochastic_prior_hypers.py`` (never ``uvx``).
 """
@@ -58,7 +56,7 @@ def mvn_logpdf(x, S):
 
 
 def test_sigma_scales_the_covariance_quadratically():
-    """The premise of the whole argument: Sigma is homogeneous of degree 2 in sigma."""
+    """Sigma is homogeneous of degree 2 in sigma, the premise of the whole argument."""
     p = HYPERS.copy()
     S1 = ratio_covar(p)
     q = p.copy()

@@ -1,9 +1,8 @@
 """Save the posterior and model spectra of the converged C/O tie fit for the analysis.
 
-Copied from 2026-10-09_nautilus_c3k_er_broadline/predict.py. The checkpoint name and the output
-folder are this experiment's, and it also prints the largest posterior weight share and the
-effective sample size of the kept points, because the sampling phase of this run, which started at
-f_live 0.3, saw single points take a large weight.
+Copied from 2026-10-09_nautilus_c3k_er_broadline/predict.py, with this experiment's checkpoint
+name and output folder. It also prints the largest posterior weight share and the effective sample
+size of the kept points.
 
 The output is results/2026-10-10_nautilus_c3k_er_cotie_split/<stem>_pred.npz with the data the fit
 used, the posterior points that carry weight, the maximum likelihood spectrum, the same point with

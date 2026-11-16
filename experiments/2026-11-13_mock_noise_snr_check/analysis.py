@@ -2,7 +2,7 @@
 
 QUESTION: (1) How do the median per-pixel S/N distributions of the flow training mocks (noised v2,
 S/N > 3) and the DESI spectra the flows scored compare, overall and per redshift? (2) What sets the
-mock S/N: redshift, mass formed, the normalisation A? (3) Per S/N bin, what are the DESI outlier rate
+mock S/N, redshift, mass formed or the normalisation A? (3) Per S/N bin, what are the DESI outlier rate
 and median log p of each flow, and the median log p of the mocks?
 HYPOTHESIS: none registered. A first look (2026-11-13_psb_fraction_like_for_like snr step) found
 two thirds of the S/N > 3 mocks above S/N 8, against 13.5% of the DESI parent.

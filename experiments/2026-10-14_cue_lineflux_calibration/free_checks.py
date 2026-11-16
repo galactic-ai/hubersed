@@ -1,5 +1,7 @@
-"""Two checks from existing outputs, no fits: is there an MZR signal in the raw line ratios, and do the
-Cue posteriors trade gas_logz against N/O, C/O and U?
+"""Check the raw line ratios for an MZR signal and the Cue posteriors for gas_logz trades.
+
+Both checks use existing outputs, no fits. Is there an MZR signal in the raw line ratios, and do
+the Cue posteriors trade gas_logz against N/O, C/O and U?
 
 (a) Raw observed line ratios against FastSpecFit LOGMSTAR, with the Spearman rank correlation, for
 the 20 fitted galaxies (subset_20.txt) and for all 1108 of lineflux_table.fits. N2 = log
@@ -9,7 +11,9 @@ uncorrected, so they carry dust.
 (b) Weighted correlation coefficients of gas_logz with gas_logno, gas_logco, gas_logu and gas_lognH
 inside each strong-line posterior (fits/<TARGETID>_strong_emfit_mu0.4_zs-0.41.npz), and the
 Spearman correlations of the posterior medians of gas_logz, gas_logno and gas_logco with N2 over
-the 20. Points more than e^-30 below the heaviest are dropped. SEED: none.
+the 20. Points more than e^-30 below the heaviest are dropped.
+
+SEED: none.
 
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/free_checks.py``
 from the repository root.

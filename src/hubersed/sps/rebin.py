@@ -86,7 +86,7 @@ def match_kernel_sigma_A(wave_obs, z, library="miles", desi_sigma_kms=None):
     library : str or dict
         See ``_library_sigma_obs_A``. Default "miles".
     desi_sigma_kms : np.ndarray, optional
-        Per-target DESI LSF sigma in km/s. Default: calibrated median.
+        Per-target DESI LSF sigma in km/s. The default is the calibrated median.
 
     Returns
     -------
@@ -95,7 +95,7 @@ def match_kernel_sigma_A(wave_obs, z, library="miles", desi_sigma_kms=None):
         where DESI is already as coarse as the library or coarser (no smoothing needed).
     good : np.ndarray
         True inside the library window, where the spectrum can be fitted. Pixels where DESI
-        is coarser than the library stay good: Prospector smooths the model there.
+        is coarser than the library stay good, because Prospector smooths the model there.
     """
     sig_l, inwin = _library_sigma_obs_A(wave_obs, z, library)
     sig_d = _desi_sigma_obs_A(wave_obs, desi_sigma_kms)
@@ -147,7 +147,7 @@ def degrade_to_library(
 ):
     """Convolve an observed-frame DESI spectrum down to a library's resolution.
 
-    Only pixels where DESI is sharper than the library are smoothed; the others pass through.
+    Only pixels where DESI is sharper than the library are smoothed. The others pass through.
 
     Parameters
     ----------
@@ -162,7 +162,7 @@ def degrade_to_library(
     library : str or dict
         See ``_library_sigma_obs_A``. Default "miles".
     desi_sigma_kms : np.ndarray, optional
-        Per-target DESI LSF sigma in km/s. Default: calibrated median.
+        Per-target DESI LSF sigma in km/s. The default is the calibrated median.
     keep_ivar : bool
         If True, keep the input inverse variance for good pixels instead of propagating it.
 
@@ -171,16 +171,16 @@ def degrade_to_library(
     flux_deg : np.ndarray
         Convolved flux, weighted so that bad pixels do not pull their neighbours down.
     ivar_deg : np.ndarray
-        Inverse variance of ``flux_deg``; zero outside the library window.
+        Inverse variance of ``flux_deg``. It is zero outside the library window.
     good : np.ndarray
         True inside the library window.
 
     Notes
     -----
     Convolution correlates the noise between pixels. The propagated ``ivar_deg`` keeps only
-    the diagonal of the new covariance; a likelihood that treats pixels as independent then
-    over-counts the information (errors on fitted quantities ~1.7x too small for a
-    ~30 km/s kernel on the DESI grid, and rebinning to 60 km/s bins does not fix it).
+    the diagonal of the new covariance. A likelihood that treats pixels as independent then
+    over-counts the information. Errors on fitted quantities come out ~1.7x too small for a
+    ~30 km/s kernel on the DESI grid, and rebinning to 60 km/s bins does not fix it.
     ``keep_ivar=True`` keeps the input ivar, which roughly cancels the two effects and gives
     correctly sized errors in that test. Use it when fitting on the native grid.
     """

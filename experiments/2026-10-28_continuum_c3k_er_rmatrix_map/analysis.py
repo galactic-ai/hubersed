@@ -7,7 +7,7 @@ INPUTS: the DESI DR1 coadd from hubersed.io.desi.load_spectrum. The 10-08 max-L 
 miles_miles_nebon_nodeg_pred.npz and c3k_hr_full_nebon_afefree_pred.npz in
 results/2026-10-08_continuum_outlier/ (md5 equal to the ls6 copies, 2026-10-28). The Cue MAP
 <TID>_map_cue.npz of fit.py collect --nebular on (fits icx job 3655624), copied from stampede3.
-The continuum MAP <TID>_map.npz (icx job 3655467) is no longer drawn. Index bands from
+Index bands from
 $SPS_HOME/data/allindices.dat, as in the 10-08 analysis.
 SEED: none.
 COMMAND: from the repository root on the Mac,

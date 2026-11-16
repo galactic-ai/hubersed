@@ -1,4 +1,6 @@
-"""QUESTION: Which major and minor emission lines of the DESI prospect viewer have no line in Cue's list?
+"""List the DESI prospect viewer emission lines that have no line in Cue's list.
+
+QUESTION: Which major and minor emission lines of the DESI prospect viewer have no line in Cue's list?
 HYPOTHESIS: None registered before this analysis.
 METHOD: air entries go to vacuum with _airtovac, as the viewer does. A line is in Cue if a Cue line
 lies within 1 A. The fitted range is the rest range of 39633278973513279, 3510-9000 A.

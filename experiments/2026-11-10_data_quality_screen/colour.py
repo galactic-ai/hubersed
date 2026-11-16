@@ -5,8 +5,8 @@ Does Delta(g-r) = (g-r) synthesized from the observed spectrum minus (g-r) of th
 fibre flux separate the gallery92 artifacts (bad_sky above all) from the physical classes, and how
 do the old and new candidates compare with a random control?
 HYPOTHESIS: none stated before the run.
-INPUTS: data/fastspec-iron-sv3-bright.fits: FLUX_SYNTH_{G,R,Z} ("synthesized from the observed
-spectrum") and METADATA FIBERFLUX_{G,R,Z} ("fiber flux corrected for Galactic extinction"), nmgy,
+INPUTS: FLUX_SYNTH_{G,R,Z} ("synthesized from the observed spectrum") and METADATA FIBERFLUX_{G,R,Z}
+("fiber flux corrected for Galactic extinction") of data/fastspec-iron-sv3-bright.fits, in nmgy,
 definitions from the fastspecfit data model (read 2026-11-10); results/2026-11-10_data_quality_screen/
 targets.npz; gallery92 labels as analysis.py. The spectrum ends at 9824 A, short of the full z
 band, so r-z is secondary.

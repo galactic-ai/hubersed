@@ -1,4 +1,4 @@
-"""Round trip of the SSP slot cache: a loaded slot gives the same spectrum as a built one."""
+"""Round trip of the SSP slot cache. A loaded slot gives the same spectrum as a built one."""
 
 import numpy as np
 import pytest
@@ -44,7 +44,7 @@ def test_refuses_other_inputs(tmp_path):
 
 
 def test_loaded_slot_is_used(tmp_path):
-    """The spectrum comes from the copied slot, not a rebuild: doubling it doubles the spectrum."""
+    """The spectrum comes from the copied slot, not a rebuild, so doubling the slot doubles it."""
     from hubersed.sps.ssp_cache import load_ssp_cache, save_ssp_cache
 
     sp = _population()

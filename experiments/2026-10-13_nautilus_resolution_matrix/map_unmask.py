@@ -22,7 +22,7 @@ V in PROFILE_NH, then report. ``... map_unmask.py windows`` splits the profile c
 ``--masked`` keeps [SII]6731 masked, as the control.
 
 The model over-predicts the auroral [OII]7320,7330 and [SIII]6312 lines, which hold n_H down. So
-``profile --nh V --drop D --k K`` repeats the profile with them masked (D in DROPS), from two starts:
+``profile --nh V --drop D --k K`` repeats the profile with them masked (D in DROPS), from two starts,
 the unmasked profile point at V (K 0) and a 2% jitter of it (K 1, rng seed 1). Then
 ``... map_unmask.py profiles`` compares the variants.
 
@@ -129,7 +129,7 @@ def build(unmask, fixed_nh=None, drop="none"):
 
 
 def starts(model, theta0):
-    """Return the start points: theta0, jittered draws inside the prior, then theta0 at NH_SII."""
+    """Return the start points, theta0, jittered draws inside the prior, then theta0 at NH_SII."""
     rng = np.random.default_rng(SEED)
     scale = jitter_scale(model, theta0, JITTER_FRAC)
     out = [theta0.copy()]

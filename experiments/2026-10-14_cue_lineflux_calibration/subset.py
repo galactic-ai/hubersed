@@ -1,4 +1,4 @@
-"""Pick the galaxies for the first Cue line-flux fits: 19 at evenly spaced stellar-mass ranks, plus the target.
+"""Pick galaxies for the first Cue line-flux fits, 19 at even stellar-mass ranks plus the target.
 
 The ranks are round(linspace(0, N - 1, 19)) of lineflux_table.fits sorted by LOGMSTAR, so the pick
 spans the sample's mass range and depends on nothing random.

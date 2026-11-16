@@ -1,17 +1,17 @@
-"""MILES against C3K dust for 39633433328091196: C. Hahn's four tests (issue #17, 2026-10-29).
+"""MILES against C3K dust for 39633433328091196, C. Hahn's four tests (issue #17).
 
 QUESTION: (1, 2) at the same parameters, how do the MILES and C3K ER models differ? (3) how do
 the attenuation curves of the MILES and C3K ER best points compare? (4) are dust2 and stellar
 mass degenerate?
 HYPOTHESIS: none registered.
-INPUTS: (3) the best points of the C3K ER MAP (icx job 3657895) and the 10-08 MILES nautilus
-max-L, until the MILES MAP of 2026-10-29_nodust_map_39633433328091196 exists; since 2026-10-30
-also the C3K ER MAP of the SV3 dark spectrum (2026-10-30_continuum_39633433328091196_dark_map,
-spr job 3662995). (4) the weighted
-posterior points of the 10-08 nautilus runs miles_miles_neboff_nodeg, c3k_hr_full_neboff_afezero
-and c3k_hr_full_neboff (pred npz, md5 of the MILES one equal to /work; the two HR ones copied from
-/work 2026-10-29), and the c3k_hr_full_neboff_afefree checkpoint (no pred npz; points read as in
-hypers.py). (1, 2) spectra_er.npz and spectra_miles.npz of spectra.py, when copied.
+INPUTS: (3) the best points of the C3K ER MAP (icx job 3657895), the 10-08 MILES nautilus max-L
+(until the MILES MAP of 2026-10-29_nodust_map_39633433328091196 exists) and the C3K ER MAP of the
+SV3 dark spectrum (2026-10-30_continuum_39633433328091196_dark_map, spr job 3662995). (4) the
+weighted posterior points of the 10-08 nautilus runs miles_miles_neboff_nodeg,
+c3k_hr_full_neboff_afezero and c3k_hr_full_neboff (pred npz, md5 of the MILES one equal to /work;
+the two HR ones copied from /work 2026-10-29), and the c3k_hr_full_neboff_afefree checkpoint (no
+pred npz; points read as in hypers.py). (1, 2) spectra_er.npz and spectra_miles.npz of spectra.py,
+when copied.
 SEED: none.
 COMMAND: from the repository root on the Mac,
 ``uv run --no-sync python experiments/2026-10-29_c3k_vs_miles_dust/analysis.py``.
@@ -58,7 +58,7 @@ OUT.mkdir(parents=True, exist_ok=True)
 def kc13_curve(lam, delta):
     """Return the FSPS dust_type 4 curve, tau(lam) / tau_V, for rest ``lam`` in A.
 
-    As attn_curve.f90:133-154 of the python-fsps fork in uv.lock: the Calzetti curve over 4.05,
+    As attn_curve.f90:133-154 of the python-fsps fork in uv.lock, the Calzetti curve over 4.05,
     plus a 2175 A Drude bump of strength 0.85 - 1.9 delta, times (lam / 5500)^delta.
     """
     lam = np.asarray(lam, float)

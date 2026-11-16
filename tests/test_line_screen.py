@@ -15,7 +15,7 @@ def test_full_screen_is_keyed_by_target_id(tmp_path):
 
 
 def test_flag_only_screen_raises(tmp_path):
-    """The 2026-09-04 layout, target_id and flagged only, is refused by name."""
+    """A file with only target_id and flagged is refused, with the missing columns named."""
     path = tmp_path / "gaia.csv"
     path.write_text("target_id,flagged\n7,True\n")
     with pytest.raises(ValueError, match="onsource_star, sep_arcsec"):

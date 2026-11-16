@@ -8,7 +8,7 @@ Pairs:
 - mass: logmass against dust2 and logzsol.
 Coefficients are the weighted Pearson r of the pocoMC samples (weights normalised), from the same
 posteriors as ladder_corner.py. A pair is skipped for a run that lacks one of its parameters.
-Also reported: the share of weight with sigma_dyn below 0.05, the lower mode seen in the DR1 run.
+It also reports the share of weight with sigma_dyn below 0.05, the lower mode seen in the DR1 run.
 COMMAND: ``uv run --no-sync python experiments/2026-11-01_poco_repeats/ladder_correlations.py --tid <TID>``.
 OUTPUT: results/2026-11-01_poco_repeats/<TID>/ladder_correlations.txt.
 """

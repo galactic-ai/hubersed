@@ -1,4 +1,4 @@
-"""The sigma_smooth prior floor: library_sigma_floor and the sigma_floor argument."""
+"""Check the sigma_smooth prior floor from library_sigma_floor and the sigma_floor argument."""
 
 from types import SimpleNamespace
 
@@ -45,7 +45,7 @@ def test_floor_outside_the_library_raises():
 
 
 def test_sigma_floor_sets_the_prior_and_default_is_unchanged():
-    """The default keeps TopHat(10, 400); sigma_floor moves only the lower bound."""
+    """The default keeps TopHat(10, 400), and sigma_floor moves only the lower bound."""
     from hubersed.sps.config import build_continuum_model
 
     _, template = build_continuum_model(0.0253)

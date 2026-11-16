@@ -1,19 +1,19 @@
 """Do high-S/N cont-flow outliers stay flagged in independent DR1 repeats more than matched controls?
 
-QUESTION: Part B2 of the calibration plan (~/.claude/plans/calib_injection_2026-11-13.md). For SV3
-bright targets above S/N 8, is a cont10 or cont15 outlier flagged again in its deepest independent
-DR1 coadd more often than a control matched in S/N and z?
+QUESTION: For SV3 bright targets above S/N 8, is a cont10 or cont15 outlier flagged again in its
+deepest independent DR1 coadd more often than a control matched in S/N and z? Plan in
+~/.claude/plans/calib_injection_2026-11-13.md.
 HYPOTHESIS: R = P(flag in repeat | SV3 outlier) / P(flag in repeat | control), with the control
-rate reweighted to the outliers' repeat S/N bins. R < 2: the excess is mostly exposure-specific
-systematics. R > 10: it is set by the galaxy or by systematics shared by all DR1 spectra. Between:
-mixed.
+rate reweighted to the outliers' repeat S/N bins. R < 2 means the excess is mostly
+exposure-specific systematics. R > 10 means it is set by the galaxy or by systematics shared by
+all DR1 spectra. In between means mixed.
 INPUTS: results/2026-11-13_repeat_persistence/{targets.npz, sparcl_spectra.npz} (sample.py,
 fetch.py); results/2026-11-09_mocks_v2_outliers/flows (cont10, cont15 flows, run log p and
 thresholds); encoders in data/checkpoints.
-METHOD: as experiments/2026-11-10_data_quality_screen/repeats.py: each SPARCL spectrum goes through
+METHOD: as experiments/2026-11-10_data_quality_screen/repeats.py. Each SPARCL spectrum goes through
 spender's steps (mask or ivar <= 1e-6 to zero weight, sky-line mask, median at rest 5300-5850 A,
-own redshift), is encoded and scored; flagged = log p at or below the run threshold. Check: SPARCL
-SV3 bright spectra must reproduce the run log p. A repeat is any record other than SV3 bright with
+own redshift), is encoded and scored; flagged = log p at or below the run threshold. SPARCL SV3
+bright spectra must reproduce the run log p. A repeat is any record other than SV3 bright with
 median S/N > 3 and z within 0.01 (1 + z); the deepest one per target is used. Per flow, outliers
 are the targets that flow flagged; controls are flagged by neither flow. Repeat S/N bins 3-5, 5-8,
 8-15, > 15. Errors binomial, R error by propagation.

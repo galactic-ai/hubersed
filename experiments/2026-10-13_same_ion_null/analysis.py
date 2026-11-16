@@ -1,4 +1,4 @@
-"""Same-ion null test: do two lines of one ion get the same second-component fraction?
+"""Same-ion null test. Do two lines of one ion get the same second-component fraction?
 
 QUESTION: [O III] 4959 and 5007, and [N II] 6548 and 6584, each come from one upper level of one
 ion, so their second-component fractions must be equal. With a free fraction per line, how far

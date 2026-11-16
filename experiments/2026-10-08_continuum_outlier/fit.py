@@ -200,9 +200,8 @@ def check_setup(tid, lib, window, nebular, degrade, afe="none"):
     ------
     AssertionError
         If FSPS was compiled with another library or, for ``afe``, without AFE_FLAG, if the
-        library resolution is not what
-        ``degrade`` asks for, if the data target is sharper than the library plus 10 km/s on a
-        fitted pixel, or if the start is not finite.
+        library resolution is not what ``degrade`` asks for, if the data target is sharper than
+        the library plus 10 km/s on a fitted pixel, or if the start is not finite.
     """
     z, flux, unc, good, target_kms = load_data(tid, lib, window, degrade)
     model = make_model(z, nebular, afe)

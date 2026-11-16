@@ -84,7 +84,7 @@ def get_sps(nebular=False):
 
 
 def start_values(nebular):
-    """Return start 0: the HR max-L, overridden by the run 1d max-L for the parameters it has."""
+    """Return start 0, the HR max-L overridden by the run 1d max-L for the parameters it has."""
     assert not nebular, "this experiment fits the continuum only"
     best = base.hr_best()
     d = np.load(RUN_1D)

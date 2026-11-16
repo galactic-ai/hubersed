@@ -4,11 +4,13 @@ QUESTION: residuals.py shows Cue fits the strong lines of the six metal-rich gal
 with a low-Z solution that over-predicts the held-out [OII]7325 (median 1.63x). Which change moves
 them to high O/H, and what does it cost in fit to the data?
 
-Variants, all from fit.py: strong flat (fits/..._strong_emfit_mu0.4_zs-0.41.npz), all flat,
-strong Nicholls prior, all Nicholls prior, strong with --zstar 0.0. For each: weighted median
-12+log(O/H) = gas_logz + 8.71 with 16-84, N/O, U, [OII]7325 model/data, and the best data log
-likelihood (log_l_data where saved, else log_l, which equals it for flat fits). Likelihoods compare
-only fits of the same lines. Points more than e^-30 below the heaviest are dropped. SEED: none.
+The variants, all from fit.py, are strong flat (fits/..._strong_emfit_mu0.4_zs-0.41.npz), all flat,
+strong Nicholls prior, all Nicholls prior, and strong with --zstar 0.0. For each it gives the
+weighted median 12+log(O/H) = gas_logz + 8.71 with 16-84, N/O, U, [OII]7325 model/data, and the best
+data log likelihood (log_l_data where saved, else log_l, which equals it for flat fits). Likelihoods
+compare only fits of the same lines. Points more than e^-30 below the heaviest are dropped.
+
+SEED: none.
 
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/rich_compare.py``
 from the repository root.

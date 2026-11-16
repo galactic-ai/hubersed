@@ -6,8 +6,8 @@ what does dust_ratio alone do?
 The two runs have the same model and the same 29 parameters, and differ in the library
 resolution, the data degradation, the sky mask and the fitted pixels.
 
-Four points go through the ER model on the ER data: the ER max-L point, the HR max-L point, the
-ER max-L point with only the dust parameters (dust2, dust_ratio, dust_index) and the gas
+Four points go through the ER model on the ER data. They are the ER max-L point, the HR max-L
+point, the ER max-L point with only the dust parameters (dust2, dust_ratio, dust_index) and the gas
 parameters (gas_logz, gas_logu, gas_lognH, gas_logno, gas_logco) set to their HR max-L values, and
 the HR max-L point with only dust_ratio set to its ER max-L value.
 
@@ -15,8 +15,8 @@ INPUTS: the ER ``_pred.npz`` of predict.py, and
 results/2026-09-30_nautilus_c3k_broadline_split45/39627770174637084_broad_shared_split45_unmask_rest9000_seed0.h5
 with its .json. SEED: none (deterministic).
 
-Run from the repository root on the Mac with the C3K_ER build (no AFE_FLAG; [alpha/Fe] is 0 in
-the fit), as jacobian.py. Command:
+COMMAND: from the repository root on the Mac with the C3K_ER build (no AFE_FLAG, [alpha/Fe] is 0
+in the fit), as jacobian.py,
 ``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-09_nautilus_c3k_er_broadline
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
 experiments/2026-10-09_nautilus_c3k_er_broadline/hr_point.py``.

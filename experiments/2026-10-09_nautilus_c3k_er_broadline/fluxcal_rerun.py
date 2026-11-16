@@ -12,8 +12,8 @@ logs), once unchanged and once with those three changes. They are applied to the
 installed desispec/fluxcalibration.py in memory and the result is loaded in its place, so the
 installed package is not modified. Each anchor must match exactly once.
 
-Checks: the unchanged run must reproduce the iron fluxcalib files, and the patched run must give the
-same FLUXCALIB with a larger IVAR.
+It checks that the unchanged run reproduces the iron fluxcalib files and that the patched run
+gives the same FLUXCALIB with a larger IVAR.
 
 This runs with the separate desispec 0.56.2 environment, not the hubersed one. It is Python 3.11
 with numpy 1.23.5 instead of iron's 3.10 and 1.22.4, and desimodel/io.py load_platescale catches

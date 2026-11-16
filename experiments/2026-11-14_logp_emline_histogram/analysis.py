@@ -8,9 +8,10 @@ INPUTS: results/2026-11-09_mocks_v2_outliers/flows (flow_nsf_<tag>latent.pt, des
 <tag>latent_snr3.pt), the mock and DESI latent files named there, and
 results/2026-11-14_emline_outlier_coverage/coverage.csv (the 58, branch).
 METHOD: mock log p recomputed with the saved flow and scaler; held-out mocks are the first tenth of
-the default_rng(0) permutation (get_outliers_flow.py). Checks first: recomputed log p of the 58
-within 1e-3 of the saved log_p_desi (float32 rounding), and the recomputed 0.1% quantile of all
-mock log p within 1e-3 of the saved threshold. Percentiles are the share of DESI or held-out mocks with log p at or below the value.
+the default_rng(0) permutation (get_outliers_flow.py). The checks first require the recomputed log
+p of the 58 within 1e-3 of the saved log_p_desi (float32 rounding), and the recomputed 0.1%
+quantile of all mock log p within 1e-3 of the saved threshold. Percentiles are the share of DESI
+or held-out mocks with log p at or below the value.
 SEED: none (the split uses the flows' seed 0).
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_logp_emline_histogram/analysis.py``.
 RESULT: 2026-11-14, logp.txt, logp.csv. Checks pass (max |diff| 3.0e-4, thresholds exact). The 46

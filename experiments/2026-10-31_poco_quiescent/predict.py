@@ -1,7 +1,8 @@
 """Save the model spectrum of the max-likelihood pocoMC sample of one follow-up batch target.
 
-As 2026-10-31_poco_robust6/predict.py and 2026-10-31_poco_c3k_er_dark_39633433328091196/predict.py: the sample with the largest stored lnlike
-in pmc_final.state goes through the prior transform and the model of fit.py with C3K_ER; its lnlike
+As 2026-10-31_poco_robust6/predict.py and
+2026-10-31_poco_c3k_er_dark_39633433328091196/predict.py. The sample with the largest stored lnlike
+in pmc_final.state goes through the prior transform and the model of fit.py with C3K_ER. Its lnlike
 is recomputed and must match. Run on stampede3 through predict.slurm.
 OUTPUT: results/2026-10-31_poco_quiescent/<TARGETID>/<TARGETID>_poco_maxl.npz.
 """

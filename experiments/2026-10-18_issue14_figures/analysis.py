@@ -1,4 +1,4 @@
-"""Figures of 39627770174637084 for issue #14: corner plot, residuals by run, and line windows.
+"""Corner plot, residuals by run and line windows of 39627770174637084 for issue #14.
 
 The residual and window figures compare three fits, each against the data it saw.
 1. MILES + Cue, 2026-09-24_nautilus_tauin. DR1 coadd, MILES window, not degraded.

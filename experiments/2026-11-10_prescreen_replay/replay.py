@@ -1,6 +1,6 @@
-"""Replay the prescreen that wrote results/prescreened_sample_v1.npz and record the step that
-removes each DESI SV3 bright spectrum.
+"""Replay the prescreen of prescreened_sample_v1.npz and find the step that drops each spectrum.
 
+The prescreen wrote results/prescreened_sample_v1.npz. The spectra are the DESI SV3 bright ones.
 The original driver ran as an inline heredoc on 2026-09-05 (session a3ef5882, backup transcript
 ~/claude-backup/projects/-Users-ng27753-Documents-UberSED/a3ef5882-....jsonl, lines 2135 and 2468).
 This file repeats its logic unchanged. The inputs are copies of that session's intermediates from
@@ -8,9 +8,9 @@ This file repeats its logic unchanged. The inputs are copies of that session's i
 inputs_md5.txt). The scripts that made the Gaia, SGA, morphology, BPT and shred inputs are not
 ported yet.
 
-Steps, in order:
-1. encoded: in the DESI set the flows scored (raw_sets.npz "desi", 114,693). The latents keep
-   spectra with median per-pixel S/N > 3 (scripts/get_latent_space.py l.77-84: median of
+The steps in order are
+1. encoded, in the DESI set the flows scored (raw_sets.npz "desi", 114,693). The latents keep
+   spectra with median per-pixel S/N > 3 (scripts/get_latent_space.py l.77-84, the median of
    flux * sqrt(ivar) over unmasked pixels of the 7781-pixel observed grid, 3600-9824 A).
 2. in the fastspecfit SV3 bright VAC.
 3. VAC z in [0.01, 0.6]; 4. pipeline z agrees with the VAC z within 0.01 (1 + z).

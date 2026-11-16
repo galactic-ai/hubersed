@@ -6,14 +6,15 @@ young CSP of a 10 Myr constant-SFR population at stellar Z ``--zstar`` (ionspec.
 ionspec.py). Dust is a screen with the Wild+11 line curve A_lambda/A_V = (1 - mu)(lambda/5500)^-1.3
 + mu(lambda/5500)^-0.7 (arXiv:1008.3160, spitz_emlines_astro.tex:1273-1280), mu = ``--mu``.
 
-Free parameters and uniform priors: gas_logu (-4, -1), gas_lognH (1, 4), gas_logz (-2.2, 0.5),
-gas_logno and gas_logco (-1, log10 5.4), as the pipeline's cue_stellar_nebular template; av (0, 3);
-log_fhb, the log10 intrinsic Hbeta flux, from log10 of the observed Hbeta -0.3 to +1.6.
+The free parameters have uniform priors. They are gas_logu (-4, -1), gas_lognH (1, 4), gas_logz
+(-2.2, 0.5), gas_logno and gas_logco (-1, log10 5.4) as in the pipeline's cue_stellar_nebular
+template, av (0, 3), and log_fhb, the log10 intrinsic Hbeta flux, from log10 of the observed Hbeta
+-0.3 to +1.6.
 
-Likelihood: Gaussian on each fitted line, with variance the flux error squared plus Cue's emulation
-error (line_frac_error times the model flux) squared, and its log term, since the variance depends
-on the model. Summed lines ([OII]3727, [OII]7325) add the emulation errors of their members in
-quadrature. Lines with a NaN flux or a non-positive error are skipped.
+The likelihood is Gaussian on each fitted line. Its variance is the flux error squared plus Cue's
+emulation error (line_frac_error times the model flux) squared. It keeps the log variance term,
+since the variance depends on the model. Summed lines ([OII]3727, [OII]7325) add the emulation
+errors of their members in quadrature. Lines with a NaN flux or a non-positive error are skipped.
 
 ``--lines strong`` fits HB, OIII5007, NII6584, HA, SII6716, SII6731, OII3727, NEIII3869, HG and
 OI6300. ``--lines all`` adds OIII4363, SIII6312 and OII7325. ``--lines semi`` adds SIII9069 and
@@ -23,23 +24,24 @@ Gaussian fluxes of the six EmFit lines instead of the EmFit totals. ``--drop`` l
 lines out of the fit; they are still predicted.
 
 ``--prior nicholls`` multiplies the flat priors by Gaussians in gas_logno and gas_logco around the
-Nicholls+17 relations (arXiv:1612.03546, abundances.tex:301-304, total abundances, so on Cue's
-total [O/H] scale): gas_logno = log10(10^-0.852 + 10^gas_logz), sigma NO_SIGMA 0.3 dex (typical for
-individual objects, Andrews & Martini 2013, arXiv:1211.3418, ms.tex:1550), and gas_logco =
-log10(10^-0.43 + 10^(gas_logz + 0.02)), sigma CO_SIGMA 0.17 dex (Berg+19, arXiv:1901.08160, below
-12+log(O/H) 8.0). It enters as an extra term of the sampled log density; log_l_data saves the data
-log likelihood alone at every posterior point. ``--zmin`` raises the lower bound of the
-gas_logz prior, for example to force the upper metallicity branch. ``--table`` reads another table in the
-lineflux_table.fits format, such as mocks/mock_table.fits, and writes to a fits/ folder beside it.
+Nicholls+17 relations (arXiv:1612.03546, abundances.tex:301-304, total abundances, so on Cue's total
+[O/H] scale). These are gas_logno = log10(10^-0.852 + 10^gas_logz) with sigma NO_SIGMA 0.3 dex
+(typical for individual objects, Andrews & Martini 2013, arXiv:1211.3418, ms.tex:1550), and
+gas_logco = log10(10^-0.43 + 10^(gas_logz + 0.02)) with sigma CO_SIGMA 0.17 dex (Berg+19,
+arXiv:1901.08160, below 12+log(O/H) 8.0). It enters as an extra term of the sampled log density;
+log_l_data saves the data log likelihood alone at every posterior point. ``--zmin`` raises the lower
+bound of the gas_logz prior, for example to force the upper metallicity branch. ``--table`` reads
+another table in the lineflux_table.fits format, such as mocks/mock_table.fits, and writes to a
+fits/ folder beside it.
 
 COMMAND: from the repository root,
 ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/fit.py TARGETID
 --lines strong`` (defaults: --mu 0.4 --zstar -0.41 --fluxes emfit --n-live 2000). No FSPS needed.
 
 OUTPUT: fits/<TARGETID>_<lines>_<fluxes>_mu<mu>_zs<zstar>[_pnicholls][_zmin<zmin>].npz in
-results/2026-10-14_cue_lineflux_calibration/ (or beside --table): the posterior points, log weights, log likelihoods,
-log evidence, N_eff, likelihood calls, run time, settings, and the model flux of every line at 200
-posterior draws.
+results/2026-10-14_cue_lineflux_calibration/ (or beside --table). Each holds the posterior points,
+log weights, log likelihoods, log evidence, N_eff, likelihood calls, run time, settings, and the
+model flux of every line at 200 posterior draws.
 """
 
 import argparse

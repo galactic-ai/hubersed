@@ -5,10 +5,10 @@ eline_sigma_forb to its floor) in the #14 ER fit of 39627770174637084?
 
 At the maximum likelihood point the gradient g_i = sum J_i (data - model) / unc^2 of a railed
 parameter i is the slope of the profile likelihood, if the free parameters are at their optimum
-(their gradients near zero, checked here). Two splits over windows:
+(their gradients near zero, checked here). Two splits over windows.
 
-- raw: the sum of J_i (data - model) / unc^2 over each window;
-- residualized: J_i minus its projection on the other parameters' Jacobians,
+- raw, the sum of J_i (data - model) / unc^2 over each window;
+- residualized, J_i minus its projection on the other parameters' Jacobians,
   J_i - J_o F_oo^-1 F_oi, so the split shows only the part of the pull that no other parameter
   can take over. The SFH ratios and hyperparameters are held fixed in the projection (the SFH
   directions are nearly degenerate without the prior).

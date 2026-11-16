@@ -7,7 +7,7 @@ the broad component switched off (eline_fbroad = 0), and 100 weighted draws.
 The fit gave nautilus the identity prior, so the checkpoint holds unit cube points. They are read
 with the identity here and only the kept ones go through model.prior_transform.
 
-Run from the repository root on an ls6 compute node with the ER build, as in chain.slurm:
+Run from the repository root on an ls6 compute node with the ER build, as in chain.slurm,
 ``PYTHONPATH=/work/11006/nikhilgaruda/ls6/research/fsps_builds/c3k_er_afe_v3/fsps_site
 SPS_HOME=/work/11006/nikhilgaruda/ls6/research/sps_home_er .venv/bin/python
 experiments/2026-10-09_nautilus_c3k_er_broadline/predict.py --forbidden-broad shared``.

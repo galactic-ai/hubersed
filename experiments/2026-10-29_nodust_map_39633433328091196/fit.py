@@ -1,6 +1,6 @@
 """MAPs of the continuum outlier 39633433328091196 with dust attenuation off, for C3K_ER and MILES.
 
-QUESTION (C. Hahn, 2026-10-29): is the best fit without dust about as good as the one with dust?
+QUESTION: is the best fit without dust about as good as the one with dust? This is C. Hahn's test.
 
 ``--lib er`` changes 2026-10-29_continuum_39633433328091196_map/fit.py (dusty MAP, icx job 3657895)
 in one way: dust2 is fixed at 0, so dust1 = dust2 * dust_ratio is 0 and dust_index scales nothing;
@@ -15,12 +15,12 @@ hyperparameters, free in the 10-08 run, are fixed at its max-L point, as the ER 
 since with them free a MAP drifts to their prior floors (hubersed.sps.config, notes of
 build_full_cue_model). Start 0 is the 10-08 max-L point.
 
-``--mask features`` (follow-up 3, C3K ER only) drops rest 3850-4450 A and 4600-4750 A from the
-fitted pixels, where C3K and MILES SSPs differ most at fixed age and metallicity
-(2026-10-29_c3k_vs_miles_ssp: Ca H and K, G band, C2 4668), and fits with dust on and off. Outputs go
+``--mask features`` (C3K ER only) drops rest 3850-4450 A and 4600-4750 A from the fitted pixels,
+where C3K and MILES SSPs differ most at fixed age and metallicity (Ca H and K, G band, C2 4668 in
+2026-10-29_c3k_vs_miles_ssp), and fits with dust on and off. Outputs go
 to er_dust_features and er_nodust_features.
 
-``--zmax 0.2`` (follow-up 2) caps the logzsol prior at +0.2 (Uniform -2.5 to 0.2 instead of 0.5),
+``--zmax 0.2`` caps the logzsol prior at +0.2 (Uniform -2.5 to 0.2 instead of 0.5),
 the top of FSPS's MILES spectral grid (Z 0.030, zsol_spec 0.019; MILES spectra are not extrapolated,
 sps_setup.f90), for either library; starts above the cap are moved to 0.195. Outputs carry _zmax0.2.
 

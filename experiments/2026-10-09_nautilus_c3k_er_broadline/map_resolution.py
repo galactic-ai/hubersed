@@ -21,12 +21,13 @@ Runs from the same start, the ER max-L point of the 10-09 nautilus run.
   onto the fitted spectrum. Their chi2 is on different errors, so they are compared with each other.
 
 In both the SFH hyperparameters sigma_reg, tau_eq, sigma_dyn and tau_dyn are fixed at max-L (MAP
-does not recover them, so the 10-08 decision dropped MAP fits), and tau_in is fixed as in fit.py.
-Every other parameter is free. One Powell start (hubersed.fitting.map_fits.map_fit, no jitter
-starts). The control separates the optimizer's own drift from the change of resolution model.
+does not recover them), and tau_in is fixed as in fit.py. Every other parameter is free. One Powell
+start (hubersed.fitting.map_fits.map_fit, no jitter starts). The control separates the optimizer's
+own drift from the change of resolution model.
 
 INPUTS: the ``_pred.npz`` of predict.py, resolution_matrix.npz of resolution_check.py,
-resolution_matrix_rows.npz of coadd_rows.py, and the DESI spectrum as fit.load_data reads it. SEED: none (one start, no jitter).
+resolution_matrix_rows.npz of coadd_rows.py, and the DESI spectrum as fit.load_data reads it.
+SEED: none (one start, no jitter).
 
 COMMAND: from the repository root on the Mac with the C3K_ER build, one process per run,
 ``PYTHONPATH=~/.claude/jobs/16ec6e43/tmp/er_path:experiments/2026-10-09_nautilus_c3k_er_broadline

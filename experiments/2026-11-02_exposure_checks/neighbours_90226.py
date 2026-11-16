@@ -1,4 +1,4 @@
-"""Fibres around 1309 in exposure 90226: is the star in 39627781742528421's spectrum a neighbour's light?
+"""Fibres around 1309 in exposure 90226. Is the star in 39627781742528421's spectrum a neighbour's light?
 
 In 90226 (tile 76, petal 2) the spectrum of 39627781742528421 (fibre 1309) is ~10x brighter than
 in its other exposures and shows z = 0 stellar lines. This saves the per-arm flux of fibres 1300 to

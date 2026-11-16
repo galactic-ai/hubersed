@@ -59,7 +59,7 @@ def test_wavelengths_are_rest_frame(written):
 
 
 def test_observed_flag_is_gone():
-    """--observed wrote observed-frame edges that alf then shifted again, so it was removed."""
+    """The --observed option is refused, as alf shifts the edges to the observed frame itself."""
     spec = importlib.util.spec_from_file_location("make_alf_input", SCRIPT)
     script = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(script)

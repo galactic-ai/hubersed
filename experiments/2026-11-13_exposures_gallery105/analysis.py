@@ -1,21 +1,21 @@
 """Do the single exposures of gallery105 figures 05, 67 and 99 agree with their coadds?
 
-Adapted from 2026-11-05_exposures_39627770174637084/analysis.py to a list of targets. 99 added
-2026-11-14: z 0.015, flagged by both cont flows in its SV3 (7 exposures) and main (1) coadds, kNN
-distance beyond every same-z mock (2026-11-14_cont_z_coverage); blue continuum peaking near 4000-4300 A,
-a narrow Halpha spike and a noisy blue end. Are these in every exposure?
-QUESTION: 05 (39627770317246630): its SV3 bright coadd (2 exposures) has negative flux below rest
+Adapted from 2026-11-05_exposures_39627770174637084/analysis.py to a list of targets. 99 (z 0.015)
+is flagged by both cont flows in its SV3 (7 exposures) and main (1) coadds, with a kNN distance
+beyond every same-z mock (2026-11-14_cont_z_coverage). It has a blue continuum peaking near
+4000-4300 A, a narrow Halpha spike and a noisy blue end. Are these in every exposure?
+QUESTION: in 05 (39627770317246630) the SV3 bright coadd (2 exposures) has negative flux below rest
 3400 A, a step near rest 4850 A (observed ~5845 A, near the b/r overlap), Dn4000 5.1 and D(g-r) 0.69,
 and its main bright coadd is not flagged (repeats.csv, cleared). Is one SV3 exposure bad, with bright
-sky, poor seeing, low efftime or a FIBERSTATUS flag? 67 (39633136522363591): its only coadd (SV3
+sky, poor seeing, low efftime or a FIBERSTATUS flag? In 67 (39633136522363591) the only coadd (SV3
 bright, 3 exposures) has HdA 7.0 +- 1.1 and HgA 6.6 +- 1.1 at Dn4000 1.53 (90th and 99th percentile
 of the parent at that break, 2026-11-13_hda_parent_67). Is the Balmer absorption in every exposure?
 HYPOTHESIS: none registered. Descriptive, no threshold.
 INPUTS: results/2026-11-13_exposures_gallery105/extract_<nn>.npz (extract.py, DR1 iron healpix files)
 and conditions.csv (conditions.py). Arms are joined ivar-weighted as spender does. Excess is the
 median of exposure minus reference coadd flux (1e-17 erg/s/cm2/A) over good pixels in each rest
-window, at the SV3 redrock redshift. Reference: the main coadd for 05, the SV3 coadd for 67 (its
-only one) and 99. For 67 and 99, HdA and HgA of each exposure and coadd as gallery105 seed.py
+window, at the SV3 redrock redshift. The reference is the main coadd for 05 and the SV3 coadd for
+67 (its only one) and 99. For 67 and 99, HdA and HgA of each exposure and coadd as gallery105 seed.py
 (lick_index copied unchanged); for 99 also Dn4000 and EW(Halpha) with the functions of
 2026-11-13_psb_fraction_like_for_like/measure.py, loaded by path.
 SEED: 0 (index noise draws).
@@ -79,8 +79,12 @@ COADD_STYLE = {"main": dict(color="k", lw=1.0), "sv3": dict(color="0.45", lw=1.0
 def merge_arms(d, prefix, k=None):
     """Return flux, ivar and mask on the DESI grid, arms joined as spender does.
 
-    Copy of merge_arms in 2026-11-02_exposure_checks/analysis.py. ``prefix`` picks the exposure
-    (``sv3`` or ``main``, row ``k``) or coadd (``coadd_sv3`` or ``coadd_main``) arrays.
+    Copy of merge_arms in 2026-11-02_exposure_checks/analysis.py.
+
+    Parameters
+    ----------
+    prefix : str
+        ``sv3`` or ``main`` for the exposure in row ``k``, ``coadd_sv3`` or ``coadd_main`` for a coadd.
     """
     wave = DESI._wave_obs.numpy()
     flux, ivar = np.zeros(wave.size), np.zeros(wave.size)

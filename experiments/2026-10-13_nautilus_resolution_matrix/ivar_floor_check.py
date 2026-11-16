@@ -9,8 +9,8 @@ and 2452) is Var_new = 1/(ivar_F C^2) + F'^2 / (ivar_C,new C^2), with F' the cal
 iron variance is 1/(ivar_F C^2) + F'^2 / (ivar_C,old C^4). So Var_new = 1/ivar_iron - F'^2 /
 (ivar_C,old C^4) + (F' sigma_C / C)^2, a fractional floor with f = sigma_C / C, which depends on
 exposure, camera and wavelength. This script builds Var_new exactly for both exposures of this
-target and compares it with floor models: a constant f per exposure and camera (the median of
-sigma_C / C), and one global f for everything (chosen to fit best at coadd S/N above 20). The
+target and compares it with two floor models, a constant f per exposure and camera (the median
+of sigma_C / C) and one global f for everything (chosen to fit best at coadd S/N above 20). The
 comparison is sigma_floor / sigma_exact of the row-weighted coadd in bins of S/N.
 
 INPUTS: resolution_matrix_rows.npz (iron per-exposure flux and ivar, from the iron spectra file),

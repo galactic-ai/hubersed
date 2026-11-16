@@ -1,4 +1,4 @@
-"""Free line columns for the Cue model: ions, line widths and the prospect columns."""
+"""Free line columns for the Cue model, with the ions, the line widths and the prospect columns."""
 
 import numpy as np
 
@@ -143,7 +143,7 @@ def add_line_params(params, widths="ratio"):
 
 
 def build_columns(names, limits):
-    """Return the free line columns: weak narrow ions and broad components.
+    """Return the free line columns for weak narrow ions and broad components.
 
     Weak ions (narrow class "free" or "auroral" in ``IONS``) replace their Cue lines and share
     the narrow width ``eline_sigma``. Broad columns add to Cue, with width

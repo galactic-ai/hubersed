@@ -1,6 +1,6 @@
 """Fetch every DESI DR1 coadd spectrum of the screened old and new outliers from SPARCL.
 
-Targets: all four lists of results/2026-11-10_data_quality_screen/screened.npz (screen.py). As
+Targets are all four lists of results/2026-11-10_data_quality_screen/screened.npz (screen.py). As
 experiments/2026-11-01_repeats92/fetch.py, all DESI-DR1 SPARCL records of each TARGETID (every
 survey and program) are saved with flux, ivar and mask on the 7781 pixel DESI grid and their
 catalogue fields. sparclclient is not a project dependency, so this runs in its own uv environment

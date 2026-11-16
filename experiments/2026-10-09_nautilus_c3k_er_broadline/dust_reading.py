@@ -1,4 +1,4 @@
-"""Dust model reading of 37084: optical depths, line response and where the dust is constrained.
+"""Dust model reading of 37084, with optical depths, line response and where dust is constrained.
 
 QUESTION: why does the HR max-L point with only dust_ratio set to its ER max-L value overshoot
 the emission lines in the ER model, and which wavelengths constrain dust2, dust_ratio and
@@ -8,7 +8,7 @@ The model attenuates the young CSP (ages up to dust_tesc, 10^7 yr) by dust1 and 
 CSP by dust2 only (prospect fake_fsps.add_dust). Cue lines and Cue nebular continuum are computed
 for each CSP from its own ionizing spectrum and get the same split. dust1 = dust2 * dust_ratio.
 
-Six products:
+Six products.
 
 - the optical depths tau2 (Kriek and Conroy curve) and tau1 (power law, index -1) at the lines,
   at the ER and HR max-L points, from prospect's own ``attenuate``;
@@ -30,7 +30,7 @@ hyperparameters have no pixel information and are dropped before the inversion.
 INPUTS: jacobian.npz of jacobian.py, the ER .json and _pred.npz, and the HR split 45 chain through
 ``hr_point.hr_best``. SEED: none (deterministic).
 
-Run from the repository root on the Mac with the C3K_ER build, as hr_point.py. Command:
+COMMAND: from the repository root on the Mac with the C3K_ER build, as hr_point.py,
 ``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-09_nautilus_c3k_er_broadline
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
 experiments/2026-10-09_nautilus_c3k_er_broadline/dust_reading.py``.

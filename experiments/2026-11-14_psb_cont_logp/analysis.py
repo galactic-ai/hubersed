@@ -3,16 +3,17 @@
 QUESTION: The gallery105 PSBs 67 and 71 are flagged only by cont10 and cont15, just past threshold,
 and sit in the bulk of flows 6, 10, 15. Do PSB-like mocks have low log p in the cont flows (thin
 coverage under the prior, like the emitters), or do they sit in the cont bulk?
-HYPOTHESIS: none registered. Plan ~/.claude/plans/psb_cont_logp_2026-11-14.md. Reading: PSB-like
-median log p at least 2 below the rest and share below threshold at least 5x the rest means thin;
-within 1 of the rest means covered; quenched-not-PSB as low as PSB-like means old continua in general.
+HYPOTHESIS: none registered. Plan ~/.claude/plans/psb_cont_logp_2026-11-14.md. PSB-like median log
+p at least 2 below the rest and share below threshold at least 5x the rest means thin; within 1 of
+the rest means covered; quenched-not-PSB as low as PSB-like means old continua in general.
 INPUTS: results/2026-11-13_mock_psb_coverage/sfh_psb.npz (sfh.py on stampede3, finish job 3719051),
 the saved flows and mock latents of results/2026-11-09_mocks_v2_outliers/flows, and
 data/prospector_model/mocks_v2_500000.h5 (priors/redshifts for the row check).
 METHOD: PSB-like = nssfr100 < 0.2, ratio > 1, f15 > 0.4, not failed (sfh.py); quenched = nssfr100 <
 0.2 and not PSB-like; rest = the others. All mocks of the S/N > 3 latent set scored with the saved
-flow (training and held-out; held-out tenth also shown). Per group: count, median log p, share below
-the saved threshold, at all z and z 0.45-0.60. Gallery105 67, 71, 88, 99 (hda_parent_67) log p and flag.
+flow (training and held-out; held-out tenth also shown). Per group it gives count, median log p
+and share below the saved threshold, at all z and z 0.45-0.60. Gallery105 67, 71, 88, 99
+(hda_parent_67) log p and flag.
 SEED: none (the split uses the flows' seed 0).
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_psb_cont_logp/analysis.py``.
 RESULT: 2026-11-14, psb_logp.txt. Checks pass. PSB-like mocks (628; 210 in the S/N > 3 set, 38 at

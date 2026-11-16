@@ -8,10 +8,10 @@ nautilus points, read with forced.load) and the direct T_e tables of direct.py r
 The nosii variants use the subset_20 direct table, the semi variant the semi direct table; on the
 semi galaxies the all-lines fits that exist are compared on the same galaxies. No new fits.
 
-For each variant: N, the fraction with direct O/H inside the Cue 16-84 interval, the fraction with
-|Cue - direct| (medians) within the two half widths in quadrature, the fractions with direct
-below 16 and above 84, and the median Cue 16-84 width. For Gaussian, calibrated posteriors the
-first two are about 0.68. A bimodal posterior has a wide 16-84 interval that can contain direct
+For each variant it writes N, the fraction with direct O/H inside the Cue 16-84 interval, the
+fraction with |Cue - direct| (medians) within the two half widths in quadrature, the fractions with
+direct below 16 and above 84, and the median Cue 16-84 width. For Gaussian, calibrated posteriors
+the first two are about 0.68. A bimodal posterior has a wide 16-84 interval that can contain direct
 without much posterior mass near it.
 
 RESULT: 2026-10-15. Subset_20 (19): direct inside the Cue 16-84 interval 0.05 with all lines

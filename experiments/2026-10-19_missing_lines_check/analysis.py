@@ -1,4 +1,6 @@
-"""QUESTION: Which emission lines in the fitted range are neither in Cue's line list nor masked, and
+"""Find emission lines in the fitted range that are seen in the data but neither in Cue nor masked.
+
+QUESTION: Which emission lines in the fitted range are neither in Cue's line list nor masked, and
 seen in the data? MISSING_LINES (model_setup.py) was picked by hand in the #14 continuum check of
 2026-10-12, and 39633278973513279 shows spikes at Paschen and O I positions it does not cover.
 HYPOTHESIS: None registered before this analysis.

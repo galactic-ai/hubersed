@@ -1,13 +1,13 @@
 """Numerical checks of the integrated likelihood for a bounded equivalent-width line prior.
 
 QUESTION: does the closed form of UberSED knowledge/free_line_prior_derivation_2026-11-06.md
-(section 5: flat-prior result, minus sum ln(W c), plus ln P_B) equal brute-force integration of the
-likelihood over the prior box, including a line whose amplitude sits within about one standard
+(section 5, the flat-prior result minus sum ln(W c) plus ln P_B) equal brute-force integration of
+the likelihood over the prior box, including a line whose amplitude sits within about one standard
 deviation of its upper bound, and does the Jacobian term hold when integrating over EW directly?
 HYPOTHESIS: agreement to 1e-4 in ln L with the exact P_B; the diagonal P_B fails for weak,
 correlated lines.
-INPUTS: none (toy model: 200 pixels, sigma 0.3, two unit-width lines at -0.6 and +0.6, amplitude
-correlation -0.70, continuum c = (2, 2.5), EW limits W = (3, 3), so bounds b = (6, 7.5)).
+INPUTS: none. Toy model with 200 pixels, sigma 0.3, two unit-width lines at -0.6 and +0.6, amplitude
+correlation -0.70, continuum c = (2, 2.5) and EW limits W = (3, 3), so bounds b = (6, 7.5).
 SEED: numpy default_rng 1 for the box cases, 2 for the EW cases.
 COMMAND: ``uv run --no-sync python experiments/2026-11-07_line_prior_check/analysis.py``.
 RESULT: 2026-11-07, checks.txt. The closed form with the exact P_B equals brute force to five

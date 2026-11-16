@@ -139,12 +139,12 @@ def starts(fit, model):
     equal to ``eline_fbroad`` and ``eline_sigma_forb_hi`` equal to ``eline_sigma_forb``, so the
     low-ionization lines start with the shared profile. Then
 
-    - F0 A: as mapped.
-    - F0 B: ``eline_sigma_forb_hi`` set to ``moment_width``, the single Gaussian with the variance
+    - F0 A, as mapped.
+    - F0 B, ``eline_sigma_forb_hi`` set to ``moment_width``, the single Gaussian with the variance
       of the shared [O III] profile, capped below the prior edge.
-    - F1 A0: high-ionization fraction 0.
-    - F1 A1: high-ionization fraction equal to ``eline_fbroad``. This is the shared MAP itself.
-    - F1 B: high-ionization fraction 0.35 with ``eline_sigma_forb_hi`` at EmFit's 17.3 km/s, a
+    - F1 A0, high-ionization fraction 0.
+    - F1 A1, high-ionization fraction equal to ``eline_fbroad``. This is the shared MAP itself.
+    - F1 B, high-ionization fraction 0.35 with ``eline_sigma_forb_hi`` at EmFit's 17.3 km/s, a
       narrow core with a large second component, on the other side of the width and fraction
       degeneracy from F0 B.
     """

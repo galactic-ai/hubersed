@@ -8,8 +8,8 @@ INPUTS: the ER ``_pred.npz`` of predict.py (posterior points and log weights), a
 results/2026-09-30_nautilus_c3k_broadline_split45/39627770174637084_broad_shared_split45_unmask_rest9000_seed0.h5
 with its .json. SEED: none.
 
-Run from the repository root with the C3K_ER build, as hr_point.py (the model is built only for
-the prior edges). Command:
+COMMAND: from the repository root with the C3K_ER build, as hr_point.py (the model is built only
+for the prior edges),
 ``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-09_nautilus_c3k_er_broadline
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
 experiments/2026-10-09_nautilus_c3k_er_broadline/corner_dust_gas.py``.

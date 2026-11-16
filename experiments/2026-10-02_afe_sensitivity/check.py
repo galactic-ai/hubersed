@@ -10,8 +10,8 @@ mass, so this is the exact best logmass. Report chi2(afe) - chi2(afe=0) on all f
 continuum pixels only (500 km/s around lines removed), and per rest-frame band. For scale, the same
 number for logzsol +-0.1 dex at afe=0. Fixed theta ignores degeneracies, so a large value here does
 not mean alpha is measurable.
-Second test (noise free, "Asimov"): take model(afe) at the max-L point as fake data with the real sigma,
-continuum pixels only, and fit it with afe = 0 models on a logzsol grid, each times a Legendre
+A second test is noise free ("Asimov"). It takes model(afe) at the max-L point as fake data with the
+real sigma, continuum pixels only, and fits it with afe = 0 models on a logzsol grid, each times a Legendre
 polynomial in wavelength of order 0 (amplitude only) or 5 (a smooth stand-in for dust and other
 broadband freedom; the real model has no calibration polynomial). The minimum chi2 over the grid is
 the Delta chi2 a real fit would have to detect that afe. Age, SFH and gas stay fixed, so it is still an

@@ -1,12 +1,14 @@
-"""QUESTION: How well do the pocoMC free_dust fits of the free-line candidates match their data,
+"""Plot the pocoMC free_dust fits of the free-line candidates against their data and quick MAPs.
+
+QUESTION: How well do the pocoMC free_dust fits of the free-line candidates match their data,
 over the full spectrum and in the line windows, next to their quick MAPs?
 HYPOTHESIS: None registered before this analysis.
 INPUTS: pmc_final.state of poco.py copied from ls6 into
 results/2026-10-15_broadline_free_amplitude/poco_<TID>_free_dust_neff1024/, <TID>_map_free.npz of
 2026-10-18_candidate_map (free variant, SFH hyperparameters fixed at #14's), and the 10-13 _pred.npz
-of 39627770174637084 for those hyperparameters. Same layout as 2026-10-18_issue14_figures.py: data
-and the highest-posterior pocoMC particle, then chi panels from -5 to 5 with dotted lines at -2 and
-2. The flux axis is not clipped. Each chi panel gives chi2/(N - free parameters) and the pixels
+of 39627770174637084 for those hyperparameters. The layout is that of 2026-10-18_issue14_figures.py,
+data and the highest-posterior pocoMC particle, then chi panels from -5 to 5 with dotted lines at -2
+and 2. The flux axis is not clipped. Each chi panel gives chi2/(N - free parameters) and the pixels
 beyond 5.
 SEED: none.
 COMMAND: from the repository root on the Mac with the C3K_ER build, once per target,
@@ -16,8 +18,9 @@ experiments/2026-10-19_candidate_poco_figures/analysis.py
 RESULT: 2026-10-19. chi2_nu 1.350 (pocoMC) and 1.456 (MAP) on 5541 px for 39633278973513279, 0.963
 and 1.005 on 5397 px for 39633001071509599.
 FIGURES: <TID>_residuals.png and <TID>_windows.png in results/2026-10-19_candidate_poco_figures/.
-With --poco-only, <TID>_residuals_poco.png: the pocoMC chi alone, with no text box. --flux-pct p
-stops its flux axis at the p-th percentile of the data, in <TID>_residuals_poco_p<p>.png.
+With --poco-only it writes <TID>_residuals_poco.png, the pocoMC chi alone with no text box.
+--flux-pct p stops its flux axis at the p-th percentile of the data, in
+<TID>_residuals_poco_p<p>.png.
 """
 
 # %%

@@ -4,11 +4,13 @@ QUESTION: the mocks (analysis_mocks.py) show the strong lines separate Z and N/O
 real metal-rich galaxies' low-Z, high-N/O, low-U solutions point to spectra Cue does not reproduce.
 Which lines does it miss in them?
 
-For each galaxy of subset_20.txt, from fits/<TARGETID>_strong_emfit_mu0.4_zs-0.41.npz (flat priors):
-the median over the 200 posterior draws of model/data for every line, and chi = (data - median
-model) / sqrt(err^2 + emulation error^2), with the emulation error from Cue's line_frac_error at the
-median model flux. Groups: metal-rich if observed N2 = log [NII]6584/Halpha > N2_CUT, metal-poor
-otherwise. Lines with S/N < 3 are left out. SEED: none.
+For each galaxy of subset_20.txt it reads fits/<TARGETID>_strong_emfit_mu0.4_zs-0.41.npz (flat
+priors). It gives the median over the 200 posterior draws of model/data for every line, and chi =
+(data - median model) / sqrt(err^2 + emulation error^2), with the emulation error from Cue's
+line_frac_error at the median model flux. A galaxy is metal-rich if observed N2 = log
+[NII]6584/Halpha > N2_CUT, metal-poor otherwise. Lines with S/N < 3 are left out.
+
+SEED: none.
 
 COMMAND: ``uv run --no-sync python experiments/2026-10-14_cue_lineflux_calibration/residuals.py``
 from the repository root.

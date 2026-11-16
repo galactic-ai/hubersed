@@ -5,12 +5,13 @@ emission. Where do these sit among parent galaxies with the same break strength 
 HYPOTHESIS: none registered. If 67 is an older post-starburst its HdA should sit in the upper tail.
 INPUTS: results/prescreened_sample_v1.npz (keep, the 104,990 parent); data/fastspec-iron-sv3-bright.fits
 (DN4000, Z, HALPHA_EW and its IVAR, OII EWs); DR1 SV3 bright coadds through load_by_index.
-Figure 71 (39633149579232417, z 0.467, HdA 7.8 +- 1.0, HgA 2.1, Dn4000 1.37) added on 2026-11-13.
-METHOD: control = parent galaxies with FastSpecFit DN4000 in a 0.15-wide window at the target's break
-(67: [1.45, 1.60]; 71: [1.30, 1.45]; 88: [1.25, 1.40]; 99: [1.12, 1.27], added 2026-11-13) and Z within 0.05 of the target, the target removed. HdA and HgA measured as gallery105 seed.py (lick_index copied unchanged:
-Worthey & Ottaviani 1997 bands taken as air and moved to vacuum, mean form over good pixels, NaN below
-25% good pixels, std over 200 noise draws). Reported for all controls and for those with no lines
-(FastSpecFit EW Halpha < 3 A where Halpha is on the spectrum, and EW [OII] 3726+3729 < 2.5 A).
+Figure 71 is 39633149579232417, z 0.467, HdA 7.8 +- 1.0, HgA 2.1, Dn4000 1.37.
+METHOD: control = parent galaxies with FastSpecFit DN4000 in a 0.15-wide window at the target's
+break (67 [1.45, 1.60], 71 [1.30, 1.45], 88 [1.25, 1.40], 99 [1.12, 1.27]) and Z within 0.05 of the
+target, the target removed. HdA and HgA measured as gallery105 seed.py (lick_index copied unchanged,
+with Worthey & Ottaviani 1997 bands taken as air and moved to vacuum, mean form over good pixels,
+NaN below 25% good pixels, std over 200 noise draws). Reported for all controls and for those with
+no lines (FastSpecFit EW Halpha < 3 A where Halpha is on the spectrum, and EW [OII] 3726+3729 < 2.5 A).
 SEED: 0 (noise draws).
 COMMAND: ``uv run --no-sync python experiments/2026-11-13_hda_parent_67/analysis.py``.
 RESULT: 2026-11-13, hda_parent.txt. 182 controls (47 with no lines). 67's HdA 6.97 sits at the 90th

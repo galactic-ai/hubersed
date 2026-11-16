@@ -43,7 +43,7 @@ def col(name):
 
 
 def qline(label, x):
-    """Return one table row: label, N and the quantiles of finite x."""
+    """Return one table row with label, N and the quantiles of finite x."""
     x = x[np.isfinite(x)]
     if x.size == 0:
         return f"{label:34s} N 0"

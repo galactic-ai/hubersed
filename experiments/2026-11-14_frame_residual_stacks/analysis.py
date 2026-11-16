@@ -1,9 +1,9 @@
 """Is the DESI minus best-fit continuum residual coherent in observed or in rest wavelength?
 
-QUESTION: Test 1 (a) of the calibration plan (~/.claude/plans/calib_injection_2026-11-13.md). For
-the MAP fits of the 310 old outliers, does the residual F / (s M) agree between the low-z and
-high-z halves when stacked in observed wavelength (instrument or calibration shared by all DR1
-spectra) or in rest wavelength (model physics or prior coverage, explanation 1)?
+QUESTION: For the MAP fits of the 310 old outliers, does the residual F / (s M) agree between the
+low-z and high-z halves when stacked in observed wavelength (instrument or calibration shared by
+all DR1 spectra) or in rest wavelength (model physics or prior coverage)? Plan in
+~/.claude/plans/calib_injection_2026-11-13.md.
 HYPOTHESIS: the frame with the higher split-half correlation wins when the difference exceeds 3
 bootstrap sigma; otherwise undecided. A residual broader than the frame shift cannot decide.
 INPUTS: results/map_fits_outliers310_v2/<tid>.pkl (flux, unc, model on the DESI grid, z; prospect
@@ -14,8 +14,8 @@ lines in LINES. r = F / (s M) with s the median of F / M over good pixels at res
 (galaxies with under 10 such pixels dropped). Each r is averaged in 10 A bins in observed
 (3600-9800 A) and rest (2800-9400 A) wavelength. Stacks are the median over galaxies per bin, kept
 where 10 or more galaxies contribute. The sample is split at its median z; per frame the Pearson
-correlation of the two half stacks (minus 1) is taken over bins both cover. Bootstrap: 1000
-resamples of galaxies within each half, on the difference corr_obs - corr_rest.
+correlation of the two half stacks (minus 1) is taken over bins both cover. The bootstrap takes
+1000 resamples of galaxies within each half, on the difference corr_obs - corr_rest.
 SEED: 0 (bootstrap).
 COMMAND: ``uv run --no-sync python experiments/2026-11-14_frame_residual_stacks/analysis.py``.
 RESULT: 2026-11-14, frame_stacks.txt. 310 fits, z median 0.075 (10-90% 0.030-0.374). Split-half

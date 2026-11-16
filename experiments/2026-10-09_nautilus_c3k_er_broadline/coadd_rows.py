@@ -5,15 +5,14 @@ the exposures are combined with the corrected weights, and do the per-exposure m
 behave as the resolution checks assume?
 
 DR1 (iron) coadds weight each exposure's banded matrix by the ivar of the column pixel
-(desispec 0.56 coaddition.coadd). The DR1 paper lists this as a known issue (arXiv:2503.14745,
-A5_knownissues.tex:29) and desispec issue 2372 derives the correct form, the ivar of the row
-pixel, R_hat = (sum_e C_e^-1)^-1 sum_e C_e^-1 R_e. PR 2377 implements it as _resolution_coadd,
-where data[k, j] is weighted by the normalised ivar at pixel j + k - ndiag//2. The arms are then
-merged the same way (coadd_cameras in PR 2377). Cosmic masking needs three or more exposures, so
-it does not apply to the two-exposure reference. For targets with more, the row-weighted coadd
-masks cosmics as PR 2377 does (_mask_cosmics as merged, 4 sigma). The column-weighted rebuild
-masks them as iron did, whose mean gradient divides by the sum of the weights over all pixels
-rather than per pixel (desispec 0.56.2 coaddition.py:416, fixed in PR 2377). The number of
+(desispec 0.56 coaddition.coadd), a known issue in the DR1 paper (arXiv:2503.14745,
+A5_knownissues.tex:29). Desispec issue 2372 derives the correct form, the ivar of the row pixel,
+R_hat = (sum_e C_e^-1)^-1 sum_e C_e^-1 R_e. PR 2377 implements it as _resolution_coadd, and the
+arms are merged the same way (coadd_cameras in PR 2377). Cosmic masking needs three or more
+exposures, so it does not apply to the two-exposure reference. For targets with more, the
+row-weighted coadd masks cosmics as PR 2377 does (_mask_cosmics as merged, 4 sigma). The
+column-weighted rebuild masks them as iron did, whose mean gradient divides by the sum of the
+weights over all pixels rather than per pixel (desispec 0.56.2 coaddition.py:416). The number of
 pixels each masks is reported, in total and near the lines.
 
 The script does five things from the iron spectra file of healpix 26004.
@@ -24,14 +23,15 @@ The script does five things from the iron spectra file of healpix 26004.
   DR1 coadd), as a test of the reading.
 - Builds the row-weighted coadd per arm and merged over the arms, and compares it with the old one
   at the strong lines.
-- Tests R = S Q on each exposure, where it holds exactly (Guy et al. 2023, extraction.tex:43-61):
-  R_ij sqrt(ivar_i) should be symmetric.
+- Tests R = S Q on each exposure, where it holds exactly (Guy et al. 2023, extraction.tex:43-61),
+  by checking that R_ij sqrt(ivar_i) is symmetric.
 - Compares the two exposures pixel by pixel, (f1 - a f2) / sqrt(1/ivar1 + a^2/ivar2) with a scalar a
   per arm, in bins of S/N, as in desispec issue 2420. Near strong lines the two matrices differ,
   which adds to the scatter there.
 
-It was written for 39627770174637084 (healpix 26004), the default. --tid picks another target of
-targets.py, whose resolution_matrix.npz comes from experiments/2026-10-18_candidate_resolution_matrix/analysis.py.
+The default target is 39627770174637084 (healpix 26004). --tid picks another target of
+targets.py, whose resolution_matrix.npz comes from
+experiments/2026-10-18_candidate_resolution_matrix/analysis.py.
 
 INPUTS: spectra-sv3-bright-<healpix>.fits.gz (iron), resolution_matrix.npz of resolution_check.py.
 SEED: none.
@@ -205,7 +205,7 @@ def row_weights(res, weights):
 
 
 def row_coadd(res, ivar, mask, cosmic=None):
-    """Return the PR 2377 coadd of one arm: flux weights and the row-weighted matrix."""
+    """Return the PR 2377 coadd of one arm, with its flux weights and row-weighted matrix."""
     masked = ivar * (mask == 0)
     if cosmic is not None:
         masked[cosmic] = 0

@@ -9,11 +9,11 @@ parent's code.
 
 Scenarios. All use the truth point, the rmatrix mask MAP of 2026-10-13_nautilus_resolution_matrix.
 
-- ``model`` (S0): the components of our own model, (1 - f_b) G(sigma) + f_b G(sigma_b, v_b) with
+- ``model`` (S0), the components of our own model, (1 - f_b) G(sigma) + f_b G(sigma_b, v_b) with
   the widths of TwoCompLineModel. It must reproduce ResolutionMatrixModel.
-- ``S1``: every line has EmFit's three-component Halpha profile for this target.
-- ``S2``: our two-component shape, with broad fractions per line group.
-- ``S3``: our two-component shape, with the broad component of [N II], [S II], [O I] and [O III]
+- ``S1``, every line has EmFit's three-component Halpha profile for this target.
+- ``S2``, our two-component shape, with broad fractions per line group.
+- ``S3``, our two-component shape, with the broad component of [N II], [S II], [O I] and [O III]
   scaled by literature broad-to-narrow ratio offsets. Narrow components keep the Cue ratios.
 
 Sources of the injected numbers. Line numbers refer to files in ~/Documents/UberSED/knowledge/.
@@ -23,11 +23,12 @@ Sources of the injected numbers. Line numbers refer to files in ~/Documents/Uber
   ha_b_sigma 154.919 km/s. Fluxes 1463.63, 636.00, 95.36, so fractions 0.6668, 0.2897, 0.0434.
   Shifts relative to the narrow centre from ha_*_mean, -0.870 and -2.888 km/s. The same numbers
   are in lit_broad_emission_components_2026-10-13.md lines 23-24. ``check_emfit`` re-reads the csv.
-- Per-group broad fractions (S2): broad fraction of low-ionization forbidden lines 1.2 times the
-  Balmer one and of high-ionization lines 0.7 times, lit_broad_emission_components_2026-10-13.md
-  line 393, from Hogarth+20 tab2 (lines 338-341, Ha 0.32, [NII] 0.38, [OIII]5007 0.22) and
-  EmFit for this target (line 344, [NII] 0.373 and [SII] 0.349 vs Ha 0.303).
-- Broad ratio offsets (S3), each in dex on the broad component's line over Halpha (or Hbeta):
+- Per-group broad fractions (S2). The broad fraction of low-ionization forbidden lines is 1.2
+  times the Balmer one and of high-ionization lines 0.7 times,
+  lit_broad_emission_components_2026-10-13.md line 393, from Hogarth+20 tab2 (lines 338-341,
+  Ha 0.32, [NII] 0.38, [OIII]5007 0.22) and EmFit for this target (line 344, [NII] 0.373 and
+  [SII] 0.349 vs Ha 0.303).
+- Broad ratio offsets (S3), each in dex on the broad component's line over Halpha (or Hbeta).
   [N II] +0.136 and [S II] +0.091 from EmFit for this target, log N2Ha -1.005 to -0.869 and log
   S2Ha -0.890 to -0.799 (lit_broad_emission_components_2026-10-13.md line 26). [O I] +0.5 from
   CLASSY VIII (line 116). [O III] -0.210 = log10(4.41 / 7.16) from Hogarth+20 tab2 (line 321,
@@ -129,7 +130,7 @@ def check_emfit(path=EMFIT_CSV):
 
 
 def line_group(name):
-    """Return the S2 group of a Cue line name: recombination, high or low."""
+    """Return the S2 group (recombination, high or low) of a Cue line name."""
     name = name.strip()
     if name.startswith(RECOMB_PREFIXES):
         return "recombination"

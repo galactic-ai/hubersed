@@ -62,23 +62,23 @@ def build_sps(zcontinuous=1, zero_library_resolution=True):
 
     Parameters
     ----------
-        zcontinuous : int
-            FSPS metallicity interpolation mode, passed to ``FastStepBasis``.
-        zero_library_resolution : bool
-            If True, set template resolution to zero. False keeps the library's
-            native resolution.
+    zcontinuous : int
+        FSPS metallicity interpolation mode, passed to ``FastStepBasis``.
+    zero_library_resolution : bool
+        If True, set template resolution to zero. False keeps the library's
+        native resolution.
 
     Returns
     -------
-        prospect.sources.FastStepBasis
-            The stellar population source.
+    prospect.sources.FastStepBasis
+        The stellar population source.
 
     Notes
     -----
-        The MILES templates have lower resolution than DESI spectra, so prospect would refuse to
-        blur the model to the DESI line spread function. Setting the template resolution to zero
-        lets it through, at the cost of over-broadening the model. The setting is made on
-    +    ``SSPBasis`` itself, so it applies to every SSPBasis in the process.
+    The MILES templates have lower resolution than DESI spectra, so prospect would refuse to
+    blur the model to the DESI line spread function. Setting the template resolution to zero
+    lets it through, at the cost of over-broadening the model. The setting is made on
+    ``SSPBasis`` itself, so it applies to every SSPBasis in the process.
     """
     sps = FastStepBasis(zcontinuous=zcontinuous)
     SSPBasis.spectral_resolution = (

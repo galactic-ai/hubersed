@@ -4,8 +4,8 @@ QUESTION: what is unusual about 39633421923781141 (z 0.232, a strong line at obs
 neighbour in the cutout, flagged in 18 of 20 seeds)?
 HYPOTHESIS: none registered.
 INPUTS: FastSpecFit VAC (redshift, line fits), fracflux.csv of 2026-10-31_screen_all, the spender
-spectrum, the cutout of 2026-10-31_logp_vs_colour/cutouts. BPT line: Kewley et al. 2001, log
-[OIII]/Hb = 0.61 / (log [NII]/Ha - 0.47) + 1.19 [from memory, unchecked].
+spectrum, the cutout of 2026-10-31_logp_vs_colour/cutouts. The BPT line is Kewley et al. 2001,
+log [OIII]/Hb = 0.61 / (log [NII]/Ha - 0.47) + 1.19 [from memory, unchecked].
 SEED: none.
 COMMAND: ``uv run --no-sync python experiments/2026-10-31_look_39633421923781141/analysis.py``.
 RESULT: 2026-10-31. Broad-line AGN: FastSpecFit broad Halpha S/N 94, sigma 533 km/s, EW 58 A, broad

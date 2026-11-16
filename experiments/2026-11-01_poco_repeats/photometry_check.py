@@ -4,13 +4,13 @@ QUESTION: do the best models reproduce the broadband colours, which they were no
 - Synthetic AB maggies use the photon-counting mean of F_nu over the band. They are made from each
   step's max-likelihood model and from its data spectrum (<step>_maxl.npz, observed frame,
   maggies).
-- Curves are the speclite v1.0.0 files in data/filters/speclite_v1.0.0/: BASS g, r and MzLS z for
-  PHOTSYS N, DECam otherwise.
-- A band is used if 99 per cent of its weight lies where the spectrum is defined: the fitted
+- Curves are the speclite v1.0.0 files in data/filters/speclite_v1.0.0/, BASS g, r and MzLS z for
+  PHOTSYS N and DECam otherwise.
+- A band is used if 99 per cent of its weight lies where the spectrum is defined. That is the fitted
   pixels for the data, and the whole DESI grid for the model (the MILES fit window for MILES).
 - Our spectra and models are not corrected for Milky Way extinction, so they are compared with the
   observed fluxes, not divided by MW_TRANSMISSION.
-- Photometry: LS DR9 FIBERFLUX (1.5 arcsec) and FLUX (total) from the FastSpecFit v3.0 METADATA.
+- Photometry is LS DR9 FIBERFLUX (1.5 arcsec) and FLUX (total) from the FastSpecFit v3.0 METADATA.
   Their errors are 1/sqrt(FLUX_IVAR) (total only).
 - FastSpecFit v3.0 FLUX_SYNTH_G/R (from the spectrum) and FLUX_SYNTH_PHOTMODEL_* (its model,
   MW-free, so multiplied by MW_TRANSMISSION here) are listed for comparison.

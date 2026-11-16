@@ -22,7 +22,7 @@ INPUTS: the ER ``_pred.npz`` of predict.py, jacobian.npz of jacobian.py (posteri
 scale the optimizer steps) and the same data, model and build as the fit. SEED: none
 (deterministic).
 
-Run from the repository root on the Mac with the C3K_ER build, as jacobian.py. COMMAND:
+COMMAND: from the repository root on the Mac with the C3K_ER build, as jacobian.py,
 ``PYTHONPATH=<site with the C3K_ER fsps>:experiments/2026-10-09_nautilus_c3k_er_broadline
 SPS_HOME=~/Astronomy_Research/fsps uv run --no-sync python
 experiments/2026-10-09_nautilus_c3k_er_broadline/dust1_index_check.py``.

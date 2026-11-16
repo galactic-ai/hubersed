@@ -1,10 +1,10 @@
-"""Fetch every DESI DR1 coadd spectrum of the B2 targets from SPARCL.
+"""Fetch every DESI DR1 coadd spectrum of the sample.py targets from SPARCL.
 
 As experiments/2026-11-10_data_quality_screen/repeats_fetch.py, for the targets of targets.npz
-(sample.py): all DESI-DR1 records of each TARGETID (every survey and program) with flux, ivar and
-mask on the 7781 pixel DESI grid and their catalogue fields. Records are found in chunks of 500
-target ids. sparclclient is not a project dependency, so this runs in its own uv environment and
-does not import hubersed.
+(sample.py). It saves all DESI-DR1 records of each TARGETID (every survey and program) with flux,
+ivar and mask on the 7781 pixel DESI grid and their catalogue fields. Records are found in chunks
+of 500 target ids. sparclclient is not a project dependency, so this runs in its own uv
+environment and does not import hubersed.
 COMMAND: from the repository root,
 ``uv run --no-project --python 3.13 --with sparclclient --with "numpy>=2" --with "pandas>=2.2"
 python experiments/2026-11-13_repeat_persistence/fetch.py``.
