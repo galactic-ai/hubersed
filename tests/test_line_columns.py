@@ -50,13 +50,14 @@ def test_build_columns():
 
 @pytest.mark.fsps
 def test_add_line_params():
-    """Narrow width 10-250 km/s, broad widths 250-800 km/s, broad offset within +-300 km/s."""
+    """With split widths, narrow 10-250 km/s, broad 250-800 km/s, broad offset within +-300 km/s."""
     from prospect.models import priors
 
     from hubersed.sps.line_columns import add_line_params
 
     params = add_line_params({"eline_sigma": dict(N=1, isfree=True, init=100.0,
-                                                  prior=priors.TopHat(mini=10.0, maxi=250.0))})  # fmt: skip
+                                                  prior=priors.TopHat(mini=10.0, maxi=250.0))},
+                             widths="split")  # fmt: skip
     assert params["eline_sigma"]["prior"].range == (10.0, 250.0)
     assert params["eline_sigma"]["init"] == 130.0
     for k in ("eline_sigma_broad", "eline_sigma_broad_forb"):
