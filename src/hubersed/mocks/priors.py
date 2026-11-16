@@ -79,9 +79,9 @@ def draw_priors(n, seed, cue):
     # sigma_gas uniform 10 to 250
     sigma_gass = sample_uniform(10, 250, size=n, rng=rng)
 
-    # gas phase metallicity. Cue allows -2.2 to 0.5. The FSPS nebular grid covers -1.3 to
-    # 0.3 and FSPS clamps outside it (add_nebular.f90:27-29).
-    gas_lo, gas_hi = (-2.2, 0.5) if cue else (-1.3, 0.3)
+    # gas phase metallicity. Cue allows -2.2 to 0.5. The FSPS nebular grid covers -1.98 to
+    # 0.2 and FSPS clamps outside it (add_nebular.f90:27-29).
+    gas_lo, gas_hi = (-2.2, 0.5) if cue else (-1.98, 0.2)
     gas_metallicities = sample_uniform(gas_lo, gas_hi, size=n, rng=rng)
 
     # gas ionization parameter -4 to -1
