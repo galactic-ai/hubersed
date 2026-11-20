@@ -27,6 +27,7 @@ dependencies = [
     "numpy>=2.3.4",
     "pandas>=2.3.3",
     "pocomc>=1.2.6",
+    "pyarrow>=26.0.1",
     "pyneb>=1.1.32",
     "requests>=2.32.5",
     "schwimmbad>=0.4.2",
