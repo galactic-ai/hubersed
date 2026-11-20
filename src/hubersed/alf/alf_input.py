@@ -24,7 +24,7 @@ from pathlib import Path
 import numpy as np
 
 from hubersed.fitting.chi2 import WAVE_OBS
-from hubersed.io.desi import load_by_index, tids_to_indices
+from hubersed.io.desi import load_by_targetid
 from hubersed.sps.lsf import C_KMS, desi_resolution
 
 # alf's model wavelength range (alf_vars.f90:127-128)
@@ -62,8 +62,7 @@ def write_alf_input(tid, out, intervals=DEFAULT_INTERVALS, mask=DEFAULT_MASK):
     SystemExit
         If no pixel falls in both a requested interval and alf's model range.
     """
-    idx = int(tids_to_indices(np.array([tid], np.int64))[0])
-    spec, ivar, z, tid_chk = load_by_index(idx)
+    spec, ivar, z, tid_chk = load_by_targetid(tid)
     assert int(tid_chk) == tid, f"TARGETID mismatch: asked {tid}, got {tid_chk}"
     z = float(z)
 

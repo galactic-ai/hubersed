@@ -29,8 +29,7 @@ def written(tmp_path, monkeypatch):
 
     spec = 2.0 + 1e-4 * np.arange(alf_input.WAVE_OBS.size)
     ivar = np.full(alf_input.WAVE_OBS.size, 4.0)
-    monkeypatch.setattr(alf_input, "tids_to_indices", lambda tids: np.array([0]))
-    monkeypatch.setattr(alf_input, "load_by_index", lambda idx: (spec, ivar, Z, TID))
+    monkeypatch.setattr(alf_input, "load_by_targetid", lambda tid: (spec, ivar, Z, TID))
 
     out = tmp_path / "desi.dat"
     alf_input.write_alf_input(TID, out, mask="")
