@@ -10,11 +10,12 @@ COMMAND: ``PYTHONPATH=experiments/2026-10-15_broadline_free_amplitude uv run --n
 experiments/2026-11-14_poco_psb_sfh/analysis.py``.
 RESULT: 2026-11-14, fits.txt. Both fit 22, 51, 69 well (chi2/N 0.994-1.098), ln Z(B) - ln Z(A) 3.98
 +- 1.01, 0.43 +- 0.71, -0.05 +- 0.49, so their flags are rarity or data. 99 fits with Cue (1.031).
-Model L for the five emission-line outliers (gallery105 28, 34, 80, 25, 64) is pending.
+2026-11-20: model L chi2/N of gallery105 28, 34, 80, 25, 64 is 1.486, 1.426, 1.417, 1.091, 1.107;
+L_recoadd 1.299, 1.159, 1.244, 1.059, 1.091 (ln Z not compared, different data).
 Assumptions: continuum-only C3K ER, no line mask, SV3 DR1 coadd, B's cut prior; 51 has a Gaia match.
 FIGURES: results/2026-11-14_poco_psb_sfh/ <TID>/<model>/best_fit.png, sfh.png, sfh_99.png,
-corner_99_AC.png, corner_99_AC_AC0.png, fit_<nn>_<model>.png. For L, sfh_em5.png, fit_<nn>_L.png,
-windows_<nn>_L.png, corner_<nn>_L_{stars_dust,gas,all_ssfr}.png.
+corner_99_AC.png, corner_99_AC_AC0.png, fit_<nn>_<model>.png. For L, sfh_em5.png. For L and
+L_recoadd, fit_<nn>_<model>.png, windows_<nn>_<model>.png, corner_<nn>_<model>_{stars_dust,gas,all_ssfr}.png.
 """
 
 # %%
@@ -48,10 +49,12 @@ NAMES = {
     "39627806493117457": "25",
     "39633127609469239": "64",
 }  # numbers from results/2026-11-13_gallery105/gallery105.tsv
-EM5 = list(NAMES)[4:]  # the emission-line outliers, model L only
+EM5 = list(NAMES)[4:]  # the emission-line outliers, models L and L_recoadd only
 PSB4 = list(NAMES)[:4]
-# all but A and B only for 99; L only for the emission-line outliers
-MODELS = ("A", "B", "AC", "BC", "AC0", "AC_main", "BC_main", "L")
+# all but A and B only for 99; L and L_recoadd only for the emission-line outliers
+MODELS = ("A", "B", "AC", "BC", "AC0", "AC_main", "BC_main", "L", "L_recoadd")
+L_MODELS = ("L", "L_recoadd")
+DATA_LABEL = {"sv3": "DESI DR1 SV3 coadd", "recoadd": "DESI SV3 recoadd"}
 
 
 def models_of(tid):
@@ -60,8 +63,9 @@ def models_of(tid):
 
 
 def model_of(name, d):
-    """Return the fit.py model of ``name`` for maxl.npz ``d``; L takes its saved sigma_smooth floor."""
-    return fit.make_model(name, float(d["z"]), float(d["sigma_floor"]) if name == "L" else None)
+    """Return the fit.py model of ``name`` for maxl.npz ``d``; L models take their sigma_smooth floor."""
+    floor = float(d["sigma_floor"]) if name in L_MODELS else None
+    return fit.make_model(name, float(d["z"]), floor)
 
 
 RED = "#b2182b"
@@ -188,7 +192,7 @@ from scipy.stats import spearmanr  # noqa: E402
 
 deg = ["Spearman correlation of logzsol with each quantity over 2000 posterior draws (seed 0)"]
 for tid, nn in NAMES.items():
-    for name in [m for m in models_of(tid) if m != "L"]:  # PSB models only
+    for name in [m for m in models_of(tid) if m not in L_MODELS]:  # PSB models only
         folder = OUT / tid / name
         d = np.load(folder / "maxl.npz")
         with h5py.File(folder / "fit.h5", "r") as h:
@@ -227,6 +231,7 @@ STYLE = {
     "AC_main": dict(color="#b35806", ls="-.", label="A + Cue, main coadd"),
     "BC_main": dict(color="#542788", ls="-.", label="B + Cue, main coadd"),
     "L": dict(color=RED, label="L (stochastic + Cue + free lines)"),
+    "L_recoadd": dict(color=RED, label="L, SV3 recoadd"),
 }
 SFH_MODELS = ("A", "B", "AC", "BC")  # sfh.png; 99's Cue variants go to sfh_99.png
 
@@ -444,7 +449,7 @@ zh = [
     "[Z/H] = logzsol + MIST2 ([Z/H] - [Fe/H]) at (logzsol, afe); 16/50/84% of the weighted samples"
 ]
 for tid, nn in NAMES.items():
-    for name in [m for m in models_of(tid) if m != "L"]:  # PSB models only
+    for name in [m for m in models_of(tid) if m not in L_MODELS]:  # PSB models only
         d = np.load(OUT / tid / name / "maxl.npz")
         with h5py.File(OUT / tid / name / "fit.h5", "r") as h:
             theta = h["sampling/unstructured_chain"][:]
@@ -493,6 +498,8 @@ FIG_FITS = {  # (TID, model): chi panel label
     ("39628454575998103", "A"): "C3K ER + afe + R matrix, stochastic SFH (DR1 SV3 coadd)",
     ("39633145275876182", "A"): "C3K ER + afe + R matrix, stochastic SFH (DR1 SV3 coadd)",
 } | {(tid, "L"): "C3K ER + R matrix, stochastic SFH + Cue + free lines (DR1 SV3 coadd)" for tid in EM5}  # fmt: skip
+FIG_FITS |= {(tid, "L_recoadd"): "C3K ER + R matrix, stochastic SFH + Cue + free lines (SV3 recoadd)"
+             for tid in EM5}  # fmt: skip
 # model L's ticks: EMLINES of 2026-11-07_emline_ladder_39627770174637084/analysis.py (rest vacuum)
 EMLINES = {  # label: (label position, tick wavelengths)
     "[OII]": (3728.5, (3727.09, 3729.88)),
@@ -543,7 +550,7 @@ def fit_figure(tid, name, label):
     lo, hi = rest[g].min(), rest[g].max()
     ax[1].set_xlim(lo, hi)
     trans = ax[0].get_xaxis_transform()
-    if name == "L":  # the emline ladder's ticks, no index bands
+    if name in L_MODELS:  # the emline ladder's ticks, no index bands
         for n, (m, ws) in EMLINES.items():
             for w in ws:
                 ax[0].axvline(w, ymin=0.96, ymax=1.0, color="tab:blue", lw=1.2)
@@ -636,7 +643,7 @@ def windows_figure(tid, name, label):
     ax[0, 0].set_ylabel(r"$f_\lambda$ [$10^{-17}$ cgs $\AA^{-1}$]", fontsize=13)
     ax[1, 0].set_ylabel(r"$\chi$", fontsize=13)
     handles = [plt.Line2D([], [], color="0.2", lw=2), plt.Line2D([], [], color=RED, lw=3)]
-    fig.legend(handles, ["DESI DR1 SV3 coadd", label], loc="lower center",
+    fig.legend(handles, [DATA_LABEL[fit.split_name(name)[1]], label], loc="lower center",
                bbox_to_anchor=(0.5, 0.915), ncol=2, fontsize=13, frameon=False)  # fmt: skip
     path = OUT / f"windows_{NAMES[tid]}_{name}.png"
     fig.savefig(path, dpi=130, bbox_inches="tight")
@@ -647,15 +654,16 @@ def windows_figure(tid, name, label):
 
 rows = []
 for tid in EM5:
-    if "L" in models_of(tid):
-        st = windows_figure(tid, "L", FIG_FITS[(tid, "L")])
-        rows.append(f"{NAMES[tid]:>3} {tid:>18} "
+    for name in [m for m in L_MODELS if m in models_of(tid)]:
+        st = windows_figure(tid, name, FIG_FITS[(tid, name)])
+        rows.append(f"{NAMES[tid]:>3} {tid:>18} {name:>9} "
                     + " ".join(f"{c:7.2f} ({n:2d})" for c, n in st.values()))  # fmt: skip
 if rows:
     win_text = "\n".join(
-        ["model L chi2/N (N px) at the max-likelihood point in the line windows (rest vacuum A,",
-         "2026-10-15_broadline_free_amplitude/map.py WINDOWS)",
-         f"{'nn':>3} {'TARGETID':>18} " + " ".join(f"{k:>12}" for k in WINDOWS)] + rows
+        ["models L and L_recoadd chi2/N (N px) at the max-likelihood point in the line windows",
+         "(rest vacuum A, 2026-10-15_broadline_free_amplitude/map.py WINDOWS)",
+         f"{'nn':>3} {'TARGETID':>18} {'model':>9} " + " ".join(f"{k:>12}" for k in WINDOWS)]
+        + rows
     )  # fmt: skip
     (OUT / "windows_em5.txt").write_text(win_text + "\n")
     print(win_text)
@@ -669,11 +677,10 @@ STARS_L = ["logzsol", "logmass", "dust2", "dust_ratio", "dust_index", "sigma_smo
 GAS = ["gas_logz", "gas_logu", "gas_lognH", "gas_logno", "gas_logco", "eline_sigma", "r_broad",
        "r_broad_forb", "eline_vbroad"]  # fmt: skip
 for tid in EM5:
-    if "L" not in models_of(tid):
-        continue
-    labels = list(posterior("L", tid)[0].theta_labels())
-    every = [p for p in labels if not p.startswith("logsfr_ratios")]
-    nn = NAMES[tid]
-    corner_fig(["L"], STARS_L, OUT / f"corner_{nn}_L_stars_dust.png", [RED], tid=tid)
-    corner_fig(["L"], GAS, OUT / f"corner_{nn}_L_gas.png", [RED], tid=tid)
-    corner_fig(["L"], every, OUT / f"corner_{nn}_L_all_ssfr.png", [RED], tid=tid, inset=True)
+    for name in [m for m in L_MODELS if m in models_of(tid)]:
+        labels = list(posterior(name, tid)[0].theta_labels())
+        every = [p for p in labels if not p.startswith("logsfr_ratios")]
+        stem = f"corner_{NAMES[tid]}_{name}"
+        corner_fig([name], STARS_L, OUT / f"{stem}_stars_dust.png", [RED], tid=tid)
+        corner_fig([name], GAS, OUT / f"{stem}_gas.png", [RED], tid=tid)
+        corner_fig([name], every, OUT / f"{stem}_all_ssfr.png", [RED], tid=tid, inset=True)
