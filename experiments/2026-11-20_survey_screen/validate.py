@@ -44,9 +44,13 @@ def unit_vectors(ra, dec):
     return np.stack([np.cos(dec) * np.cos(ra), np.cos(dec) * np.sin(ra), np.sin(dec)], axis=1)
 
 
-def gaia_flags(tids):
-    """Return the Gaia star flag of each TARGETID, the rule of the 2026-11-10 replay."""
-    t = Table.read(REPLAY / "gaia_xmatch.fits")
+def gaia_flags(tids, t=None):
+    """Return the Gaia star flag of each TARGETID, the rule of the 2026-11-10 replay.
+
+    ``t`` is the Gaia match table, by default the 2026-09 cross-match of the replay.
+    """
+    if t is None:
+        t = Table.read(REPLAY / "gaia_xmatch.fits")
     order = np.argsort(np.asarray(t["angDist"], float))
     near = {}
     for i in order:
