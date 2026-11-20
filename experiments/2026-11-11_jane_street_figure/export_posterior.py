@@ -1,8 +1,6 @@
 """Save the free_dust posterior of logmass, logzsol and gas_logz for the Year 2 panel.
 
-The prior transform needs the model of 2026-10-15_broadline_free_amplitude, which imports modules
-removed later (hubersed.sps.broadline). So this runs on the source of commit 2938e32, copied out with
-git show, not on the current tree.
+Runs on the source of commit 2938e32, since the 10-15 model imports modules removed later.
 INPUTS: pmc_final.state of the free_dust pocoMC run of 39627770174637084. SEED: none.
 COMMAND: copy src and the 10-13 and 10-15 experiment folders of 2938e32 to <old> (git show per
 file), then from the repository root

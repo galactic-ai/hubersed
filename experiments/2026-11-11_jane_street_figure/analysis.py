@@ -13,7 +13,8 @@ https://storage.noirlab.edu/media/archives/images/screen/noirlab2512b.jpg``.
 SEED: none.
 COMMAND: from the repository root on the Mac,
 ``uv run python experiments/2026-11-11_jane_street_figure/analysis.py``.
-RESULT: 2026-11-11. Both versions made; Nikhil chose figure_image for statement_v10 (Figure 1).
+RESULT: 2026-11-11. figure_image chosen for statement_v10. 2026-11-13: steps not years, 2D corner
+panels without ticks, zoomed wedge (RA 205-225, z < 0.2) for v11.
 FIGURES: results/2026-11-11_jane_street_figure/figure_{wedge,image}.{pdf,png}, two Year 3 options.
 """
 
@@ -25,7 +26,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from astropy.io import fits
 from matplotlib.patches import Rectangle
-from matplotlib.ticker import MaxNLocator
 
 from hubersed.conversion import to_flambda
 from hubersed.paths import PATHS
@@ -43,6 +43,8 @@ CORNER = {
 }
 SLICE = OUT / "desi_slice" / "noirlab2512b_screen.jpg"
 CREDIT = "Image: DESI Collaboration/DOE/KPNO/\nNOIRLab/NSF/AURA/R. Proctor (CC BY 4.0)"
+WEDGE_ZMAX = 0.2
+WEDGE_STRETCH = 4
 COLORS = {"data": "0.45", "sota": "C1", "uber": "C0"}
 
 
@@ -70,7 +72,7 @@ def bgs_positions():
     m = fits.getdata(FASTSPEC, "METADATA")
     good = (m["ZWARN"] == 0) & (m["SPECTYPE"] == "GALAXY") & (m["SV3_BGS_TARGET"] > 0)
     good &= (m["Z"] > 0.01) & (m["Z"] < 0.6)
-    return np.asarray(m["RA"][good], float), np.asarray(m["Z"][good], float)
+    return tuple(np.asarray(m[c][good], float) for c in ("RA", "DEC", "Z"))
 
 
 # %%
@@ -103,84 +105,68 @@ def year1(sub, sota, uber):
     axr.set_ylim(-5, 5)
     for y in (-2, 2):
         axr.axhline(y, color="0.3", ls="--", lw=0.5)
-    axr.set_ylabel(r"$\chi$")
+    axr.set_ylabel(r"$\chi$", labelpad=1)
     axr.set_xlabel(r"rest-frame wavelength [\AA]")
-    sub.suptitle("Year 1: a better model", fontsize=9)
+    sub.suptitle("Step 1: a better model", fontsize=9)
 
 
 def year2(sub, theta, w):
-    """Draw a small corner plot of the Bayesian posterior."""
+    """Draw the 2D panels of a corner plot of the Bayesian posterior, without ticks."""
     import corner
 
     k = len(CORNER)
-    axes = sub.subplots(k, k, gridspec_kw={"hspace": 0.08, "wspace": 0.08})
-    sub.subplots_adjust(left=0.31, right=0.95, bottom=0.24, top=0.8)
+    axes = sub.subplots(k - 1, k - 1, gridspec_kw={"hspace": 0.08, "wspace": 0.08}, squeeze=False)
+    sub.subplots_adjust(left=0.27, right=0.95, bottom=0.2, top=0.8)
     names = list(CORNER.values())
     rng = [tuple(np.quantile(theta[:, i], [0.002, 0.998])) for i in range(k)]
-    for i in range(k):
-        for j in range(k):
-            ax = axes[i, j]
-            if j > i:
-                ax.axis("off")
+    for i in range(1, k):
+        for j in range(k - 1):
+            ax = axes[i - 1, j]
+            if j >= i:
+                ax.set_visible(False)
                 continue
-            if i == j:
-                ax.hist(theta[:, i], bins=30, weights=w, range=rng[i], histtype="step", color="C0")
-                ax.set_yticks([])
-            else:
-                corner.hist2d(
-                    theta[:, j],
-                    theta[:, i],
-                    weights=w,
-                    ax=ax,
-                    range=[rng[j], rng[i]],
-                    levels=(0.393, 0.865),
-                    smooth=1.0,
-                    bins=30,
-                    color="C0",
-                    plot_datapoints=False,
-                    fill_contours=True,
-                )
+            corner.hist2d(
+                theta[:, j],
+                theta[:, i],
+                weights=w,
+                ax=ax,
+                range=[rng[j], rng[i]],
+                levels=(0.393, 0.865),
+                smooth=1.0,
+                bins=30,
+                color="C0",
+                plot_datapoints=False,
+                fill_contours=True,
+            )
             ax.set_xlim(rng[j])
-            ax.xaxis.set_major_locator(MaxNLocator(2))
-            if i != j:
-                ax.set_ylim(rng[i])
-                ax.yaxis.set_major_locator(MaxNLocator(2))
-            ax.tick_params(labelsize=5)
-            ax.tick_params(axis="x", labelrotation=45)
-            if i < k - 1:
-                ax.set_xticklabels([])
-            else:
+            ax.set_ylim(rng[i])
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.minorticks_off()
+            ax.tick_params(which="both", length=0)
+            if i == k - 1:
                 ax.set_xlabel(names[j], fontsize=7)
-            if j > 0 or i == 0:
-                ax.set_yticklabels([])
-            else:
+            if j == 0:
                 ax.set_ylabel(names[i], fontsize=7)
-                ax.yaxis.set_label_coords(-1.05, 0.5)
-    sub.suptitle("Year 2: fast inference\n(benchmark posterior)", fontsize=9)
+    sub.suptitle("Step 2: fast inference\n(benchmark posterior)", fontsize=9)
 
 
-def year3_wedge(sub, ra, z):
-    """Draw the SV3 BGS galaxies as a wedge in RA and redshift."""
+def year3_wedge(sub, ra, dec, z):
+    """Draw one equatorial SV3 region as a wedge in RA and redshift, angle stretched by WEDGE_STRETCH."""
     ax = sub.add_subplot(projection="polar")
-    sub.subplots_adjust(left=0.02, right=0.98, bottom=0.22, top=0.84)
-    ax.scatter(np.deg2rad(ra), z, s=0.05, color="C0", alpha=0.3, lw=0, rasterized=True)
-    ax.set_thetamin(ra.min())
-    ax.set_thetamax(ra.max())
-    ax.set_rmax(0.4)
-    ax.set_rticks([0.1, 0.2, 0.3, 0.4])
-    ax.set_rlabel_position(ra.max() + 3)
+    sub.subplots_adjust(left=0.04, right=0.9, bottom=0.22, top=0.84)
+    s = (ra > 205) & (ra < 225) & (dec > -3) & (dec < 7) & (z < WEDGE_ZMAX)
+    theta = 90 + WEDGE_STRETCH * (ra[s] - 215)
+    ax.scatter(np.deg2rad(theta), z[s], s=0.08, color="C0", alpha=0.6, lw=0, rasterized=True)
+    ax.set_thetamin(theta.min())
+    ax.set_thetamax(theta.max())
+    ax.set_rmax(WEDGE_ZMAX)
+    ax.set_rticks([0.1, 0.2])
+    ax.set_rlabel_position(theta.min() - 4)
+    ax.grid(False)
     ax.set_xticklabels([])
     ax.tick_params(labelsize=5)
-    ax.text(
-        0.5,
-        -0.05,
-        f"{len(z):,} DESI galaxies\nof ten million to come",
-        transform=ax.transAxes,
-        ha="center",
-        va="top",
-        fontsize=7,
-    )
-    sub.suptitle("Year 3: DESI", fontsize=9)
+    sub.suptitle("Step 3: apply to DESI", fontsize=9)
 
 
 def year3_image(sub, n):
@@ -199,7 +185,7 @@ def year3_image(sub, n):
         fontsize=7,
     )
     ax.text(0.5, -0.36, CREDIT, transform=ax.transAxes, ha="center", va="top", fontsize=4)
-    sub.suptitle("Year 3: DESI", fontsize=9)
+    sub.suptitle("Step 3: apply to DESI", fontsize=9)
 
 
 # %%
@@ -209,7 +195,7 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     sota, uber = load_export("miles_cue"), load_export("ubersed")
     theta, w = posterior()
-    ra, z = bgs_positions()
+    ra, dec, z = bgs_positions()
     for name in ("wedge", "image"):
         fig = plt.figure(figsize=(6.5, 2.5))
         subs = fig.subfigures(1, 3, width_ratios=[2.3, 1.2, 1.3], wspace=0.02)
@@ -220,7 +206,7 @@ def main():
         year1(subs[0], sota, uber)
         year2(subs[1], theta, w)
         if name == "wedge":
-            year3_wedge(subs[2], ra, z)
+            year3_wedge(subs[2], ra, dec, z)
         else:
             year3_image(subs[2], len(z))
         for ext in ("pdf", "png"):
