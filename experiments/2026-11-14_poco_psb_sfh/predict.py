@@ -38,7 +38,7 @@ def load_cache():
     print(f"{n} SSP slots loaded from {fit.CACHE}", flush=True)
 
 
-MODELS = ("A", "B", "AC", "BC", "AC0", "AC_main", "BC_main", "L")
+MODELS = ("A", "B", "AC", "BC", "AC0", "AC_main", "BC_main", "L", "L_recoadd")
 
 
 def main(only=None, models=None):
