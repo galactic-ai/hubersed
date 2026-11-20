@@ -2,7 +2,8 @@
 # Build the spender Parquet datasets on /scratch. ACTION picks one step:
 #   env      install the locked packages (spender v0.4, pyarrow, datasets, desitarget) into the venv
 #   convert  scripts/chunks_to_parquet.py for the DESI chunks and the v2 and baseline noisy mocks
-# The mock pickles must be staged first (stage.sh). Outputs that already exist stop the job.
+# The mock pickles are read from the repository's data/prospector_model on /work. Outputs that
+# already exist stop the job.
 # Pick -p at submit (test-only first):
 #   ACTION=env sbatch --export=ALL -p skx-dev -t 00:30:00 experiments/2026-11-20_corral_parquet/convert.slurm
 #SBATCH -J parquet
@@ -16,7 +17,7 @@ REPO=/work/11006/nikhilgaruda/ls6/research/hubersed
 PY=/work2/11006/nikhilgaruda/stampede3/venvs/hubersed/bin/python
 UV=$HOME/.local/bin/uv
 DESI=/work/11006/nikhilgaruda/ls6/research/spender/DATA
-P=/scratch/11006/nikhilgaruda/hubersed_data/pickles
+P=$REPO/data/prospector_model
 D=/scratch/11006/nikhilgaruda/hubersed_data/datasets
 ACTION=${ACTION:-convert}
 cd $REPO
