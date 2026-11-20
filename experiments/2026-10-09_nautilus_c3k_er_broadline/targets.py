@@ -134,6 +134,50 @@ TARGETS = {
             85078: ("20210416", 5, 2649),
         },
     ),
+    # emission-line outliers of 2026-11-14_poco_psb_sfh; z of the SV3 spender chunk, exposures from
+    # the coadd EXP_FIBERMAP (recoadd_exposures.txt there)
+    39627818010675704: dict(
+        z=0.020883191376924515,
+        healpix=26285,
+        out=RESULTS / "2026-11-14_poco_psb_sfh" / "39627818010675704" / "recoadd",
+        exposures={
+            83527: ("20210405", 6, 3159),
+            83717: ("20210406", 6, 3159),
+            86839: ("20210501", 6, 3173),
+            87235: ("20210504", 6, 3189),
+            87469: ("20210506", 6, 3160),
+            87710: ("20210508", 6, 3160),
+            # 88033 (20210511, fiber 3457) left out: FIBERSTATUS 512, zero ivar, not in the DR1 coadd
+        },
+    ),
+    39627854832472157: dict(
+        z=0.02837890386581421,
+        healpix=25977,
+        out=RESULTS / "2026-11-14_poco_psb_sfh" / "39627854832472157" / "recoadd",
+        exposures={84247: ("20210410", 7, 3737)},
+    ),
+    39633318999755849: dict(
+        z=0.06651268899440765,
+        healpix=10153,
+        out=RESULTS / "2026-11-14_poco_psb_sfh" / "39633318999755849" / "recoadd",
+        exposures={85636: ("20210420", 8, 4205), 86511: ("20210428", 9, 4883)},
+    ),
+    39627806493117457: dict(
+        z=0.030540362000465393,
+        healpix=25965,
+        out=RESULTS / "2026-11-14_poco_psb_sfh" / "39627806493117457" / "recoadd",
+        exposures={
+            83541: ("20210405", 6, 3488),
+            84249: ("20210410", 6, 3488),
+            85092: ("20210416", 6, 3488),
+        },
+    ),
+    39633127609469239: dict(
+        z=0.13114424049854279,
+        healpix=9835,
+        out=RESULTS / "2026-11-14_poco_psb_sfh" / "39633127609469239" / "recoadd",
+        exposures={87121: ("20210503", 8, 4068), 87129: ("20210503", 8, 4068)},
+    ),
 }
 MAIN_TARGETS = {
     # z of the main row of desi_dr1.zpix (Astro Data Lab TAP, 2026-10-28)
