@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """Encode DESI spectra with a trained spender autoencoder and stream the latents to HDF5.
 
-Run it as ``uv run python scripts/get_latent_space.py DATADIR CHECKPOINT OUTFILE.h5``.
+DATASET is a spender Parquet dataset. All three splits are encoded.
+Run it as ``uv run python scripts/get_latent_space.py DATASET CHECKPOINT OUTFILE.h5``.
 """
 
 import argparse
@@ -11,6 +12,33 @@ import h5py
 import torch
 from spender import load_model
 from spender.data import desi
+
+SPLITS = ("train", "validation", "test")
+COLUMNS = ("spec", "w", "z", "target_id", "norm", "zerr")
+
+
+def dataset_batches(inst, path, batch_size):
+    """Yield (spec, w, z, target_id, norm, zerr) batches from every split of a dataset.
+
+    Parameters
+    ----------
+    inst : spender.data.desi.DESI
+        Instrument whose loader reads the dataset.
+    path : str
+        Local directory or HuggingFace Hub repository of the dataset.
+    batch_size : int
+        Number of spectra per batch.
+
+    Yields
+    ------
+    tuple of torch.Tensor
+        One batch, columns in the order of ``COLUMNS``.
+    """
+    for split in SPLITS:
+        loader = inst.get_data_loader(
+            path, which=split, columns=COLUMNS, batch_size=batch_size, shuffle=False
+        )
+        yield from loader
 
 
 def process_loader_h5(
@@ -28,7 +56,7 @@ def process_loader_h5(
     The per-pixel S/N is spec times sqrt(w). Its median over pixels with w > 0 is
     stored as ``snr_med`` whenever S/N is computed. Every kept spectrum is saved with
     its TARGETID in ``target_ids``. Match rows to a catalogue by TARGETID, never by
-    row position, because the loader order is not the numeric chunk and row order.
+    row position, because rows follow the dataset splits.
 
     Parameters
     ----------
@@ -172,15 +200,7 @@ def main(args: argparse.Namespace) -> None:
     )
     model.eval()
 
-    tag = args.tag or "chunk1024"
-    loader = inst.get_data_loader(
-        args.datadir,
-        tag=tag,
-        which="all",
-        batch_size=args.batch_size,
-        shuffle=False,
-        shuffle_instance=False,
-    )
+    loader = dataset_batches(inst, args.dataset, args.batch_size)
 
     # Two independent settings, deliberately not one flag. encode_snr feeds the S/N
     # array to the encoder instead of the spectrum and is only for mode noise.
@@ -195,7 +215,7 @@ def main(args: argparse.Namespace) -> None:
     meta = {
         "mode": args.mode,
         "zmax": args.zmax,
-        "tag": tag,
+        "dataset": Path(args.dataset).name,
         "snr_min": args.snr_min,
         # Records which encoder produced these latents, since latents from
         # different encoders are not interchangeable.
@@ -218,7 +238,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Generate latent space (spectra or noise) from trained autoencoder"
     )
-    parser.add_argument("datadir", type=str, help="Directory containing DESI training data")
+    parser.add_argument("dataset", type=str, help="Spender Parquet dataset of the spectra")
     parser.add_argument("checkpoint", type=str, help="Path to the trained autoencoder checkpoint")
     parser.add_argument("outfile", type=str, help="Output file to save the latent representations")
     parser.add_argument(
@@ -233,12 +253,6 @@ if __name__ == "__main__":
         type=float,
         default=0.0,
         help="Maximum redshift for rest-frame wavelength calculation",
-    )
-    parser.add_argument(
-        "--tag",
-        type=str,
-        default="chunk1024",
-        help="Data tag to load from DESI data directory",
     )
     parser.add_argument(
         "--mode",
