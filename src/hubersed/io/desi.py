@@ -1,9 +1,11 @@
-"""Load DESI spectra from the spender chunk files and coadd npz files."""
+"""Load DESI spectra from a spender Parquet dataset and from coadd npz files."""
 
-import pickle
+from functools import lru_cache
+from pathlib import Path
 
 import astropy.units as u
 import numpy as np
+import pyarrow.parquet as pq
 from astropy.nddata import InverseVariance
 from specutils import Spectrum
 
@@ -12,94 +14,87 @@ from hubersed.paths import PATHS
 from hubersed.sps.lsf import DESI_WAV
 
 DATA_PATH = PATHS["DATA"]
-CHUNK = 1024
+DATASET = DATA_PATH / "datasets" / "desi_sv3_bright_v1"
 
 
 class TargetIDMismatchError(ValueError):
     """The spectrum on disk has a different TARGETID from the one asked for."""
 
 
-def load_by_index(gidx):
-    """Load one DESI spectrum by its global index and undo the spender normalization.
+@lru_cache(maxsize=4)
+def _index(dataset):
+    """Return the Parquet files of a dataset and each TARGETID's file and row.
+
+    Only the ``target_id`` column is read. The arrays are sorted by TARGETID.
+    """
+    files = tuple(sorted((Path(dataset) / "data").glob("*.parquet")))
+    if not files:
+        raise FileNotFoundError(f"no Parquet files in {Path(dataset) / 'data'}")
+    tids, fidx, rows = [], [], []
+    for i, f in enumerate(files):
+        t = pq.read_table(f, columns=["target_id"])["target_id"].to_numpy()
+        tids.append(t)
+        fidx.append(np.full(t.size, i))
+        rows.append(np.arange(t.size))
+    tids, fidx, rows = (np.concatenate(x) for x in (tids, fidx, rows))
+    order = np.argsort(tids, kind="stable")
+    return files, tids[order], fidx[order], rows[order]
+
+
+def load_by_targetid(targetid, dataset=DATASET):
+    """Load one DESI spectrum by TARGETID and undo the spender normalization.
 
     Parameters
     ----------
-    gidx : int
-        Global index. The spectrum is row ``gidx % 1024`` of the file
-        ``DESIchunk1024_{gidx // 1024}.pkl``, counting chunks in numeric order.
+    targetid : int
+        DESI TARGETID.
+    dataset : str or pathlib.Path, optional
+        Spender Parquet dataset. The default is ``DATASET``.
 
     Returns
     -------
     spec : np.ndarray
-        Flux density f_lambda in units of 1e-17 erg/s/cm^2/A, on ``WAVE_OBS``.
+        Flux density f_lambda in units of 1e-17 erg/s/cm^2/A, on ``DESI_WAV``.
     ivar : np.ndarray
         Inverse variance of ``spec``, in (1e-17 erg/s/cm^2/A)^-2.
     z : float
         Redshift.
     tid : int
-        DESI TARGETID. Callers should check it matches the galaxy they asked for.
-
-    Notes
-    -----
-    spender reads the same files in string order (0, 1, 10, 100, ...), so a row in an
-    encoder output file is not a global index. Go from TARGETID to index with
-    ``tids_to_indices``. ``tests/test_targetid.py`` pins both orders.
-    """
-    chunk, row = gidx // CHUNK, gidx % CHUNK
-    with open(DATA_PATH / "desi_spectra" / f"DESIchunk1024_{chunk}.pkl", "rb") as f:
-        s, w, z, tid, norm, *_ = pickle.load(f)
-    s = s * norm[:, None]
-    w = w / norm[:, None] ** 2  # un-normalize
-
-    def to(x):
-        return x.cpu().numpy() if hasattr(x, "cpu") else np.asarray(x)
-
-    s, w, z, tid = to(s)[row], to(w)[row], float(to(z)[row]), int(to(tid)[row])
-    return s, w, z, tid
-
-
-def tids_to_indices(tids):
-    """Find the global index of each TARGETID.
-
-    Parameters
-    ----------
-    tids : np.ndarray
-        TARGETIDs as int64.
-
-    Returns
-    -------
-    np.ndarray
-        Global indices for ``load_by_index``, in the same order as ``tids``.
+        TARGETID read from the file.
 
     Raises
     ------
     ValueError
-        If any TARGETID is missing from ``all_target_ids.npy``. Nothing is dropped.
-
-    Notes
-    -----
-    ``all_target_ids.npy`` lists TARGETIDs in numeric chunk order, the order
-    ``load_by_index`` uses. It was checked against all 249 chunk files.
+        If the TARGETID is missing from the dataset or appears more than once.
     """
-    all_tids = np.load(DATA_PATH / "all_target_ids.npy").astype(np.int64)
-    order = np.argsort(all_tids)
-    sa = all_tids[order]
-    pos = np.clip(np.searchsorted(sa, tids), 0, len(sa) - 1)
-    ok = sa[pos] == tids
-    if not ok.all():
-        raise ValueError(
-            f"{int((~ok).sum())}/{len(tids)} TARGETIDs not found in all_target_ids.npy"
-        )
-    return order[pos].astype(int)
+    files, tids, fidx, rows = _index(str(dataset))
+    lo, hi = np.searchsorted(tids, [targetid, targetid + 1])
+    if hi - lo != 1:
+        raise ValueError(f"TARGETID {targetid} appears {hi - lo} times in {dataset}")
+    pf = pq.ParquetFile(files[fidx[lo]])
+    row = int(rows[lo])
+    for g in range(pf.num_row_groups):
+        n = pf.metadata.row_group(g).num_rows
+        if row < n:
+            break
+        row -= n
+    t = pf.read_row_group(g, columns=["spec", "w", "z", "norm", "target_id"]).slice(row, 1)
+    t = {c: t[c].combine_chunks() for c in t.column_names}
+    norm = t["norm"].to_numpy()[0]
+    s = t["spec"].values.to_numpy() * norm
+    w = t["w"].values.to_numpy() / norm**2  # un-normalize
+    return s, w, float(t["z"].to_numpy()[0]), int(t["target_id"].to_numpy()[0])
 
 
-def load_spectrum(targetid):
+def load_spectrum(targetid, dataset=DATASET):
     """Load one DESI spectrum by TARGETID, with units, mask and redshift attached.
 
     Parameters
     ----------
     targetid : int
         DESI TARGETID.
+    dataset : str or pathlib.Path, optional
+        Spender Parquet dataset. The default is ``DATASET``.
 
     Returns
     -------
@@ -107,20 +102,18 @@ def load_spectrum(targetid):
         Flux in ``DESI_FLAM`` on the observed frame ``DESI_WAV`` grid in Angstrom, the
         inverse variance as uncertainty, and the redshift. A pixel is masked when its
         inverse variance is not positive or its flux is not finite. ``meta["targetid"]``
-        holds the TARGETID read from the file. Flux and inverse variance keep the float32
-        type of the chunk files.
+        holds the TARGETID read from the file. Flux and inverse variance are float32.
 
     Raises
     ------
     ValueError
-        If the TARGETID is missing from ``all_target_ids.npy``.
+        If the TARGETID is missing from the dataset or appears more than once.
     TargetIDMismatchError
-        If the file row found for the TARGETID holds a different TARGETID.
+        If the row found for the TARGETID holds a different TARGETID.
     """
-    gidx = tids_to_indices(np.array([targetid], dtype=np.int64))[0]
-    flux, ivar, z, tid = load_by_index(gidx)
+    flux, ivar, z, tid = load_by_targetid(targetid, dataset)
     if tid != targetid:
-        raise TargetIDMismatchError(f"asked for TARGETID {targetid}, row {gidx} holds {tid}")
+        raise TargetIDMismatchError(f"asked for TARGETID {targetid}, the row holds {tid}")
     return desi_spectrum(flux, ivar, z, tid)
 
 
