@@ -1,7 +1,8 @@
 """pocoMC fits of gallery105 22, 51 and 69 with the current SFH (model A) and a PSB SFH (model B).
 
 Changed from 2026-11-01_poco_repeats/fit.py are prospect's pocoMC fit_model, the ladder node pool,
-ResolutionMatrixSpectrum, the SSP cache, models B (PSB SFH), AC and BC (Cue), AC0, _main and L.
+ResolutionMatrixSpectrum, the SSP cache, models B (PSB SFH), AC and BC (Cue), AC0, _main, L and
+L_recoadd (model L on the SV3 recoadd).
 COMMAND: through check.slurm and prod.slurm, for example
 ``ibrun <venv>/bin/python experiments/2026-11-14_poco_psb_sfh/fit.py run --tid <TID> --model B --mpi``.
 OUTPUT: results/2026-11-14_poco_psb_sfh/<TID>/<model>/ (pmc_<i>.state, fit.h5).
@@ -67,15 +68,17 @@ if os.environ.get("SPEC_DATA"):  # staged spender files; Corral is not mounted o
 
 
 def split_name(name):
-    """Return the model part and the coadd ("sv3" or "main") of a model name such as AC_main."""
+    """Return the model part and the coadd ("sv3", "main" or "recoadd") of a name such as AC_main."""
     base, _, coadd = name.partition("_")
     return base, coadd or "sv3"
 
 
 def matrix_path(tid, coadd="sv3"):
-    """Return the DR1 resolution matrix file of ``tid`` for its SV3 or main coadd."""
+    """Return the resolution matrix file of ``tid`` for its SV3 coadd, main coadd or SV3 recoadd."""
     if coadd == "main":
         return OUT / str(tid) / "resolution_matrix_main.npz"
+    if coadd == "recoadd":
+        return OUT / str(tid) / "recoadd" / "resolution_matrix_rows_ivar.npz"
     if tid == TID_REPRO:
         return REPEATS / str(tid) / "resolution_matrix.npz"
     return OUT / str(tid) / "resolution_matrix.npz"
@@ -87,9 +90,23 @@ def load_data(tid, coadd="sv3"):
     Parameters
     ----------
     coadd : str
-        "sv3" for the SV3 coadd and R file, "main" for the main coadd R file at the main redrock z.
+        "sv3" for the SV3 coadd and R file, "main" for the main coadd R file at the main redrock z,
+        "recoadd" for the SV3 recoadd (row-weighted R, flux-calibration ivar) on spender's good
+        pixels, as 2026-10-29_continuum_recoadd.
     """
     wave = WAVE_OBS * u.AA
+    if coadd == "recoadd":
+        s = load_spectrum(tid)
+        z = float(s.redshift.value)
+        r = load_resolution_npz(matrix_path(tid, "recoadd"))
+        assert np.allclose(r["wave"], WAVE_OBS, rtol=0, atol=1e-3), "R grid differs from WAVE_OBS"
+        flux = to_maggies(wave, r["flux"] * DESI_FLAM).value
+        iv = ivar_to_maggies(wave, r["ivar"] * DESI_FLAM**-2).value
+        rest = WAVE_OBS / (1 + z)
+        good = (~s.mask & np.isfinite(flux) & np.isfinite(iv) & (iv > 0)
+                & (rest >= REST_MIN) & (rest < REST_MAX))  # fmt: skip
+        unc = np.where(good, 1 / np.sqrt(np.where(good, iv, 1.0)), np.inf)
+        return z, np.where(good, flux, 0.0), unc, good, r
     if coadd == "main":
         z = Z_MAIN[tid]
         r = load_resolution_npz(matrix_path(tid, "main"))
@@ -423,7 +440,9 @@ def main():
     ap.add_argument("action", choices=("repro", "check", "run"))
     ap.add_argument("--tid", type=int, default=TID_REPRO)
     ap.add_argument(
-        "--model", choices=("A", "B", "AC", "BC", "AC0", "AC_main", "BC_main", "L"), default="A"
+        "--model",
+        choices=("A", "B", "AC", "BC", "AC0", "AC_main", "BC_main", "L", "L_recoadd"),
+        default="A",
     )
     ap.add_argument("--pool", type=int, default=0, help="0 sizes it from the commit room")
     ap.add_argument("--gib-worker", type=float, default=GIB_WORKER, help="commit per worker")
