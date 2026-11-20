@@ -1,29 +1,30 @@
+"""Add DESI-like noise to Prospector mock SEDs and write them as a spender Parquet dataset.
+
+Each mock gets an S/N spectrum drawn from the noise flow and noise spender, conditioned on its
+normalization. Run it as ``uv run python scripts/make_prospector_noisy_sed.py --input MOCKS.h5
+--outdir data/datasets/<name>``.
+"""
+
 import argparse
-import pickle
 from pathlib import Path
 
 import astropy.units as u
 import h5py
 import torch
-from huggingface_hub import batch_bucket_files
 from spender.data import desi
+from spender.data.dataset import get_features, write_dataset
 from spender.instrument import get_skyline_mask
 
 from hubersed.conversion import to_flambda
 from hubersed.detect.quantities import normalize_spectra
 from hubersed.detect.utils import load_models
 from hubersed.paths import PATHS
-from hubersed.utils import nanstd
 
 DATA_PATH = PATHS["DATA"]
-RESULTS_PATH = PATHS["RESULTS"]
 
-# CUE: noise the Cue mocks into a separate, cue-tagged LOCAL set (don't touch the FSPS chain)
+# CUE: noise the Cue mocks into a separate dataset (don't touch the FSPS chain)
 CUE = True
-TAG = "cueprospector1024" if CUE else "prospector1024"
-PUSH = False  # keep everything local for now; push to HF later
-LOCAL_TMP = DATA_PATH / "prospector_model" / "noised_cue_meanzero_wide"
-UPLOAD_EVERY = 50
+OUTDIR = DATA_PATH / "datasets" / ("mocks_cue_noised" if CUE else "mocks_fsps_noised")
 
 # set random seeds
 torch.manual_seed(42)
@@ -50,22 +51,18 @@ prospector_sed_file = (
 # The defaults above stay; the arguments let other mock sets use the same noise.
 ap = argparse.ArgumentParser(description="Add DESI-like noise to Prospector mock SEDs.")
 ap.add_argument("--input", type=Path, default=prospector_sed_file, help="mock h5 file")
-ap.add_argument("--outdir", type=Path, default=LOCAL_TMP, help="where the pkl batches go")
-ap.add_argument("--tag", default=TAG, help="batch files are named DESI<tag>_<i>.pkl")
+ap.add_argument("--outdir", type=Path, default=OUTDIR, help="Parquet dataset to write")
 ap.add_argument("--device", default=str(device), help="cpu or cuda")
 args = ap.parse_args()
-prospector_sed_file, LOCAL_TMP, TAG = args.input, args.outdir, args.tag
+prospector_sed_file, OUTDIR = args.input, args.outdir
 device = torch.device(args.device)
-print(f"input {prospector_sed_file}, outdir {LOCAL_TMP}, tag {TAG}, device {device}")
+print(f"input {prospector_sed_file}, outdir {OUTDIR}, device {device}")
 
 flow_latent = 10
 instrument = desi.DESI()
 
 wave_obs = instrument._wave_obs
 sky_mask = get_skyline_mask(wave_obs)
-
-# create tmp directory if it doesn't exist
-LOCAL_TMP.mkdir(parents=True, exist_ok=True)
 
 # loading flow model and spender model for noise
 NDE_theta, model_spender = load_models(
@@ -85,87 +82,71 @@ redshifts = torch.tensor(hdu["priors/redshifts"][:])
 batch_size = 1024
 total_samples = redshifts.shape[0]
 
-idx = 0
-for i in range(0, total_samples, batch_size):
-    fluxes_batch = fluxes[i : i + batch_size]  # in maggies
-    # DESI units, 1e-17 erg/s/cm2/Ang
-    flambda = torch.from_numpy(to_flambda(wavelength.numpy() * u.AA, fluxes_batch * u.mgy).value)
 
-    redshifts_batch = redshifts[i : i + batch_size]
-    redshifts_err_batch = torch.zeros_like(redshifts_batch)
-    target_id_batch = torch.arange(i, min(i + batch_size, total_samples))
-
-    flambda_norm, norms, good_mask = normalize_spectra(
-        flambda, redshifts_batch, wavelength, inplace=False
-    )
-    flambda_norm = flambda_norm[:, :-1]  # remove last point to match instrument wave grid
-
-    print(
-        f"Processing batch {i} - {i + batch_size}, "
-        f"normalized {good_mask.sum().item()} / {good_mask.shape[0]} spectra, "
-    )
-
-    with torch.no_grad():
-        # shape is n_sims, n_samples, n_latent
-        samples = NDE_theta.sample(1, context=norms.unsqueeze(1).float())
-
-        # make it (n_samples, n_sims, n_latent)
-        samples = samples.permute(1, 0, 2).float()
-
-        model_spender.eval()
-        instrument.eval()
-
-        snr_sample_maf = model_spender.decode(samples)
-        snr_sample_maf = snr_sample_maf.squeeze(0)  # (n_samples, n_wave)
-
-    snr_batch = snr_sample_maf.clone()  # (1024, 7780), last batch could be smaller
-    snr_batch[:, sky_mask[:-1]] = float("nan")
-    snr_batch[snr_batch <= 0] = float("nan")
-
-    # median and std along wavelength for each object
-    median_snr = torch.nanmedian(snr_batch, dim=1).values  # (1024,)
-    std_snr = nanstd(snr_batch, dim=1)  # (1024,)
-
-    sigma_batch = (flambda_norm / snr_batch).abs()
-    sigma_batch = torch.nan_to_num(sigma_batch, nan=0.0, posinf=0.0, neginf=0.0)
-
-    # clamp sigma batch to be 99.5 percentile
-    sigma_cap = torch.nanquantile(sigma_batch, 0.995, dim=1, keepdim=True)
-    sigma_batch = torch.minimum(sigma_batch, sigma_cap)
-
-    ivar_batch = 1.0 / (sigma_batch**2)
-    ivar_batch = torch.nan_to_num(ivar_batch, nan=0.0, posinf=0.0, neginf=0.0)
-    ivar_batch[sigma_batch == 0] = 0.0
-
-    noise = torch.normal(mean=0.0, std=sigma_batch, generator=generator)
-    f_noisy = flambda_norm + noise
-
-    # save to a pickle file (DESIprospector1024_idx.pkl)
-    # such that when I open I can upack it as
-    # spec, w, z, target_id,  norm, zerr
-
-    save_dict = [
-        f_noisy,
-        ivar_batch,
-        redshifts_batch,
-        target_id_batch,
-        norms,
-        redshifts_err_batch,
-    ]
-    local_path = LOCAL_TMP / f"DESI{TAG}_{idx}.pkl"
-
-    with open(local_path, "wb") as f:
-        pickle.dump(save_dict, f)
-
-    idx += 1
-
-    if PUSH and idx % UPLOAD_EVERY == 0:
-        # upload to huggingface hub
-        files_to_upload = sorted(LOCAL_TMP.glob(f"DESI{TAG}_*.pkl"))
-        batch_bucket_files(
-            "nikhil0504/hubersed-data",
-            add=[(str(p), f"prospector_model/{p.name}") for p in files_to_upload],
+def noisy_batches():
+    """Yield each batch of noisy mocks as a dict of the spender dataset columns."""
+    for i in range(0, total_samples, batch_size):
+        fluxes_batch = fluxes[i : i + batch_size]  # in maggies
+        # DESI units, 1e-17 erg/s/cm2/Ang
+        flambda = torch.from_numpy(
+            to_flambda(wavelength.numpy() * u.AA, fluxes_batch * u.mgy).value
         )
 
-        for p in files_to_upload:
-            p.unlink()
+        redshifts_batch = redshifts[i : i + batch_size]
+        redshifts_err_batch = torch.zeros_like(redshifts_batch)
+        target_id_batch = torch.arange(i, min(i + batch_size, total_samples))
+
+        flambda_norm, norms, good_mask = normalize_spectra(
+            flambda, redshifts_batch, wavelength, inplace=False
+        )
+        flambda_norm = flambda_norm[:, :-1]  # remove last point to match instrument wave grid
+
+        print(
+            f"Processing batch {i} - {i + batch_size}, "
+            f"normalized {good_mask.sum().item()} / {good_mask.shape[0]} spectra, "
+        )
+
+        with torch.no_grad():
+            # shape is n_sims, n_samples, n_latent
+            samples = NDE_theta.sample(1, context=norms.unsqueeze(1).float())
+
+            # make it (n_samples, n_sims, n_latent)
+            samples = samples.permute(1, 0, 2).float()
+
+            model_spender.eval()
+            instrument.eval()
+
+            snr_sample_maf = model_spender.decode(samples)
+            snr_sample_maf = snr_sample_maf.squeeze(0)  # (n_samples, n_wave)
+
+        snr_batch = snr_sample_maf.clone()  # (1024, 7780), last batch could be smaller
+        snr_batch[:, sky_mask[:-1]] = float("nan")
+        snr_batch[snr_batch <= 0] = float("nan")
+
+        sigma_batch = (flambda_norm / snr_batch).abs()
+        sigma_batch = torch.nan_to_num(sigma_batch, nan=0.0, posinf=0.0, neginf=0.0)
+
+        # clamp sigma batch to be 99.5 percentile
+        sigma_cap = torch.nanquantile(sigma_batch, 0.995, dim=1, keepdim=True)
+        sigma_batch = torch.minimum(sigma_batch, sigma_cap)
+
+        ivar_batch = 1.0 / (sigma_batch**2)
+        ivar_batch = torch.nan_to_num(ivar_batch, nan=0.0, posinf=0.0, neginf=0.0)
+        ivar_batch[sigma_batch == 0] = 0.0
+
+        noise = torch.normal(mean=0.0, std=sigma_batch, generator=generator)
+        f_noisy = flambda_norm + noise
+
+        yield dict(
+            spec=f_noisy,
+            w=ivar_batch,
+            z=redshifts_batch,
+            zerr=redshifts_err_batch,
+            norm=norms,
+            target_id=target_id_batch,
+        )
+
+
+features = get_features(wavelength.shape[0] - 1, ["target_id"])
+counts = write_dataset(str(OUTDIR), noisy_batches(), features, ["target_id"])
+print(f"wrote {sum(counts.values())} mocks to {OUTDIR}, split counts {counts}")
