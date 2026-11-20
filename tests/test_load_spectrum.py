@@ -3,8 +3,7 @@
 import astropy.units as u
 import numpy as np
 import pytest
-import torch
-from spender.data.desi import DESI
+from spender.data.dataset import get_features, write_dataset
 
 from hubersed.conversion import DESI_FLAM
 from hubersed.io import desi
@@ -15,25 +14,32 @@ Z = 0.1
 
 
 @pytest.fixture
-def one_chunk(tmp_path, monkeypatch):
-    """Write one chunk of three spectra with one NaN flux pixel and one zero ivar pixel."""
-    chunk_dir = tmp_path / "desi_spectra"
-    chunk_dir.mkdir()
-    spec = torch.full((3, NPIX), 2.0)
-    spec[1, 5] = float("nan")
-    ivar = torch.full((3, NPIX), 4.0)
+def dataset(tmp_path):
+    """Write three normalized spectra, one with a NaN flux pixel and one zero ivar pixel.
+
+    Spectrum 2 has norm 2, so it is stored as flux 1 and ivar 16.
+    """
+    spec = np.full((3, NPIX), 2.0, np.float32)
+    spec[1, 5] = np.nan
+    ivar = np.full((3, NPIX), 4.0, np.float32)
     ivar[1, 7] = 0.0
-    one = torch.ones(3)
-    batch = [spec, ivar, torch.full((3,), Z), torch.from_numpy(TIDS), one, one]
-    DESI.save_batch(str(chunk_dir), batch, tag="chunk1024", counter=0)
-    np.save(tmp_path / "all_target_ids.npy", TIDS)
-    monkeypatch.setattr(desi, "DATA_PATH", tmp_path)
+    norm = np.array([1.0, 1.0, 2.0], np.float32)
+    batch = dict(
+        spec=spec / norm[:, None],
+        w=ivar * norm[:, None] ** 2,
+        z=np.full(3, Z, np.float32),
+        zerr=np.zeros(3, np.float32),
+        norm=norm,
+        target_id=TIDS,
+    )
+    path = tmp_path / "ds"
+    write_dataset(str(path), [batch], get_features(NPIX, ["target_id"]), ["target_id"])
+    return path
 
 
-@pytest.mark.usefixtures("one_chunk")
-def test_units_mask_and_redshift():
+def test_units_mask_and_redshift(dataset):
     """Flux, wavelength and inverse variance carry units, and bad pixels are masked."""
-    spec = desi.load_spectrum(int(TIDS[1]))
+    spec = desi.load_spectrum(int(TIDS[1]), dataset)
     assert spec.meta["targetid"] == TIDS[1]
     assert spec.flux.unit == DESI_FLAM
     assert spec.spectral_axis.unit == u.AA
@@ -44,13 +50,20 @@ def test_units_mask_and_redshift():
     assert np.flatnonzero(spec.mask).tolist() == [5, 7]
 
 
-@pytest.mark.usefixtures("one_chunk")
-def test_flux_converts_to_cgs():
-    """2 DESI flux units are 2e-17 erg/s/cm^2/A, to float32 precision like the chunk files."""
-    spec = desi.load_spectrum(int(TIDS[0]))
+def test_flux_converts_to_cgs(dataset):
+    """2 DESI flux units are 2e-17 erg/s/cm^2/A, to float32 precision."""
+    spec = desi.load_spectrum(int(TIDS[0]), dataset)
     assert spec.flux.dtype == np.float32
     cgs = spec.flux.to(u.erg / u.s / u.cm**2 / u.AA)
     np.testing.assert_allclose(cgs.value, 2e-17, rtol=1e-7)
+
+
+def test_normalization_is_undone(dataset):
+    """A spectrum stored with norm 2 comes back as flux 2 and ivar 4."""
+    flux, ivar, _, tid = desi.load_by_targetid(int(TIDS[2]), dataset)
+    assert tid == TIDS[2]
+    np.testing.assert_array_equal(flux, 2.0)
+    np.testing.assert_array_equal(ivar, 4.0)
 
 
 def test_nan_ivar_is_masked():
@@ -62,9 +75,15 @@ def test_nan_ivar_is_masked():
     assert np.flatnonzero(spec.mask).tolist() == [3]
 
 
-@pytest.mark.usefixtures("one_chunk")
-def test_wrong_row_raises(monkeypatch):
-    """If all_target_ids.npy points at a row holding another TARGETID, loading fails."""
-    monkeypatch.setattr(desi, "tids_to_indices", lambda tids: np.array([2]))
+def test_unknown_tid_raises(dataset):
+    """A TARGETID missing from the dataset fails rather than returning another spectrum."""
+    with pytest.raises(ValueError, match="appears 0 times"):
+        desi.load_spectrum(int(TIDS.max() + 1), dataset)
+
+
+def test_wrong_row_raises(dataset, monkeypatch):
+    """If the row found holds another TARGETID, loading fails."""
+    wrong = desi.load_by_targetid(int(TIDS[2]), dataset)
+    monkeypatch.setattr(desi, "load_by_targetid", lambda tid, ds: wrong)
     with pytest.raises(desi.TargetIDMismatchError, match="holds"):
-        desi.load_spectrum(int(TIDS[0]))
+        desi.load_spectrum(int(TIDS[0]), dataset)

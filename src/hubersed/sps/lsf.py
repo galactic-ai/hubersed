@@ -1,6 +1,5 @@
 """DESI line spread function, measured from the per-target resolution matrices."""
 
-import pickle
 from pathlib import Path
 
 import astropy.io.fits as fits
@@ -18,15 +17,15 @@ DESI_WAV = np.linspace(3600.0, 9824.0, 7781, dtype=np.float64)
 ZPIX_FILE = DESI_BASE_URL + "zcatalog/v1/zpix-sv3-bright.fits"
 
 
-def sample_target_ids(pkl_file, n_sample=100, seed=42):
-    """Return a random sample of TARGETIDs from one spender chunk file.
+def sample_target_ids(dataset, n_sample=100, seed=42):
+    """Return a random sample of TARGETIDs from a spender Parquet dataset.
 
     Parameters
     ----------
-    pkl_file : str or Path
-        A chunk pickle, a list of six tensors with the TARGETIDs fourth.
+    dataset : str or Path
+        Spender Parquet dataset. Only its ``target_id`` column is read.
     n_sample : int
-        How many TARGETIDs to return, at most the number in the file.
+        How many TARGETIDs to return, at most the number in the dataset.
     seed : int
         Seed for ``np.random.default_rng``.
 
@@ -35,9 +34,12 @@ def sample_target_ids(pkl_file, n_sample=100, seed=42):
     np.ndarray
         The sampled TARGETIDs.
     """
-    with open(pkl_file, "rb") as f:
-        batch = pickle.load(f)
-    target_ids = batch[3].numpy()
+    import pyarrow.parquet as pq
+
+    files = sorted((Path(dataset) / "data").glob("*.parquet"))
+    target_ids = np.concatenate(
+        [pq.read_table(f, columns=["target_id"])["target_id"].to_numpy() for f in files]
+    )
     rng = np.random.default_rng(seed)
     idx = rng.choice(len(target_ids), min(n_sample, len(target_ids)), replace=False)
     return target_ids[idx]

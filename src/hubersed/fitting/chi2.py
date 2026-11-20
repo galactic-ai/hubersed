@@ -13,7 +13,7 @@ from scipy.optimize import minimize
 
 from hubersed.conversion import DESI_FLAM, ivar_to_maggies, to_maggies
 from hubersed.fitting.result import MapFitResult
-from hubersed.io.desi import load_by_index
+from hubersed.io.desi import load_by_targetid
 from hubersed.sps import parameter_file as P
 from hubersed.sps.config import build_continuum_model, build_full_cue_model, build_full_model
 
@@ -114,7 +114,7 @@ def _lsf_sigma_kms():
     return (C_KMS / (2.355 * R)).astype(np.float64)
 
 
-def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000):
+def map_chi2_one(targetid, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000):
     """Fit one galaxy at the MAP and return its reduced chi-squared.
 
     The continuum fit uses a mask that hides emission lines. Its best values seed the full
@@ -122,8 +122,8 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
 
     Parameters
     ----------
-    gidx : int
-        Global index of the galaxy, as used by ``load_by_index``.
+    targetid : int
+        DESI TARGETID of the galaxy, read with ``load_by_targetid``.
     use_cue : bool
         Model nebular emission with Cue instead of FSPS.
     cont_nseeds, full_nseeds : int
@@ -134,7 +134,7 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
     Returns
     -------
     dict
-        Always has ``gidx`` and ``status``. When ``status`` is ``"ok"`` it also has
+        Always has ``targetid`` and ``status``. When ``status`` is ``"ok"`` it also has
         ``id`` (TARGETID), ``z``, ``chi2``, ``ndof``, ``chi2_red``, ``npix``, ``theta``,
         ``theta_labels``, ``theta_dict``, and the spectra ``model``, ``flux``, ``unc`` and
         ``mask`` in maggies. Other statuses are ``load_fail:<error>``, ``below_zfloor``,
@@ -147,18 +147,18 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
     against ``theta_dict``.
     """
     try:
-        spec, ivar, redshift, tid = load_by_index(gidx)
+        spec, ivar, redshift, tid = load_by_targetid(targetid)
     except Exception as e:
-        return dict(gidx=gidx, status=f"load_fail:{type(e).__name__}")
+        return dict(targetid=targetid, status=f"load_fail:{type(e).__name__}")
     if redshift < Z_FLOOR:
-        return dict(gidx=gidx, id=tid, z=redshift, status="below_zfloor")
+        return dict(targetid=targetid, id=tid, z=redshift, status="below_zfloor")
 
     spec_maggies = to_maggies(WAVE_OBS * u.AA, spec * DESI_FLAM).value
     ivar_maggies = ivar_to_maggies(WAVE_OBS * u.AA, ivar * DESI_FLAM**-2).value
     sigma = 1 / np.sqrt(np.where(ivar_maggies > 0, ivar_maggies, np.inf))
     mask = (sigma > 0) & np.isfinite(sigma) & np.isfinite(spec_maggies)
     if mask.sum() < 100:
-        return dict(gidx=gidx, id=tid, z=redshift, status="too_masked")
+        return dict(targetid=targetid, id=tid, z=redshift, status="too_masked")
 
     sps = _fsps()
     fw = sps.ssp.emline_wavelengths
@@ -187,7 +187,7 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
 
     bc = _map_optimize(neg_cont, cmodel.theta.copy(), n_seeds=cont_nseeds, maxfev=maxfev)
     if bc is None:
-        return dict(gidx=gidx, id=tid, z=redshift, status="cont_fail")
+        return dict(targetid=targetid, id=tid, z=redshift, status="cont_fail")
     theta_cont = bc.x
 
     # full MAP (continuum + nebular); Cue or FSPS
@@ -208,7 +208,7 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
 
     bf = _map_optimize(neg_full, fmodel.theta.copy(), n_seeds=full_nseeds, maxfev=maxfev)
     if bf is None:
-        return dict(gidx=gidx, id=tid, z=redshift, status="full_fail")
+        return dict(targetid=targetid, id=tid, z=redshift, status="full_fail")
     theta_map = bf.x
 
     preds, _ = fmodel.predict(theta_map, observations=obs_full, sps=sps)
@@ -224,7 +224,7 @@ def map_chi2_one(gidx, use_cue=False, cont_nseeds=1, full_nseeds=1, maxfev=3_000
         tuple(fmodel.theta_labels()),
     )
     return dict(
-        gidx=gidx,
+        targetid=targetid,
         id=tid,
         z=redshift,
         status="ok",

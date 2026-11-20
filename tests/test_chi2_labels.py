@@ -23,7 +23,7 @@ def test_labels_match_theta(monkeypatch, use_cue):
     n = len(chi2.WAVE_OBS)
     fake = (np.full(n, 5.0, np.float32), np.full(n, 4.0, np.float32), 0.1, 123)
     sps = SimpleNamespace(ssp=SimpleNamespace(emline_wavelengths=np.array([4862.7, 6564.6])))
-    monkeypatch.setattr(chi2, "load_by_index", lambda gidx: fake)
+    monkeypatch.setattr(chi2, "load_by_targetid", lambda targetid: fake)
     monkeypatch.setattr(chi2, "_fsps", lambda: sps)
     monkeypatch.setattr(chi2, "_cue", lambda: sps)
     monkeypatch.setattr(chi2, "_map_optimize", lambda neg, th, **kw: SimpleNamespace(x=th))

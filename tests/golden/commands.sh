@@ -20,13 +20,6 @@ uv run python scripts/make_model_seds.py --nebular fsps -n 8 --seed 0 --workers 
 uv run python scripts/run_map_fits_outliers.py \
     -s results/emline_outlier_sample20.npz --limit 1 -n 1 -m 2000 -w 1 -o "$OUT/map"
 
-# chunk 10 sorts before chunk 2 as text
-mkdir -p "$OUT/_chunks"
-ln -sf "$ROOT/data/desi_spectra/DESIchunk1024_2.pkl" "$OUT/_chunks/"
-ln -sf "$ROOT/data/desi_spectra/DESIchunk1024_10.pkl" "$OUT/_chunks/"
-uv run python scripts/get_latent_space.py "$OUT/_chunks" \
-    data/checkpoints/spender_asc_run_10latent_zmax.pt "$OUT/latents.h5" --snr_min 3
-
 for script in \
     scripts/make_alf_input.py scripts/read_alf_sample.py \
     experiments/2026-08-25_compare_alf_solar_scaled/analysis.py \

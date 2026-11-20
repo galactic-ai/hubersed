@@ -1,5 +1,4 @@
 # %%
-import glob
 import os
 
 import astropy.io.fits as fits
@@ -7,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 
+from hubersed.io.desi import DATASET
 from hubersed.paths import PATHS
 from hubersed.sps.lsf import (
     C_KMS,
@@ -36,18 +36,12 @@ def desi_resolution_design(wave):
 
 
 # Main pipeline
-def main(n_sample=10):
-    files = sorted(glob.glob(str(DATA_PATH / "desi_spectra" / "DESIchunk1024_*.pkl")))
-    sample_files = files[::25]  # every 25th file, ~10 files
-    print(f"Sampling from {len(sample_files)} files: {sample_files}")
+def main(n_sample=100):
+    print(f"Sampling {n_sample} target_ids from {DATASET}")
     output_dir = str(RESULTS_PATH)
 
     # Step 1: Sample target_ids
-    samples_tids = []
-
-    for pkl_file in sample_files:
-        sample_tids = sample_target_ids(pkl_file, n_sample=n_sample)
-        samples_tids.extend(sample_tids)
+    samples_tids = list(sample_target_ids(DATASET, n_sample=n_sample))
     print(f"  Got {len(samples_tids)} target_ids")
 
     # Step 2: Look up healpix
