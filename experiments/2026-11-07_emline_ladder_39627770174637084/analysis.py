@@ -4,15 +4,17 @@ QUESTION: how do the fit and the posterior change along ladder steps 1-8 (MILES,
 Gaussian LSF, own R, free line columns, recoadd, ratio broad widths)?
 HYPOTHESIS: none fixed. Steps 3, 4 and 5 share pixels and compare by chi2 and log Z.
 INPUTS: results/2026-11-07_emline_ladder_39627770174637084/<STEM>/predict.npz (fit.py predict),
-<STEM>.h5 (fit.py run) and pmc_final.state.
-SEED: none here (posterior draws in fit.py predict, seed 0).
+<STEM>.h5 (fit.py run), pmc_final.state and mfrac.npz (mfrac.py); LOGMSTAR of FastSpecFit v4.0 and
+LOGM of CIGALE v1.2 (SV3 bright) in data/.
+SEED: none here (posterior draws in fit.py predict and mfrac.py, seed 0).
 COMMAND: ``SPS_HOME=<fsps> uv run --no-sync python
 experiments/2026-11-07_emline_ladder_39627770174637084/analysis.py``.
 RESULT: max-likelihood chi2 / 5597 px is 8277.7 (step 5), 7418.6 (6), 6791.8 (7), 6383.6 (8).
 log Z 101724.31 +- 0.55 (7), 101805.56 +- 0.28 (8).
 Assumptions: steps 6 and 8 fit the recoadd, so they differ from 5 and 7 in the data too.
-FIGURES: ladder.png, windows.png, ladder_table.txt, step5_line_ew.txt in
-results/2026-11-07_emline_ladder_39627770174637084/. Steps 7, 8 carry the labels of 5, 6.
+FIGURES: ladder.png, windows.png, ladder_table.txt, step5_line_ew.txt and
+corner_{gas,stars_dust}_{1_4,7_8}.png in results/2026-11-07_emline_ladder_39627770174637084/.
+Steps 7, 8 carry the labels of 5, 6.
 """
 
 # %%
@@ -20,10 +22,13 @@ import importlib.util
 from pathlib import Path
 
 import astropy.units as u
+import corner
 import dill
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.patches import Circle
+from astropy.io import fits
+from matplotlib.lines import Line2D
+from matplotlib.patches import Circle, Patch
 from prospect.io.read_results import results_from
 from scipy.signal import medfilt
 
@@ -31,6 +36,7 @@ from hubersed.conversion import to_flambda
 from hubersed.io.desi import load_spectrum
 from hubersed.paths import PATHS
 from hubersed.plotting.style import use_apj_style
+from hubersed.sps.config import build_continuum_model, build_full_cue_model
 
 TID = 39627770174637084
 OUT = PATHS["RESULTS"] / "2026-11-07_emline_ladder_39627770174637084"
@@ -272,3 +278,109 @@ if 5 in pred:
                     f"{float(p5['ew_p84'][i]):.3g}]")  # fmt: skip
     (OUT / "step5_line_ew.txt").write_text("\n".join(rows) + "\n")
     print("\n".join(rows))
+
+# %% corners of steps 1 and 4, and 7 and 8: gas, and stars and dust; 68 and 95% contours
+# Gas uses the weighted chain. Stars and dust use the 1000 draws of mfrac.py, which carry the
+# surviving mass. Grey dashed lines are prior edges inside the plotted range, black lines catalog
+# masses as catalogued (FastSpecFit v4.0 dashed, CIGALE v1.2 dotted). The fits assume WMAP9, CIGALE
+# H0 = 70.4. FastSpecFit's data model says h = 1, but its masses match CIGALE's to a median of
+# 0.00 dex over the SV3 bright sample, so its h convention is unresolved.
+CORNER_STEPS = ((1, 4), (7, 8))
+GAS = {
+    "gas_logz": r"$\log Z_{\rm gas}/Z_\odot$",
+    "gas_logno": r"[N/O]",
+    "gas_logu": r"$\log U$",
+    "gas_lognH": r"$\log n_{\rm H}$",
+    "gas_logco": r"[C/O]",
+}
+STARS = {
+    "logzsol": r"$\log Z_\star/Z_\odot$",
+    "logmass_surv": r"$\log M_\star/M_\odot$",
+    "dust2": r"$\tau_2$",
+    "dust_ratio": r"$\tau_1/\tau_2$",
+}
+with fits.open(PATHS["DATA"] / "fastspecfit_v4.0" / "fastspec-iron-sv3-bright.fits") as h:
+    d = h["SPECPHOT"].data
+    m_fsf = float(d["LOGMSTAR"][d["TARGETID"] == TID][0])
+with fits.open(PATHS["DATA"] / "cigale_dr1" / "IronPhysProp_v1.2.fits", memmap=True) as h:
+    d = h[1].data
+    m_cig = float(d["LOGM"][(d["TARGETID"] == TID) & (d["PROGRAM"] == "bright")][0])
+CATALOG = {"FastSpecFit": (m_fsf, "--"), "CIGALE": (m_cig, ":")}
+print(f"catalog masses: FastSpecFit {m_fsf:.3f}, CIGALE {m_cig:.3f}")
+cont_model, cont_tmpl = build_continuum_model(z)
+_, prior_tmpl = build_full_cue_model(cont_tmpl, cont_model.theta, cont_model)
+
+
+def prior_edges(name):
+    """Return the prior bounds of ``name``, or none for a derived quantity."""
+    if name not in prior_tmpl:
+        return ()
+    params = prior_tmpl[name]["prior"].params
+    return tuple(params[k] for k in ("mini", "maxi") if k in params)
+
+
+def corner_samples(s, names):
+    """Return the samples of ``names`` in step ``s`` and their weights."""
+    chain, w, labels = post[s]
+    if "logmass_surv" not in names:
+        return np.column_stack([chain[:, labels.index(n)] for n in names]), w
+    mf = np.load(OUT / STEPS[s][0] / "mfrac.npz")
+    cols = [
+        mf["logmass_surv"] if n == "logmass_surv" else chain[mf["index"], labels.index(n)]
+        for n in names
+    ]
+    return np.column_stack(cols), np.full(len(mf["index"]), 1 / len(mf["index"]))
+
+
+for group, names in (("gas", GAS), ("stars_dust", STARS)):
+    for pair in CORNER_STEPS:
+        if group == "stars_dust" and not all(
+            (OUT / STEPS[s][0] / "mfrac.npz").exists() for s in pair
+        ):
+            print(f"corner {group} {pair}: no mfrac.npz yet, run mfrac.py")
+            continue
+        samp = {s: corner_samples(s, list(names)) for s in pair}
+        ranges = []
+        for j, n in enumerate(names):
+            lo = min(wquantile(x[:, j], w, 0.001) for x, w in samp.values())
+            hi = max(wquantile(x[:, j], w, 0.999) for x, w in samp.values())
+            if n == "logmass_surv":
+                masses = [v for v, _ in CATALOG.values()]
+                lo, hi = min(lo, *masses), max(hi, *masses)
+            ranges.append((lo - 0.1 * (hi - lo), hi + 0.1 * (hi - lo)))
+        fig = None
+        for s in pair:
+            x, w = samp[s]
+            fig = corner.corner(x, weights=w, range=ranges, labels=list(names.values()),
+                                color=FIG_STEPS[s][2], fig=fig, bins=30, smooth=1.0, smooth1d=1.0,
+                                levels=(0.68, 0.95), fill_contours=True, plot_datapoints=False,
+                                plot_density=False, max_n_ticks=3,
+                                label_kwargs={"fontsize": 10})  # fmt: skip
+        k = len(names)
+        axes = np.array(fig.axes).reshape(k, k)
+        for i in range(k):
+            axes[i, i].relim()
+            axes[i, i].autoscale(axis="y")
+            axes[i, i].set_ylim(bottom=0)
+        handles = [Patch(color=FIG_STEPS[s][2], label=FIG_STEPS[s][1]) for s in pair]
+        edge_drawn = False
+        for j, n in enumerate(names):
+            marks = [(e, "0.5", "--") for e in prior_edges(n) if ranges[j][0] < e < ranges[j][1]]
+            edge_drawn |= bool(marks)
+            if n == "logmass_surv":
+                marks += [(v, "k", ls) for v, ls in CATALOG.values()]
+            for v, colour, ls in marks:
+                for i in range(j, k):
+                    axes[i, j].axvline(v, color=colour, ls=ls, lw=0.8)
+                for c in range(j):
+                    axes[j, c].axhline(v, color=colour, ls=ls, lw=0.8)
+        if edge_drawn:
+            handles.append(Line2D([], [], color="0.5", ls="--", lw=0.8, label="prior edge"))
+        if group == "stars_dust":
+            handles += [Line2D([], [], color="k", ls=ls, lw=0.8, label=f"{name} mass")
+                        for name, (_, ls) in CATALOG.items()]  # fmt: skip
+        fig.set_size_inches(1.1 * k + 0.6, 1.1 * k + 0.6)
+        fig.legend(handles=handles, loc="upper right", frameon=False, fontsize=9)
+        fig.savefig(OUT / f"corner_{group}_{pair[0]}_{pair[1]}.png", dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        print(f"wrote corner_{group}_{pair[0]}_{pair[1]}.png")
