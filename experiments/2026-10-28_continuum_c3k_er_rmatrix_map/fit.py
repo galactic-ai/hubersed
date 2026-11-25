@@ -20,17 +20,16 @@ import astropy.units as u
 import numpy as np
 from prospect.fitting import lnprobfn
 from prospect.models.priors import TopHat
+from prospect.models.sedmodel import HyperSpecModel
 
 import hubersed.io.desi as desi_io
 from hubersed.conversion import DESI_FLAM, ivar_to_maggies, to_maggies
 from hubersed.fitting.map_fits import get_sps as get_cue_sps
 from hubersed.fitting.map_fits import jitter_scale, map_fit, safe_lnprior
-from hubersed.io.desi import load_spectrum
+from hubersed.io.desi import load_resolution_npz, load_spectrum
 from hubersed.paths import PATHS
 from hubersed.sps.config import build_continuum_model, build_full_cue_model
 from hubersed.sps.parameter_file import WAVE_OBS, build_sps
-from hubersed.sps.resolution_matrix import load_resolution_npz
-from hubersed.sps.resolution_model import ResolutionMatrixModel, build_resolution_obs
 from hubersed.sps.utils import universe_age_gyr
 
 TID = 39627757533007793
@@ -90,15 +89,23 @@ def make_model(z, nebular=False):
         t[name]["isfree"] = False
         t[name]["init"] = best[name]
     t["afe"] = {"N": 1, "isfree": True, "init": 0.0, "prior": TopHat(mini=-0.2, maxi=0.6)}
-    return ResolutionMatrixModel(t)
+    return HyperSpecModel(t)
 
 
 def make_obs(flux, unc, good):
-    """Return the observation list with the target's DR1 resolution matrix."""
+    """Return the observation list with the target's DR1 resolution matrix.
+
+    Uses prospect's ResolutionMatrixSpectrum, as 2026-11-14_poco_psb_sfh, since the hubersed classes
+    this fit was run with are removed.
+    """
+    from prospect.observation import ResolutionMatrixSpectrum
+
     new = load_resolution_npz(MATRIX)
-    return build_resolution_obs(
-        flux, unc, good, new["res"], resolution_wave=new["wave"], wavelength=WAVE_OBS
+    obs = ResolutionMatrixSpectrum(
+        wavelength=new["wave"], resolution_matrix=new["res"], flux=flux, uncertainty=unc, mask=good
     )
+    obs.rectify()
+    return [obs]
 
 
 def get_sps(nebular=False):
