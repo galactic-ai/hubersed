@@ -30,9 +30,8 @@ def recoadd_data(base, tid):
     import astropy.units as u
 
     from hubersed.conversion import DESI_FLAM, ivar_to_maggies, to_maggies
-    from hubersed.io.desi import load_spectrum
+    from hubersed.io.desi import load_resolution_npz, load_spectrum
     from hubersed.sps.parameter_file import WAVE_OBS
-    from hubersed.sps.resolution_matrix import load_resolution_npz
 
     s = load_spectrum(tid)
     z, keep = float(s.redshift.value), np.asarray(s.uncertainty.array) > 0
