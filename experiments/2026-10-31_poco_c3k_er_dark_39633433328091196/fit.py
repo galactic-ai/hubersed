@@ -19,10 +19,10 @@ from pathlib import Path
 import numpy as np
 from prospect.fitting import lnprobfn
 from prospect.models.priors import LogUniform, TopHat
+from prospect.models.sedmodel import HyperSpecModel
 
 from hubersed.paths import PATHS
 from hubersed.sps.config import build_continuum_model
-from hubersed.sps.resolution_model import ResolutionMatrixModel
 from hubersed.sps.utils import universe_age_gyr
 
 EXPS = Path(__file__).resolve().parents[1]
@@ -60,7 +60,7 @@ def make_model(z):
         if init is not None:
             t[name]["init"] = init
     t["afe"] = {"N": 1, "isfree": True, "init": 0.0, "prior": TopHat(mini=-0.2, maxi=0.6)}
-    return ResolutionMatrixModel(t)
+    return HyperSpecModel(t)
 
 
 def state(with_sps=True):
