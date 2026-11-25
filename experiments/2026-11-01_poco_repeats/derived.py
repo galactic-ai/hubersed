@@ -11,13 +11,20 @@ OUTPUT: results/2026-11-01_poco_repeats/<TID>/derived/ draws_<RUN>.npz, fsps_<RU
 # %%
 import argparse
 import importlib.util
+import os
 import sys
 import time
 from pathlib import Path
 
 import numpy as np
 
+from hubersed.io import desi
 from hubersed.paths import PATHS
+
+if os.environ.get("SPEC_DATA"):  # staged Parquet dataset; data/ is not mounted on compute nodes
+    desi.load_spectrum.__defaults__ = (
+        Path(os.environ["SPEC_DATA"]) / "datasets" / "desi_sv3_bright_v1",
+    )
 
 HERE = Path(__file__).resolve().parent
 RES = PATHS["RESULTS"] / HERE.name
