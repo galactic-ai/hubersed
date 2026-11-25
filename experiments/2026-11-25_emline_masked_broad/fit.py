@@ -400,6 +400,13 @@ GIB_HELPER = 15.0  # commit of one build_ssps helper (10-31)
 GIB_WORKER = 8.0  # commit of one worker after the free: 5.44 GiB without Cue + Cue
 GIB_MARGIN = 8.0  # commit left free on each node
 TORCH_THREADS = 16  # pocoMC's flow runs in the parent; it keeps this many cores, workers the rest
+# Saved C3K ER SSP slots (2026-11-13_ssp_cache_c3k_er), next to the staged data on compute nodes.
+SSP_CACHE = Path(
+    os.environ.get(
+        "SSP_CACHE",
+        Path(os.environ.get("SPEC_DATA", PATHS["DATA"])) / "ssp_cache" / "c3k_er_afe_v3.npz",
+    )
+)
 
 
 def commit_room():
@@ -429,7 +436,11 @@ def parent_pool(ctx, npool, cores):
 
 
 def node_pool(npool, gib_worker=GIB_WORKER, free=True):
-    """Return this node's forked pool, after the SSP build and the speclib free on TACC builds."""
+    """Return this node's forked pool, after the SSPs and the speclib free on TACC builds.
+
+    The SSPs are loaded from SSP_CACHE when it matches this build and its SSP parameters, and built
+    otherwise.
+    """
     ctx = mp.get_context("fork")
     if not hasattr(fsps.StellarPopulation, "build_ssps"):  # no prebuild: macOS or an older build
         assert not jax_backend_started(), "the JAX backend started before the fork"
@@ -444,20 +455,27 @@ def node_pool(npool, gib_worker=GIB_WORKER, free=True):
         return parent_pool(ctx, npool, cores)
     import fsps_mem
 
+    from hubersed.sps.ssp_cache import load_ssp_cache
+
     t = time.time()
     sp = fsps.StellarPopulation(zcontinuous=1)
     for k in ("add_igm_absorption", "add_dust_emission", "add_neb_emission", "nebemlineinspec"):
         sp.params[k] = False  # as NebStepBasis sets them
     sp.params["sfh"] = 0
-    room = commit_room()
-    nbuild = max(1, min(10, int((room - GIB_MARGIN) // GIB_HELPER)))
-    sp.build_ssps(processes=nbuild)
+    try:
+        how = f"{load_ssp_cache(sp, SSP_CACHE)} slots loaded from {SSP_CACHE}"
+    except (OSError, ValueError, RuntimeError) as err:  # no cache, or one of another build or setup
+        print(f"SSP cache not used: {err}", flush=True)
+        room = commit_room()
+        nbuild = max(1, min(10, int((room - GIB_MARGIN) // GIB_HELPER)))
+        sp.build_ssps(processes=nbuild)
+        how = f"built with {nbuild} helpers"
     freed = fsps_mem.free_speclib() if free else False
     room = commit_room()
     cores = sorted(os.sched_getaffinity(0))
     npool = npool or max(1, min(len(cores) - TORCH_THREADS, int((room - GIB_MARGIN) // gib_worker)))
     print(
-        f"SSPs {time.time() - t:.0f} s with {nbuild} helpers, speclib freed {freed}, commit room "
+        f"SSPs {time.time() - t:.0f} s, {how}, speclib freed {freed}, commit room "
         f"{room:.1f} GiB, {len(cores)} cores, pool {npool}",
         flush=True,
     )
